@@ -1,0 +1,6 @@
+.pulumi/
+preview.json
+state.json
+target/
+__pycache__/
+*.pyc

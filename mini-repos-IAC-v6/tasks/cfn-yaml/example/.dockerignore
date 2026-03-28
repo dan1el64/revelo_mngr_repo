@@ -1,0 +1,15 @@
+# Harness-generated files
+stack_outputs.json
+stack_description.json
+
+# Python cache
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# IDE and editor files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store

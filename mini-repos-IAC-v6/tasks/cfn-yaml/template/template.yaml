@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template (YAML). Add Parameters, Resources, and Outputs as needed.
+
+Parameters:
+  NamePrefix:
+    Type: String
+    Description: Prefix for resource names (set by harness to avoid collisions).
+
+Resources:
+  Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${NamePrefix}-bucket"
+
+Outputs:
+  BucketName:
+    Description: Name of the S3 bucket
+    Value: !Ref Bucket
+    Export:
+      Name: !Sub "${AWS::StackName}-BucketName"

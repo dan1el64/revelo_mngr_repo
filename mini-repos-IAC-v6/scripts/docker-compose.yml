@@ -1,0 +1,33 @@
+# LocalStack environment for IaC deploy/destroy. Owned by the harness, not the repo.
+# This docker-compose supports all AWS services for any IaC task.
+services:
+  localstack:
+    container_name: localstack-harness
+    image: localstack/localstack-pro:latest
+    ports:
+      - "4566:4566"            # LocalStack Gateway (main entry point for all AWS services)
+      - "4510-4559:4510-4559"  # External services port range (OpenSearch, Elasticsearch, etc.)
+    networks:
+      harness-net:
+        # Set the container IP address in the 10.0.2.0/24 subnet
+        ipv4_address: 10.0.2.20
+    environment:
+      # All AWS services available (default in LocalStack 2.x+)
+      # Remove SERVICES env var to enable all services, or specify: s3,ec2,lambda,dynamodb,etc.
+      - DEBUG=${DEBUG:-0}
+      - PERSISTENCE=${PERSISTENCE:-0}
+      # Allow connections from Docker containers on host network
+      - HOSTNAME_EXTERNAL=localhost
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN- }
+    volumes:
+      # Persist LocalStack state between runs (optional, commented out by default)
+      # - "${LOCALSTACK_VOLUME_DIR:-./localstack-data}:/var/lib/localstack"
+      # Required for some services (Lambda, ECS, etc.)
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+networks:
+  harness-net:
+    name: iac-harness-network
+    ipam:
+      config:
+        - subnet: 10.0.2.0/24
