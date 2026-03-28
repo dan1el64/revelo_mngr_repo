@@ -1,0 +1,634 @@
+Harness: REPO_DIR=/Users/admin/Desktop/mini-repos-IAC-v5/tasks/cdk-py/9fdf6120-4936-41cc-a634-6043bd373850 FRAMEWORK=cdk-py
+
+
+Starting LocalStack (harness environment)...
+ Container localstack-harness  Starting
+ Container localstack-harness  Started
+Waiting for LocalStack health endpoint: http://localhost:4566/_localstack/health
+LocalStack is healthy.
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Setup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Starting worker container: harness-worker-28953
+fa6fb61e9076b27f99a8c79278a0fe32cd5fefbb39fe2d77f22e563431343f35
+Installing dependencies (pip install -r requirements.txt)...
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/de0662c3-25ee-487f-b8c6-23113758c9e1
+[32m✅ Step passed: Setup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Syntax / Synth[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Checking for LocalStack references...
+Running cdklocal synth...
+Generating template.json for unit tests...
+[32m✅ Step passed: Syntax / Synth[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Unit tests (pytest)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest unit tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+plugins: typeguard-2.13.3
+collecting ... collected 29 items
+
+tests/unit_tests.py::TestOrderIntakeUnit::test_all_integrations_are_wired_with_cdk_references_instead_of_hard_coded_names PASSED [  3%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_api_gateway_excludes_custom_domains_usage_plans_and_api_keys PASSED [  6%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_api_routes_logging_and_lambda_runtime_settings PASSED [ 10%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_app_is_self_contained_and_uses_only_prompt_configuration_inputs PASSED [ 13%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_athena_workgroup_is_explicitly_associated_with_aws_data_catalog PASSED [ 17%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_aws_endpoint_input_is_propagated_to_custom_sdk_clients PASSED [ 20%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_build_app_synthesizes_all_stages_without_manual_preprovisioning_inputs PASSED [ 24%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_catalog_and_lambda_code_contracts_match_prompt PASSED [ 27%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_context_validation_and_default_region PASSED [ 31%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_dynamodb_table_does_not_enable_streams PASSED [ 34%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_enrichment_lambda_permissions_are_minimal_and_exclude_writes PASSED [ 37%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_enrichment_lambda_transforms_pipe_body_to_order_payload PASSED [ 41%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_eventbridge_rules_do_not_target_prohibited_services PASSED [ 44%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_eventbridge_rules_route_processed_and_failed_events_to_sns PASSED [ 48%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_glue_crawler_targets_archive_prefix_and_writes_to_glue_database PASSED [ 51%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_iam_policies_are_minimal_and_scoped_to_required_resources PASSED [ 55%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_pipe_maps_sqs_body_into_state_machine_input PASSED [ 58%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_post_orders_starts_execution_and_returns_execution_identifier PASSED [ 62%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_resources_are_fully_destructible_and_network_is_restricted PASSED [ 65%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_stack_contains_exact_prompt_resource_counts PASSED [ 68%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_stage_specific_schedule_and_prefixes_are_deterministic PASSED [ 72%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_state_machine_and_security_controls_match_prompt PASSED [ 75%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_state_machine_passes_order_id_and_payload_through_workflow_steps PASSED [ 79%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_state_machine_writes_received_status_before_queueing_order PASSED [ 82%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_template_uses_requested_aws_region_without_hardcoded_region_values PASSED [ 86%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_worker_publishes_sns_notification_on_success PASSED [ 89%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_worker_puts_processed_and_failed_events_with_required_detail_types PASSED [ 93%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_worker_secret_access_is_scoped_to_created_secret_only PASSED [ 96%]
+tests/unit_tests.py::TestOrderIntakeUnit::test_worker_updates_dynamodb_status_for_success_and_failure PASSED [100%]
+
+============================= 29 passed in 10.66s ==============================
+[32m✅ Step passed: Unit tests (pytest)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Deploy (LocalStack)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Bootstrapping (if needed)...
+Running cdklocal deploy...
+
+✨  Synthesis time: 6.71s
+
+OrderIntake-cdk-2cceceb68ce18d21-dev: start: Building faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6
+OrderIntake-cdk-2cceceb68ce18d21-dev: success: Built faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6
+OrderIntake-cdk-2cceceb68ce18d21-dev: start: Building abd217e8b9d8e57bfce51f8f46599fbd544a5dd3158fda2f12148d7c4c54553e
+OrderIntake-cdk-2cceceb68ce18d21-dev: success: Built abd217e8b9d8e57bfce51f8f46599fbd544a5dd3158fda2f12148d7c4c54553e
+OrderIntake-cdk-2cceceb68ce18d21-dev: start: Building 735d3d242660ff9a9c336df30a9ee0b953dd3ee2db72298bee2a98ee1ed485be
+OrderIntake-cdk-2cceceb68ce18d21-dev: success: Built 735d3d242660ff9a9c336df30a9ee0b953dd3ee2db72298bee2a98ee1ed485be
+OrderIntake-cdk-2cceceb68ce18d21-dev: start: Publishing faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6:current_account-us-east-1
+OrderIntake-cdk-2cceceb68ce18d21-dev: start: Building 2cfe59adb62c175e2c150ebe86e906b6e44552da1c2c2a04f1e96d1824a1d535
+OrderIntake-cdk-2cceceb68ce18d21-dev: success: Built 2cfe59adb62c175e2c150ebe86e906b6e44552da1c2c2a04f1e96d1824a1d535
+OrderIntake-cdk-2cceceb68ce18d21-dev: start: Publishing 2cfe59adb62c175e2c150ebe86e906b6e44552da1c2c2a04f1e96d1824a1d535:current_account-us-east-1
+OrderIntake-cdk-2cceceb68ce18d21-dev: start: Publishing abd217e8b9d8e57bfce51f8f46599fbd544a5dd3158fda2f12148d7c4c54553e:current_account-us-east-1
+OrderIntake-cdk-2cceceb68ce18d21-dev: start: Publishing 735d3d242660ff9a9c336df30a9ee0b953dd3ee2db72298bee2a98ee1ed485be:current_account-us-east-1
+OrderIntake-cdk-2cceceb68ce18d21-dev: start: Building c663e5c4a499f131b8b244c871bf830ec73596a16aa2f5761b7b77de87d5d950
+OrderIntake-cdk-2cceceb68ce18d21-dev: success: Built c663e5c4a499f131b8b244c871bf830ec73596a16aa2f5761b7b77de87d5d950
+OrderIntake-cdk-2cceceb68ce18d21-dev: start: Publishing c663e5c4a499f131b8b244c871bf830ec73596a16aa2f5761b7b77de87d5d950:current_account-us-east-1
+OrderIntake-cdk-2cceceb68ce18d21-test: start: Building 016156635d87112afdc0e9bf86b108b155fe0bd30a738f03edb59dede021c702
+OrderIntake-cdk-2cceceb68ce18d21-test: success: Built 016156635d87112afdc0e9bf86b108b155fe0bd30a738f03edb59dede021c702
+OrderIntake-cdk-2cceceb68ce18d21-test: start: Publishing 016156635d87112afdc0e9bf86b108b155fe0bd30a738f03edb59dede021c702:current_account-us-east-1
+OrderIntake-cdk-2cceceb68ce18d21-prod: start: Building 6bbd6b4ce77763e5fd5aeb2c8b8e2680772a17b3a3a19552f83e0c4930957efd
+OrderIntake-cdk-2cceceb68ce18d21-prod: success: Built 6bbd6b4ce77763e5fd5aeb2c8b8e2680772a17b3a3a19552f83e0c4930957efd
+OrderIntake-cdk-2cceceb68ce18d21-prod: start: Publishing 6bbd6b4ce77763e5fd5aeb2c8b8e2680772a17b3a3a19552f83e0c4930957efd:current_account-us-east-1
+OrderIntake-cdk-2cceceb68ce18d21-dev: success: Published c663e5c4a499f131b8b244c871bf830ec73596a16aa2f5761b7b77de87d5d950:current_account-us-east-1
+OrderIntake-cdk-2cceceb68ce18d21-test: success: Published 016156635d87112afdc0e9bf86b108b155fe0bd30a738f03edb59dede021c702:current_account-us-east-1
+OrderIntake-cdk-2cceceb68ce18d21-prod: success: Published 6bbd6b4ce77763e5fd5aeb2c8b8e2680772a17b3a3a19552f83e0c4930957efd:current_account-us-east-1
+OrderIntake-cdk-2cceceb68ce18d21-dev: success: Published faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6:current_account-us-east-1
+OrderIntake-cdk-2cceceb68ce18d21-dev: success: Published abd217e8b9d8e57bfce51f8f46599fbd544a5dd3158fda2f12148d7c4c54553e:current_account-us-east-1
+OrderIntake-cdk-2cceceb68ce18d21-dev: success: Published 735d3d242660ff9a9c336df30a9ee0b953dd3ee2db72298bee2a98ee1ed485be:current_account-us-east-1
+OrderIntake-cdk-2cceceb68ce18d21-dev: success: Published 2cfe59adb62c175e2c150ebe86e906b6e44552da1c2c2a04f1e96d1824a1d535:current_account-us-east-1
+OrderIntake-cdk-2cceceb68ce18d21-dev
+OrderIntake-cdk-2cceceb68ce18d21-dev: deploying... [1/3]
+OrderIntake-cdk-2cceceb68ce18d21-dev: creating CloudFormation changeset...
+OrderIntake-cdk-2cceceb68ce18d21-dev |  0/69 | 8:59:21 PM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack            | OrderIntake-cdk-2cceceb68ce18d21-dev User Initiated
+OrderIntake-cdk-2cceceb68ce18d21-dev |  0/69 | 8:59:21 PM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack            | OrderIntake-cdk-2cceceb68ce18d21-dev 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  0/69 | 8:59:21 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | ApiAccessLogs (ApiAccessLogsE9DF007D) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  0/69 | 8:59:21 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                         | OrderVpc (OrderVpc494511AA) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  1/69 | 8:59:21 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | ApiAccessLogs (ApiAccessLogsE9DF007D) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  1/69 | 8:59:22 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderVpc/privateSubnet2/RouteTable (OrderVpcprivateSubnet2RouteTable6F88FFEB) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  2/69 | 8:59:22 PM | CREATE_COMPLETE      | AWS::EC2::VPC                         | OrderVpc (OrderVpc494511AA) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  3/69 | 8:59:22 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderVpc/privateSubnet2/RouteTable (OrderVpcprivateSubnet2RouteTable6F88FFEB) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  3/69 | 8:59:22 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderVpc/privateSubnet2/Subnet (OrderVpcprivateSubnet2SubnetA23E1132) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  3/69 | 8:59:22 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/privateSubnet2/RouteTableAssociation (OrderVpcprivateSubnet2RouteTableAssociation72F168C2) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  4/69 | 8:59:22 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderVpc/privateSubnet2/Subnet (OrderVpcprivateSubnet2SubnetA23E1132) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  4/69 | 8:59:22 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderVpc/privateSubnet1/RouteTable (OrderVpcprivateSubnet1RouteTableA931E0C8) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  5/69 | 8:59:22 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/privateSubnet2/RouteTableAssociation (OrderVpcprivateSubnet2RouteTableAssociation72F168C2) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  6/69 | 8:59:22 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderVpc/privateSubnet1/RouteTable (OrderVpcprivateSubnet1RouteTableA931E0C8) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  6/69 | 8:59:22 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderVpc/privateSubnet1/Subnet (OrderVpcprivateSubnet1Subnet01FED9C8) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  6/69 | 8:59:22 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/privateSubnet1/RouteTableAssociation (OrderVpcprivateSubnet1RouteTableAssociation5BC4D31E) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  7/69 | 8:59:22 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderVpc/privateSubnet1/Subnet (OrderVpcprivateSubnet1Subnet01FED9C8) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  7/69 | 8:59:22 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | ApiGetFunction/ServiceRole (ApiGetFunctionServiceRoleBF5485EF) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  8/69 | 8:59:22 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/privateSubnet1/RouteTableAssociation (OrderVpcprivateSubnet1RouteTableAssociation5BC4D31E) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  8/69 | 8:59:22 PM | CREATE_IN_PROGRESS   | AWS::DynamoDB::Table                  | OrderStatusTable (OrderStatusTableA172E078) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  9/69 | 8:59:22 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | ApiGetFunction/ServiceRole (ApiGetFunctionServiceRoleBF5485EF) 
+OrderIntake-cdk-2cceceb68ce18d21-dev |  9/69 | 8:59:23 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | ApiGetFunction/ServiceRole/DefaultPolicy (ApiGetFunctionServiceRoleDefaultPolicy52EB4B2F) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 10/69 | 8:59:23 PM | CREATE_COMPLETE      | AWS::DynamoDB::Table                  | OrderStatusTable (OrderStatusTableA172E078) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 10/69 | 8:59:23 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | LambdaSecurityGroup (LambdaSecurityGroup0BD9FC99) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 11/69 | 8:59:23 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | ApiGetFunction/ServiceRole/DefaultPolicy (ApiGetFunctionServiceRoleDefaultPolicy52EB4B2F) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 11/69 | 8:59:23 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | ApiGetFunction (ApiGetFunctionB56CE83E) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 12/69 | 8:59:23 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | LambdaSecurityGroup (LambdaSecurityGroup0BD9FC99) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 13/69 | 8:59:30 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | ApiGetFunction (ApiGetFunctionB56CE83E) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 13/69 | 8:59:30 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | ApiGetLogGroup (ApiGetLogGroup8D14C44F) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 13/69 | 8:59:30 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | ApiStartExecutionRole (ApiStartExecutionRoleC6BFFAFE) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 14/69 | 8:59:30 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | ApiGetLogGroup (ApiGetLogGroup8D14C44F) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 14/69 | 8:59:30 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | StateMachineRole (StateMachineRole78EC082E) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 15/69 | 8:59:30 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | ApiStartExecutionRole (ApiStartExecutionRoleC6BFFAFE) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 15/69 | 8:59:30 PM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                       | OrderIntakeQueue (OrderIntakeQueue228B6246) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 16/69 | 8:59:30 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | StateMachineRole (StateMachineRole78EC082E) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 16/69 | 8:59:30 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | WorkerFunction/ServiceRole (WorkerFunctionServiceRole38D8F738) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 17/69 | 8:59:30 PM | CREATE_COMPLETE      | AWS::SQS::Queue                       | OrderIntakeQueue (OrderIntakeQueue228B6246) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 18/69 | 8:59:30 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | WorkerFunction/ServiceRole (WorkerFunctionServiceRole38D8F738) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 18/69 | 8:59:30 PM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                       | ArchiveBucket (ArchiveBucket9DECBF5D) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 18/69 | 8:59:30 PM | CREATE_IN_PROGRESS   | AWS::Events::EventBus                 | OrderEventsBus (OrderEventsBusADB829FF) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 19/69 | 8:59:30 PM | CREATE_COMPLETE      | AWS::S3::Bucket                       | ArchiveBucket (ArchiveBucket9DECBF5D) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 19/69 | 8:59:30 PM | CREATE_IN_PROGRESS   | AWS::SNS::Topic                       | NotificationTopic (NotificationTopicEB7A0DF1) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 20/69 | 8:59:30 PM | CREATE_COMPLETE      | AWS::Events::EventBus                 | OrderEventsBus (OrderEventsBusADB829FF) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 20/69 | 8:59:30 PM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret           | ThirdPartyApiKeySecret (ThirdPartyApiKeySecret59D6F8D4) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 21/69 | 8:59:30 PM | CREATE_COMPLETE      | AWS::SNS::Topic                       | NotificationTopic (NotificationTopicEB7A0DF1) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 22/69 | 8:59:30 PM | CREATE_COMPLETE      | AWS::SecretsManager::Secret           | ThirdPartyApiKeySecret (ThirdPartyApiKeySecret59D6F8D4) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 22/69 | 8:59:30 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | WorkerFunction/ServiceRole/DefaultPolicy (WorkerFunctionServiceRoleDefaultPolicy07D8276A) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 22/69 | 8:59:30 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | WorkerFunction (WorkerFunctionACE6A4B0) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 23/69 | 8:59:30 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | WorkerFunction/ServiceRole/DefaultPolicy (WorkerFunctionServiceRoleDefaultPolicy07D8276A) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 24/69 | 8:59:31 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | WorkerFunction (WorkerFunctionACE6A4B0) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 24/69 | 8:59:31 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | StateMachineRole/DefaultPolicy (StateMachineRoleDefaultPolicy433448B5) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 25/69 | 8:59:31 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | StateMachineRole/DefaultPolicy (StateMachineRoleDefaultPolicy433448B5) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 25/69 | 8:59:31 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | StateMachineLogGroup (StateMachineLogGroup15B91BCB) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 25/69 | 8:59:31 PM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine      | OrderStateMachine (OrderStateMachineC078F95C) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 26/69 | 8:59:31 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | StateMachineLogGroup (StateMachineLogGroup15B91BCB) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 26/69 | 8:59:32 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | ApiStartExecutionRole/DefaultPolicy (ApiStartExecutionRoleDefaultPolicy7E383846) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 27/69 | 8:59:32 PM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine      | OrderStateMachine (OrderStateMachineC078F95C) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 27/69 | 8:59:32 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | Custom::S3AutoDeleteObjectsCustomResourceProvider/Role (CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 28/69 | 8:59:32 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | ApiStartExecutionRole/DefaultPolicy (ApiStartExecutionRoleDefaultPolicy7E383846) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 28/69 | 8:59:32 PM | CREATE_IN_PROGRESS   | AWS::S3::BucketPolicy                 | ArchiveBucket/Policy (ArchiveBucketPolicyF1A75978) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 29/69 | 8:59:32 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | Custom::S3AutoDeleteObjectsCustomResourceProvider/Role (CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 30/69 | 8:59:32 PM | CREATE_COMPLETE      | AWS::S3::BucketPolicy                 | ArchiveBucket/Policy (ArchiveBucketPolicyF1A75978) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 30/69 | 8:59:32 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler (CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 30/69 | 8:59:33 PM | CREATE_IN_PROGRESS   | Custom::S3AutoDeleteObjects           | ArchiveBucket/AutoDeleteObjectsCustomResource/Default (ArchiveBucketAutoDeleteObjectsCustomResource9EFE6D2E) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 31/69 | 8:59:33 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler (CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 32/69 | 8:59:42 PM | CREATE_COMPLETE      | Custom::S3AutoDeleteObjects           | ArchiveBucket/AutoDeleteObjectsCustomResource/Default (ArchiveBucketAutoDeleteObjectsCustomResource9EFE6D2E) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 32/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::Athena::WorkGroup                | AthenaWorkGroup 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 33/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 33/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 34/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::Athena::WorkGroup                | AthenaWorkGroup Resource type AWS::Athena::WorkGroup is not supported but was deployed as a fallback
+OrderIntake-cdk-2cceceb68ce18d21-dev | 34/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | EnrichmentFunction/ServiceRole (EnrichmentFunctionServiceRole7C57E520) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 34/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | EnrichmentFunction (EnrichmentFunction65873741) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 35/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | EnrichmentFunction/ServiceRole (EnrichmentFunctionServiceRole7C57E520) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 35/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | EnrichmentLogGroup (EnrichmentLogGroup8EC48EAC) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 36/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | EnrichmentFunction (EnrichmentFunction65873741) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 36/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 37/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::Glue::Database                   | GlueDatabase Resource type AWS::Glue::Database is not supported but was deployed as a fallback
+OrderIntake-cdk-2cceceb68ce18d21-dev | 37/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::Glue::Database                   | GlueDatabase 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 38/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | EnrichmentLogGroup (EnrichmentLogGroup8EC48EAC) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 39/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 39/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 40/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::Glue::Crawler                    | GlueCrawler Resource type AWS::Glue::Crawler is not supported but was deployed as a fallback
+OrderIntake-cdk-2cceceb68ce18d21-dev | 40/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::Glue::Crawler                    | GlueCrawler 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 41/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 41/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::SNS::TopicPolicy                 | NotificationTopic/Policy (NotificationTopicPolicyF935982E) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 42/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::SNS::TopicPolicy                 | NotificationTopic/Policy (NotificationTopicPolicyF935982E) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 42/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::Events::Rule                     | OrderFailedRule (OrderFailedRule1947297C) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 43/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::Events::Rule                     | OrderFailedRule (OrderFailedRule1947297C) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 43/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 43/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::Events::Rule                     | OrderProcessedRule (OrderProcessedRule085B0107) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 44/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::Pipes::Pipe                      | OrderPipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
+OrderIntake-cdk-2cceceb68ce18d21-dev | 44/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                      | OrderPipe 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 45/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 45/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway             | OrderVpc/IGW (OrderVpcIGWFCEC4583) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 46/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::Events::Rule                     | OrderProcessedRule (OrderProcessedRule085B0107) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 46/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment        | OrderVpc/VPCGW (OrderVpcVPCGW574C7F3C) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 47/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::EC2::InternetGateway             | OrderVpc/IGW (OrderVpcIGWFCEC4583) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 47/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderVpc/publicSubnet1/RouteTable (OrderVpcpublicSubnet1RouteTableF1C0604F) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 48/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment        | OrderVpc/VPCGW (OrderVpcVPCGW574C7F3C) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 49/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderVpc/publicSubnet1/RouteTable (OrderVpcpublicSubnet1RouteTableF1C0604F) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 49/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | OrderVpc/publicSubnet1/DefaultRoute (OrderVpcpublicSubnet1DefaultRoute78496725) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 50/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | OrderVpc/publicSubnet1/DefaultRoute (OrderVpcpublicSubnet1DefaultRoute78496725) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 50/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderVpc/publicSubnet1/Subnet (OrderVpcpublicSubnet1Subnet24AD198C) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 50/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/publicSubnet1/RouteTableAssociation (OrderVpcpublicSubnet1RouteTableAssociationD9FB7691) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 51/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderVpc/publicSubnet1/Subnet (OrderVpcpublicSubnet1Subnet24AD198C) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 51/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderVpc/publicSubnet2/RouteTable (OrderVpcpublicSubnet2RouteTable31E4F2AA) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 52/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/publicSubnet1/RouteTableAssociation (OrderVpcpublicSubnet1RouteTableAssociationD9FB7691) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 52/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | OrderVpc/publicSubnet2/DefaultRoute (OrderVpcpublicSubnet2DefaultRoute9262272D) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 53/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderVpc/publicSubnet2/RouteTable (OrderVpcpublicSubnet2RouteTable31E4F2AA) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 54/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | OrderVpc/publicSubnet2/DefaultRoute (OrderVpcpublicSubnet2DefaultRoute9262272D) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 54/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderVpc/publicSubnet2/Subnet (OrderVpcpublicSubnet2SubnetD14FF214) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 55/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderVpc/publicSubnet2/Subnet (OrderVpcpublicSubnet2SubnetD14FF214) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 55/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/publicSubnet2/RouteTableAssociation (OrderVpcpublicSubnet2RouteTableAssociation1CFE17FD) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 55/69 | 8:59:42 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi              | OrdersApi (OrdersApi48294D44) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 56/69 | 8:59:42 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/publicSubnet2/RouteTableAssociation (OrderVpcpublicSubnet2RouteTableAssociation1CFE17FD) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 57/69 | 8:59:44 PM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi              | OrdersApi (OrdersApi48294D44) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 57/69 | 8:59:44 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource             | OrdersApi/Default/orders (OrdersApiordersDBA2FB62) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 57/69 | 8:59:44 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource             | OrdersApi/Default/orders/{orderId} (OrdersApiordersorderIdD634D4E3) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 58/69 | 8:59:44 PM | CREATE_COMPLETE      | AWS::ApiGateway::Resource             | OrdersApi/Default/orders (OrdersApiordersDBA2FB62) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 58/69 | 8:59:44 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method               | OrdersApi/Default/orders/{orderId}/GET (OrdersApiordersorderIdGETE9AAAD24) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 59/69 | 8:59:44 PM | CREATE_COMPLETE      | AWS::ApiGateway::Resource             | OrdersApi/Default/orders/{orderId} (OrdersApiordersorderIdD634D4E3) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 59/69 | 8:59:44 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method               | OrdersApi/Default/orders/POST (OrdersApiordersPOSTAD0E8A63) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 60/69 | 8:59:44 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method               | OrdersApi/Default/orders/{orderId}/GET (OrdersApiordersorderIdGETE9AAAD24) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 60/69 | 8:59:44 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment           | OrdersApi/Deployment (OrdersApiDeployment7E9592493f6a01a10aecd6bc0301abe9bbcdba7d) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 61/69 | 8:59:44 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method               | OrdersApi/Default/orders/POST (OrdersApiordersPOSTAD0E8A63) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 61/69 | 8:59:44 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage                | OrdersApi/DeploymentStage.v1 (OrdersApiDeploymentStagev178298ECB) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 62/69 | 8:59:44 PM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment           | OrdersApi/Deployment (OrdersApiDeployment7E9592493f6a01a10aecd6bc0301abe9bbcdba7d) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 62/69 | 8:59:44 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | OrdersApi/Default/orders/{orderId}/GET/ApiPermission.OrderIntakecdk2cceceb68ce18d21devOrdersApiCDD458C4.GET..orders.{orderId} (OrdersApiordersorderIdGETApiPermissionOrderIntakecdk2cceceb68ce18d21devOrdersApiCDD458C4GETordersorderId8E8A2A31) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 63/69 | 8:59:44 PM | CREATE_COMPLETE      | AWS::ApiGateway::Stage                | OrdersApi/DeploymentStage.v1 (OrdersApiDeploymentStagev178298ECB) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 63/69 | 8:59:44 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | OrdersApi/Default/orders/{orderId}/GET/ApiPermission.Test.OrderIntakecdk2cceceb68ce18d21devOrdersApiCDD458C4.GET..orders.{orderId} (OrdersApiordersorderIdGETApiPermissionTestOrderIntakecdk2cceceb68ce18d21devOrdersApiCDD458C4GETordersorderIdFDACB836) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 64/69 | 8:59:44 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | OrdersApi/Default/orders/{orderId}/GET/ApiPermission.OrderIntakecdk2cceceb68ce18d21devOrdersApiCDD458C4.GET..orders.{orderId} (OrdersApiordersorderIdGETApiPermissionOrderIntakecdk2cceceb68ce18d21devOrdersApiCDD458C4GETordersorderId8E8A2A31) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 64/69 | 8:59:44 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 65/69 | 8:59:44 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | OrdersApi/Default/orders/{orderId}/GET/ApiPermission.Test.OrderIntakecdk2cceceb68ce18d21devOrdersApiCDD458C4.GET..orders.{orderId} (OrdersApiordersorderIdGETApiPermissionTestOrderIntakecdk2cceceb68ce18d21devOrdersApiCDD458C4GETordersorderIdFDACB836) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 65/69 | 8:59:45 PM | CREATE_IN_PROGRESS   | AWS::Lambda::EventSourceMapping       | WorkerFunction/SqsEventSource:OrderIntakecdk2cceceb68ce18d21devOrderIntakeQueue51C13F9B (WorkerFunctionSqsEventSourceOrderIntakecdk2cceceb68ce18d21devOrderIntakeQueue51C13F9BD1BACFB3) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 66/69 | 8:59:45 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 66/69 | 8:59:45 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | WorkerLogGroup (WorkerLogGroup31FDBE4A) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 67/69 | 8:59:45 PM | CREATE_COMPLETE      | AWS::Lambda::EventSourceMapping       | WorkerFunction/SqsEventSource:OrderIntakecdk2cceceb68ce18d21devOrderIntakeQueue51C13F9B (WorkerFunctionSqsEventSourceOrderIntakecdk2cceceb68ce18d21devOrderIntakeQueue51C13F9BD1BACFB3) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 68/69 | 8:59:45 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | WorkerLogGroup (WorkerLogGroup31FDBE4A) 
+OrderIntake-cdk-2cceceb68ce18d21-dev | 69/69 | 8:59:45 PM | CREATE_COMPLETE      | AWS::CloudFormation::Stack            | OrderIntake-cdk-2cceceb68ce18d21-dev 
+
+ ✅  OrderIntake-cdk-2cceceb68ce18d21-dev
+
+✨  Deployment time: 25.89s
+
+Outputs:
+OrderIntake-cdk-2cceceb68ce18d21-dev.ArchiveBucketName = orderintake-cdk-2cceceb68ce18d21-archivebucket9decbf5d-d05c9025
+OrderIntake-cdk-2cceceb68ce18d21-dev.NotificationTopicArn = arn:aws:sns:us-east-1:000000000000:topic-80dd86fb
+OrderIntake-cdk-2cceceb68ce18d21-dev.OrderEventsBusName = OrderIntakecdk2cceceb68ce18d21devOrderEventsBusE3F784B4
+OrderIntake-cdk-2cceceb68ce18d21-dev.OrderStatusTableName = OrderIntake-cdk-2cceceb68ce18-OrderStatusTableA172E078-f1563205
+OrderIntake-cdk-2cceceb68ce18d21-dev.OrdersApiEndpointAC1CCDAC = https://0rll5e9gih.execute-api.localhost.localstack.cloud:4566/v1/
+OrderIntake-cdk-2cceceb68ce18d21-dev.OrdersApiUrl = https://0rll5e9gih.execute-api.localhost.localstack.cloud:4566/v1/
+Stack ARN:
+arn:aws:cloudformation:us-east-1:000000000000:stack/OrderIntake-cdk-2cceceb68ce18d21-dev/05a3f493-8a8c-4ecf-895c-ec9d7360ec18
+
+✨  Total time: 32.6s
+
+OrderIntake-cdk-2cceceb68ce18d21-test
+OrderIntake-cdk-2cceceb68ce18d21-test: deploying... [2/3]
+OrderIntake-cdk-2cceceb68ce18d21-test: creating CloudFormation changeset...
+OrderIntake-cdk-2cceceb68ce18d21-test |  0/69 | 8:59:47 PM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack            | OrderIntake-cdk-2cceceb68ce18d21-test User Initiated
+OrderIntake-cdk-2cceceb68ce18d21-test |  0/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack            | OrderIntake-cdk-2cceceb68ce18d21-test 
+OrderIntake-cdk-2cceceb68ce18d21-test |  0/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | ApiAccessLogs (ApiAccessLogsE9DF007D) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  0/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                         | OrderVpc (OrderVpc494511AA) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  1/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | ApiAccessLogs (ApiAccessLogsE9DF007D) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  1/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderVpc/privateSubnet2/RouteTable (OrderVpcprivateSubnet2RouteTable6F88FFEB) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  2/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::EC2::VPC                         | OrderVpc (OrderVpc494511AA) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  3/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderVpc/privateSubnet2/RouteTable (OrderVpcprivateSubnet2RouteTable6F88FFEB) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  3/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderVpc/privateSubnet2/Subnet (OrderVpcprivateSubnet2SubnetA23E1132) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  3/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/privateSubnet2/RouteTableAssociation (OrderVpcprivateSubnet2RouteTableAssociation72F168C2) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  4/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderVpc/privateSubnet2/Subnet (OrderVpcprivateSubnet2SubnetA23E1132) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  4/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderVpc/privateSubnet1/RouteTable (OrderVpcprivateSubnet1RouteTableA931E0C8) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  5/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/privateSubnet2/RouteTableAssociation (OrderVpcprivateSubnet2RouteTableAssociation72F168C2) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  6/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderVpc/privateSubnet1/RouteTable (OrderVpcprivateSubnet1RouteTableA931E0C8) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  6/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderVpc/privateSubnet1/Subnet (OrderVpcprivateSubnet1Subnet01FED9C8) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  6/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/privateSubnet1/RouteTableAssociation (OrderVpcprivateSubnet1RouteTableAssociation5BC4D31E) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  7/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderVpc/privateSubnet1/Subnet (OrderVpcprivateSubnet1Subnet01FED9C8) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  7/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | ApiGetFunction/ServiceRole (ApiGetFunctionServiceRoleBF5485EF) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  8/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/privateSubnet1/RouteTableAssociation (OrderVpcprivateSubnet1RouteTableAssociation5BC4D31E) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  8/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::DynamoDB::Table                  | OrderStatusTable (OrderStatusTableA172E078) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  9/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | ApiGetFunction/ServiceRole (ApiGetFunctionServiceRoleBF5485EF) 
+OrderIntake-cdk-2cceceb68ce18d21-test |  9/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | ApiGetFunction/ServiceRole/DefaultPolicy (ApiGetFunctionServiceRoleDefaultPolicy52EB4B2F) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 10/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::DynamoDB::Table                  | OrderStatusTable (OrderStatusTableA172E078) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 10/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | LambdaSecurityGroup (LambdaSecurityGroup0BD9FC99) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 11/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | ApiGetFunction/ServiceRole/DefaultPolicy (ApiGetFunctionServiceRoleDefaultPolicy52EB4B2F) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 11/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | ApiGetFunction (ApiGetFunctionB56CE83E) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 12/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | LambdaSecurityGroup (LambdaSecurityGroup0BD9FC99) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 12/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | ApiGetLogGroup (ApiGetLogGroup8D14C44F) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 13/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | ApiGetFunction (ApiGetFunctionB56CE83E) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 13/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | ApiStartExecutionRole (ApiStartExecutionRoleC6BFFAFE) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 14/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | ApiGetLogGroup (ApiGetLogGroup8D14C44F) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 14/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | StateMachineRole (StateMachineRole78EC082E) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 15/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | ApiStartExecutionRole (ApiStartExecutionRoleC6BFFAFE) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 15/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                       | OrderIntakeQueue (OrderIntakeQueue228B6246) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 16/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | StateMachineRole (StateMachineRole78EC082E) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 17/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::SQS::Queue                       | OrderIntakeQueue (OrderIntakeQueue228B6246) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 17/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | WorkerFunction/ServiceRole (WorkerFunctionServiceRole38D8F738) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 17/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                       | ArchiveBucket (ArchiveBucket9DECBF5D) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 18/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | WorkerFunction/ServiceRole (WorkerFunctionServiceRole38D8F738) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 18/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::Events::EventBus                 | OrderEventsBus (OrderEventsBusADB829FF) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 19/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::S3::Bucket                       | ArchiveBucket (ArchiveBucket9DECBF5D) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 19/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::SNS::Topic                       | NotificationTopic (NotificationTopicEB7A0DF1) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 20/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::Events::EventBus                 | OrderEventsBus (OrderEventsBusADB829FF) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 20/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret           | ThirdPartyApiKeySecret (ThirdPartyApiKeySecret59D6F8D4) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 21/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::SNS::Topic                       | NotificationTopic (NotificationTopicEB7A0DF1) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 21/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | WorkerFunction/ServiceRole/DefaultPolicy (WorkerFunctionServiceRoleDefaultPolicy07D8276A) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 22/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::SecretsManager::Secret           | ThirdPartyApiKeySecret (ThirdPartyApiKeySecret59D6F8D4) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 22/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | WorkerFunction (WorkerFunctionACE6A4B0) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 23/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | WorkerFunction/ServiceRole/DefaultPolicy (WorkerFunctionServiceRoleDefaultPolicy07D8276A) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 23/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | StateMachineRole/DefaultPolicy (StateMachineRoleDefaultPolicy433448B5) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 24/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | WorkerFunction (WorkerFunctionACE6A4B0) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 24/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | StateMachineLogGroup (StateMachineLogGroup15B91BCB) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 25/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | StateMachineRole/DefaultPolicy (StateMachineRoleDefaultPolicy433448B5) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 25/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine      | OrderStateMachine (OrderStateMachineC078F95C) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 26/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | StateMachineLogGroup (StateMachineLogGroup15B91BCB) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 26/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | ApiStartExecutionRole/DefaultPolicy (ApiStartExecutionRoleDefaultPolicy7E383846) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 27/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine      | OrderStateMachine (OrderStateMachineC078F95C) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 27/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | Custom::S3AutoDeleteObjectsCustomResourceProvider/Role (CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 28/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | ApiStartExecutionRole/DefaultPolicy (ApiStartExecutionRoleDefaultPolicy7E383846) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 28/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::S3::BucketPolicy                 | ArchiveBucket/Policy (ArchiveBucketPolicyF1A75978) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 29/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | Custom::S3AutoDeleteObjectsCustomResourceProvider/Role (CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 29/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler (CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 30/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::S3::BucketPolicy                 | ArchiveBucket/Policy (ArchiveBucketPolicyF1A75978) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 30/69 | 8:59:47 PM | CREATE_IN_PROGRESS   | Custom::S3AutoDeleteObjects           | ArchiveBucket/AutoDeleteObjectsCustomResource/Default (ArchiveBucketAutoDeleteObjectsCustomResource9EFE6D2E) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 31/69 | 8:59:47 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler (CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 32/69 | 8:59:54 PM | CREATE_COMPLETE      | Custom::S3AutoDeleteObjects           | ArchiveBucket/AutoDeleteObjectsCustomResource/Default (ArchiveBucketAutoDeleteObjectsCustomResource9EFE6D2E) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 32/69 | 8:59:54 PM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 33/69 | 8:59:54 PM | CREATE_COMPLETE      | AWS::Athena::WorkGroup                | AthenaWorkGroup Resource type AWS::Athena::WorkGroup is not supported but was deployed as a fallback
+OrderIntake-cdk-2cceceb68ce18d21-test | 33/69 | 8:59:54 PM | CREATE_IN_PROGRESS   | AWS::Athena::WorkGroup                | AthenaWorkGroup 
+OrderIntake-cdk-2cceceb68ce18d21-test | 33/69 | 8:59:54 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | EnrichmentFunction/ServiceRole (EnrichmentFunctionServiceRole7C57E520) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 34/69 | 8:59:54 PM | CREATE_COMPLETE      | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 34/69 | 8:59:54 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | EnrichmentFunction (EnrichmentFunction65873741) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 35/69 | 8:59:54 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | EnrichmentFunction/ServiceRole (EnrichmentFunctionServiceRole7C57E520) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 35/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | EnrichmentLogGroup (EnrichmentLogGroup8EC48EAC) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 36/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | EnrichmentFunction (EnrichmentFunction65873741) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 36/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 37/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::Glue::Database                   | GlueDatabase Resource type AWS::Glue::Database is not supported but was deployed as a fallback
+OrderIntake-cdk-2cceceb68ce18d21-test | 37/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::Glue::Database                   | GlueDatabase 
+OrderIntake-cdk-2cceceb68ce18d21-test | 38/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | EnrichmentLogGroup (EnrichmentLogGroup8EC48EAC) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 38/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::Glue::Crawler                    | GlueCrawler 
+OrderIntake-cdk-2cceceb68ce18d21-test | 39/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 39/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 40/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::Glue::Crawler                    | GlueCrawler Resource type AWS::Glue::Crawler is not supported but was deployed as a fallback
+OrderIntake-cdk-2cceceb68ce18d21-test | 40/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::SNS::TopicPolicy                 | NotificationTopic/Policy (NotificationTopicPolicyF935982E) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 41/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 41/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::Events::Rule                     | OrderFailedRule (OrderFailedRule1947297C) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 42/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::SNS::TopicPolicy                 | NotificationTopic/Policy (NotificationTopicPolicyF935982E) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 42/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 43/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::Events::Rule                     | OrderFailedRule (OrderFailedRule1947297C) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 43/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                      | OrderPipe 
+OrderIntake-cdk-2cceceb68ce18d21-test | 44/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 44/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::Events::Rule                     | OrderProcessedRule (OrderProcessedRule085B0107) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 45/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::Pipes::Pipe                      | OrderPipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
+OrderIntake-cdk-2cceceb68ce18d21-test | 45/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway             | OrderVpc/IGW (OrderVpcIGWFCEC4583) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 46/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::Events::Rule                     | OrderProcessedRule (OrderProcessedRule085B0107) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 46/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment        | OrderVpc/VPCGW (OrderVpcVPCGW574C7F3C) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 47/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::EC2::InternetGateway             | OrderVpc/IGW (OrderVpcIGWFCEC4583) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 47/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderVpc/publicSubnet1/RouteTable (OrderVpcpublicSubnet1RouteTableF1C0604F) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 48/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment        | OrderVpc/VPCGW (OrderVpcVPCGW574C7F3C) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 48/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | OrderVpc/publicSubnet1/DefaultRoute (OrderVpcpublicSubnet1DefaultRoute78496725) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 49/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderVpc/publicSubnet1/RouteTable (OrderVpcpublicSubnet1RouteTableF1C0604F) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 50/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | OrderVpc/publicSubnet1/DefaultRoute (OrderVpcpublicSubnet1DefaultRoute78496725) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 50/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderVpc/publicSubnet1/Subnet (OrderVpcpublicSubnet1Subnet24AD198C) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 50/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/publicSubnet1/RouteTableAssociation (OrderVpcpublicSubnet1RouteTableAssociationD9FB7691) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 51/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderVpc/publicSubnet1/Subnet (OrderVpcpublicSubnet1Subnet24AD198C) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 51/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderVpc/publicSubnet2/RouteTable (OrderVpcpublicSubnet2RouteTable31E4F2AA) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 52/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/publicSubnet1/RouteTableAssociation (OrderVpcpublicSubnet1RouteTableAssociationD9FB7691) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 52/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | OrderVpc/publicSubnet2/DefaultRoute (OrderVpcpublicSubnet2DefaultRoute9262272D) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 53/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderVpc/publicSubnet2/RouteTable (OrderVpcpublicSubnet2RouteTable31E4F2AA) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 54/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | OrderVpc/publicSubnet2/DefaultRoute (OrderVpcpublicSubnet2DefaultRoute9262272D) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 54/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderVpc/publicSubnet2/Subnet (OrderVpcpublicSubnet2SubnetD14FF214) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 54/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/publicSubnet2/RouteTableAssociation (OrderVpcpublicSubnet2RouteTableAssociation1CFE17FD) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 55/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderVpc/publicSubnet2/Subnet (OrderVpcpublicSubnet2SubnetD14FF214) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 55/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi              | OrdersApi (OrdersApi48294D44) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 56/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/publicSubnet2/RouteTableAssociation (OrderVpcpublicSubnet2RouteTableAssociation1CFE17FD) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 56/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource             | OrdersApi/Default/orders (OrdersApiordersDBA2FB62) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 57/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi              | OrdersApi (OrdersApi48294D44) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 57/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource             | OrdersApi/Default/orders/{orderId} (OrdersApiordersorderIdD634D4E3) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 58/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::ApiGateway::Resource             | OrdersApi/Default/orders (OrdersApiordersDBA2FB62) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 58/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method               | OrdersApi/Default/orders/{orderId}/GET (OrdersApiordersorderIdGETE9AAAD24) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 59/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::ApiGateway::Resource             | OrdersApi/Default/orders/{orderId} (OrdersApiordersorderIdD634D4E3) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 59/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method               | OrdersApi/Default/orders/POST (OrdersApiordersPOSTAD0E8A63) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 60/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method               | OrdersApi/Default/orders/{orderId}/GET (OrdersApiordersorderIdGETE9AAAD24) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 60/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment           | OrdersApi/Deployment (OrdersApiDeployment7E95924941ede383c90c4101fcccdcacaf9895e9) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 61/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method               | OrdersApi/Default/orders/POST (OrdersApiordersPOSTAD0E8A63) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 61/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage                | OrdersApi/DeploymentStage.v1 (OrdersApiDeploymentStagev178298ECB) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 62/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment           | OrdersApi/Deployment (OrdersApiDeployment7E95924941ede383c90c4101fcccdcacaf9895e9) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 63/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::ApiGateway::Stage                | OrdersApi/DeploymentStage.v1 (OrdersApiDeploymentStagev178298ECB) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 63/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | OrdersApi/Default/orders/{orderId}/GET/ApiPermission.OrderIntakecdk2cceceb68ce18d21testOrdersApi56C79624.GET..orders.{orderId} (OrdersApiordersorderIdGETApiPermissionOrderIntakecdk2cceceb68ce18d21testOrdersApi56C79624GETordersorderId992596BD) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 63/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | OrdersApi/Default/orders/{orderId}/GET/ApiPermission.Test.OrderIntakecdk2cceceb68ce18d21testOrdersApi56C79624.GET..orders.{orderId} (OrdersApiordersorderIdGETApiPermissionTestOrderIntakecdk2cceceb68ce18d21testOrdersApi56C79624GETordersorderId0F75BBCD) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 64/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | OrdersApi/Default/orders/{orderId}/GET/ApiPermission.OrderIntakecdk2cceceb68ce18d21testOrdersApi56C79624.GET..orders.{orderId} (OrdersApiordersorderIdGETApiPermissionOrderIntakecdk2cceceb68ce18d21testOrdersApi56C79624GETordersorderId992596BD) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 64/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 65/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | OrdersApi/Default/orders/{orderId}/GET/ApiPermission.Test.OrderIntakecdk2cceceb68ce18d21testOrdersApi56C79624.GET..orders.{orderId} (OrdersApiordersorderIdGETApiPermissionTestOrderIntakecdk2cceceb68ce18d21testOrdersApi56C79624GETordersorderId0F75BBCD) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 65/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::Lambda::EventSourceMapping       | WorkerFunction/SqsEventSource:OrderIntakecdk2cceceb68ce18d21testOrderIntakeQueue0DFE8F26 (WorkerFunctionSqsEventSourceOrderIntakecdk2cceceb68ce18d21testOrderIntakeQueue0DFE8F26FFFDC228) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 66/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 66/69 | 8:59:55 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | WorkerLogGroup (WorkerLogGroup31FDBE4A) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 67/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::Lambda::EventSourceMapping       | WorkerFunction/SqsEventSource:OrderIntakecdk2cceceb68ce18d21testOrderIntakeQueue0DFE8F26 (WorkerFunctionSqsEventSourceOrderIntakecdk2cceceb68ce18d21testOrderIntakeQueue0DFE8F26FFFDC228) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 68/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | WorkerLogGroup (WorkerLogGroup31FDBE4A) 
+OrderIntake-cdk-2cceceb68ce18d21-test | 69/69 | 8:59:55 PM | CREATE_COMPLETE      | AWS::CloudFormation::Stack            | OrderIntake-cdk-2cceceb68ce18d21-test 
+
+ ✅  OrderIntake-cdk-2cceceb68ce18d21-test
+
+✨  Deployment time: 10.2s
+
+Outputs:
+OrderIntake-cdk-2cceceb68ce18d21-test.ArchiveBucketName = orderintake-cdk-2cceceb68ce18d21-archivebucket9decbf5d-fbfb1f51
+OrderIntake-cdk-2cceceb68ce18d21-test.NotificationTopicArn = arn:aws:sns:us-east-1:000000000000:topic-a053d53f
+OrderIntake-cdk-2cceceb68ce18d21-test.OrderEventsBusName = OrderIntakecdk2cceceb68ce18d21testOrderEventsBus967E81DE
+OrderIntake-cdk-2cceceb68ce18d21-test.OrderStatusTableName = OrderIntake-cdk-2cceceb68ce18-OrderStatusTableA172E078-3ad2f06b
+OrderIntake-cdk-2cceceb68ce18d21-test.OrdersApiEndpointAC1CCDAC = https://h9bxgax7c2.execute-api.localhost.localstack.cloud:4566/v1/
+OrderIntake-cdk-2cceceb68ce18d21-test.OrdersApiUrl = https://h9bxgax7c2.execute-api.localhost.localstack.cloud:4566/v1/
+Stack ARN:
+arn:aws:cloudformation:us-east-1:000000000000:stack/OrderIntake-cdk-2cceceb68ce18d21-test/974b863e-4a41-4be9-948e-42641b18cfd8
+
+✨  Total time: 16.92s
+
+OrderIntake-cdk-2cceceb68ce18d21-prod
+OrderIntake-cdk-2cceceb68ce18d21-prod: deploying... [3/3]
+OrderIntake-cdk-2cceceb68ce18d21-prod: creating CloudFormation changeset...
+OrderIntake-cdk-2cceceb68ce18d21-prod |  0/69 | 8:59:57 PM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack            | OrderIntake-cdk-2cceceb68ce18d21-prod User Initiated
+OrderIntake-cdk-2cceceb68ce18d21-prod |  0/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | ApiAccessLogs (ApiAccessLogsE9DF007D) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  0/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack            | OrderIntake-cdk-2cceceb68ce18d21-prod 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  1/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | ApiAccessLogs (ApiAccessLogsE9DF007D) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  1/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                         | OrderVpc (OrderVpc494511AA) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  1/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderVpc/privateSubnet2/RouteTable (OrderVpcprivateSubnet2RouteTable6F88FFEB) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  2/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::EC2::VPC                         | OrderVpc (OrderVpc494511AA) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  3/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderVpc/privateSubnet2/RouteTable (OrderVpcprivateSubnet2RouteTable6F88FFEB) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  3/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderVpc/privateSubnet2/Subnet (OrderVpcprivateSubnet2SubnetA23E1132) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  3/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/privateSubnet2/RouteTableAssociation (OrderVpcprivateSubnet2RouteTableAssociation72F168C2) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  4/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderVpc/privateSubnet2/Subnet (OrderVpcprivateSubnet2SubnetA23E1132) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  4/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderVpc/privateSubnet1/RouteTable (OrderVpcprivateSubnet1RouteTableA931E0C8) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  5/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/privateSubnet2/RouteTableAssociation (OrderVpcprivateSubnet2RouteTableAssociation72F168C2) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  6/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderVpc/privateSubnet1/RouteTable (OrderVpcprivateSubnet1RouteTableA931E0C8) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  6/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderVpc/privateSubnet1/Subnet (OrderVpcprivateSubnet1Subnet01FED9C8) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  6/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/privateSubnet1/RouteTableAssociation (OrderVpcprivateSubnet1RouteTableAssociation5BC4D31E) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  7/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderVpc/privateSubnet1/Subnet (OrderVpcprivateSubnet1Subnet01FED9C8) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  7/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | ApiGetFunction/ServiceRole (ApiGetFunctionServiceRoleBF5485EF) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  8/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/privateSubnet1/RouteTableAssociation (OrderVpcprivateSubnet1RouteTableAssociation5BC4D31E) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  8/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::DynamoDB::Table                  | OrderStatusTable (OrderStatusTableA172E078) 
+OrderIntake-cdk-2cceceb68ce18d21-prod |  9/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | ApiGetFunction/ServiceRole (ApiGetFunctionServiceRoleBF5485EF) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 10/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::DynamoDB::Table                  | OrderStatusTable (OrderStatusTableA172E078) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 10/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | ApiGetFunction/ServiceRole/DefaultPolicy (ApiGetFunctionServiceRoleDefaultPolicy52EB4B2F) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 10/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | LambdaSecurityGroup (LambdaSecurityGroup0BD9FC99) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 11/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | ApiGetFunction/ServiceRole/DefaultPolicy (ApiGetFunctionServiceRoleDefaultPolicy52EB4B2F) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 11/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | ApiGetFunction (ApiGetFunctionB56CE83E) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 12/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | LambdaSecurityGroup (LambdaSecurityGroup0BD9FC99) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 12/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | ApiGetLogGroup (ApiGetLogGroup8D14C44F) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 13/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | ApiGetFunction (ApiGetFunctionB56CE83E) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 13/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | ApiStartExecutionRole (ApiStartExecutionRoleC6BFFAFE) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 14/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | ApiGetLogGroup (ApiGetLogGroup8D14C44F) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 14/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | StateMachineRole (StateMachineRole78EC082E) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 15/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | ApiStartExecutionRole (ApiStartExecutionRoleC6BFFAFE) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 15/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                       | OrderIntakeQueue (OrderIntakeQueue228B6246) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 16/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | StateMachineRole (StateMachineRole78EC082E) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 16/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | WorkerFunction/ServiceRole (WorkerFunctionServiceRole38D8F738) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 17/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::SQS::Queue                       | OrderIntakeQueue (OrderIntakeQueue228B6246) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 18/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | WorkerFunction/ServiceRole (WorkerFunctionServiceRole38D8F738) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 18/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                       | ArchiveBucket (ArchiveBucket9DECBF5D) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 18/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::Events::EventBus                 | OrderEventsBus (OrderEventsBusADB829FF) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 19/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::S3::Bucket                       | ArchiveBucket (ArchiveBucket9DECBF5D) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 19/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::SNS::Topic                       | NotificationTopic (NotificationTopicEB7A0DF1) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 20/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::Events::EventBus                 | OrderEventsBus (OrderEventsBusADB829FF) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 20/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret           | ThirdPartyApiKeySecret (ThirdPartyApiKeySecret59D6F8D4) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 21/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::SNS::Topic                       | NotificationTopic (NotificationTopicEB7A0DF1) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 22/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::SecretsManager::Secret           | ThirdPartyApiKeySecret (ThirdPartyApiKeySecret59D6F8D4) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 22/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | WorkerFunction/ServiceRole/DefaultPolicy (WorkerFunctionServiceRoleDefaultPolicy07D8276A) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 23/69 | 8:59:57 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | WorkerFunction/ServiceRole/DefaultPolicy (WorkerFunctionServiceRoleDefaultPolicy07D8276A) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 23/69 | 8:59:57 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | WorkerFunction (WorkerFunctionACE6A4B0) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 23/69 | 8:59:58 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | StateMachineRole/DefaultPolicy (StateMachineRoleDefaultPolicy433448B5) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 24/69 | 8:59:58 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | WorkerFunction (WorkerFunctionACE6A4B0) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 24/69 | 8:59:58 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | StateMachineLogGroup (StateMachineLogGroup15B91BCB) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 25/69 | 8:59:58 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | StateMachineRole/DefaultPolicy (StateMachineRoleDefaultPolicy433448B5) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 25/69 | 8:59:58 PM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine      | OrderStateMachine (OrderStateMachineC078F95C) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 26/69 | 8:59:58 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | StateMachineLogGroup (StateMachineLogGroup15B91BCB) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 26/69 | 8:59:58 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | ApiStartExecutionRole/DefaultPolicy (ApiStartExecutionRoleDefaultPolicy7E383846) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 27/69 | 8:59:58 PM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine      | OrderStateMachine (OrderStateMachineC078F95C) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 27/69 | 8:59:58 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | Custom::S3AutoDeleteObjectsCustomResourceProvider/Role (CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 28/69 | 8:59:58 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | ApiStartExecutionRole/DefaultPolicy (ApiStartExecutionRoleDefaultPolicy7E383846) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 28/69 | 8:59:58 PM | CREATE_IN_PROGRESS   | AWS::S3::BucketPolicy                 | ArchiveBucket/Policy (ArchiveBucketPolicyF1A75978) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 29/69 | 8:59:58 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | Custom::S3AutoDeleteObjectsCustomResourceProvider/Role (CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 30/69 | 8:59:58 PM | CREATE_COMPLETE      | AWS::S3::BucketPolicy                 | ArchiveBucket/Policy (ArchiveBucketPolicyF1A75978) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 30/69 | 8:59:58 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler (CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 30/69 | 8:59:58 PM | CREATE_IN_PROGRESS   | Custom::S3AutoDeleteObjects           | ArchiveBucket/AutoDeleteObjectsCustomResource/Default (ArchiveBucketAutoDeleteObjectsCustomResource9EFE6D2E) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 31/69 | 8:59:58 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler (CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 32/69 | 9:00:06 PM | CREATE_COMPLETE      | Custom::S3AutoDeleteObjects           | ArchiveBucket/AutoDeleteObjectsCustomResource/Default (ArchiveBucketAutoDeleteObjectsCustomResource9EFE6D2E) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 33/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 33/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 34/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::Athena::WorkGroup                | AthenaWorkGroup Resource type AWS::Athena::WorkGroup is not supported but was deployed as a fallback
+OrderIntake-cdk-2cceceb68ce18d21-prod | 34/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::Athena::WorkGroup                | AthenaWorkGroup 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 34/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | EnrichmentFunction/ServiceRole (EnrichmentFunctionServiceRole7C57E520) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 35/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | EnrichmentFunction/ServiceRole (EnrichmentFunctionServiceRole7C57E520) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 35/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | EnrichmentFunction (EnrichmentFunction65873741) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 35/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | EnrichmentLogGroup (EnrichmentLogGroup8EC48EAC) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 36/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | EnrichmentFunction (EnrichmentFunction65873741) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 36/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 37/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::Glue::Database                   | GlueDatabase Resource type AWS::Glue::Database is not supported but was deployed as a fallback
+OrderIntake-cdk-2cceceb68ce18d21-prod | 37/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::Glue::Database                   | GlueDatabase 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 38/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | EnrichmentLogGroup (EnrichmentLogGroup8EC48EAC) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 38/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 39/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::Glue::Crawler                    | GlueCrawler Resource type AWS::Glue::Crawler is not supported but was deployed as a fallback
+OrderIntake-cdk-2cceceb68ce18d21-prod | 39/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::Glue::Crawler                    | GlueCrawler 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 40/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 40/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::SNS::TopicPolicy                 | NotificationTopic/Policy (NotificationTopicPolicyF935982E) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 41/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 41/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::Events::Rule                     | OrderFailedRule (OrderFailedRule1947297C) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 42/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::SNS::TopicPolicy                 | NotificationTopic/Policy (NotificationTopicPolicyF935982E) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 42/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 43/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::Events::Rule                     | OrderFailedRule (OrderFailedRule1947297C) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 43/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::Events::Rule                     | OrderProcessedRule (OrderProcessedRule085B0107) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 44/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::Pipes::Pipe                      | OrderPipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
+OrderIntake-cdk-2cceceb68ce18d21-prod | 44/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                      | OrderPipe 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 45/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 45/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway             | OrderVpc/IGW (OrderVpcIGWFCEC4583) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 46/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::Events::Rule                     | OrderProcessedRule (OrderProcessedRule085B0107) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 46/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment        | OrderVpc/VPCGW (OrderVpcVPCGW574C7F3C) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 47/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::EC2::InternetGateway             | OrderVpc/IGW (OrderVpcIGWFCEC4583) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 47/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderVpc/publicSubnet1/RouteTable (OrderVpcpublicSubnet1RouteTableF1C0604F) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 48/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment        | OrderVpc/VPCGW (OrderVpcVPCGW574C7F3C) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 48/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | OrderVpc/publicSubnet1/DefaultRoute (OrderVpcpublicSubnet1DefaultRoute78496725) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 49/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderVpc/publicSubnet1/RouteTable (OrderVpcpublicSubnet1RouteTableF1C0604F) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 50/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | OrderVpc/publicSubnet1/DefaultRoute (OrderVpcpublicSubnet1DefaultRoute78496725) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 50/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderVpc/publicSubnet1/Subnet (OrderVpcpublicSubnet1Subnet24AD198C) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 50/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/publicSubnet1/RouteTableAssociation (OrderVpcpublicSubnet1RouteTableAssociationD9FB7691) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 51/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderVpc/publicSubnet1/Subnet (OrderVpcpublicSubnet1Subnet24AD198C) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 51/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderVpc/publicSubnet2/RouteTable (OrderVpcpublicSubnet2RouteTable31E4F2AA) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 52/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/publicSubnet1/RouteTableAssociation (OrderVpcpublicSubnet1RouteTableAssociationD9FB7691) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 52/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | OrderVpc/publicSubnet2/DefaultRoute (OrderVpcpublicSubnet2DefaultRoute9262272D) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 53/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderVpc/publicSubnet2/RouteTable (OrderVpcpublicSubnet2RouteTable31E4F2AA) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 54/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | OrderVpc/publicSubnet2/DefaultRoute (OrderVpcpublicSubnet2DefaultRoute9262272D) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 54/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderVpc/publicSubnet2/Subnet (OrderVpcpublicSubnet2SubnetD14FF214) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 54/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/publicSubnet2/RouteTableAssociation (OrderVpcpublicSubnet2RouteTableAssociation1CFE17FD) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 55/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderVpc/publicSubnet2/Subnet (OrderVpcpublicSubnet2SubnetD14FF214) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 55/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi              | OrdersApi (OrdersApi48294D44) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 56/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderVpc/publicSubnet2/RouteTableAssociation (OrderVpcpublicSubnet2RouteTableAssociation1CFE17FD) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 57/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi              | OrdersApi (OrdersApi48294D44) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 57/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource             | OrdersApi/Default/orders (OrdersApiordersDBA2FB62) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 57/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource             | OrdersApi/Default/orders/{orderId} (OrdersApiordersorderIdD634D4E3) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 58/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::ApiGateway::Resource             | OrdersApi/Default/orders (OrdersApiordersDBA2FB62) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 59/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::ApiGateway::Resource             | OrdersApi/Default/orders/{orderId} (OrdersApiordersorderIdD634D4E3) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 59/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method               | OrdersApi/Default/orders/{orderId}/GET (OrdersApiordersorderIdGETE9AAAD24) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 60/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method               | OrdersApi/Default/orders/{orderId}/GET (OrdersApiordersorderIdGETE9AAAD24) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 60/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method               | OrdersApi/Default/orders/POST (OrdersApiordersPOSTAD0E8A63) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 60/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment           | OrdersApi/Deployment (OrdersApiDeployment7E959249db16d6f04db46df5fb348f90906464b4) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 61/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method               | OrdersApi/Default/orders/POST (OrdersApiordersPOSTAD0E8A63) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 62/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment           | OrdersApi/Deployment (OrdersApiDeployment7E959249db16d6f04db46df5fb348f90906464b4) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 62/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage                | OrdersApi/DeploymentStage.v1 (OrdersApiDeploymentStagev178298ECB) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 63/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::ApiGateway::Stage                | OrdersApi/DeploymentStage.v1 (OrdersApiDeploymentStagev178298ECB) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 63/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | OrdersApi/Default/orders/{orderId}/GET/ApiPermission.OrderIntakecdk2cceceb68ce18d21prodOrdersApi9D58792B.GET..orders.{orderId} (OrdersApiordersorderIdGETApiPermissionOrderIntakecdk2cceceb68ce18d21prodOrdersApi9D58792BGETordersorderIdC69DC8C6) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 63/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | OrdersApi/Default/orders/{orderId}/GET/ApiPermission.Test.OrderIntakecdk2cceceb68ce18d21prodOrdersApi9D58792B.GET..orders.{orderId} (OrdersApiordersorderIdGETApiPermissionTestOrderIntakecdk2cceceb68ce18d21prodOrdersApi9D58792BGETordersorderIdC2F1BD25) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 64/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | OrdersApi/Default/orders/{orderId}/GET/ApiPermission.OrderIntakecdk2cceceb68ce18d21prodOrdersApi9D58792B.GET..orders.{orderId} (OrdersApiordersorderIdGETApiPermissionOrderIntakecdk2cceceb68ce18d21prodOrdersApi9D58792BGETordersorderIdC69DC8C6) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 64/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 65/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | OrdersApi/Default/orders/{orderId}/GET/ApiPermission.Test.OrderIntakecdk2cceceb68ce18d21prodOrdersApi9D58792B.GET..orders.{orderId} (OrdersApiordersorderIdGETApiPermissionTestOrderIntakecdk2cceceb68ce18d21prodOrdersApi9D58792BGETordersorderIdC2F1BD25) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 65/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::Lambda::EventSourceMapping       | WorkerFunction/SqsEventSource:OrderIntakecdk2cceceb68ce18d21prodOrderIntakeQueueD241E15D (WorkerFunctionSqsEventSourceOrderIntakecdk2cceceb68ce18d21prodOrderIntakeQueueD241E15D2EFD1B09) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 66/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 66/69 | 9:00:06 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | WorkerLogGroup (WorkerLogGroup31FDBE4A) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 67/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::Lambda::EventSourceMapping       | WorkerFunction/SqsEventSource:OrderIntakecdk2cceceb68ce18d21prodOrderIntakeQueueD241E15D (WorkerFunctionSqsEventSourceOrderIntakecdk2cceceb68ce18d21prodOrderIntakeQueueD241E15D2EFD1B09) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 68/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | WorkerLogGroup (WorkerLogGroup31FDBE4A) 
+OrderIntake-cdk-2cceceb68ce18d21-prod | 69/69 | 9:00:06 PM | CREATE_COMPLETE      | AWS::CloudFormation::Stack            | OrderIntake-cdk-2cceceb68ce18d21-prod 
+
+ ✅  OrderIntake-cdk-2cceceb68ce18d21-prod
+
+✨  Deployment time: 10.19s
+
+Outputs:
+OrderIntake-cdk-2cceceb68ce18d21-prod.ArchiveBucketName = orderintake-cdk-2cceceb68ce18d21-archivebucket9decbf5d-e0160450
+OrderIntake-cdk-2cceceb68ce18d21-prod.NotificationTopicArn = arn:aws:sns:us-east-1:000000000000:topic-cbfade94
+OrderIntake-cdk-2cceceb68ce18d21-prod.OrderEventsBusName = OrderIntakecdk2cceceb68ce18d21prodOrderEventsBus79DC52B8
+OrderIntake-cdk-2cceceb68ce18d21-prod.OrderStatusTableName = OrderIntake-cdk-2cceceb68ce18-OrderStatusTableA172E078-5ee65b13
+OrderIntake-cdk-2cceceb68ce18d21-prod.OrdersApiEndpointAC1CCDAC = https://4xdndddidh.execute-api.localhost.localstack.cloud:4566/v1/
+OrderIntake-cdk-2cceceb68ce18d21-prod.OrdersApiUrl = https://4xdndddidh.execute-api.localhost.localstack.cloud:4566/v1/
+Stack ARN:
+arn:aws:cloudformation:us-east-1:000000000000:stack/OrderIntake-cdk-2cceceb68ce18d21-prod/5747a686-2902-4c25-8560-cc6888d43570
+
+✨  Total time: 16.9s
+
+[32m✅ Step passed: Deploy (LocalStack)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Integration tests[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest integration tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+plugins: typeguard-2.13.3
+collecting ... collected 3 items
+
+tests/integration_tests.py::TestOrderIntakeIntegration::test_all_expected_stage_stacks_are_deployed_with_outputs PASSED [ 33%]
+tests/integration_tests.py::TestOrderIntakeIntegration::test_glue_pipes_eventbridge_secretsmanager_and_vpc_resources_exist_in_all_stages PASSED [ 66%]
+tests/integration_tests.py::TestOrderIntakeIntegration::test_order_workflow_executes_end_to_end_in_each_stage PASSED [100%]
+
+============================== 3 passed in 21.18s ==============================
+[32m✅ Step passed: Integration tests[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Destroy / Cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running cdklocal destroy...
+Cleaning up worker container: harness-worker-28953
+[32m✅ Step passed: Destroy / Cleanup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  HARNESS SUMMARY[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ setup[0m
+[32m✅ syntax/plan[0m
+[32m✅ unit tests[0m
+[32m✅ deploy (localstack)[0m
+[32m✅ integration tests[0m
+[32m✅ destroy/cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ All steps passed.[0m
+
+Log saved to: /Users/admin/Desktop/mini-repos-IAC-v5/runs/tasks_cdk-py_9fdf6120-4936-41cc-a634-6043bd373850.log
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+Stopping LocalStack...
+ Container localstack-harness  Stopping
+ Container localstack-harness  Stopped
+ Container localstack-harness  Removing
+ Container localstack-harness  Removed
+ Network iac-harness-network  Removing
+ Network iac-harness-network  Removed

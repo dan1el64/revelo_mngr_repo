@@ -1,0 +1,6 @@
+name: pulumi-aws-java
+runtime:
+  name: java
+  options:
+    binary: mvn
+description: A Pulumi Java program for AWS infrastructure

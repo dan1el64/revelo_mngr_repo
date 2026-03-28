@@ -1,0 +1,4 @@
+name: pulumi-aws-ts
+runtime: nodejs
+main: app.ts
+description: A Pulumi TypeScript program for AWS infrastructure

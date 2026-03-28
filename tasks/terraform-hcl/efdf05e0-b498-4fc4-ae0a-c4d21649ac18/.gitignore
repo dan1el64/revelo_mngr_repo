@@ -1,0 +1,11 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+.tfplan
+plan.json
+state.json
+.pytest_cache/
+__pycache__/
+*.pyc
+.DS_Store
