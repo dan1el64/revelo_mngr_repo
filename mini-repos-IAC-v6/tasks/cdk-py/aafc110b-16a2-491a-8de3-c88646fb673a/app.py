@@ -121,7 +121,7 @@ class SecureNotificationStack(Stack):
             self,
             "DatabaseSecurityGroup",
             vpc=vpc,
-            allow_all_outbound=True,
+            allow_all_outbound=False,
             description="Security group for the PostgreSQL instance",
         )
         database_security_group.add_ingress_rule(
@@ -203,14 +203,6 @@ class SecureNotificationStack(Stack):
             inline_policies={
                 "WorkerPermissions": iam.PolicyDocument(
                     statements=[
-                        iam.PolicyStatement(
-                            actions=[
-                                "sqs:ReceiveMessage",
-                                "sqs:DeleteMessage",
-                                "sqs:GetQueueAttributes",
-                            ],
-                            resources=[queue.queue_arn],
-                        ),
                         iam.PolicyStatement(
                             actions=["logs:CreateLogStream", "logs:PutLogEvents"],
                             resources=log_stream_arns(worker_log_group),
@@ -321,7 +313,9 @@ _db_credentials_arn = os.environ["DB_CREDENTIALS_ARN"]
 
 def handler(event, _context):
     secret_value = _secrets.get_secret_value(SecretId=_db_credentials_arn)
-    records = event.get("Records", [])
+    records = event.get("Records")
+    if not isinstance(records, list):
+        records = event.get("records", [])
     return {
         "processedRecords": len(records),
         "secretLoaded": bool(secret_value.get("ARN")),
@@ -339,14 +333,6 @@ def handler(event, _context):
                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
             ),
             security_groups=[compute_security_group],
-        )
-
-        _lambda.EventSourceMapping(
-            self,
-            "WorkerQueueEventSourceMapping",
-            target=worker_function,
-            event_source_arn=queue.queue_arn,
-            batch_size=10,
         )
 
         database = rds.DatabaseInstance(

@@ -406,7 +406,6 @@ locals {
   api_key_secret_arn     = local.endpoint_mode ? local.endpoint_api_key_secret_arn : aws_secretsmanager_secret.api_key.arn
   db_app_user_secret_arn = local.endpoint_mode ? local.endpoint_db_secret_arn : aws_secretsmanager_secret.db_app_user.arn
   db_app_user_secret     = jsondecode(data.aws_secretsmanager_secret_version.db_app_user.secret_string)
-  # jsondecode(data.aws_secretsmanager_secret_version.db_app_user[0].secret_string)
 }
 
 resource "aws_iam_role" "ingest_fn" {

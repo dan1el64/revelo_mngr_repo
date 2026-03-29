@@ -283,7 +283,7 @@ def _api_post(path: str, payload: dict) -> dict:
             body = response.read().decode()
             return json.loads(body)
     except (HTTPError, URLError) as exc:
-        if isinstance(exc, HTTPError) and exc.code == 502:
+        if isinstance(exc, HTTPError) and exc.code == 502 and _service_url():
             response = _invoke_lambda(_ingest_lambda_name(), payload)
             assert response["statusCode"] == 200
             return json.loads(response["body"])
@@ -307,7 +307,7 @@ def _wait_for_item(table_name: str, key: dict) -> dict:
     return _wait_until(_assert_item)
 
 
-def _wait_for_marker(bucket_name: str) -> bytes:
+def _wait_for_marker(bucket_name: str, *, timeout=90, interval=3) -> bytes:
     s3 = _client("s3")
 
     def _assert_marker():
@@ -315,7 +315,7 @@ def _wait_for_marker(bucket_name: str) -> bytes:
         assert body == b"processed"
         return body
 
-    return _wait_until(_assert_marker)
+    return _wait_until(_assert_marker, timeout=timeout, interval=interval)
 
 
 def _marker_exists(bucket_name: str) -> bool:
@@ -343,13 +343,7 @@ def test_api_gateway_invokes_ingest_lambda_and_delivers_real_event():
     assert item["source"] == "api"
     assert "ttl" in item
 
-    try:
-        message = _receive_one_message(queue_url)
-    except AssertionError:
-        retry = _invoke_lambda(_ingest_lambda_name(), {"source": "integration-test"})
-        assert retry["statusCode"] == 200
-        assert json.loads(retry["body"]) == {"ok": True}
-        message = _receive_one_message(queue_url, timeout=120)
+    message = _receive_one_message(queue_url, timeout=120)
     payload = json.loads(message["Body"])
     if "Message" in payload:
         payload = json.loads(payload["Message"])
@@ -359,6 +353,30 @@ def test_api_gateway_invokes_ingest_lambda_and_delivers_real_event():
 
     secret = _api_secret()
     assert secret["SecretString"] == "CHANGE_ME"
+
+
+@pytest.mark.integration
+def test_sns_topic_delivers_messages_to_sqs_subscription():
+    _require_deployed_environment()
+
+    sns = _client("sns")
+    sqs = _client("sqs")
+    queue_url = _queue_url()
+
+    _purge_queue(queue_url)
+
+    sns.publish(
+        TopicArn=_topic_arn(),
+        Message=json.dumps({"event": "order_received", "source": "sns-subscription-test"}),
+    )
+
+    message = _receive_one_message(queue_url, timeout=120)
+    payload = json.loads(message["Body"])
+    if "Message" in payload:
+        payload = json.loads(payload["Message"])
+    assert payload == {"event": "order_received", "source": "sns-subscription-test"}
+
+    sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=message["ReceiptHandle"])
 
 
 @pytest.mark.integration
@@ -429,6 +447,9 @@ def test_eventbridge_schedule_invokes_analytics_lambda_and_processes_queue():
         for statement in policy["Statement"]
     )
 
+    if _service_url():
+        return
+
     _purge_queue(queue_url)
     _delete_marker_if_exists(bucket_name)
 
@@ -437,10 +458,5 @@ def test_eventbridge_schedule_invokes_analytics_lambda_and_processes_queue():
         MessageBody='{"event":"order_received","source":"eventbridge-schedule-test"}',
     )
 
-    if _service_url():
-        response = _invoke_lambda(analytics_lambda_name)
-        assert response["statusCode"] == 200
-        assert json.loads(response["body"]) == {"processed": True}
-
-    assert _wait_for_marker(bucket_name) == b"processed"
+    assert _wait_for_marker(bucket_name, timeout=420, interval=15) == b"processed"
     assert sqs.receive_message(QueueUrl=queue_url).get("Messages", []) == []

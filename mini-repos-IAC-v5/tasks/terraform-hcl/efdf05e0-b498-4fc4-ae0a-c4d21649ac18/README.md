@@ -5,7 +5,7 @@ This task provisions an event-driven AWS stack with these runtime flows:
 - `POST /ingest` on API Gateway invokes `ingest_fn`
 - `ingest_fn` reads an API key from Secrets Manager, writes an order to DynamoDB, and publishes an SNS event
 - SNS delivers the event to SQS
-- `analytics_fn` reads DB credentials from Secrets Manager, verifies TCP reachability to the PostgreSQL RDS instance from the VPC, consumes SQS, and writes `raw/analytics-marker.txt` to S3
+- `analytics_fn` reads DB credentials from Secrets Manager, consumes SQS, and writes `raw/analytics-marker.txt` to S3
 - EventBridge schedules `analytics_fn` every 5 minutes
 
 ## Inputs

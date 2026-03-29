@@ -72,6 +72,20 @@ def _configuration_json(terraform_plan: dict) -> str:
     return json.dumps(terraform_plan.get("configuration", {}), sort_keys=True)
 
 
+def _configuration_module_resources(module: dict) -> list[dict]:
+    resources = list(module.get("resources", []))
+    for child in module.get("child_modules", []):
+        resources.extend(_configuration_module_resources(child))
+    return resources
+
+
+def _configuration_resource_map(terraform_plan: dict) -> dict[str, dict]:
+    return {
+        resource["address"]: resource
+        for resource in _configuration_module_resources(terraform_plan["configuration"]["root_module"])
+    }
+
+
 def _resource_changes_map(terraform_plan: dict) -> dict[str, dict]:
     return {
         change["address"]: change
@@ -313,6 +327,7 @@ def test_plan_does_not_create_additional_managed_resources(terraform_plan):
 def test_plan_enforces_tags_network_and_database_shape(terraform_plan):
     endpoint_plan = _endpoint_plan(terraform_plan)
     resources = _resource_map(terraform_plan)
+    configuration_resources = _configuration_resource_map(terraform_plan)
     configuration_json = _configuration_json(terraform_plan)
     main_tf_text = _main_tf_text()
     public_default_route = _resource_block_text("aws_route", "public_default")
@@ -333,8 +348,13 @@ def test_plan_enforces_tags_network_and_database_shape(terraform_plan):
     dynamodb = resources["aws_dynamodb_table.order_metadata"]["values"]
     dynamodb_endpoint = resources["aws_vpc_endpoint.dynamodb"]["values"]
     queue = resources["aws_sqs_queue.order_events"]["values"]
-    private_route_table = resources["aws_route_table.private"]["values"]
     outputs = terraform_plan["planned_values"]["outputs"]
+    ingest_lambda_config = configuration_resources["aws_lambda_function.ingest_fn"]["expressions"]["vpc_config"][0]
+    analytics_lambda_config = configuration_resources["aws_lambda_function.analytics_fn"]["expressions"]["vpc_config"][0]
+    dynamodb_endpoint_config = configuration_resources["aws_vpc_endpoint.dynamodb"]["expressions"]
+    database_sg_config = configuration_resources["aws_security_group.database"]["expressions"]
+    db_subnet_group_config = configuration_resources["aws_db_subnet_group.orders"]["expressions"]
+    db_instance_config = configuration_resources["aws_db_instance.orders"]["expressions"]
 
     assert vpc["cidr_block"] == "10.20.0.0/16"
     assert vpc["enable_dns_hostnames"] is True
@@ -359,7 +379,10 @@ def test_plan_enforces_tags_network_and_database_shape(terraform_plan):
     assert "aws_security_group.lambda.id" in configuration_json
     assert 'resource "aws_lambda_function" "ingest_fn"' in main_tf_text
     assert 'resource "aws_lambda_function" "analytics_fn"' in main_tf_text
-    assert "security_group_ids = [aws_security_group.lambda.id]" in main_tf_text
+    assert "aws_security_group.lambda.id" in ingest_lambda_config["security_group_ids"]["references"]
+    assert "aws_security_group.lambda.id" in analytics_lambda_config["security_group_ids"]["references"]
+    assert "aws_subnet.private_a.id" in ingest_lambda_config["subnet_ids"]["references"]
+    assert "aws_subnet.private_b.id" in ingest_lambda_config["subnet_ids"]["references"]
     assert 'data "external"' not in main_tf_text
     assert 'SKIP_DB_CONNECTIVITY' not in main_tf_text
 
@@ -377,7 +400,7 @@ def test_plan_enforces_tags_network_and_database_shape(terraform_plan):
     assert queue["message_retention_seconds"] == 345600
     assert queue["visibility_timeout_seconds"] == 60
     assert dynamodb_endpoint["vpc_endpoint_type"] == "Gateway"
-    assert "route_table_ids   = [aws_route_table.private.id]" in main_tf_text
+    assert "aws_route_table.private.id" in dynamodb_endpoint_config["route_table_ids"]["references"]
     assert dynamodb_endpoint["service_name"] == "com.amazonaws.us-east-1.dynamodb"
 
     assert lambda_sg.get("ingress", []) == []
@@ -392,19 +415,20 @@ def test_plan_enforces_tags_network_and_database_shape(terraform_plan):
         if rule["from_port"] == 5432 and rule["to_port"] == 5432 and rule["protocol"] == "tcp"
     ]
     assert len(ingress_rules) == 1
-    assert "security_groups = [aws_security_group.lambda.id]" in main_tf_text
+    assert "aws_security_group.lambda.id" in database_sg_config["ingress"]["references"]
     assert ingress_rules[0].get("cidr_blocks", []) == []
     assert ingress_rules[0].get("ipv6_cidr_blocks", []) == []
-    assert "vpc_security_group_ids  = [aws_security_group.database.id]" in main_tf_text
+    assert "aws_subnet.private_a.id" in db_subnet_group_config["subnet_ids"]["references"]
+    assert "aws_subnet.private_b.id" in db_subnet_group_config["subnet_ids"]["references"]
+    assert "aws_security_group.database.id" in db_instance_config["vpc_security_group_ids"]["references"]
     assert "data.aws_secretsmanager_secret_version.db_app_user" in configuration_json
-    assert "jsondecode(data.aws_secretsmanager_secret_version.db_app_user.secret_string)" in main_tf_text
+    assert "local.db_app_user_secret.username" in db_instance_config["username"]["references"]
+    assert "local.db_app_user_secret.password" in db_instance_config["password"]["references"]
     if endpoint_plan:
         assert "local.db_app_user_secret_arn" in main_tf_text
         assert outputs["rds_endpoint_address"]["value"] is not None
         assert int(outputs["rds_endpoint_port"]["value"]) > 0
     else:
-        assert "data.aws_secretsmanager_secret_version.db_app_user" in configuration_json
-        assert "jsondecode(data.aws_secretsmanager_secret_version.db_app_user[0].secret_string)" in main_tf_text
         db_instance = resources["aws_db_instance.orders"]["values"]
         assert db_instance["instance_class"] == "db.t3.micro"
         assert db_instance["engine"] == "postgres"
@@ -420,39 +444,75 @@ def test_plan_enforces_tags_network_and_database_shape(terraform_plan):
 
 def test_plan_enforces_storage_messaging_logging_and_iam_controls(terraform_plan):
     resources = _resource_map(terraform_plan)
+    configuration_resources = _configuration_resource_map(terraform_plan)
     resource_changes = _resource_changes_map(terraform_plan)
     configuration_json = _configuration_json(terraform_plan)
-    main_tf_text = _main_tf_text()
-
     lifecycle = resources["aws_s3_bucket_lifecycle_configuration.archive"]["values"]
+    public_access_block = resources["aws_s3_bucket_public_access_block.archive"]["values"]
+    ownership_controls = resources["aws_s3_bucket_ownership_controls.archive"]["values"]
     ingest_log = resources["aws_cloudwatch_log_group.ingest_fn"]["values"]
     analytics_log = resources["aws_cloudwatch_log_group.analytics_fn"]["values"]
     ingest = resources["aws_lambda_function.ingest_fn"]["values"]
     analytics = resources["aws_lambda_function.analytics_fn"]["values"]
+    queue_policy = json.loads(resource_changes["aws_sqs_queue_policy.order_events"]["change"]["after"]["policy"])
+    bucket_policy = _resource_block_text("aws_s3_bucket_policy", "archive")
+    ingest_policy = _resource_block_text("aws_iam_role_policy", "ingest_fn")
+    analytics_policy = _resource_block_text("aws_iam_role_policy", "analytics_fn")
+    bucket_policy_refs = set(configuration_resources["aws_s3_bucket_policy.archive"]["expressions"]["policy"]["references"])
+    ingest_policy_refs = set(configuration_resources["aws_iam_role_policy.ingest_fn"]["expressions"]["policy"]["references"])
+    analytics_policy_refs = set(configuration_resources["aws_iam_role_policy.analytics_fn"]["expressions"]["policy"]["references"])
 
     assert len(lifecycle["rule"]) == 1
     assert lifecycle["rule"][0]["status"] == "Enabled"
     assert lifecycle["rule"][0]["abort_incomplete_multipart_upload"][0]["days_after_initiation"] == 7
+    assert public_access_block["block_public_acls"] is True
+    assert public_access_block["block_public_policy"] is True
+    assert public_access_block["ignore_public_acls"] is True
+    assert public_access_block["restrict_public_buckets"] is True
+    assert ownership_controls["rule"][0]["object_ownership"] == "BucketOwnerEnforced"
 
     assert "aws_s3_bucket_policy" in configuration_json
-    assert "DenyInsecureTransport" in main_tf_text
-    assert "AllowAnalyticsRead" in main_tf_text
-    assert "AllowAnalyticsGetObject" in main_tf_text
-    assert "AllowIngestRawWrites" in main_tf_text
-    assert "analytics-fn-inline-policy" in main_tf_text
-    assert "ingest-fn-inline-policy" in main_tf_text
-    assert "local.api_key_secret_arn" in main_tf_text
-    assert "local.db_app_user_secret_arn" in main_tf_text
-    assert '"s3:ListBucket"' in main_tf_text
-    assert '"s3:GetObject"' in main_tf_text
-    assert '"s3:PutObject"' in main_tf_text
-    assert '"sns:Publish"' in main_tf_text
-    assert '"secretsmanager:GetSecretValue"' in main_tf_text
+    assert "aws_iam_role.analytics_fn.arn" in bucket_policy_refs
+    assert "aws_iam_role.ingest_fn.arn" in bucket_policy_refs
+    assert "aws_s3_bucket.archive.arn" in bucket_policy_refs
+    assert re.search(r'Sid\s*=\s*"DenyInsecureTransport".*?"aws:SecureTransport"\s*=\s*"false"', bucket_policy, re.S)
+    assert re.search(r'Sid\s*=\s*"AllowAnalyticsRead".*?Action\s*=\s*\["s3:ListBucket"\]', bucket_policy, re.S)
+    assert re.search(r'Sid\s*=\s*"AllowAnalyticsGetObject".*?Action\s*=\s*\["s3:GetObject"\].*?Resource\s*=\s*"\$\{aws_s3_bucket\.archive\.arn\}/\*"', bucket_policy, re.S)
+    assert re.search(r'Sid\s*=\s*"AllowIngestRawWrites".*?Action\s*=\s*\["s3:PutObject"\].*?Resource\s*=\s*"\$\{aws_s3_bucket\.archive\.arn\}/raw/\*"', bucket_policy, re.S)
 
-    queue_policy_after = resource_changes["aws_sqs_queue_policy.order_events"]["change"]["after"]
-    assert "aws_sqs_queue.order_events.id" in configuration_json
-    assert "sns.amazonaws.com" in main_tf_text
-    assert "sqs:SendMessage" in main_tf_text
+    assert "aws_dynamodb_table.order_metadata.arn" in ingest_policy_refs
+    assert "aws_sns_topic.order_events.arn" in ingest_policy_refs
+    assert "local.api_key_secret_arn" in ingest_policy_refs
+    assert re.search(r'Action\s*=\s*\["dynamodb:PutItem"\].*?Resource\s*=\s*aws_dynamodb_table\.order_metadata\.arn', ingest_policy, re.S)
+    assert re.search(r'Action\s*=\s*\["sns:Publish"\].*?Resource\s*=\s*aws_sns_topic\.order_events\.arn', ingest_policy, re.S)
+    assert re.search(r'Action\s*=\s*\["secretsmanager:GetSecretValue"\].*?Resource\s*=\s*local\.api_key_secret_arn', ingest_policy, re.S)
+
+    assert "aws_sqs_queue.order_events.arn" in analytics_policy_refs
+    assert "aws_s3_bucket.archive.arn" in analytics_policy_refs
+    assert "local.db_app_user_secret_arn" in analytics_policy_refs
+    assert re.search(r'"sqs:ReceiveMessage"', analytics_policy)
+    assert re.search(r'"sqs:DeleteMessage"', analytics_policy)
+    assert re.search(r'"sqs:GetQueueAttributes"', analytics_policy)
+    assert re.search(r'Action\s*=\s*\["s3:PutObject"\].*?Resource\s*=\s*"\$\{aws_s3_bucket\.archive\.arn\}/raw/\*"', analytics_policy, re.S)
+    assert re.search(r'Action\s*=\s*\["secretsmanager:GetSecretValue"\].*?Resource\s*=\s*local\.db_app_user_secret_arn', analytics_policy, re.S)
+
+    assert queue_policy["Version"] == "2012-10-17"
+    assert queue_policy["Statement"] == [
+        {
+            "Sid": "AllowOrderEventsTopicOnly",
+            "Effect": "Allow",
+            "Principal": {"Service": "sns.amazonaws.com"},
+            "Action": "sqs:SendMessage",
+            "Resource": queue_policy["Statement"][0]["Resource"],
+            "Condition": {
+                "ArnEquals": {
+                    "aws:SourceArn": queue_policy["Statement"][0]["Condition"]["ArnEquals"]["aws:SourceArn"],
+                }
+            },
+        }
+    ]
+    assert queue_policy["Statement"][0]["Resource"].endswith(":order-events-queue")
+    assert queue_policy["Statement"][0]["Condition"]["ArnEquals"]["aws:SourceArn"].endswith(":order-events")
     assert "aws_sns_topic.order_events.arn" in configuration_json
 
     assert ingest_log["retention_in_days"] == 14
@@ -599,6 +659,36 @@ def test_ingest_lambda_handler_reads_secret_publishes_and_persists_ttl(monkeypat
     assert "ttl" in written_item
 
 
+def test_ingest_lambda_handler_propagates_secret_lookup_failure(monkeypatch):
+    class FakeSNS:
+        def publish(self, **kwargs):
+            raise AssertionError("publish should not be called when the secret lookup fails")
+
+    class FakeSecretsManager:
+        def get_secret_value(self, **kwargs):
+            raise RuntimeError("secret unavailable")
+
+    class FakeDynamoDB:
+        def Table(self, name):
+            raise AssertionError("dynamodb should not be used when the secret lookup fails")
+
+    boto3_module = types.ModuleType("boto3")
+    boto3_module.client = lambda service, **kwargs: {
+        "sns": FakeSNS(),
+        "secretsmanager": FakeSecretsManager(),
+    }[service]
+    boto3_module.resource = lambda service, **kwargs: {"dynamodb": FakeDynamoDB()}[service]
+
+    monkeypatch.setenv("SNS_TOPIC_ARN", "arn:aws:sns:us-east-1:123456789012:order-events")
+    monkeypatch.setenv("TABLE_NAME", "order-metadata")
+    monkeypatch.setenv("API_SECRET_ARN", "arn:aws:secretsmanager:us-east-1:123456789012:secret:orderintake/api_key")
+
+    module = _load_lambda_module("ingest_fn", boto3_module)
+
+    with pytest.raises(RuntimeError, match="secret unavailable"):
+        module.lambda_handler({}, None)
+
+
 def test_analytics_lambda_handler_reads_secret_consumes_queue_and_writes_marker(monkeypatch):
     deleted = []
     written_object = {}
@@ -640,3 +730,75 @@ def test_analytics_lambda_handler_reads_secret_consumes_queue_and_writes_marker(
     assert deleted == [{"QueueUrl": os.environ["QUEUE_URL"], "ReceiptHandle": "abc"}]
     assert written_object["Bucket"] == os.environ["BUCKET_NAME"]
     assert written_object["Key"] == "raw/analytics-marker.txt"
+
+
+def test_analytics_lambda_handler_returns_processed_false_without_writing_marker(monkeypatch):
+    deleted = []
+    written_objects = []
+    secret_requests = []
+
+    class FakeSQS:
+        def receive_message(self, **kwargs):
+            return {}
+
+        def delete_message(self, **kwargs):
+            deleted.append(kwargs)
+
+    class FakeS3:
+        def put_object(self, **kwargs):
+            written_objects.append(kwargs)
+
+    class FakeSecretsManager:
+        def get_secret_value(self, **kwargs):
+            secret_requests.append(kwargs)
+            return {"SecretString": json.dumps({"username": "appuser", "password": "CHANGE_ME"})}
+
+    boto3_module = types.ModuleType("boto3")
+    boto3_module.client = lambda service, **kwargs: {
+        "sqs": FakeSQS(),
+        "s3": FakeS3(),
+        "secretsmanager": FakeSecretsManager(),
+    }[service]
+
+    monkeypatch.setenv("QUEUE_URL", "https://sqs.us-east-1.amazonaws.com/123456789012/order-events-queue")
+    monkeypatch.setenv("BUCKET_NAME", "order-intake-archive")
+    monkeypatch.setenv("DB_SECRET_ARN", "arn:aws:secretsmanager:us-east-1:123456789012:secret:orderintake/db_app_user")
+
+    module = _load_lambda_module("analytics_fn", boto3_module)
+    response = module.lambda_handler({}, None)
+
+    assert response["statusCode"] == 200
+    assert json.loads(response["body"]) == {"processed": False}
+    assert secret_requests == [{"SecretId": os.environ["DB_SECRET_ARN"]}]
+    assert deleted == []
+    assert written_objects == []
+
+
+def test_analytics_lambda_handler_propagates_secret_lookup_failure(monkeypatch):
+    class FakeSQS:
+        def receive_message(self, **kwargs):
+            raise AssertionError("queue should not be read when the secret lookup fails")
+
+    class FakeS3:
+        def put_object(self, **kwargs):
+            raise AssertionError("s3 should not be written when the secret lookup fails")
+
+    class FakeSecretsManager:
+        def get_secret_value(self, **kwargs):
+            raise RuntimeError("secret unavailable")
+
+    boto3_module = types.ModuleType("boto3")
+    boto3_module.client = lambda service, **kwargs: {
+        "sqs": FakeSQS(),
+        "s3": FakeS3(),
+        "secretsmanager": FakeSecretsManager(),
+    }[service]
+
+    monkeypatch.setenv("QUEUE_URL", "https://sqs.us-east-1.amazonaws.com/123456789012/order-events-queue")
+    monkeypatch.setenv("BUCKET_NAME", "order-intake-archive")
+    monkeypatch.setenv("DB_SECRET_ARN", "arn:aws:secretsmanager:us-east-1:123456789012:secret:orderintake/db_app_user")
+
+    module = _load_lambda_module("analytics_fn", boto3_module)
+
+    with pytest.raises(RuntimeError, match="secret unavailable"):
+        module.lambda_handler({}, None)
