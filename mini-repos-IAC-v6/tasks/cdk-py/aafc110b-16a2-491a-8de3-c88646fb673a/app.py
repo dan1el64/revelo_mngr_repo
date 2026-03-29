@@ -316,11 +316,11 @@ import boto3
 
 
 _secrets = boto3.client("secretsmanager")
-_secret_arn = os.environ["SECRET_ARN"]
+_db_credentials_arn = os.environ["DB_CREDENTIALS_ARN"]
 
 
 def handler(event, _context):
-    secret_value = _secrets.get_secret_value(SecretId=_secret_arn)
+    secret_value = _secrets.get_secret_value(SecretId=_db_credentials_arn)
     records = event.get("Records", [])
     return {
         "processedRecords": len(records),
@@ -331,7 +331,7 @@ def handler(event, _context):
             ),
             memory_size=256,
             timeout=Duration.seconds(20),
-            environment={"SECRET_ARN": db_secret.secret_arn},
+            environment={"DB_CREDENTIALS_ARN": db_secret.secret_arn},
             log_group=worker_log_group,
             role=worker_role,
             vpc=vpc,
