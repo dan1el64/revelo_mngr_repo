@@ -147,17 +147,7 @@ class OrdersIngestStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const isLocalEndpointMode = Boolean(awsEndpoint);
-    const deploysManagedDataPlane = !isLocalEndpointMode;
-    const deploysPipe = !isLocalEndpointMode;
-    const attachesLambdasToVpc = !isLocalEndpointMode;
-    const createsQueueWorkerTrigger = !isLocalEndpointMode;
-    const createsEventQueuePolicy = !isLocalEndpointMode;
-    const createsExplicitRouting = !isLocalEndpointMode;
-
-    const availabilityZones = isLocalEndpointMode
-      ? [`${awsRegion}a`, `${awsRegion}b`]
-      : [cdk.Fn.select(0, cdk.Fn.getAzs()), cdk.Fn.select(1, cdk.Fn.getAzs())];
+    const availabilityZones = [cdk.Fn.select(0, cdk.Fn.getAzs()), cdk.Fn.select(1, cdk.Fn.getAzs())];
 
     const vpc = new ec2.Vpc(this, 'OrdersVpc', {
       ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
@@ -194,82 +184,77 @@ class OrdersIngestStack extends cdk.Stack {
       mapPublicIpOnLaunch: false,
     });
 
-    let importedPrivateSubnets: ec2.ISubnet[] = [];
-    let privateDefaultRoute: ec2.CfnRoute | undefined;
+    const internetGateway = new ec2.CfnInternetGateway(this, 'OrdersInternetGateway', {});
 
-    if (createsExplicitRouting) {
-      const internetGateway = new ec2.CfnInternetGateway(this, 'OrdersInternetGateway', {});
+    const gatewayAttachment = new ec2.CfnVPCGatewayAttachment(this, 'OrdersInternetGatewayAttachment', {
+      vpcId: vpc.vpcId,
+      internetGatewayId: internetGateway.ref,
+    });
 
-      const gatewayAttachment = new ec2.CfnVPCGatewayAttachment(this, 'OrdersInternetGatewayAttachment', {
-        vpcId: vpc.vpcId,
-        internetGatewayId: internetGateway.ref,
-      });
+    const publicRouteTable = new ec2.CfnRouteTable(this, 'OrdersPublicRouteTable', {
+      vpcId: vpc.vpcId,
+    });
 
-      const publicRouteTable = new ec2.CfnRouteTable(this, 'OrdersPublicRouteTable', {
-        vpcId: vpc.vpcId,
-      });
+    const publicDefaultRoute = new ec2.CfnRoute(this, 'OrdersPublicDefaultRoute', {
+      routeTableId: publicRouteTable.ref,
+      destinationCidrBlock: '0.0.0.0/0',
+      gatewayId: internetGateway.ref,
+    });
+    publicDefaultRoute.addDependency(gatewayAttachment);
 
-      const publicDefaultRoute = new ec2.CfnRoute(this, 'OrdersPublicDefaultRoute', {
-        routeTableId: publicRouteTable.ref,
-        destinationCidrBlock: '0.0.0.0/0',
-        gatewayId: internetGateway.ref,
-      });
-      publicDefaultRoute.addDependency(gatewayAttachment);
+    new ec2.CfnSubnetRouteTableAssociation(this, 'OrdersPublicSubnetAssociationA', {
+      subnetId: publicSubnetA.ref,
+      routeTableId: publicRouteTable.ref,
+    });
 
-      new ec2.CfnSubnetRouteTableAssociation(this, 'OrdersPublicSubnetAssociationA', {
-        subnetId: publicSubnetA.ref,
-        routeTableId: publicRouteTable.ref,
-      });
+    new ec2.CfnSubnetRouteTableAssociation(this, 'OrdersPublicSubnetAssociationB', {
+      subnetId: publicSubnetB.ref,
+      routeTableId: publicRouteTable.ref,
+    });
 
-      new ec2.CfnSubnetRouteTableAssociation(this, 'OrdersPublicSubnetAssociationB', {
-        subnetId: publicSubnetB.ref,
-        routeTableId: publicRouteTable.ref,
-      });
+    const natEip = new ec2.CfnEIP(this, 'OrdersNatEip', {
+      domain: 'vpc',
+    });
+    natEip.addDependency(gatewayAttachment);
 
-      const natEip = new ec2.CfnEIP(this, 'OrdersNatEip', {
-        domain: 'vpc',
-      });
-      natEip.addDependency(gatewayAttachment);
+    const natGateway = new ec2.CfnNatGateway(this, 'OrdersNatGateway', {
+      subnetId: publicSubnetA.ref,
+      allocationId: natEip.attrAllocationId,
+    });
 
-      const natGateway = new ec2.CfnNatGateway(this, 'OrdersNatGateway', {
-        subnetId: publicSubnetA.ref,
-        allocationId: natEip.attrAllocationId,
-      });
+    const privateRouteTable = new ec2.CfnRouteTable(this, 'OrdersPrivateRouteTable', {
+      vpcId: vpc.vpcId,
+    });
 
-      const privateRouteTable = new ec2.CfnRouteTable(this, 'OrdersPrivateRouteTable', {
-        vpcId: vpc.vpcId,
-      });
+    const privateDefaultRoute = new ec2.CfnRoute(this, 'OrdersPrivateDefaultRoute', {
+      routeTableId: privateRouteTable.ref,
+      destinationCidrBlock: '0.0.0.0/0',
+      natGatewayId: natGateway.ref,
+    });
+    privateDefaultRoute.addDependency(natGateway);
 
-      privateDefaultRoute = new ec2.CfnRoute(this, 'OrdersPrivateDefaultRoute', {
-        routeTableId: privateRouteTable.ref,
-        destinationCidrBlock: '0.0.0.0/0',
-        natGatewayId: natGateway.ref,
-      });
-      privateDefaultRoute.addDependency(natGateway);
+    new ec2.CfnSubnetRouteTableAssociation(this, 'OrdersPrivateSubnetAssociationA', {
+      subnetId: privateSubnetA.ref,
+      routeTableId: privateRouteTable.ref,
+    });
 
-      new ec2.CfnSubnetRouteTableAssociation(this, 'OrdersPrivateSubnetAssociationA', {
+    new ec2.CfnSubnetRouteTableAssociation(this, 'OrdersPrivateSubnetAssociationB', {
+      subnetId: privateSubnetB.ref,
+      routeTableId: privateRouteTable.ref,
+    });
+
+    const importedPrivateSubnets: ec2.ISubnet[] = [
+      ec2.Subnet.fromSubnetAttributes(this, 'ImportedPrivateSubnetA', {
         subnetId: privateSubnetA.ref,
+        availabilityZone: availabilityZones[0],
         routeTableId: privateRouteTable.ref,
-      });
-
-      new ec2.CfnSubnetRouteTableAssociation(this, 'OrdersPrivateSubnetAssociationB', {
+      }),
+      ec2.Subnet.fromSubnetAttributes(this, 'ImportedPrivateSubnetB', {
         subnetId: privateSubnetB.ref,
+        availabilityZone: availabilityZones[1],
         routeTableId: privateRouteTable.ref,
-      });
-
-      importedPrivateSubnets = [
-        ec2.Subnet.fromSubnetAttributes(this, 'ImportedPrivateSubnetA', {
-          subnetId: privateSubnetA.ref,
-          availabilityZone: availabilityZones[0],
-          routeTableId: privateRouteTable.ref,
-        }),
-        ec2.Subnet.fromSubnetAttributes(this, 'ImportedPrivateSubnetB', {
-          subnetId: privateSubnetB.ref,
-          availabilityZone: availabilityZones[1],
-          routeTableId: privateRouteTable.ref,
-        }),
-      ];
-    }
+      }),
+    ];
 
     const apiLambdaSecurityGroup = new ec2.SecurityGroup(this, 'OrdersApiSecurityGroup', {
       vpc,
@@ -283,49 +268,40 @@ class OrdersIngestStack extends cdk.Stack {
       description: 'Attached to the orders-worker Lambda.',
     });
 
-    let dataPlaneSecurityGroup: ec2.SecurityGroup | undefined;
-    if (deploysManagedDataPlane) {
-      dataPlaneSecurityGroup = new ec2.SecurityGroup(this, 'OrdersDataPlaneSecurityGroup', {
-        vpc,
-        description: 'Attached to the RDS instance.',
-      });
-    }
+    const dataPlaneSecurityGroup = new ec2.SecurityGroup(this, 'OrdersDataPlaneSecurityGroup', {
+      vpc,
+      description: 'Attached to the RDS instance.',
+    });
 
     for (const sg of [apiLambdaSecurityGroup, workerLambdaSecurityGroup]) {
       sg.addEgressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(443), 'Public AWS service endpoints');
-      if (deploysManagedDataPlane) {
-        sg.addEgressRule(
-          ec2.Peer.securityGroupId(vpc.vpcDefaultSecurityGroup),
-          ec2.Port.tcp(443),
-          'Secrets Manager interface endpoint',
-        );
-      }
-    }
-
-    if (dataPlaneSecurityGroup) {
-      workerLambdaSecurityGroup.addEgressRule(
-        ec2.Peer.securityGroupId(dataPlaneSecurityGroup.securityGroupId),
-        ec2.Port.tcp(5432),
-        'PostgreSQL to the RDS instance',
-      );
-
-      dataPlaneSecurityGroup.addIngressRule(
-        ec2.Peer.securityGroupId(workerLambdaSecurityGroup.securityGroupId),
-        ec2.Port.tcp(5432),
-        'Allow PostgreSQL only from the worker Lambda security group',
+      sg.addEgressRule(
+        ec2.Peer.securityGroupId(vpc.vpcDefaultSecurityGroup),
+        ec2.Port.tcp(443),
+        'Secrets Manager interface endpoint',
       );
     }
 
-    if (deploysManagedDataPlane) {
-      new ec2.CfnSecurityGroupIngress(this, 'OrdersSecretsEndpointIngressFromWorker', {
-        groupId: vpc.vpcDefaultSecurityGroup,
-        ipProtocol: 'tcp',
-        fromPort: 443,
-        toPort: 443,
-        sourceSecurityGroupId: workerLambdaSecurityGroup.securityGroupId,
-        description: 'Allow Secrets Manager endpoint access only from the worker Lambda security group',
-      });
-    }
+    workerLambdaSecurityGroup.addEgressRule(
+      ec2.Peer.securityGroupId(dataPlaneSecurityGroup.securityGroupId),
+      ec2.Port.tcp(5432),
+      'PostgreSQL to the RDS instance',
+    );
+
+    dataPlaneSecurityGroup.addIngressRule(
+      ec2.Peer.securityGroupId(workerLambdaSecurityGroup.securityGroupId),
+      ec2.Port.tcp(5432),
+      'Allow PostgreSQL only from the worker Lambda security group',
+    );
+
+    new ec2.CfnSecurityGroupIngress(this, 'OrdersSecretsEndpointIngressFromWorker', {
+      groupId: vpc.vpcDefaultSecurityGroup,
+      ipProtocol: 'tcp',
+      fromPort: 443,
+      toPort: 443,
+      sourceSecurityGroupId: workerLambdaSecurityGroup.securityGroupId,
+      description: 'Allow Secrets Manager endpoint access only from the worker Lambda security group',
+    });
 
     const ordersArchiveBucket = new s3.Bucket(this, 'OrdersArchiveBucket', {
       encryption: s3.BucketEncryption.S3_MANAGED,
@@ -347,52 +323,45 @@ class OrdersIngestStack extends cdk.Stack {
       username: 'orders_app',
     });
 
-    let ordersDatabase: rds.DatabaseInstance | undefined;
-    let secretsManagerEndpoint: ec2.InterfaceVpcEndpoint | undefined;
+    const dbSubnetGroup = new rds.SubnetGroup(this, 'OrdersDbSubnetGroup', {
+      vpc,
+      description: 'Dedicated private subnets for the orders database.',
+      vpcSubnets: {
+        subnets: importedPrivateSubnets,
+      },
+    });
 
-    if (deploysManagedDataPlane) {
-      const dbSubnetGroup = new rds.SubnetGroup(this, 'OrdersDbSubnetGroup', {
-        vpc,
-        description: 'Dedicated private subnets for the orders database.',
-        vpcSubnets: {
-          subnets: importedPrivateSubnets,
-        },
-      });
+    const ordersDatabase = new rds.DatabaseInstance(this, 'OrdersDatabase', {
+      engine: rds.DatabaseInstanceEngine.postgres({
+        version: rds.PostgresEngineVersion.VER_15,
+      }),
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
+      allocatedStorage: 20,
+      storageEncrypted: true,
+      vpc,
+      vpcSubnets: {
+        subnets: importedPrivateSubnets,
+      },
+      subnetGroup: dbSubnetGroup,
+      securityGroups: [dataPlaneSecurityGroup],
+      publiclyAccessible: false,
+      deletionProtection: false,
+      credentials: rds.Credentials.fromSecret(dbSecret),
+      databaseName: 'orders',
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
 
-      ordersDatabase = new rds.DatabaseInstance(this, 'OrdersDatabase', {
-        engine: rds.DatabaseInstanceEngine.postgres({
-          version: rds.PostgresEngineVersion.VER_15,
-        }),
-        instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
-        allocatedStorage: 20,
-        storageEncrypted: true,
-        vpc,
-        vpcSubnets: {
-          subnets: importedPrivateSubnets,
-        },
-        subnetGroup: dbSubnetGroup,
-        securityGroups: dataPlaneSecurityGroup ? [dataPlaneSecurityGroup] : [],
-        publiclyAccessible: false,
-        deletionProtection: false,
-        credentials: rds.Credentials.fromSecret(dbSecret),
-        databaseName: 'orders',
-        removalPolicy: cdk.RemovalPolicy.DESTROY,
-      });
-
-      secretsManagerEndpoint = new ec2.InterfaceVpcEndpoint(this, 'OrdersSecretsManagerEndpoint', {
-        vpc,
-        service: ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
-        securityGroups: [ec2.SecurityGroup.fromSecurityGroupId(this, 'OrdersSecretsEndpointSecurityGroup', vpc.vpcDefaultSecurityGroup)],
-        open: false,
-        subnets: {
-          subnets: importedPrivateSubnets,
-        },
-        privateDnsEnabled: true,
-      });
-      if (privateDefaultRoute) {
-        secretsManagerEndpoint.node.addDependency(privateDefaultRoute);
-      }
-    }
+    const secretsManagerEndpoint = new ec2.InterfaceVpcEndpoint(this, 'OrdersSecretsManagerEndpoint', {
+      vpc,
+      service: ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
+      securityGroups: [ec2.SecurityGroup.fromSecurityGroupId(this, 'OrdersSecretsEndpointSecurityGroup', vpc.vpcDefaultSecurityGroup)],
+      open: false,
+      subnets: {
+        subnets: importedPrivateSubnets,
+      },
+      privateDnsEnabled: true,
+    });
+    secretsManagerEndpoint.node.addDependency(privateDefaultRoute);
 
     const apiLambdaRole = new iam.Role(this, 'OrdersApiLambdaRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
@@ -402,26 +371,24 @@ class OrdersIngestStack extends cdk.Stack {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
 
-    if (attachesLambdasToVpc) {
-      // Lambda ENI APIs do not support resource-level scoping, so keep the single
-      // wildcard statement isolated to the minimum EC2 actions needed for VPC access.
-      const lambdaVpcAccessPolicy = new iam.PolicyStatement({
-        actions: [
-          'ec2:CreateNetworkInterface',
-          'ec2:DescribeNetworkInterfaces',
-          'ec2:DeleteNetworkInterface',
-          'ec2:AssignPrivateIpAddresses',
-          'ec2:UnassignPrivateIpAddresses',
-          'ec2:DescribeSubnets',
-          'ec2:DescribeSecurityGroups',
-          'ec2:DescribeVpcs',
-        ],
-        resources: ['*'],
-      });
+    // Lambda ENI APIs do not support resource-level scoping, so keep the single
+    // wildcard statement isolated to the minimum EC2 actions needed for VPC access.
+    const lambdaVpcAccessPolicy = new iam.PolicyStatement({
+      actions: [
+        'ec2:CreateNetworkInterface',
+        'ec2:DescribeNetworkInterfaces',
+        'ec2:DeleteNetworkInterface',
+        'ec2:AssignPrivateIpAddresses',
+        'ec2:UnassignPrivateIpAddresses',
+        'ec2:DescribeSubnets',
+        'ec2:DescribeSecurityGroups',
+        'ec2:DescribeVpcs',
+      ],
+      resources: ['*'],
+    });
 
-      apiLambdaRole.addToPolicy(lambdaVpcAccessPolicy);
-      workerLambdaRole.addToPolicy(lambdaVpcAccessPolicy);
-    }
+    apiLambdaRole.addToPolicy(lambdaVpcAccessPolicy);
+    workerLambdaRole.addToPolicy(lambdaVpcAccessPolicy);
 
     const ordersApi = new lambda.Function(this, 'OrdersApiFunction', {
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -430,24 +397,18 @@ class OrdersIngestStack extends cdk.Stack {
       memorySize: 256,
       timeout: cdk.Duration.seconds(10),
       role: apiLambdaRole,
-      ...(attachesLambdasToVpc
-        ? {
-            vpc,
-            vpcSubnets: {
-              subnets: importedPrivateSubnets,
-            },
-            securityGroups: [apiLambdaSecurityGroup],
-          }
-        : {}),
+      vpc,
+      vpcSubnets: {
+        subnets: importedPrivateSubnets,
+      },
+      securityGroups: [apiLambdaSecurityGroup],
       environment: {
         BUCKET_NAME: ordersArchiveBucket.bucketName,
         EVENT_BUS_NAME: ordersEventBus.eventBusName,
         QUEUE_URL: ordersQueue.queueUrl,
       },
     });
-    if (privateDefaultRoute) {
-      ordersApi.node.addDependency(privateDefaultRoute);
-    }
+    ordersApi.node.addDependency(privateDefaultRoute);
 
     const ordersWorker = new lambda.Function(this, 'OrdersWorkerFunction', {
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -456,29 +417,21 @@ class OrdersIngestStack extends cdk.Stack {
       memorySize: 256,
       timeout: cdk.Duration.seconds(20),
       role: workerLambdaRole,
-      ...(attachesLambdasToVpc
-        ? {
-            vpc,
-            vpcSubnets: {
-              subnets: importedPrivateSubnets,
-            },
-            securityGroups: [workerLambdaSecurityGroup],
-          }
-        : {}),
+      vpc,
+      vpcSubnets: {
+        subnets: importedPrivateSubnets,
+      },
+      securityGroups: [workerLambdaSecurityGroup],
       environment: {
-        DB_HOST: ordersDatabase ? ordersDatabase.dbInstanceEndpointAddress : 'orders-db.local',
+        DB_HOST: ordersDatabase.dbInstanceEndpointAddress,
         DB_NAME: 'orders',
-        DB_PORT: ordersDatabase ? ordersDatabase.dbInstanceEndpointPort : '5432',
+        DB_PORT: ordersDatabase.dbInstanceEndpointPort,
         DB_SECRET_ARN: dbSecret.secretArn,
         TOPIC_ARN: ordersNotificationsTopic.topicArn,
       },
     });
-    if (privateDefaultRoute) {
-      ordersWorker.node.addDependency(privateDefaultRoute);
-    }
-    if (secretsManagerEndpoint) {
-      ordersWorker.node.addDependency(secretsManagerEndpoint);
-    }
+    ordersWorker.node.addDependency(privateDefaultRoute);
+    ordersWorker.node.addDependency(secretsManagerEndpoint);
 
     const ordersApiLogGroup = new logs.LogGroup(this, 'OrdersApiLogGroup', {
       logGroupName: `/aws/lambda/${ordersApi.functionName}`,
@@ -545,24 +498,22 @@ class OrdersIngestStack extends cdk.Stack {
     const ordersResource = api.root.addResource('orders');
     ordersResource.addMethod('POST', new apigateway.LambdaIntegration(ordersApi, { proxy: true }));
 
-    if (createsEventQueuePolicy) {
-      new sqs.CfnQueuePolicy(this, 'OrdersQueuePolicy', {
-        queues: [ordersQueue.queueUrl],
-        policyDocument: {
-          Version: '2012-10-17',
-          Statement: [
-            {
-              Effect: 'Allow',
-              Principal: {
-                Service: 'events.amazonaws.com',
-              },
-              Action: 'sqs:SendMessage',
-              Resource: ordersQueue.queueArn,
+    new sqs.CfnQueuePolicy(this, 'OrdersQueuePolicy', {
+      queues: [ordersQueue.queueUrl],
+      policyDocument: {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Principal: {
+              Service: 'events.amazonaws.com',
             },
-          ],
-        },
-      });
-    }
+            Action: 'sqs:SendMessage',
+            Resource: ordersQueue.queueArn,
+          },
+        ],
+      },
+    });
 
     new events.CfnRule(this, 'OrdersEventRule', {
       eventBusName: ordersEventBus.eventBusName,
@@ -578,11 +529,9 @@ class OrdersIngestStack extends cdk.Stack {
       ],
     });
 
-    if (createsQueueWorkerTrigger) {
-      ordersWorker.addEventSource(new lambdaEventSources.SqsEventSource(ordersQueue, {
-        batchSize: 1,
-      }));
-    }
+    ordersWorker.addEventSource(new lambdaEventSources.SqsEventSource(ordersQueue, {
+      batchSize: 1,
+    }));
 
     const stateMachineRole = new iam.Role(this, 'OrdersStateMachineRole', {
       assumedBy: new iam.ServicePrincipal('states.amazonaws.com'),
@@ -601,43 +550,41 @@ class OrdersIngestStack extends cdk.Stack {
       role: stateMachineRole,
     });
 
-    if (deploysPipe) {
-      const pipeRole = new iam.Role(this, 'OrdersPipeRole', {
-        assumedBy: new iam.ServicePrincipal('pipes.amazonaws.com'),
-      });
+    const pipeRole = new iam.Role(this, 'OrdersPipeRole', {
+      assumedBy: new iam.ServicePrincipal('pipes.amazonaws.com'),
+    });
 
-      pipeRole.addToPolicy(new iam.PolicyStatement({
-        actions: ['sqs:ReceiveMessage', 'sqs:DeleteMessage', 'sqs:GetQueueAttributes'],
-        resources: [ordersQueue.queueArn],
-      }));
+    pipeRole.addToPolicy(new iam.PolicyStatement({
+      actions: ['sqs:ReceiveMessage', 'sqs:DeleteMessage', 'sqs:GetQueueAttributes'],
+      resources: [ordersQueue.queueArn],
+    }));
 
-      pipeRole.addToPolicy(new iam.PolicyStatement({
-        actions: ['lambda:InvokeFunction'],
-        resources: [ordersWorker.functionArn],
-      }));
+    pipeRole.addToPolicy(new iam.PolicyStatement({
+      actions: ['lambda:InvokeFunction'],
+      resources: [ordersWorker.functionArn],
+    }));
 
-      pipeRole.addToPolicy(new iam.PolicyStatement({
-        actions: ['states:StartExecution'],
-        resources: [stateMachine.stateMachineArn],
-      }));
+    pipeRole.addToPolicy(new iam.PolicyStatement({
+      actions: ['states:StartExecution'],
+      resources: [stateMachine.stateMachineArn],
+    }));
 
-      new pipes.CfnPipe(this, 'OrdersPipe', {
-        roleArn: pipeRole.roleArn,
-        source: ordersQueue.queueArn,
-        sourceParameters: {
-          sqsQueueParameters: {
-            batchSize: 1,
-          },
+    new pipes.CfnPipe(this, 'OrdersPipe', {
+      roleArn: pipeRole.roleArn,
+      source: ordersQueue.queueArn,
+      sourceParameters: {
+        sqsQueueParameters: {
+          batchSize: 1,
         },
-        enrichment: ordersWorker.functionArn,
-        target: stateMachine.stateMachineArn,
-        targetParameters: {
-          stepFunctionStateMachineParameters: {
-            invocationType: 'FIRE_AND_FORGET',
-          },
+      },
+      enrichment: ordersWorker.functionArn,
+      target: stateMachine.stateMachineArn,
+      targetParameters: {
+        stepFunctionStateMachineParameters: {
+          invocationType: 'FIRE_AND_FORGET',
         },
-      });
-    }
+      },
+    });
 
     new cdk.CfnOutput(this, 'OrdersApiUrl', {
       value: api.url,

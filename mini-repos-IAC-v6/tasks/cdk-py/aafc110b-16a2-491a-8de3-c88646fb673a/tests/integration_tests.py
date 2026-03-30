@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 from uuid import uuid4
 
 import boto3
+from botocore.exceptions import ClientError
 
 
 STACK_NAME = os.getenv("STACK_NAME", "SecureNotificationStack")
@@ -285,6 +286,18 @@ class TestIntegration(unittest.TestCase):
         response_body = response.get("body") or "{}"
         return response["status"], json.loads(response_body)
 
+    def _test_invoke_api_raw_body(self, body: str) -> tuple[int, dict]:
+        response = self.apigateway.test_invoke_method(
+            restApiId=self.rest_api_id,
+            resourceId=self.events_resource_id,
+            httpMethod="POST",
+            pathWithQueryString="/events",
+            body=body,
+            headers={"Content-Type": "application/json"},
+        )
+        response_body = response.get("body") or "{}"
+        return response["status"], json.loads(response_body)
+
     def _wait_for_queue_message(self, marker: str) -> dict:
         def receive_message():
             response = self.sqs.receive_message(
@@ -520,6 +533,51 @@ class TestIntegration(unittest.TestCase):
         resources = self.apigateway.get_resources(restApiId=self.rest_api_id)["items"]
         events_resource = next(resource for resource in resources if resource["path"] == "/events")
         self.assertIn("POST", events_resource["resourceMethods"])
+
+    def test_api_gateway_rejects_wrong_http_method_for_events_route(self):
+        try:
+            response = self.apigateway.test_invoke_method(
+                restApiId=self.rest_api_id,
+                resourceId=self.events_resource_id,
+                httpMethod="GET",
+                pathWithQueryString="/events",
+            )
+        except ClientError as exc:
+            self.assertIn(
+                exc.response["Error"]["Code"],
+                {"NotFoundException", "BadRequestException", "MethodNotAllowedException"},
+            )
+            return
+
+        self.assertIn(response["status"], {400, 403, 404, 405})
+
+    def test_api_post_with_malformed_json_body_is_handled_without_crashing(self):
+        marker = str(uuid4())
+        malformed_body = f'{{"marker":"{marker}"'
+
+        status_code, body = self._test_invoke_api_raw_body(malformed_body)
+        self.assertEqual(status_code, 202)
+        self.assertEqual(body, {"accepted": True})
+
+        message = self._wait_for_queue_message(marker)
+        self.assertEqual(json.loads(message["Body"]), {"message": malformed_body})
+        self.sqs.delete_message(
+            QueueUrl=self.queue_url,
+            ReceiptHandle=message["ReceiptHandle"],
+        )
+
+    def test_step_functions_reject_invalid_json_input(self):
+        with self.assertRaises(ClientError) as ctx:
+            self.stepfunctions.start_execution(
+                stateMachineArn=self.state_machine_arn,
+                name=f"invalid-{uuid4()}",
+                input="{",
+            )
+
+        self.assertIn(
+            ctx.exception.response["Error"]["Code"],
+            {"ValidationException", "InvalidExecutionInput", "SerializationException"},
+        )
 
     def test_state_machine_execution_invokes_worker_lambda_and_loads_secret(self):
         marker = str(uuid4())

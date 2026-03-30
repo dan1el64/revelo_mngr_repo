@@ -1,5 +1,8 @@
+import json
 import os
 import re
+import sys
+import types
 import unittest
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
@@ -132,6 +135,23 @@ def logical_id_from_getatt(value: dict) -> str:
     return value["Fn::GetAtt"][0]
 
 
+def inline_code_for_lambda_with_env_key(template_json: dict, env_key: str) -> str:
+    functions = resource_properties_of_type(template_json, "AWS::Lambda::Function")
+    return next(
+        properties["Code"]["ZipFile"]
+        for properties in functions.values()
+        if env_key in properties["Environment"]["Variables"]
+    )
+
+
+def load_inline_handler(code: str, env: dict, clients: dict):
+    fake_boto3 = types.SimpleNamespace(client=lambda service_name: clients[service_name])
+    namespace: dict = {}
+    with patch.dict(os.environ, env, clear=False), patch.dict(sys.modules, {"boto3": fake_boto3}):
+        exec(code, namespace)
+    return namespace["handler"]
+
+
 class TestModuleConfiguration(unittest.TestCase):
     def test_deliverable_is_self_contained_root_app(self):
         root_python_files = sorted(path.name for path in ROOT.glob("*.py"))
@@ -182,6 +202,111 @@ class TestModuleConfiguration(unittest.TestCase):
 
             self.assertEqual(module.aws_region, "us-east-1")
             self.assertEqual(os.environ["AWS_REGION"], "us-east-1")
+
+    def test_api_handler_accepts_malformed_json_body_without_crashing(self):
+        template = synth_template_json()
+        sent_messages = []
+
+        class FakeSqsClient:
+            def send_message(self, **kwargs):
+                sent_messages.append(kwargs)
+
+        handler = load_inline_handler(
+            inline_code_for_lambda_with_env_key(template, "QUEUE_URL"),
+            {"QUEUE_URL": "https://queue.example.test"},
+            {"sqs": FakeSqsClient()},
+        )
+
+        response = handler({"body": "{"}, None)
+
+        self.assertEqual(response["statusCode"], 202)
+        self.assertEqual(json.loads(response["body"]), {"accepted": True})
+        self.assertEqual(len(sent_messages), 1)
+        self.assertEqual(json.loads(sent_messages[0]["MessageBody"]), {"message": "{"})
+
+    def test_api_handler_accepts_missing_body_without_crashing(self):
+        template = synth_template_json()
+        sent_messages = []
+
+        class FakeSqsClient:
+            def send_message(self, **kwargs):
+                sent_messages.append(kwargs)
+
+        handler = load_inline_handler(
+            inline_code_for_lambda_with_env_key(template, "QUEUE_URL"),
+            {"QUEUE_URL": "https://queue.example.test"},
+            {"sqs": FakeSqsClient()},
+        )
+
+        event = {"unexpected": "payload", "requestContext": {"requestId": "negative-case"}}
+        response = handler(event, None)
+
+        self.assertEqual(response["statusCode"], 202)
+        self.assertEqual(len(sent_messages), 1)
+        self.assertEqual(json.loads(sent_messages[0]["MessageBody"]), event)
+
+    def test_api_handler_wraps_plain_text_body_as_message_payload(self):
+        template = synth_template_json()
+        sent_messages = []
+
+        class FakeSqsClient:
+            def send_message(self, **kwargs):
+                sent_messages.append(kwargs)
+
+        handler = load_inline_handler(
+            inline_code_for_lambda_with_env_key(template, "QUEUE_URL"),
+            {"QUEUE_URL": "https://queue.example.test"},
+            {"sqs": FakeSqsClient()},
+        )
+
+        response = handler({"body": "plain-text-message"}, None)
+
+        self.assertEqual(response["statusCode"], 202)
+        self.assertEqual(len(sent_messages), 1)
+        self.assertEqual(
+            json.loads(sent_messages[0]["MessageBody"]),
+            {"message": "plain-text-message"},
+        )
+
+    def test_worker_handles_non_list_records_as_zero_processed(self):
+        template = synth_template_json()
+
+        class FakeSecretsClient:
+            def get_secret_value(self, **_kwargs):
+                return {"ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:test"}
+
+        handler = load_inline_handler(
+            inline_code_for_lambda_with_env_key(template, "DB_CREDENTIALS_ARN"),
+            {"DB_CREDENTIALS_ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:test"},
+            {"secretsmanager": FakeSecretsClient()},
+        )
+
+        event = {"Records": "not-a-list"}
+        response = handler(event, None)
+
+        self.assertEqual(response["processedRecords"], 0)
+        self.assertTrue(response["secretLoaded"])
+        self.assertEqual(response["event"], event)
+
+    def test_worker_handles_missing_records_key_as_zero_processed(self):
+        template = synth_template_json()
+
+        class FakeSecretsClient:
+            def get_secret_value(self, **_kwargs):
+                return {"ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:test"}
+
+        handler = load_inline_handler(
+            inline_code_for_lambda_with_env_key(template, "DB_CREDENTIALS_ARN"),
+            {"DB_CREDENTIALS_ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:test"},
+            {"secretsmanager": FakeSecretsClient()},
+        )
+
+        event = {"unexpected": "shape"}
+        response = handler(event, None)
+
+        self.assertEqual(response["processedRecords"], 0)
+        self.assertTrue(response["secretLoaded"])
+        self.assertEqual(response["event"], event)
 
 class TestNetworkSecurity(unittest.TestCase):
     def test_vpc_has_two_public_two_private_subnets_and_one_nat_gateway(self):

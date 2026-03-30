@@ -1,4 +1,4 @@
-Harness: REPO_DIR=/Users/admin/Desktop/mini-repos-IAC-v5/tasks/cdk-ts/291b0440-912a-49b5-afff-8dc2e70496a9 FRAMEWORK=cdk-ts
+Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v5/tasks/cdk-ts/291b0440-912a-49b5-afff-8dc2e70496a9 FRAMEWORK=cdk-ts
 
 
 Starting LocalStack (harness environment)...
@@ -14,13 +14,13 @@ LocalStack is healthy.
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  Step: Setup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
-Starting worker container: harness-worker-75106
-8e8be48f912e223db83897b9519ca4f2f92f6f28dd807d7882afa5b3e8a83932
+Starting worker container: harness-worker-9930
+b2cc5b44677d4fbcbf3458768d63bc12dd1ad89bb0d6697fa68aee257503acc6
 Installing dependencies (npm install)...
 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
-added 405 packages, and audited 442 packages in 24s
+added 405 packages, and audited 442 packages in 22s
 
 41 packages are looking for funding
   run `npm fund` for details
@@ -39,7 +39,7 @@ npm notice New major version of npm available! 10.8.2 -> 11.12.1
 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
 npm notice To update run: npm install -g npm@11.12.1
 npm notice
-Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/e824fdca-954f-4be9-9f54-43d90aa8b484
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/41276b8d-3965-42a0-b737-925c9b428de5
 [32m✅ Step passed: Setup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -59,67 +59,80 @@ platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
 cachedir: .pytest_cache
 rootdir: /work
 configfile: pytest.ini
-collecting ... collected 57 items
+collecting ... collected 70 items
 
-tests/unit_tests.py::test_deliverable_file_structure PASSED              [  1%]
-tests/unit_tests.py::test_config_aws_region_default PASSED               [  3%]
-tests/unit_tests.py::test_config_aws_endpoint_used PASSED                [  5%]
-tests/unit_tests.py::test_config_no_extra_input_variables PASSED         [  7%]
-tests/unit_tests.py::test_compute_ecs_cluster PASSED                     [  8%]
-tests/unit_tests.py::test_compute_fargate_service PASSED                 [ 10%]
-tests/unit_tests.py::test_compute_task_definition PASSED                 [ 12%]
-tests/unit_tests.py::test_compute_autoscaling PASSED                     [ 14%]
-tests/unit_tests.py::test_compute_lambda PASSED                          [ 15%]
-tests/unit_tests.py::test_compute_log_retention PASSED                   [ 17%]
-tests/unit_tests.py::test_compute_step_functions_logging PASSED          [ 19%]
-tests/unit_tests.py::test_compute_step_functions_invokes_migration_lambda PASSED [ 21%]
-tests/unit_tests.py::test_compute_cloudwatch_alarm PASSED                [ 22%]
-tests/unit_tests.py::test_network_vpc PASSED                             [ 24%]
-tests/unit_tests.py::test_network_alb PASSED                             [ 26%]
-tests/unit_tests.py::test_network_target_group PASSED                    [ 28%]
-tests/unit_tests.py::test_network_security_group_ingress PASSED          [ 29%]
-tests/unit_tests.py::test_network_security_group_ingress_exclusivity PASSED [ 31%]
-tests/unit_tests.py::test_alb_routing_rules_http_listener PASSED         [ 33%]
-tests/unit_tests.py::test_frontend_s3_bucket PASSED                      [ 35%]
-tests/unit_tests.py::test_frontend_cloudfront PASSED                     [ 36%]
-tests/unit_tests.py::test_route53_records PASSED                         [ 38%]
-tests/unit_tests.py::test_persistence_rds PASSED                         [ 40%]
-tests/unit_tests.py::test_persistence_secrets_and_ssm PASSED             [ 42%]
-tests/unit_tests.py::test_persistence_no_plaintext_db_credentials PASSED [ 43%]
-tests/unit_tests.py::test_persistence_dynamodb_config PASSED             [ 45%]
-tests/unit_tests.py::test_persistence_dynamodb_key_schema PASSED         [ 47%]
-tests/unit_tests.py::test_persistence_elasticache PASSED                 [ 49%]
-tests/unit_tests.py::test_persistence_elasticache_subnet_group PASSED    [ 50%]
-tests/unit_tests.py::test_io_eventbridge PASSED                          [ 52%]
-tests/unit_tests.py::test_io_eventbridge_targets_sfn PASSED              [ 54%]
-tests/unit_tests.py::test_io_sqs PASSED                                  [ 56%]
-tests/unit_tests.py::test_io_sns PASSED                                  [ 57%]
-tests/unit_tests.py::test_iam_roles_exist PASSED                         [ 59%]
-tests/unit_tests.py::test_ecs_secret_referencing PASSED                  [ 61%]
-tests/unit_tests.py::test_ecr_repository_count PASSED                    [ 63%]
-tests/unit_tests.py::test_ecr_repository_referenced_by_task PASSED       [ 64%]
-tests/unit_tests.py::test_security_group_explicit_egress PASSED          [ 66%]
-tests/unit_tests.py::test_sg_ecs_ingress_from_alb_only PASSED            [ 68%]
-tests/unit_tests.py::test_sg_rds_ingress_from_ecs_and_lambda_only PASSED [ 70%]
-tests/unit_tests.py::test_sg_redis_ingress_from_ecs_only PASSED          [ 71%]
-tests/unit_tests.py::test_sg_lambda_egress_to_rds PASSED                 [ 73%]
+tests/unit_tests.py::test_helper_resolve_ref_variants PASSED             [  1%]
+tests/unit_tests.py::test_helper_statement_normalizers PASSED            [  2%]
+tests/unit_tests.py::test_helper_contains_reference_to_nested_structures PASSED [  4%]
+tests/unit_tests.py::test_deliverable_file_structure PASSED              [  5%]
+tests/unit_tests.py::test_config_aws_region_default PASSED               [  7%]
+tests/unit_tests.py::test_config_aws_endpoint_used PASSED                [  8%]
+tests/unit_tests.py::test_config_no_extra_input_variables PASSED         [ 10%]
+tests/unit_tests.py::test_compute_ecs_cluster PASSED                     [ 11%]
+tests/unit_tests.py::test_compute_fargate_service PASSED                 [ 12%]
+tests/unit_tests.py::test_compute_task_definition PASSED                 [ 14%]
+tests/unit_tests.py::test_compute_autoscaling PASSED                     [ 15%]
+tests/unit_tests.py::test_compute_lambda PASSED                          [ 17%]
+tests/unit_tests.py::test_compute_log_retention PASSED                   [ 18%]
+tests/unit_tests.py::test_compute_step_functions_logging PASSED          [ 20%]
+tests/unit_tests.py::test_compute_step_functions_logging_has_single_destination PASSED [ 21%]
+tests/unit_tests.py::test_compute_step_functions_invokes_migration_lambda PASSED [ 22%]
+tests/unit_tests.py::test_compute_step_functions_topology_is_exact PASSED [ 24%]
+tests/unit_tests.py::test_compute_cloudwatch_alarm PASSED                [ 25%]
+tests/unit_tests.py::test_compute_cloudwatch_alarm_period_is_explicit_and_reference_based PASSED [ 27%]
+tests/unit_tests.py::test_network_vpc PASSED                             [ 28%]
+tests/unit_tests.py::test_network_alb PASSED                             [ 30%]
+tests/unit_tests.py::test_network_target_group PASSED                    [ 31%]
+tests/unit_tests.py::test_network_security_group_ingress PASSED          [ 32%]
+tests/unit_tests.py::test_network_security_group_ingress_exclusivity PASSED [ 34%]
+tests/unit_tests.py::test_network_security_group_egress_exclusivity PASSED [ 35%]
+tests/unit_tests.py::test_alb_routing_rules_http_listener PASSED         [ 37%]
+tests/unit_tests.py::test_frontend_s3_bucket PASSED                      [ 38%]
+tests/unit_tests.py::test_frontend_cloudfront PASSED                     [ 40%]
+tests/unit_tests.py::test_route53_records PASSED                         [ 41%]
+tests/unit_tests.py::test_persistence_rds PASSED                         [ 42%]
+tests/unit_tests.py::test_persistence_secrets_and_ssm PASSED             [ 44%]
+tests/unit_tests.py::test_persistence_no_plaintext_db_credentials PASSED [ 45%]
+tests/unit_tests.py::test_source_no_plaintext_password_assignments PASSED [ 47%]
+tests/unit_tests.py::test_persistence_dynamodb_config PASSED             [ 48%]
+tests/unit_tests.py::test_persistence_dynamodb_key_schema PASSED         [ 50%]
+tests/unit_tests.py::test_persistence_elasticache PASSED                 [ 51%]
+tests/unit_tests.py::test_persistence_elasticache_subnet_group PASSED    [ 52%]
+tests/unit_tests.py::test_io_eventbridge PASSED                          [ 54%]
+tests/unit_tests.py::test_io_eventbridge_single_schedule_rule PASSED     [ 55%]
+tests/unit_tests.py::test_io_eventbridge_targets_sfn PASSED              [ 57%]
+tests/unit_tests.py::test_io_sqs PASSED                                  [ 58%]
+tests/unit_tests.py::test_io_sns PASSED                                  [ 60%]
+tests/unit_tests.py::test_iam_roles_exist PASSED                         [ 61%]
+tests/unit_tests.py::test_iam_expected_role_count PASSED                 [ 62%]
+tests/unit_tests.py::test_ecs_secret_referencing PASSED                  [ 64%]
+tests/unit_tests.py::test_ecr_repository_count PASSED                    [ 65%]
+tests/unit_tests.py::test_ecr_repository_referenced_by_task PASSED       [ 67%]
+tests/unit_tests.py::test_security_group_explicit_egress PASSED          [ 68%]
+tests/unit_tests.py::test_sg_ecs_ingress_from_alb_only PASSED            [ 70%]
+tests/unit_tests.py::test_sg_rds_ingress_from_ecs_and_lambda_only PASSED [ 71%]
+tests/unit_tests.py::test_sg_redis_ingress_from_ecs_only PASSED          [ 72%]
+tests/unit_tests.py::test_sg_lambda_egress_to_rds PASSED                 [ 74%]
 tests/unit_tests.py::test_iam_ecs_task_role_has_required_permissions PASSED [ 75%]
 tests/unit_tests.py::test_iam_ecs_task_role_no_admin_actions PASSED      [ 77%]
 tests/unit_tests.py::test_iam_lambda_role_has_secrets_read PASSED        [ 78%]
 tests/unit_tests.py::test_iam_sfn_role_invokes_lambda_only PASSED        [ 80%]
-tests/unit_tests.py::test_iam_lambda_role_log_scoping PASSED             [ 82%]
-tests/unit_tests.py::test_iam_sfn_role_log_scoping PASSED                [ 84%]
-tests/unit_tests.py::test_determinism_no_fixed_names PASSED              [ 85%]
-tests/unit_tests.py::test_determinism_relationships_use_references PASSED [ 87%]
-tests/unit_tests.py::test_outputs_present PASSED                         [ 89%]
-tests/unit_tests.py::test_negative_no_wildcard_iam_actions PASSED        [ 91%]
-tests/unit_tests.py::test_negative_no_wildcard_iam_resources PASSED      [ 92%]
-tests/unit_tests.py::test_negative_exactly_one_listener PASSED           [ 94%]
-tests/unit_tests.py::test_negative_rds_not_publicly_accessible PASSED    [ 96%]
+tests/unit_tests.py::test_iam_lambda_role_log_scoping PASSED             [ 81%]
+tests/unit_tests.py::test_iam_log_permissions_are_role_specific PASSED   [ 82%]
+tests/unit_tests.py::test_determinism_security_group_rules_use_references PASSED [ 84%]
+tests/unit_tests.py::test_iam_lambda_role_ssm_scope_is_parameter_specific PASSED [ 85%]
+tests/unit_tests.py::test_iam_sfn_role_log_scoping PASSED                [ 87%]
+tests/unit_tests.py::test_determinism_no_fixed_names PASSED              [ 88%]
+tests/unit_tests.py::test_determinism_relationships_use_references PASSED [ 90%]
+tests/unit_tests.py::test_outputs_present PASSED                         [ 91%]
+tests/unit_tests.py::test_negative_no_wildcard_iam_actions PASSED        [ 92%]
+tests/unit_tests.py::test_negative_no_wildcard_iam_resources PASSED      [ 94%]
+tests/unit_tests.py::test_negative_exactly_one_listener PASSED           [ 95%]
+tests/unit_tests.py::test_negative_rds_not_publicly_accessible PASSED    [ 97%]
 tests/unit_tests.py::test_negative_no_open_all_ports_ingress PASSED      [ 98%]
 tests/unit_tests.py::test_negative_cloudfront_uses_oac_or_oai PASSED     [100%]
 
-============================== 57 passed in 0.12s ==============================
+============================== 70 passed in 0.16s ==============================
 [32m✅ Step passed: Unit tests (pytest)[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -128,187 +141,187 @@ tests/unit_tests.py::test_negative_cloudfront_uses_oac_or_oai PASSED     [100%]
 Bootstrapping (if needed)...
 Running cdklocal deploy...
 
-✨  Synthesis time: 12.02s
+✨  Synthesis time: 11.38s
 
-ThreeTierWebAppStack: start: Building 86c68838824b69813d4582a561448d605c92ff8c82cb7c2929d163fea4d37f72
-ThreeTierWebAppStack: success: Built 86c68838824b69813d4582a561448d605c92ff8c82cb7c2929d163fea4d37f72
-ThreeTierWebAppStack: start: Publishing 86c68838824b69813d4582a561448d605c92ff8c82cb7c2929d163fea4d37f72:000000000000-us-east-1
-ThreeTierWebAppStack: success: Published 86c68838824b69813d4582a561448d605c92ff8c82cb7c2929d163fea4d37f72:000000000000-us-east-1
+ThreeTierWebAppStack: start: Building c51fae5cfcf38da30d6addfcb1a47bd45e610f46fc1328227cf96ed496cdd4d0
+ThreeTierWebAppStack: success: Built c51fae5cfcf38da30d6addfcb1a47bd45e610f46fc1328227cf96ed496cdd4d0
+ThreeTierWebAppStack: start: Publishing c51fae5cfcf38da30d6addfcb1a47bd45e610f46fc1328227cf96ed496cdd4d0:000000000000-us-east-1
+ThreeTierWebAppStack: success: Published c51fae5cfcf38da30d6addfcb1a47bd45e610f46fc1328227cf96ed496cdd4d0:000000000000-us-east-1
 ThreeTierWebAppStack: deploying... [1/1]
 ThreeTierWebAppStack: creating CloudFormation changeset...
-ThreeTierWebAppStack |  0/79 | 6:51:28 PM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack                  | ThreeTierWebAppStack User Initiated
-ThreeTierWebAppStack |  0/79 | 6:51:28 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                               | Vpc (Vpc8378EB38) 
-ThreeTierWebAppStack |  0/79 | 6:51:28 PM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack                  | ThreeTierWebAppStack 
-ThreeTierWebAppStack |  0/79 | 6:51:28 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                     | AlbSecurityGroup (AlbSecurityGroup86A59E99) 
-ThreeTierWebAppStack |  1/79 | 6:51:28 PM | CREATE_COMPLETE      | AWS::EC2::VPC                               | Vpc (Vpc8378EB38) 
-ThreeTierWebAppStack |  1/79 | 6:51:28 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | Vpc/PublicSubnet1/RouteTable (VpcPublicSubnet1RouteTable6C95E38E) 
-ThreeTierWebAppStack |  2/79 | 6:51:28 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                     | AlbSecurityGroup (AlbSecurityGroup86A59E99) 
-ThreeTierWebAppStack |  2/79 | 6:51:28 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | Vpc/PublicSubnet1/Subnet (VpcPublicSubnet1Subnet5C2D37C4) 
-ThreeTierWebAppStack |  3/79 | 6:51:28 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | Vpc/PublicSubnet1/RouteTable (VpcPublicSubnet1RouteTable6C95E38E) 
-ThreeTierWebAppStack |  3/79 | 6:51:28 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PublicSubnet1/RouteTableAssociation (VpcPublicSubnet1RouteTableAssociation97140677) 
-ThreeTierWebAppStack |  4/79 | 6:51:28 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | Vpc/PublicSubnet1/Subnet (VpcPublicSubnet1Subnet5C2D37C4) 
-ThreeTierWebAppStack |  4/79 | 6:51:28 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | Vpc/PublicSubnet2/RouteTable (VpcPublicSubnet2RouteTable94F7E489) 
-ThreeTierWebAppStack |  5/79 | 6:51:28 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PublicSubnet1/RouteTableAssociation (VpcPublicSubnet1RouteTableAssociation97140677) 
-ThreeTierWebAppStack |  5/79 | 6:51:28 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | Vpc/PublicSubnet2/Subnet (VpcPublicSubnet2Subnet691E08A3) 
-ThreeTierWebAppStack |  6/79 | 6:51:28 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | Vpc/PublicSubnet2/RouteTable (VpcPublicSubnet2RouteTable94F7E489) 
-ThreeTierWebAppStack |  6/79 | 6:51:28 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PublicSubnet2/RouteTableAssociation (VpcPublicSubnet2RouteTableAssociationDD5762D8) 
-ThreeTierWebAppStack |  7/79 | 6:51:28 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | Vpc/PublicSubnet2/Subnet (VpcPublicSubnet2Subnet691E08A3) 
-ThreeTierWebAppStack |  8/79 | 6:51:28 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PublicSubnet2/RouteTableAssociation (VpcPublicSubnet2RouteTableAssociationDD5762D8) 
-ThreeTierWebAppStack |  8/79 | 6:51:28 PM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway                   | Vpc/IGW (VpcIGWD7BA715C) 
-ThreeTierWebAppStack |  8/79 | 6:51:28 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment              | Vpc/VPCGW (VpcVPCGWBF912B6E) 
-ThreeTierWebAppStack |  9/79 | 6:51:28 PM | CREATE_COMPLETE      | AWS::EC2::InternetGateway                   | Vpc/IGW (VpcIGWD7BA715C) 
-ThreeTierWebAppStack |  9/79 | 6:51:28 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | Vpc/PublicSubnet1/DefaultRoute (VpcPublicSubnet1DefaultRoute3DA9E72A) 
-ThreeTierWebAppStack | 10/79 | 6:51:28 PM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment              | Vpc/VPCGW (VpcVPCGWBF912B6E) 
-ThreeTierWebAppStack | 10/79 | 6:51:28 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | Vpc/PublicSubnet2/DefaultRoute (VpcPublicSubnet2DefaultRoute97F91067) 
-ThreeTierWebAppStack | 11/79 | 6:51:28 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | Vpc/PublicSubnet1/DefaultRoute (VpcPublicSubnet1DefaultRoute3DA9E72A) 
-ThreeTierWebAppStack | 11/79 | 6:51:28 PM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::LoadBalancer   | BackendAlb (BackendAlb0D5FE5C5) 
-ThreeTierWebAppStack | 12/79 | 6:51:28 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | Vpc/PublicSubnet2/DefaultRoute (VpcPublicSubnet2DefaultRoute97F91067) 
-ThreeTierWebAppStack | 12/79 | 6:51:28 PM | CREATE_IN_PROGRESS   | AWS::Route53::HostedZone                    | HostedZone (HostedZoneDB99F866) 
-ThreeTierWebAppStack | 13/79 | 6:51:28 PM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::LoadBalancer   | BackendAlb (BackendAlb0D5FE5C5) Resource type AWS::ElasticLoadBalancingV2::LoadBalancer is not supported but was deployed as a fallback
-ThreeTierWebAppStack | 13/79 | 6:51:30 PM | CREATE_IN_PROGRESS   | AWS::Route53::RecordSet                     | ApiAliasRecord (ApiAliasRecordBCE933A3) 
-ThreeTierWebAppStack | 14/79 | 6:51:30 PM | CREATE_COMPLETE      | AWS::Route53::HostedZone                    | HostedZone (HostedZoneDB99F866) 
-ThreeTierWebAppStack | 15/79 | 6:51:30 PM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::TargetGroup    | BackendTargetGroup (BackendTargetGroupECF98930) Resource type AWS::ElasticLoadBalancingV2::TargetGroup is not supported but was deployed as a fallback
-ThreeTierWebAppStack | 15/79 | 6:51:30 PM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::TargetGroup    | BackendTargetGroup (BackendTargetGroupECF98930) 
-ThreeTierWebAppStack | 16/79 | 6:51:30 PM | CREATE_COMPLETE      | AWS::Route53::RecordSet                     | ApiAliasRecord (ApiAliasRecordBCE933A3) 
-ThreeTierWebAppStack | 16/79 | 6:51:30 PM | CREATE_IN_PROGRESS   | AWS::CloudWatch::Alarm                      | BackendHttp5xxAlarm (BackendHttp5xxAlarm284CE474) 
-ThreeTierWebAppStack | 17/79 | 6:51:30 PM | CREATE_COMPLETE      | AWS::ECS::Cluster                           | BackendCluster (BackendCluster5086059C) Resource type AWS::ECS::Cluster is not supported but was deployed as a fallback
-ThreeTierWebAppStack | 17/79 | 6:51:30 PM | CREATE_IN_PROGRESS   | AWS::ECS::Cluster                           | BackendCluster (BackendCluster5086059C) 
-ThreeTierWebAppStack | 18/79 | 6:51:30 PM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::ListenerRule   | BackendAlb/HttpListener/HealthRuleRule (BackendAlbHttpListenerHealthRuleRule9E20E3A4) Resource type AWS::ElasticLoadBalancingV2::ListenerRule is not supported but was deployed as a fallback
-ThreeTierWebAppStack | 18/79 | 6:51:30 PM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::ListenerRule   | BackendAlb/HttpListener/HealthRuleRule (BackendAlbHttpListenerHealthRuleRule9E20E3A4) 
-ThreeTierWebAppStack | 19/79 | 6:51:30 PM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::ListenerRule   | BackendAlb/HttpListener/ApiRuleRule (BackendAlbHttpListenerApiRuleRule6C635026) Resource type AWS::ElasticLoadBalancingV2::ListenerRule is not supported but was deployed as a fallback
-ThreeTierWebAppStack | 19/79 | 6:51:30 PM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::ListenerRule   | BackendAlb/HttpListener/ApiRuleRule (BackendAlbHttpListenerApiRuleRule6C635026) 
-ThreeTierWebAppStack | 20/79 | 6:51:30 PM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::Listener       | BackendAlb/HttpListener (BackendAlbHttpListener58B160AA) Resource type AWS::ElasticLoadBalancingV2::Listener is not supported but was deployed as a fallback
-ThreeTierWebAppStack | 20/79 | 6:51:30 PM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::Listener       | BackendAlb/HttpListener (BackendAlbHttpListener58B160AA) 
-ThreeTierWebAppStack | 20/79 | 6:51:30 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                         | BackendLogGroup (BackendLogGroupDA10F1B2) 
-ThreeTierWebAppStack | 21/79 | 6:51:30 PM | CREATE_COMPLETE      | AWS::CloudWatch::Alarm                      | BackendHttp5xxAlarm (BackendHttp5xxAlarm284CE474) 
-ThreeTierWebAppStack | 22/79 | 6:51:30 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                         | BackendLogGroup (BackendLogGroupDA10F1B2) 
-ThreeTierWebAppStack | 22/79 | 6:51:30 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | BackendTaskRole (BackendTaskRole65DD5890) 
-ThreeTierWebAppStack | 23/79 | 6:51:30 PM | CREATE_COMPLETE      | AWS::ECR::Repository                        | BackendRepository (BackendRepository9B711290) 
-ThreeTierWebAppStack | 23/79 | 6:51:30 PM | CREATE_IN_PROGRESS   | AWS::ECR::Repository                        | BackendRepository (BackendRepository9B711290) 
-ThreeTierWebAppStack | 23/79 | 6:51:30 PM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret                 | DatabaseSecret (DatabaseSecret86DBB7B3) 
-ThreeTierWebAppStack | 24/79 | 6:51:30 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | BackendTaskRole (BackendTaskRole65DD5890) 
-ThreeTierWebAppStack | 25/79 | 6:51:30 PM | CREATE_COMPLETE      | AWS::SecretsManager::Secret                 | DatabaseSecret (DatabaseSecret86DBB7B3) 
-ThreeTierWebAppStack | 25/79 | 6:51:30 PM | CREATE_IN_PROGRESS   | AWS::DynamoDB::Table                        | SessionTable (SessionTableA016F679) 
-ThreeTierWebAppStack | 25/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                             | JobQueue (JobQueueEE3AD499) 
-ThreeTierWebAppStack | 26/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::DynamoDB::Table                        | SessionTable (SessionTableA016F679) 
-ThreeTierWebAppStack | 26/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::SNS::Topic                             | NotificationsTopic (NotificationsTopicE4AF40A8) 
-ThreeTierWebAppStack | 27/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::SQS::Queue                             | JobQueue (JobQueueEE3AD499) 
-ThreeTierWebAppStack | 27/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | Vpc/PrivateSubnet1/Subnet (VpcPrivateSubnet1Subnet536B997A) 
-ThreeTierWebAppStack | 28/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::SNS::Topic                             | NotificationsTopic (NotificationsTopicE4AF40A8) 
-ThreeTierWebAppStack | 29/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | Vpc/PrivateSubnet1/Subnet (VpcPrivateSubnet1Subnet536B997A) 
-ThreeTierWebAppStack | 29/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | Vpc/PrivateSubnet2/Subnet (VpcPrivateSubnet2Subnet3788AAA1) 
-ThreeTierWebAppStack | 30/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::RDS::DBSubnetGroup                     | DatabaseSubnetGroup Resource type AWS::RDS::DBSubnetGroup is not supported but was deployed as a fallback
-ThreeTierWebAppStack | 30/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::RDS::DBSubnetGroup                     | DatabaseSubnetGroup 
-ThreeTierWebAppStack | 31/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | Vpc/PrivateSubnet2/Subnet (VpcPrivateSubnet2Subnet3788AAA1) 
-ThreeTierWebAppStack | 31/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                     | RdsSecurityGroup (RdsSecurityGroup632A77E4) 
-ThreeTierWebAppStack | 31/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::SSM::Parameter                         | DbEndpointParameter (DbEndpointParameterDA0E7868) 
-ThreeTierWebAppStack | 32/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::RDS::DBInstance                        | Database Resource type AWS::RDS::DBInstance is not supported but was deployed as a fallback
-ThreeTierWebAppStack | 32/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::RDS::DBInstance                        | Database 
-ThreeTierWebAppStack | 33/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                     | RdsSecurityGroup (RdsSecurityGroup632A77E4) 
-ThreeTierWebAppStack | 33/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | BackendTaskRole/DefaultPolicy (BackendTaskRoleDefaultPolicyD82ED08E) 
-ThreeTierWebAppStack | 34/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::SSM::Parameter                         | DbEndpointParameter (DbEndpointParameterDA0E7868) 
-ThreeTierWebAppStack | 34/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                     | EcsSecurityGroup (EcsSecurityGroup44008BF1) 
-ThreeTierWebAppStack | 35/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | BackendTaskRole/DefaultPolicy (BackendTaskRoleDefaultPolicyD82ED08E) 
-ThreeTierWebAppStack | 36/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                     | EcsSecurityGroup (EcsSecurityGroup44008BF1) 
-ThreeTierWebAppStack | 36/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | BackendTaskDefinition/ExecutionRole (BackendTaskDefinitionExecutionRoleDA72B768) 
-ThreeTierWebAppStack | 36/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::ECS::Service                           | BackendService/Service (BackendService7A4224EE) 
-ThreeTierWebAppStack | 37/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::ECS::TaskDefinition                    | BackendTaskDefinition (BackendTaskDefinitionEC224DE6) Resource type AWS::ECS::TaskDefinition is not supported but was deployed as a fallback
-ThreeTierWebAppStack | 37/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::ECS::TaskDefinition                    | BackendTaskDefinition (BackendTaskDefinitionEC224DE6) 
-ThreeTierWebAppStack | 38/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | BackendTaskDefinition/ExecutionRole (BackendTaskDefinitionExecutionRoleDA72B768) 
-ThreeTierWebAppStack | 38/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | BackendTaskDefinition/ExecutionRole/DefaultPolicy (BackendTaskDefinitionExecutionRoleDefaultPolicy0750C44A) 
-ThreeTierWebAppStack | 39/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::ApplicationAutoScaling::ScalingPolicy  | BackendService/TaskCount/Target/BackendCpuScaling (BackendServiceTaskCountTargetBackendCpuScaling3DD11755) Resource type AWS::ApplicationAutoScaling::ScalingPolicy is not supported but was deployed as a fallback
-ThreeTierWebAppStack | 39/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::ApplicationAutoScaling::ScalingPolicy  | BackendService/TaskCount/Target/BackendCpuScaling (BackendServiceTaskCountTargetBackendCpuScaling3DD11755) 
-ThreeTierWebAppStack | 40/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::ApplicationAutoScaling::ScalableTarget | BackendService/TaskCount/Target (BackendServiceTaskCountTarget0CA57D80) Resource type AWS::ApplicationAutoScaling::ScalableTarget is not supported but was deployed as a fallback
-ThreeTierWebAppStack | 40/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::ApplicationAutoScaling::ScalableTarget | BackendService/TaskCount/Target (BackendServiceTaskCountTarget0CA57D80) 
-ThreeTierWebAppStack | 41/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::ECS::Service                           | BackendService/Service (BackendService7A4224EE) Resource type AWS::ECS::Service is not supported but was deployed as a fallback
-ThreeTierWebAppStack | 41/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress              | EcsSecurityGroup/from ThreeTierWebAppStackAlbSecurityGroup3D3FB7C4:8080 (EcsSecurityGroupfromThreeTierWebAppStackAlbSecurityGroup3D3FB7C48080BF947197) 
-ThreeTierWebAppStack | 42/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::CDK::Metadata                          | CDKMetadata/Default (CDKMetadata) 
-ThreeTierWebAppStack | 42/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                          | CDKMetadata/Default (CDKMetadata) 
-ThreeTierWebAppStack | 43/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | BackendTaskDefinition/ExecutionRole/DefaultPolicy (BackendTaskDefinitionExecutionRoleDefaultPolicy0750C44A) 
-ThreeTierWebAppStack | 43/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupEgress               | EcsSecurityGroup/to ThreeTierWebAppStackRdsSecurityGroup5567E4C5:5432 (EcsSecurityGrouptoThreeTierWebAppStackRdsSecurityGroup5567E4C554326D844378) 
-ThreeTierWebAppStack | 44/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress              | EcsSecurityGroup/from ThreeTierWebAppStackAlbSecurityGroup3D3FB7C4:8080 (EcsSecurityGroupfromThreeTierWebAppStackAlbSecurityGroup3D3FB7C48080BF947197) 
-ThreeTierWebAppStack | 44/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                     | RedisSecurityGroup (RedisSecurityGroupB05951F6) 
-ThreeTierWebAppStack | 45/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupEgress               | EcsSecurityGroup/to ThreeTierWebAppStackRdsSecurityGroup5567E4C5:5432 (EcsSecurityGrouptoThreeTierWebAppStackRdsSecurityGroup5567E4C554326D844378) 
-ThreeTierWebAppStack | 45/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupEgress               | EcsSecurityGroup/to ThreeTierWebAppStackRedisSecurityGroupFED5A448:6379 (EcsSecurityGrouptoThreeTierWebAppStackRedisSecurityGroupFED5A4486379F2548AF8) 
-ThreeTierWebAppStack | 46/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                     | RedisSecurityGroup (RedisSecurityGroupB05951F6) 
-ThreeTierWebAppStack | 46/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                             | FrontendBucket (FrontendBucketEFE2E19C) 
-ThreeTierWebAppStack | 47/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupEgress               | EcsSecurityGroup/to ThreeTierWebAppStackRedisSecurityGroupFED5A448:6379 (EcsSecurityGrouptoThreeTierWebAppStackRedisSecurityGroupFED5A4486379F2548AF8) 
-ThreeTierWebAppStack | 47/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::Route53::RecordSet                     | FrontendAliasRecord (FrontendAliasRecordAF9BE7A7) 
-ThreeTierWebAppStack | 48/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::CloudFront::Distribution               | FrontendDistribution (FrontendDistributionE6EAF405) Resource type AWS::CloudFront::Distribution is not supported but was deployed as a fallback
-ThreeTierWebAppStack | 48/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::CloudFront::Distribution               | FrontendDistribution (FrontendDistributionE6EAF405) 
-ThreeTierWebAppStack | 49/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::CloudFront::OriginAccessControl        | FrontendDistribution/Origin1/S3OriginAccessControl (FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6) Resource type AWS::CloudFront::OriginAccessControl is not supported but was deployed as a fallback
-ThreeTierWebAppStack | 49/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::CloudFront::OriginAccessControl        | FrontendDistribution/Origin1/S3OriginAccessControl (FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6) 
-ThreeTierWebAppStack | 50/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::S3::Bucket                             | FrontendBucket (FrontendBucketEFE2E19C) 
-ThreeTierWebAppStack | 50/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::S3::BucketPolicy                       | FrontendBucket/Policy (FrontendBucketPolicy1DFF75D9) 
-ThreeTierWebAppStack | 51/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::Route53::RecordSet                     | FrontendAliasRecord (FrontendAliasRecordAF9BE7A7) 
-ThreeTierWebAppStack | 51/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                     | LambdaSecurityGroup (LambdaSecurityGroup0BD9FC99) 
-ThreeTierWebAppStack | 52/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::S3::BucketPolicy                       | FrontendBucket/Policy (FrontendBucketPolicy1DFF75D9) 
-ThreeTierWebAppStack | 52/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupEgress               | LambdaSecurityGroup/to ThreeTierWebAppStackRdsSecurityGroup5567E4C5:5432 (LambdaSecurityGrouptoThreeTierWebAppStackRdsSecurityGroup5567E4C554326DB49A20) 
-ThreeTierWebAppStack | 53/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                     | LambdaSecurityGroup (LambdaSecurityGroup0BD9FC99) 
-ThreeTierWebAppStack | 53/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                               | Vpc/PublicSubnet1/EIP (VpcPublicSubnet1EIPD7E02669) 
-ThreeTierWebAppStack | 54/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupEgress               | LambdaSecurityGroup/to ThreeTierWebAppStackRdsSecurityGroup5567E4C5:5432 (LambdaSecurityGrouptoThreeTierWebAppStackRdsSecurityGroup5567E4C554326DB49A20) 
-ThreeTierWebAppStack | 54/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                        | Vpc/PublicSubnet1/NATGateway (VpcPublicSubnet1NATGateway4D7517AA) 
-ThreeTierWebAppStack | 55/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::EIP                               | Vpc/PublicSubnet1/EIP (VpcPublicSubnet1EIPD7E02669) 
-ThreeTierWebAppStack | 55/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | Vpc/PrivateSubnet2/RouteTable (VpcPrivateSubnet2RouteTableA678073B) 
-ThreeTierWebAppStack | 56/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::NatGateway                        | Vpc/PublicSubnet1/NATGateway (VpcPublicSubnet1NATGateway4D7517AA) 
-ThreeTierWebAppStack | 56/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | Vpc/PrivateSubnet2/DefaultRoute (VpcPrivateSubnet2DefaultRoute060D2087) 
-ThreeTierWebAppStack | 57/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | Vpc/PrivateSubnet2/RouteTable (VpcPrivateSubnet2RouteTableA678073B) 
-ThreeTierWebAppStack | 57/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | MigrationLambdaRole (MigrationLambdaRole16FEFB50) 
-ThreeTierWebAppStack | 58/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | Vpc/PrivateSubnet2/DefaultRoute (VpcPrivateSubnet2DefaultRoute060D2087) 
-ThreeTierWebAppStack | 58/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                         | MigrationLambdaLogGroup (MigrationLambdaLogGroupB9E3C18D) 
-ThreeTierWebAppStack | 59/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | MigrationLambdaRole (MigrationLambdaRole16FEFB50) 
-ThreeTierWebAppStack | 59/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | MigrationLambdaRole/DefaultPolicy (MigrationLambdaRoleDefaultPolicy3CBF61FE) 
-ThreeTierWebAppStack | 60/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                         | MigrationLambdaLogGroup (MigrationLambdaLogGroupB9E3C18D) 
-ThreeTierWebAppStack | 60/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | Vpc/PrivateSubnet1/RouteTable (VpcPrivateSubnet1RouteTableB2C5B500) 
-ThreeTierWebAppStack | 61/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | MigrationLambdaRole/DefaultPolicy (MigrationLambdaRoleDefaultPolicy3CBF61FE) 
-ThreeTierWebAppStack | 61/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | Vpc/PrivateSubnet1/DefaultRoute (VpcPrivateSubnet1DefaultRouteBE02A9ED) 
-ThreeTierWebAppStack | 62/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | Vpc/PrivateSubnet1/RouteTable (VpcPrivateSubnet1RouteTableB2C5B500) 
-ThreeTierWebAppStack | 62/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PrivateSubnet2/RouteTableAssociation (VpcPrivateSubnet2RouteTableAssociationA89CAD56) 
-ThreeTierWebAppStack | 63/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | Vpc/PrivateSubnet1/DefaultRoute (VpcPrivateSubnet1DefaultRouteBE02A9ED) 
-ThreeTierWebAppStack | 63/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PrivateSubnet1/RouteTableAssociation (VpcPrivateSubnet1RouteTableAssociation70C59FA6) 
-ThreeTierWebAppStack | 64/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PrivateSubnet2/RouteTableAssociation (VpcPrivateSubnet2RouteTableAssociationA89CAD56) 
-ThreeTierWebAppStack | 64/79 | 6:51:32 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                       | MigrationLambda (MigrationLambdaDC97547E) 
-ThreeTierWebAppStack | 65/79 | 6:51:32 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PrivateSubnet1/RouteTableAssociation (VpcPrivateSubnet1RouteTableAssociation70C59FA6) 
-ThreeTierWebAppStack | 65/79 | 6:51:34 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | MigrationScheduleRole (MigrationScheduleRole17DA6633) 
-ThreeTierWebAppStack | 66/79 | 6:51:34 PM | CREATE_COMPLETE      | AWS::Lambda::Function                       | MigrationLambda (MigrationLambdaDC97547E) 
-ThreeTierWebAppStack | 66/79 | 6:51:34 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | MigrationStateMachineRole (MigrationStateMachineRole73ED43F3) 
-ThreeTierWebAppStack | 67/79 | 6:51:34 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | MigrationScheduleRole (MigrationScheduleRole17DA6633) 
-ThreeTierWebAppStack | 68/79 | 6:51:34 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | MigrationStateMachineRole (MigrationStateMachineRole73ED43F3) 
-ThreeTierWebAppStack | 68/79 | 6:51:34 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | MigrationStateMachineRole/DefaultPolicy (MigrationStateMachineRoleDefaultPolicy41AA745A) 
-ThreeTierWebAppStack | 68/79 | 6:51:34 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                         | MigrationStateMachineLogGroup (MigrationStateMachineLogGroup9C8D630C) 
-ThreeTierWebAppStack | 69/79 | 6:51:34 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | MigrationStateMachineRole/DefaultPolicy (MigrationStateMachineRoleDefaultPolicy41AA745A) 
-ThreeTierWebAppStack | 69/79 | 6:51:34 PM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine            | MigrationStateMachine (MigrationStateMachine8737F4C8) 
-ThreeTierWebAppStack | 70/79 | 6:51:34 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                         | MigrationStateMachineLogGroup (MigrationStateMachineLogGroup9C8D630C) 
-ThreeTierWebAppStack | 70/79 | 6:51:34 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | MigrationScheduleRole/DefaultPolicy (MigrationScheduleRoleDefaultPolicy4D27685B) 
-ThreeTierWebAppStack | 71/79 | 6:51:34 PM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine            | MigrationStateMachine (MigrationStateMachine8737F4C8) 
-ThreeTierWebAppStack | 72/79 | 6:51:34 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | MigrationScheduleRole/DefaultPolicy (MigrationScheduleRoleDefaultPolicy4D27685B) 
-ThreeTierWebAppStack | 72/79 | 6:51:34 PM | CREATE_IN_PROGRESS   | AWS::Events::Rule                           | MigrationScheduleRule (MigrationScheduleRuleFF7898B0) 
-ThreeTierWebAppStack | 72/79 | 6:51:34 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress              | RdsSecurityGroup/from ThreeTierWebAppStackEcsSecurityGroupA547C8E4:5432 (RdsSecurityGroupfromThreeTierWebAppStackEcsSecurityGroupA547C8E45432F246ACB6) 
-ThreeTierWebAppStack | 73/79 | 6:51:34 PM | CREATE_COMPLETE      | AWS::Events::Rule                           | MigrationScheduleRule (MigrationScheduleRuleFF7898B0) 
-ThreeTierWebAppStack | 74/79 | 6:51:34 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress              | RdsSecurityGroup/from ThreeTierWebAppStackEcsSecurityGroupA547C8E4:5432 (RdsSecurityGroupfromThreeTierWebAppStackEcsSecurityGroupA547C8E45432F246ACB6) 
-ThreeTierWebAppStack | 74/79 | 6:51:34 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress              | RdsSecurityGroup/from ThreeTierWebAppStackLambdaSecurityGroupD05AC989:5432 (RdsSecurityGroupfromThreeTierWebAppStackLambdaSecurityGroupD05AC989543261D51ABA) 
-ThreeTierWebAppStack | 75/79 | 6:51:34 PM | CREATE_COMPLETE      | AWS::ElastiCache::SubnetGroup               | RedisSubnetGroup Resource type AWS::ElastiCache::SubnetGroup is not supported but was deployed as a fallback
-ThreeTierWebAppStack | 75/79 | 6:51:34 PM | CREATE_IN_PROGRESS   | AWS::ElastiCache::SubnetGroup               | RedisSubnetGroup 
-ThreeTierWebAppStack | 76/79 | 6:51:34 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress              | RdsSecurityGroup/from ThreeTierWebAppStackLambdaSecurityGroupD05AC989:5432 (RdsSecurityGroupfromThreeTierWebAppStackLambdaSecurityGroupD05AC989543261D51ABA) 
-ThreeTierWebAppStack | 76/79 | 6:51:34 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress              | RedisSecurityGroup/from ThreeTierWebAppStackEcsSecurityGroupA547C8E4:6379 (RedisSecurityGroupfromThreeTierWebAppStackEcsSecurityGroupA547C8E4637955A9B434) 
-ThreeTierWebAppStack | 77/79 | 6:51:34 PM | CREATE_COMPLETE      | AWS::ElastiCache::ReplicationGroup          | RedisReplicationGroup Resource type AWS::ElastiCache::ReplicationGroup is not supported but was deployed as a fallback
-ThreeTierWebAppStack | 77/79 | 6:51:34 PM | CREATE_IN_PROGRESS   | AWS::ElastiCache::ReplicationGroup          | RedisReplicationGroup 
-ThreeTierWebAppStack | 78/79 | 6:51:34 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress              | RedisSecurityGroup/from ThreeTierWebAppStackEcsSecurityGroupA547C8E4:6379 (RedisSecurityGroupfromThreeTierWebAppStackEcsSecurityGroupA547C8E4637955A9B434) 
-ThreeTierWebAppStack | 79/79 | 6:51:34 PM | CREATE_COMPLETE      | AWS::CloudFormation::Stack                  | ThreeTierWebAppStack 
+ThreeTierWebAppStack |  0/79 | 3:37:58 PM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack                  | ThreeTierWebAppStack User Initiated
+ThreeTierWebAppStack |  0/79 | 3:37:58 PM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack                  | ThreeTierWebAppStack 
+ThreeTierWebAppStack |  0/79 | 3:37:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                               | Vpc (Vpc8378EB38) 
+ThreeTierWebAppStack |  0/79 | 3:37:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                     | AlbSecurityGroup (AlbSecurityGroup86A59E99) 
+ThreeTierWebAppStack |  1/79 | 3:37:58 PM | CREATE_COMPLETE      | AWS::EC2::VPC                               | Vpc (Vpc8378EB38) 
+ThreeTierWebAppStack |  1/79 | 3:37:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway                   | Vpc/IGW (VpcIGWD7BA715C) 
+ThreeTierWebAppStack |  2/79 | 3:37:58 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                     | AlbSecurityGroup (AlbSecurityGroup86A59E99) 
+ThreeTierWebAppStack |  2/79 | 3:37:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment              | Vpc/VPCGW (VpcVPCGWBF912B6E) 
+ThreeTierWebAppStack |  3/79 | 3:37:58 PM | CREATE_COMPLETE      | AWS::EC2::InternetGateway                   | Vpc/IGW (VpcIGWD7BA715C) 
+ThreeTierWebAppStack |  4/79 | 3:37:58 PM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment              | Vpc/VPCGW (VpcVPCGWBF912B6E) 
+ThreeTierWebAppStack |  4/79 | 3:37:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | Vpc/PublicSubnet1/RouteTable (VpcPublicSubnet1RouteTable6C95E38E) 
+ThreeTierWebAppStack |  4/79 | 3:37:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | Vpc/PublicSubnet1/DefaultRoute (VpcPublicSubnet1DefaultRoute3DA9E72A) 
+ThreeTierWebAppStack |  5/79 | 3:37:58 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | Vpc/PublicSubnet1/RouteTable (VpcPublicSubnet1RouteTable6C95E38E) 
+ThreeTierWebAppStack |  5/79 | 3:37:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | Vpc/PublicSubnet1/Subnet (VpcPublicSubnet1Subnet5C2D37C4) 
+ThreeTierWebAppStack |  6/79 | 3:37:58 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | Vpc/PublicSubnet1/DefaultRoute (VpcPublicSubnet1DefaultRoute3DA9E72A) 
+ThreeTierWebAppStack |  6/79 | 3:37:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PublicSubnet1/RouteTableAssociation (VpcPublicSubnet1RouteTableAssociation97140677) 
+ThreeTierWebAppStack |  7/79 | 3:37:58 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | Vpc/PublicSubnet1/Subnet (VpcPublicSubnet1Subnet5C2D37C4) 
+ThreeTierWebAppStack |  7/79 | 3:37:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | Vpc/PublicSubnet2/RouteTable (VpcPublicSubnet2RouteTable94F7E489) 
+ThreeTierWebAppStack |  8/79 | 3:37:58 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PublicSubnet1/RouteTableAssociation (VpcPublicSubnet1RouteTableAssociation97140677) 
+ThreeTierWebAppStack |  8/79 | 3:37:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | Vpc/PublicSubnet2/Subnet (VpcPublicSubnet2Subnet691E08A3) 
+ThreeTierWebAppStack |  9/79 | 3:37:58 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | Vpc/PublicSubnet2/RouteTable (VpcPublicSubnet2RouteTable94F7E489) 
+ThreeTierWebAppStack |  9/79 | 3:37:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PublicSubnet2/RouteTableAssociation (VpcPublicSubnet2RouteTableAssociationDD5762D8) 
+ThreeTierWebAppStack | 10/79 | 3:37:58 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | Vpc/PublicSubnet2/Subnet (VpcPublicSubnet2Subnet691E08A3) 
+ThreeTierWebAppStack | 10/79 | 3:37:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | Vpc/PublicSubnet2/DefaultRoute (VpcPublicSubnet2DefaultRoute97F91067) 
+ThreeTierWebAppStack | 11/79 | 3:37:58 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PublicSubnet2/RouteTableAssociation (VpcPublicSubnet2RouteTableAssociationDD5762D8) 
+ThreeTierWebAppStack | 11/79 | 3:37:58 PM | CREATE_IN_PROGRESS   | AWS::Route53::HostedZone                    | HostedZone (HostedZoneDB99F866) 
+ThreeTierWebAppStack | 12/79 | 3:37:58 PM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::LoadBalancer   | BackendAlb (BackendAlb0D5FE5C5) Resource type AWS::ElasticLoadBalancingV2::LoadBalancer is not supported but was deployed as a fallback
+ThreeTierWebAppStack | 12/79 | 3:37:58 PM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::LoadBalancer   | BackendAlb (BackendAlb0D5FE5C5) 
+ThreeTierWebAppStack | 13/79 | 3:37:58 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | Vpc/PublicSubnet2/DefaultRoute (VpcPublicSubnet2DefaultRoute97F91067) 
+ThreeTierWebAppStack | 13/79 | 3:37:59 PM | CREATE_IN_PROGRESS   | AWS::Route53::RecordSet                     | ApiAliasRecord (ApiAliasRecordBCE933A3) 
+ThreeTierWebAppStack | 14/79 | 3:37:59 PM | CREATE_COMPLETE      | AWS::Route53::HostedZone                    | HostedZone (HostedZoneDB99F866) 
+ThreeTierWebAppStack | 15/79 | 3:37:59 PM | CREATE_COMPLETE      | AWS::ECS::Cluster                           | BackendCluster (BackendCluster5086059C) Resource type AWS::ECS::Cluster is not supported but was deployed as a fallback
+ThreeTierWebAppStack | 15/79 | 3:37:59 PM | CREATE_IN_PROGRESS   | AWS::ECS::Cluster                           | BackendCluster (BackendCluster5086059C) 
+ThreeTierWebAppStack | 16/79 | 3:37:59 PM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::ListenerRule   | BackendAlb/HttpListener/HealthRuleRule (BackendAlbHttpListenerHealthRuleRule9E20E3A4) Resource type AWS::ElasticLoadBalancingV2::ListenerRule is not supported but was deployed as a fallback
+ThreeTierWebAppStack | 16/79 | 3:37:59 PM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::ListenerRule   | BackendAlb/HttpListener/HealthRuleRule (BackendAlbHttpListenerHealthRuleRule9E20E3A4) 
+ThreeTierWebAppStack | 17/79 | 3:37:59 PM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::ListenerRule   | BackendAlb/HttpListener/ApiRuleRule (BackendAlbHttpListenerApiRuleRule6C635026) Resource type AWS::ElasticLoadBalancingV2::ListenerRule is not supported but was deployed as a fallback
+ThreeTierWebAppStack | 17/79 | 3:37:59 PM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::ListenerRule   | BackendAlb/HttpListener/ApiRuleRule (BackendAlbHttpListenerApiRuleRule6C635026) 
+ThreeTierWebAppStack | 18/79 | 3:37:59 PM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::Listener       | BackendAlb/HttpListener (BackendAlbHttpListener58B160AA) Resource type AWS::ElasticLoadBalancingV2::Listener is not supported but was deployed as a fallback
+ThreeTierWebAppStack | 18/79 | 3:37:59 PM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::Listener       | BackendAlb/HttpListener (BackendAlbHttpListener58B160AA) 
+ThreeTierWebAppStack | 19/79 | 3:37:59 PM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::TargetGroup    | BackendTargetGroup (BackendTargetGroupECF98930) Resource type AWS::ElasticLoadBalancingV2::TargetGroup is not supported but was deployed as a fallback
+ThreeTierWebAppStack | 19/79 | 3:37:59 PM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::TargetGroup    | BackendTargetGroup (BackendTargetGroupECF98930) 
+ThreeTierWebAppStack | 20/79 | 3:37:59 PM | CREATE_COMPLETE      | AWS::Route53::RecordSet                     | ApiAliasRecord (ApiAliasRecordBCE933A3) 
+ThreeTierWebAppStack | 20/79 | 3:37:59 PM | CREATE_IN_PROGRESS   | AWS::CloudWatch::Alarm                      | BackendHttp5xxAlarm (BackendHttp5xxAlarm284CE474) 
+ThreeTierWebAppStack | 20/79 | 3:37:59 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                         | BackendLogGroup (BackendLogGroupDA10F1B2) 
+ThreeTierWebAppStack | 21/79 | 3:37:59 PM | CREATE_COMPLETE      | AWS::CloudWatch::Alarm                      | BackendHttp5xxAlarm (BackendHttp5xxAlarm284CE474) 
+ThreeTierWebAppStack | 21/79 | 3:37:59 PM | CREATE_IN_PROGRESS   | AWS::ECR::Repository                        | BackendRepository (BackendRepository9B711290) 
+ThreeTierWebAppStack | 22/79 | 3:37:59 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                         | BackendLogGroup (BackendLogGroupDA10F1B2) 
+ThreeTierWebAppStack | 22/79 | 3:37:59 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | BackendTaskRole (BackendTaskRole65DD5890) 
+ThreeTierWebAppStack | 23/79 | 3:37:59 PM | CREATE_COMPLETE      | AWS::ECR::Repository                        | BackendRepository (BackendRepository9B711290) 
+ThreeTierWebAppStack | 23/79 | 3:37:59 PM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret                 | DatabaseSecret (DatabaseSecret86DBB7B3) 
+ThreeTierWebAppStack | 24/79 | 3:37:59 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | BackendTaskRole (BackendTaskRole65DD5890) 
+ThreeTierWebAppStack | 24/79 | 3:37:59 PM | CREATE_IN_PROGRESS   | AWS::DynamoDB::Table                        | SessionTable (SessionTableA016F679) 
+ThreeTierWebAppStack | 25/79 | 3:37:59 PM | CREATE_COMPLETE      | AWS::SecretsManager::Secret                 | DatabaseSecret (DatabaseSecret86DBB7B3) 
+ThreeTierWebAppStack | 25/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                             | JobQueue (JobQueueEE3AD499) 
+ThreeTierWebAppStack | 26/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::DynamoDB::Table                        | SessionTable (SessionTableA016F679) 
+ThreeTierWebAppStack | 26/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::SNS::Topic                             | NotificationsTopic (NotificationsTopicE4AF40A8) 
+ThreeTierWebAppStack | 27/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::SQS::Queue                             | JobQueue (JobQueueEE3AD499) 
+ThreeTierWebAppStack | 27/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | Vpc/PrivateSubnet1/Subnet (VpcPrivateSubnet1Subnet536B997A) 
+ThreeTierWebAppStack | 28/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::SNS::Topic                             | NotificationsTopic (NotificationsTopicE4AF40A8) 
+ThreeTierWebAppStack | 28/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | Vpc/PrivateSubnet2/Subnet (VpcPrivateSubnet2Subnet3788AAA1) 
+ThreeTierWebAppStack | 29/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | Vpc/PrivateSubnet1/Subnet (VpcPrivateSubnet1Subnet536B997A) 
+ThreeTierWebAppStack | 30/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | Vpc/PrivateSubnet2/Subnet (VpcPrivateSubnet2Subnet3788AAA1) 
+ThreeTierWebAppStack | 31/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::RDS::DBSubnetGroup                     | DatabaseSubnetGroup Resource type AWS::RDS::DBSubnetGroup is not supported but was deployed as a fallback
+ThreeTierWebAppStack | 31/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::RDS::DBSubnetGroup                     | DatabaseSubnetGroup 
+ThreeTierWebAppStack | 31/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                     | RdsSecurityGroup (RdsSecurityGroup632A77E4) 
+ThreeTierWebAppStack | 31/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::SSM::Parameter                         | DbEndpointParameter (DbEndpointParameterDA0E7868) 
+ThreeTierWebAppStack | 32/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::RDS::DBInstance                        | Database Resource type AWS::RDS::DBInstance is not supported but was deployed as a fallback
+ThreeTierWebAppStack | 32/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::RDS::DBInstance                        | Database 
+ThreeTierWebAppStack | 33/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                     | RdsSecurityGroup (RdsSecurityGroup632A77E4) 
+ThreeTierWebAppStack | 33/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | BackendTaskRole/DefaultPolicy (BackendTaskRoleDefaultPolicyD82ED08E) 
+ThreeTierWebAppStack | 34/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::SSM::Parameter                         | DbEndpointParameter (DbEndpointParameterDA0E7868) 
+ThreeTierWebAppStack | 34/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                     | EcsSecurityGroup (EcsSecurityGroup44008BF1) 
+ThreeTierWebAppStack | 35/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | BackendTaskRole/DefaultPolicy (BackendTaskRoleDefaultPolicyD82ED08E) 
+ThreeTierWebAppStack | 36/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                     | EcsSecurityGroup (EcsSecurityGroup44008BF1) 
+ThreeTierWebAppStack | 36/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | BackendTaskDefinition/ExecutionRole (BackendTaskDefinitionExecutionRoleDA72B768) 
+ThreeTierWebAppStack | 36/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::ApplicationAutoScaling::ScalableTarget | BackendService/TaskCount/Target (BackendServiceTaskCountTarget0CA57D80) 
+ThreeTierWebAppStack | 37/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::ECS::Service                           | BackendService/Service (BackendService7A4224EE) Resource type AWS::ECS::Service is not supported but was deployed as a fallback
+ThreeTierWebAppStack | 37/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::ECS::Service                           | BackendService/Service (BackendService7A4224EE) 
+ThreeTierWebAppStack | 38/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::ECS::TaskDefinition                    | BackendTaskDefinition (BackendTaskDefinitionEC224DE6) Resource type AWS::ECS::TaskDefinition is not supported but was deployed as a fallback
+ThreeTierWebAppStack | 38/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::ECS::TaskDefinition                    | BackendTaskDefinition (BackendTaskDefinitionEC224DE6) 
+ThreeTierWebAppStack | 39/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | BackendTaskDefinition/ExecutionRole (BackendTaskDefinitionExecutionRoleDA72B768) 
+ThreeTierWebAppStack | 39/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | BackendTaskDefinition/ExecutionRole/DefaultPolicy (BackendTaskDefinitionExecutionRoleDefaultPolicy0750C44A) 
+ThreeTierWebAppStack | 40/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::ApplicationAutoScaling::ScalingPolicy  | BackendService/TaskCount/Target/BackendCpuScaling (BackendServiceTaskCountTargetBackendCpuScaling3DD11755) Resource type AWS::ApplicationAutoScaling::ScalingPolicy is not supported but was deployed as a fallback
+ThreeTierWebAppStack | 40/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::ApplicationAutoScaling::ScalingPolicy  | BackendService/TaskCount/Target/BackendCpuScaling (BackendServiceTaskCountTargetBackendCpuScaling3DD11755) 
+ThreeTierWebAppStack | 41/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::ApplicationAutoScaling::ScalableTarget | BackendService/TaskCount/Target (BackendServiceTaskCountTarget0CA57D80) Resource type AWS::ApplicationAutoScaling::ScalableTarget is not supported but was deployed as a fallback
+ThreeTierWebAppStack | 41/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress              | EcsSecurityGroup/from ThreeTierWebAppStackAlbSecurityGroup3D3FB7C4:8080 (EcsSecurityGroupfromThreeTierWebAppStackAlbSecurityGroup3D3FB7C48080BF947197) 
+ThreeTierWebAppStack | 42/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::CDK::Metadata                          | CDKMetadata/Default (CDKMetadata) 
+ThreeTierWebAppStack | 42/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                          | CDKMetadata/Default (CDKMetadata) 
+ThreeTierWebAppStack | 43/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | BackendTaskDefinition/ExecutionRole/DefaultPolicy (BackendTaskDefinitionExecutionRoleDefaultPolicy0750C44A) 
+ThreeTierWebAppStack | 43/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupEgress               | EcsSecurityGroup/to ThreeTierWebAppStackRdsSecurityGroup5567E4C5:5432 (EcsSecurityGrouptoThreeTierWebAppStackRdsSecurityGroup5567E4C554326D844378) 
+ThreeTierWebAppStack | 44/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress              | EcsSecurityGroup/from ThreeTierWebAppStackAlbSecurityGroup3D3FB7C4:8080 (EcsSecurityGroupfromThreeTierWebAppStackAlbSecurityGroup3D3FB7C48080BF947197) 
+ThreeTierWebAppStack | 44/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                     | RedisSecurityGroup (RedisSecurityGroupB05951F6) 
+ThreeTierWebAppStack | 45/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupEgress               | EcsSecurityGroup/to ThreeTierWebAppStackRdsSecurityGroup5567E4C5:5432 (EcsSecurityGrouptoThreeTierWebAppStackRdsSecurityGroup5567E4C554326D844378) 
+ThreeTierWebAppStack | 45/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupEgress               | EcsSecurityGroup/to ThreeTierWebAppStackRedisSecurityGroupFED5A448:6379 (EcsSecurityGrouptoThreeTierWebAppStackRedisSecurityGroupFED5A4486379F2548AF8) 
+ThreeTierWebAppStack | 46/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                     | RedisSecurityGroup (RedisSecurityGroupB05951F6) 
+ThreeTierWebAppStack | 47/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupEgress               | EcsSecurityGroup/to ThreeTierWebAppStackRedisSecurityGroupFED5A448:6379 (EcsSecurityGrouptoThreeTierWebAppStackRedisSecurityGroupFED5A4486379F2548AF8) 
+ThreeTierWebAppStack | 47/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                             | FrontendBucket (FrontendBucketEFE2E19C) 
+ThreeTierWebAppStack | 47/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::Route53::RecordSet                     | FrontendAliasRecord (FrontendAliasRecordAF9BE7A7) 
+ThreeTierWebAppStack | 48/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::CloudFront::Distribution               | FrontendDistribution (FrontendDistributionE6EAF405) Resource type AWS::CloudFront::Distribution is not supported but was deployed as a fallback
+ThreeTierWebAppStack | 48/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::CloudFront::Distribution               | FrontendDistribution (FrontendDistributionE6EAF405) 
+ThreeTierWebAppStack | 49/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::CloudFront::OriginAccessControl        | FrontendDistribution/Origin1/S3OriginAccessControl (FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6) Resource type AWS::CloudFront::OriginAccessControl is not supported but was deployed as a fallback
+ThreeTierWebAppStack | 49/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::CloudFront::OriginAccessControl        | FrontendDistribution/Origin1/S3OriginAccessControl (FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6) 
+ThreeTierWebAppStack | 50/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::S3::Bucket                             | FrontendBucket (FrontendBucketEFE2E19C) 
+ThreeTierWebAppStack | 50/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::S3::BucketPolicy                       | FrontendBucket/Policy (FrontendBucketPolicy1DFF75D9) 
+ThreeTierWebAppStack | 51/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::Route53::RecordSet                     | FrontendAliasRecord (FrontendAliasRecordAF9BE7A7) 
+ThreeTierWebAppStack | 51/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                     | LambdaSecurityGroup (LambdaSecurityGroup0BD9FC99) 
+ThreeTierWebAppStack | 52/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::S3::BucketPolicy                       | FrontendBucket/Policy (FrontendBucketPolicy1DFF75D9) 
+ThreeTierWebAppStack | 52/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupEgress               | LambdaSecurityGroup/to ThreeTierWebAppStackRdsSecurityGroup5567E4C5:5432 (LambdaSecurityGrouptoThreeTierWebAppStackRdsSecurityGroup5567E4C554326DB49A20) 
+ThreeTierWebAppStack | 53/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                     | LambdaSecurityGroup (LambdaSecurityGroup0BD9FC99) 
+ThreeTierWebAppStack | 53/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | MigrationLambdaRole (MigrationLambdaRole16FEFB50) 
+ThreeTierWebAppStack | 54/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupEgress               | LambdaSecurityGroup/to ThreeTierWebAppStackRdsSecurityGroup5567E4C5:5432 (LambdaSecurityGrouptoThreeTierWebAppStackRdsSecurityGroup5567E4C554326DB49A20) 
+ThreeTierWebAppStack | 54/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | Vpc/PrivateSubnet2/RouteTable (VpcPrivateSubnet2RouteTableA678073B) 
+ThreeTierWebAppStack | 55/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | MigrationLambdaRole (MigrationLambdaRole16FEFB50) 
+ThreeTierWebAppStack | 55/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PrivateSubnet2/RouteTableAssociation (VpcPrivateSubnet2RouteTableAssociationA89CAD56) 
+ThreeTierWebAppStack | 56/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | Vpc/PrivateSubnet2/RouteTable (VpcPrivateSubnet2RouteTableA678073B) 
+ThreeTierWebAppStack | 56/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                               | Vpc/PublicSubnet1/EIP (VpcPublicSubnet1EIPD7E02669) 
+ThreeTierWebAppStack | 57/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PrivateSubnet2/RouteTableAssociation (VpcPrivateSubnet2RouteTableAssociationA89CAD56) 
+ThreeTierWebAppStack | 57/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                        | Vpc/PublicSubnet1/NATGateway (VpcPublicSubnet1NATGateway4D7517AA) 
+ThreeTierWebAppStack | 58/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::EIP                               | Vpc/PublicSubnet1/EIP (VpcPublicSubnet1EIPD7E02669) 
+ThreeTierWebAppStack | 58/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | Vpc/PrivateSubnet2/DefaultRoute (VpcPrivateSubnet2DefaultRoute060D2087) 
+ThreeTierWebAppStack | 59/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::NatGateway                        | Vpc/PublicSubnet1/NATGateway (VpcPublicSubnet1NATGateway4D7517AA) 
+ThreeTierWebAppStack | 59/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | Vpc/PrivateSubnet1/RouteTable (VpcPrivateSubnet1RouteTableB2C5B500) 
+ThreeTierWebAppStack | 60/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | Vpc/PrivateSubnet2/DefaultRoute (VpcPrivateSubnet2DefaultRoute060D2087) 
+ThreeTierWebAppStack | 60/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | Vpc/PrivateSubnet1/DefaultRoute (VpcPrivateSubnet1DefaultRouteBE02A9ED) 
+ThreeTierWebAppStack | 61/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | Vpc/PrivateSubnet1/RouteTable (VpcPrivateSubnet1RouteTableB2C5B500) 
+ThreeTierWebAppStack | 61/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                         | MigrationLambdaLogGroup (MigrationLambdaLogGroupB9E3C18D) 
+ThreeTierWebAppStack | 62/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | Vpc/PrivateSubnet1/DefaultRoute (VpcPrivateSubnet1DefaultRouteBE02A9ED) 
+ThreeTierWebAppStack | 62/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | MigrationLambdaRole/DefaultPolicy (MigrationLambdaRoleDefaultPolicy3CBF61FE) 
+ThreeTierWebAppStack | 63/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                         | MigrationLambdaLogGroup (MigrationLambdaLogGroupB9E3C18D) 
+ThreeTierWebAppStack | 63/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PrivateSubnet1/RouteTableAssociation (VpcPrivateSubnet1RouteTableAssociation70C59FA6) 
+ThreeTierWebAppStack | 64/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | MigrationLambdaRole/DefaultPolicy (MigrationLambdaRoleDefaultPolicy3CBF61FE) 
+ThreeTierWebAppStack | 64/79 | 3:38:01 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                       | MigrationLambda (MigrationLambdaDC97547E) 
+ThreeTierWebAppStack | 65/79 | 3:38:01 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PrivateSubnet1/RouteTableAssociation (VpcPrivateSubnet1RouteTableAssociation70C59FA6) 
+ThreeTierWebAppStack | 66/79 | 3:38:04 PM | CREATE_COMPLETE      | AWS::Lambda::Function                       | MigrationLambda (MigrationLambdaDC97547E) 
+ThreeTierWebAppStack | 66/79 | 3:38:04 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | MigrationScheduleRole (MigrationScheduleRole17DA6633) 
+ThreeTierWebAppStack | 66/79 | 3:38:04 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | MigrationStateMachineRole (MigrationStateMachineRole73ED43F3) 
+ThreeTierWebAppStack | 67/79 | 3:38:04 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | MigrationScheduleRole (MigrationScheduleRole17DA6633) 
+ThreeTierWebAppStack | 67/79 | 3:38:04 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | MigrationStateMachineRole/DefaultPolicy (MigrationStateMachineRoleDefaultPolicy41AA745A) 
+ThreeTierWebAppStack | 68/79 | 3:38:04 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | MigrationStateMachineRole (MigrationStateMachineRole73ED43F3) 
+ThreeTierWebAppStack | 68/79 | 3:38:04 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                         | MigrationStateMachineLogGroup (MigrationStateMachineLogGroup9C8D630C) 
+ThreeTierWebAppStack | 69/79 | 3:38:04 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | MigrationStateMachineRole/DefaultPolicy (MigrationStateMachineRoleDefaultPolicy41AA745A) 
+ThreeTierWebAppStack | 69/79 | 3:38:04 PM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine            | MigrationStateMachine (MigrationStateMachine8737F4C8) 
+ThreeTierWebAppStack | 70/79 | 3:38:04 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                         | MigrationStateMachineLogGroup (MigrationStateMachineLogGroup9C8D630C) 
+ThreeTierWebAppStack | 70/79 | 3:38:04 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | MigrationScheduleRole/DefaultPolicy (MigrationScheduleRoleDefaultPolicy4D27685B) 
+ThreeTierWebAppStack | 71/79 | 3:38:04 PM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine            | MigrationStateMachine (MigrationStateMachine8737F4C8) 
+ThreeTierWebAppStack | 71/79 | 3:38:04 PM | CREATE_IN_PROGRESS   | AWS::Events::Rule                           | MigrationScheduleRule (MigrationScheduleRuleFF7898B0) 
+ThreeTierWebAppStack | 72/79 | 3:38:04 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | MigrationScheduleRole/DefaultPolicy (MigrationScheduleRoleDefaultPolicy4D27685B) 
+ThreeTierWebAppStack | 73/79 | 3:38:04 PM | CREATE_COMPLETE      | AWS::Events::Rule                           | MigrationScheduleRule (MigrationScheduleRuleFF7898B0) 
+ThreeTierWebAppStack | 73/79 | 3:38:04 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress              | RdsSecurityGroup/from ThreeTierWebAppStackEcsSecurityGroupA547C8E4:5432 (RdsSecurityGroupfromThreeTierWebAppStackEcsSecurityGroupA547C8E45432F246ACB6) 
+ThreeTierWebAppStack | 73/79 | 3:38:04 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress              | RdsSecurityGroup/from ThreeTierWebAppStackLambdaSecurityGroupD05AC989:5432 (RdsSecurityGroupfromThreeTierWebAppStackLambdaSecurityGroupD05AC989543261D51ABA) 
+ThreeTierWebAppStack | 74/79 | 3:38:04 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress              | RdsSecurityGroup/from ThreeTierWebAppStackEcsSecurityGroupA547C8E4:5432 (RdsSecurityGroupfromThreeTierWebAppStackEcsSecurityGroupA547C8E45432F246ACB6) 
+ThreeTierWebAppStack | 74/79 | 3:38:04 PM | CREATE_IN_PROGRESS   | AWS::ElastiCache::SubnetGroup               | RedisSubnetGroup 
+ThreeTierWebAppStack | 75/79 | 3:38:04 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress              | RdsSecurityGroup/from ThreeTierWebAppStackLambdaSecurityGroupD05AC989:5432 (RdsSecurityGroupfromThreeTierWebAppStackLambdaSecurityGroupD05AC989543261D51ABA) 
+ThreeTierWebAppStack | 75/79 | 3:38:04 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress              | RedisSecurityGroup/from ThreeTierWebAppStackEcsSecurityGroupA547C8E4:6379 (RedisSecurityGroupfromThreeTierWebAppStackEcsSecurityGroupA547C8E4637955A9B434) 
+ThreeTierWebAppStack | 76/79 | 3:38:04 PM | CREATE_COMPLETE      | AWS::ElastiCache::ReplicationGroup          | RedisReplicationGroup Resource type AWS::ElastiCache::ReplicationGroup is not supported but was deployed as a fallback
+ThreeTierWebAppStack | 76/79 | 3:38:04 PM | CREATE_IN_PROGRESS   | AWS::ElastiCache::ReplicationGroup          | RedisReplicationGroup 
+ThreeTierWebAppStack | 77/79 | 3:38:04 PM | CREATE_COMPLETE      | AWS::ElastiCache::SubnetGroup               | RedisSubnetGroup Resource type AWS::ElastiCache::SubnetGroup is not supported but was deployed as a fallback
+ThreeTierWebAppStack | 78/79 | 3:38:04 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress              | RedisSecurityGroup/from ThreeTierWebAppStackEcsSecurityGroupA547C8E4:6379 (RedisSecurityGroupfromThreeTierWebAppStackEcsSecurityGroupA547C8E4637955A9B434) 
+ThreeTierWebAppStack | 79/79 | 3:38:04 PM | CREATE_COMPLETE      | AWS::CloudFormation::Stack                  | ThreeTierWebAppStack 
 
  ✅  ThreeTierWebAppStack
 
-✨  Deployment time: 10.31s
+✨  Deployment time: 10.29s
 
 Outputs:
 ThreeTierWebAppStack.ALBDNSName = unknown
 ThreeTierWebAppStack.CloudFrontDomainName = unknown
-ThreeTierWebAppStack.HostedZoneId = /hostedzone/LOAGO26ZI73W8T2ZYQCAOO
+ThreeTierWebAppStack.HostedZoneId = /hostedzone/7RJQE1EEC1GAVFTQJLMXY1
 ThreeTierWebAppStack.RDSEndpoint = unknown
 Stack ARN:
-arn:aws:cloudformation:us-east-1:000000000000:stack/ThreeTierWebAppStack/e0a70e13-1b6d-4036-ab67-e0215ad2e4fd
+arn:aws:cloudformation:us-east-1:000000000000:stack/ThreeTierWebAppStack/44d1cd6e-d226-44a0-8b50-64f2f6dff389
 
-✨  Total time: 22.32s
+✨  Total time: 21.67s
 
 [32m✅ Step passed: Deploy (LocalStack)[0m
 
@@ -321,49 +334,67 @@ platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
 cachedir: .pytest_cache
 rootdir: /work
 configfile: pytest.ini
-collecting ... collected 32 items
+collecting ... collected 50 items
 
-tests/integration_tests.py::test_outputs PASSED                          [  3%]
-tests/integration_tests.py::test_vpc_and_subnets PASSED                  [  6%]
-tests/integration_tests.py::test_alb_target_group_health_check PASSED    [  9%]
-tests/integration_tests.py::test_frontend_delivery PASSED                [ 12%]
-tests/integration_tests.py::test_persistence_rds PASSED                  [ 15%]
-tests/integration_tests.py::test_persistence_secrets_and_ssm PASSED      [ 18%]
-tests/integration_tests.py::test_persistence_dynamodb PASSED             [ 21%]
-tests/integration_tests.py::test_persistence_elasticache PASSED          [ 25%]
-tests/integration_tests.py::test_io_sqs PASSED                           [ 28%]
-tests/integration_tests.py::test_io_sns PASSED                           [ 31%]
-tests/integration_tests.py::test_io_eventbridge PASSED                   [ 34%]
-tests/integration_tests.py::test_step_functions_logging PASSED           [ 37%]
-tests/integration_tests.py::test_step_functions_definition_invokes_lambda PASSED [ 40%]
-tests/integration_tests.py::test_sg_alb_ingress_rules PASSED             [ 43%]
-tests/integration_tests.py::test_eventbridge_targets_sfn PASSED          [ 46%]
-tests/integration_tests.py::test_sg_ecs_ingress_rules PASSED             [ 50%]
-tests/integration_tests.py::test_sg_rds_ingress_rules PASSED             [ 53%]
-tests/integration_tests.py::test_sg_lambda_egress_to_rds PASSED          [ 56%]
-tests/integration_tests.py::test_sg_redis_ingress_rules PASSED           [ 59%]
-tests/integration_tests.py::test_compute_ecs_cluster PASSED              [ 62%]
-tests/integration_tests.py::test_compute_ecs_service PASSED              [ 65%]
-tests/integration_tests.py::test_compute_task_definition PASSED          [ 68%]
-tests/integration_tests.py::test_compute_lambda PASSED                   [ 71%]
-tests/integration_tests.py::test_compute_ecr_repository PASSED           [ 75%]
-tests/integration_tests.py::test_compute_cloudwatch_alarm PASSED         [ 78%]
-tests/integration_tests.py::test_dns_route53 PASSED                      [ 81%]
-tests/integration_tests.py::test_negative_rds_not_publicly_accessible PASSED [ 84%]
-tests/integration_tests.py::test_negative_s3_bucket_no_public_access PASSED [ 87%]
-tests/integration_tests.py::test_negative_alb_exactly_one_listener PASSED [ 90%]
-tests/integration_tests.py::test_sdk_config_aws_endpoint_used PASSED     [ 93%]
-tests/integration_tests.py::test_sdk_config_aws_region_default PASSED    [ 96%]
+tests/integration_tests.py::test_runtime_capability_error_classifier_recognizes_unsupported PASSED [  2%]
+tests/integration_tests.py::test_runtime_capability_error_classifier_preserves_authorization_failures PASSED [  4%]
+tests/integration_tests.py::test_template_sg_ingress_helper_collects_standalone_rules PASSED [  6%]
+tests/integration_tests.py::test_helper_resolve_ref_variants PASSED      [  8%]
+tests/integration_tests.py::test_helper_find_stack_resource_and_physical_ids PASSED [ 10%]
+tests/integration_tests.py::test_helper_template_role_lookup_and_policy_extraction PASSED [ 12%]
+tests/integration_tests.py::test_helper_get_role_policy_statements_flattens_scalar_and_list_forms PASSED [ 14%]
+tests/integration_tests.py::test_helper_resolve_source_descriptions_handles_lookup_failures PASSED [ 16%]
+tests/integration_tests.py::test_helper_live_ingress_rule_set_normalizes_sources PASSED [ 18%]
+tests/integration_tests.py::test_outputs PASSED                          [ 20%]
+tests/integration_tests.py::test_vpc_and_subnets PASSED                  [ 22%]
+tests/integration_tests.py::test_alb_target_group_health_check PASSED    [ 24%]
+tests/integration_tests.py::test_frontend_delivery PASSED                [ 26%]
+tests/integration_tests.py::test_persistence_rds PASSED                  [ 28%]
+tests/integration_tests.py::test_persistence_secrets_and_ssm PASSED      [ 30%]
+tests/integration_tests.py::test_persistence_dynamodb PASSED             [ 32%]
+tests/integration_tests.py::test_persistence_elasticache PASSED          [ 34%]
+tests/integration_tests.py::test_io_sqs PASSED                           [ 36%]
+tests/integration_tests.py::test_io_sns PASSED                           [ 38%]
+tests/integration_tests.py::test_io_eventbridge PASSED                   [ 40%]
+tests/integration_tests.py::test_io_eventbridge_exact_schedule_count PASSED [ 42%]
+tests/integration_tests.py::test_step_functions_logging PASSED           [ 44%]
+tests/integration_tests.py::test_step_functions_logging_uses_single_destination PASSED [ 46%]
+tests/integration_tests.py::test_step_functions_definition_invokes_lambda PASSED [ 48%]
+tests/integration_tests.py::test_step_functions_single_state_machine_count PASSED [ 50%]
+tests/integration_tests.py::test_sg_alb_ingress_rules PASSED             [ 52%]
+tests/integration_tests.py::test_eventbridge_targets_sfn PASSED          [ 54%]
+tests/integration_tests.py::test_eventbridge_schedule_role_scoped_to_state_machine_only PASSED [ 56%]
+tests/integration_tests.py::test_sg_ecs_ingress_rules PASSED             [ 58%]
+tests/integration_tests.py::test_sg_rds_ingress_rules PASSED             [ 60%]
+tests/integration_tests.py::test_sg_lambda_egress_to_rds PASSED          [ 62%]
+tests/integration_tests.py::test_sg_redis_ingress_rules PASSED           [ 64%]
+tests/integration_tests.py::test_sg_ingress_rules_are_exclusive_across_app_security_groups PASSED [ 66%]
+tests/integration_tests.py::test_compute_ecs_cluster PASSED              [ 68%]
+tests/integration_tests.py::test_compute_ecs_service PASSED              [ 70%]
+tests/integration_tests.py::test_compute_task_definition PASSED          [ 72%]
+tests/integration_tests.py::test_compute_no_plaintext_db_credentials_runtime PASSED [ 74%]
+tests/integration_tests.py::test_compute_lambda PASSED                   [ 76%]
+tests/integration_tests.py::test_compute_ecr_repository PASSED           [ 78%]
+tests/integration_tests.py::test_compute_cloudwatch_alarm PASSED         [ 80%]
+tests/integration_tests.py::test_compute_cloudwatch_alarm_dimensions_are_exact PASSED [ 82%]
+tests/integration_tests.py::test_iam_migration_lambda_role_is_scoped PASSED [ 84%]
+tests/integration_tests.py::test_iam_sfn_role_is_minimal PASSED          [ 86%]
+tests/integration_tests.py::test_dns_route53 PASSED                      [ 88%]
+tests/integration_tests.py::test_negative_rds_not_publicly_accessible PASSED [ 90%]
+tests/integration_tests.py::test_negative_s3_bucket_no_public_access PASSED [ 92%]
+tests/integration_tests.py::test_negative_alb_exactly_one_listener PASSED [ 94%]
+tests/integration_tests.py::test_sdk_config_aws_endpoint_used PASSED     [ 96%]
+tests/integration_tests.py::test_sdk_config_aws_region_default PASSED    [ 98%]
 tests/integration_tests.py::test_sdk_config_stack_deployed_successfully PASSED [100%]
 
-============================== 32 passed in 2.26s ==============================
+============================== 50 passed in 2.23s ==============================
 [32m✅ Step passed: Integration tests[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  Step: Destroy / Cleanup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 Running cdklocal destroy...
-Cleaning up worker container: harness-worker-75106
+Cleaning up worker container: harness-worker-9930
 [32m✅ Step passed: Destroy / Cleanup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -378,7 +409,7 @@ Cleaning up worker container: harness-worker-75106
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [32m✅ All steps passed.[0m
 
-Log saved to: /Users/admin/Desktop/mini-repos-IAC-v5/runs/tasks_cdk-ts_291b0440-912a-49b5-afff-8dc2e70496a9.log
+Log saved to: /Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v5/runs/tasks_cdk-ts_291b0440-912a-49b5-afff-8dc2e70496a9.log
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 
 Stopping LocalStack...

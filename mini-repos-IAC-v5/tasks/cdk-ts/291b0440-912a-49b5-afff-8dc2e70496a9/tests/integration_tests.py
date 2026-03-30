@@ -33,6 +33,40 @@ def _is_runtime_capability_error(exc):
     )
 
 
+def test_runtime_capability_error_classifier_recognizes_unsupported(monkeypatch):
+    """Unsupported-runtime errors must trigger template fallbacks when running against an endpoint override."""
+    monkeypatch.setenv('AWS_ENDPOINT', 'https://endpoint.invalid')
+    exc = ClientError(
+        {'Error': {'Code': 'UnsupportedOperation', 'Message': 'operation not supported'}},
+        'DescribeThing',
+    )
+    assert _is_runtime_capability_error(exc) is True
+
+
+def test_runtime_capability_error_classifier_preserves_authorization_failures(monkeypatch):
+    """Authorization failures must not be mistaken for capability gaps and silently bypassed."""
+    monkeypatch.setenv('AWS_ENDPOINT', 'https://endpoint.invalid')
+    exc = ClientError(
+        {'Error': {'Code': 'AccessDeniedException', 'Message': 'user is not authorized'}},
+        'DescribeThing',
+    )
+    assert _is_runtime_capability_error(exc) is False
+
+
+def test_template_sg_ingress_helper_collects_standalone_rules(template):
+    """Template SG helper must collect standalone ingress resources emitted with GetAtt-based GroupId targets."""
+    ecs_rules = _template_sg_ingress_rules(template, 'ecs')
+    redis_rules = _template_sg_ingress_rules(template, 'redis')
+    rds_rules = _template_sg_ingress_rules(template, 'rds')
+
+    assert any(str(rule.get('FromPort')) == '8080' for rule in ecs_rules), \
+        "ECS template fallback must capture the ALB->ECS standalone ingress rule"
+    assert any(str(rule.get('FromPort')) == '6379' for rule in redis_rules), \
+        "Redis template fallback must capture the ECS->Redis standalone ingress rule"
+    assert sum(1 for rule in rds_rules if str(rule.get('FromPort')) == '5432') == 2, \
+        "RDS template fallback must capture both ECS and Lambda ingress rules"
+
+
 def get_boto_client(service_name):
     """Helper to get a boto3 client configured with allowed env vars."""
     return boto3.client(
@@ -83,6 +117,14 @@ def _template_resources(template, resource_type):
     ]
 
 
+def _template_resource_map(template, resource_type):
+    return {
+        logical_id: res
+        for logical_id, res in template.get("Resources", {}).items()
+        if res.get("Type") == resource_type
+    }
+
+
 def _template_sg_ingress_rules(template, description_fragment):
     rules = []
     target_ids = []
@@ -98,11 +140,162 @@ def _template_sg_ingress_rules(template, description_fragment):
         if res.get("Type") != "AWS::EC2::SecurityGroupIngress":
             continue
         props = res.get("Properties", {})
-        group_id = props.get("GroupId", {})
-        if isinstance(group_id, dict) and group_id.get("Ref") in target_ids:
+        group_id = _resolve_ref(props.get("GroupId"))
+        if group_id in target_ids:
             rules.append(props)
 
     return rules
+
+
+def _template_role_logical_id(template, service_fragment):
+    for logical_id, res in _template_resource_map(template, "AWS::IAM::Role").items():
+        statements = res.get("Properties", {}).get("AssumeRolePolicyDocument", {}).get("Statement", [])
+        if isinstance(statements, dict):
+            statements = [statements]
+        for statement in statements:
+            services = statement.get("Principal", {}).get("Service", [])
+            if isinstance(services, str):
+                services = [services]
+            if any(service_fragment in str(service) for service in services):
+                return logical_id
+    return None
+
+
+def _resolve_ref(value):
+    if isinstance(value, dict):
+        if "Ref" in value:
+            return value["Ref"]
+        if "Fn::GetAtt" in value:
+            return value["Fn::GetAtt"][0]
+    return None
+
+
+def _template_policy_statements_for_role(template, role_logical_id):
+    statements = []
+    for res in _template_resources(template, "AWS::IAM::Policy"):
+        roles = res.get("Properties", {}).get("Roles", [])
+        for role in roles:
+            if _resolve_ref(role) == role_logical_id:
+                policy_statements = res.get("Properties", {}).get("PolicyDocument", {}).get("Statement", [])
+                if isinstance(policy_statements, dict):
+                    policy_statements = [policy_statements]
+                statements.extend(policy_statements)
+    return statements
+
+
+def _statement_actions(statement):
+    actions = statement.get("Action", [])
+    if isinstance(actions, str):
+        actions = [actions]
+    return actions
+
+
+def _statement_resources(statement):
+    resources = statement.get("Resource", [])
+    if isinstance(resources, (str, dict)):
+        resources = [resources]
+    return resources
+
+
+def _find_stack_resource(stack_resources, resource_type, logical_fragment):
+    for resource in stack_resources.get(resource_type, []):
+        if logical_fragment in resource['LogicalResourceId']:
+            return resource
+    return None
+
+
+def _get_role_policy_statements(iam_client, role_name):
+    statements = []
+    for policy_name in iam_client.list_role_policies(RoleName=role_name).get('PolicyNames', []):
+        policy_doc = iam_client.get_role_policy(RoleName=role_name, PolicyName=policy_name)['PolicyDocument']
+        policy_statements = policy_doc.get('Statement', [])
+        if isinstance(policy_statements, dict):
+            policy_statements = [policy_statements]
+        statements.extend(policy_statements)
+    return statements
+
+
+def test_helper_resolve_ref_variants():
+    """Integration helpers must normalize Ref/GetAtt identifiers consistently."""
+    assert _resolve_ref({'Ref': 'ResourceA'}) == 'ResourceA'
+    assert _resolve_ref({'Fn::GetAtt': ['ResourceB', 'Arn']}) == 'ResourceB'
+    assert _resolve_ref('literal') is None
+
+
+def test_helper_find_stack_resource_and_physical_ids():
+    """Stack-resource helpers must find logical fragments and extract physical IDs deterministically."""
+    stack_resources = {
+        'AWS::IAM::Role': [
+            {'LogicalResourceId': 'MigrationScheduleRoleABC', 'PhysicalResourceId': 'role-123'},
+            {'LogicalResourceId': 'OtherRoleXYZ', 'PhysicalResourceId': 'role-456'},
+        ]
+    }
+    found = _find_stack_resource(stack_resources, 'AWS::IAM::Role', 'MigrationScheduleRole')
+    assert found['PhysicalResourceId'] == 'role-123'
+    assert _find_stack_resource(stack_resources, 'AWS::IAM::Role', 'Missing') is None
+    assert _physical_ids(stack_resources, 'AWS::IAM::Role') == ['role-123', 'role-456']
+
+
+def test_helper_template_role_lookup_and_policy_extraction(template):
+    """Template IAM helpers must find service roles and attached inline statements."""
+    role_logical_id = _template_role_logical_id(template, 'events.amazonaws.com')
+    assert role_logical_id, "Expected to find the EventBridge role"
+    statements = _template_policy_statements_for_role(template, role_logical_id)
+    assert statements, "Expected inline policy statements for the EventBridge role"
+    assert any('states:StartExecution' in _statement_actions(statement) for statement in statements)
+
+
+def test_helper_get_role_policy_statements_flattens_scalar_and_list_forms():
+    """Role-policy helper must flatten both scalar and list Statement encodings."""
+    class FakeIamClient:
+        def list_role_policies(self, RoleName):
+            assert RoleName == 'role-name'
+            return {'PolicyNames': ['first', 'second']}
+
+        def get_role_policy(self, RoleName, PolicyName):
+            assert RoleName == 'role-name'
+            if PolicyName == 'first':
+                return {'PolicyDocument': {'Statement': {'Action': 'logs:PutLogEvents', 'Resource': '*'}}}
+            return {'PolicyDocument': {'Statement': [{'Action': 'ssm:GetParameter', 'Resource': 'arn:ssm:param'}]}}
+
+    statements = _get_role_policy_statements(FakeIamClient(), 'role-name')
+    assert len(statements) == 2
+    assert {'logs:PutLogEvents', 'ssm:GetParameter'} == {
+        action
+        for statement in statements
+        for action in _statement_actions(statement)
+    }
+
+
+def test_helper_resolve_source_descriptions_handles_lookup_failures():
+    """Source-description helper must tolerate lookup failures and preserve already-known entries."""
+    class FakeEc2Client:
+        def describe_security_groups(self, GroupIds):
+            raise RuntimeError('lookup failed')
+
+    resolved = _resolve_source_descriptions(
+        FakeEc2Client(),
+        ['sg-known', 'sg-missing'],
+        {'sg-known': 'known description'},
+    )
+    assert resolved == {'sg-known': 'known description', 'sg-missing': ''}
+
+
+def test_helper_live_ingress_rule_set_normalizes_sources():
+    """Ingress normalization helper must map CIDR and SG-description sources into stable tuples."""
+    class FakeEc2Client:
+        def describe_security_groups(self, GroupIds):
+            return {
+                'SecurityGroups': [{
+                    'IpPermissions': [
+                        {'FromPort': 80, 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},
+                        {'FromPort': 8080, 'UserIdGroupPairs': [{'GroupId': 'sg-alb'}]},
+                    ]
+                }]
+            }
+
+    actual = _live_ingress_rule_set(FakeEc2Client(), 'sg-target', {'sg-alb': 'alb security group'})
+    assert actual == {('80', '0.0.0.0/0'), ('8080', 'alb')}
 
 
 def test_outputs(stack_outputs):
@@ -306,6 +499,16 @@ def test_io_eventbridge(stack_resources):
     assert found, "Expected an EventBridge rule with rate(6 hours)"
 
 
+def test_io_eventbridge_exact_schedule_count(template):
+    """The synthesized stack must contain exactly one migration schedule rule."""
+    rules = _template_resources(template, 'AWS::Events::Rule')
+    matching = sum(
+        1 for rule in rules
+        if rule.get('Properties', {}).get('ScheduleExpression') == 'rate(6 hours)'
+    )
+    assert matching == 1, f"Expected exactly 1 rate(6 hours) rule, got {matching}"
+
+
 def test_step_functions_logging(stack_resources):
     """Step Functions state machine has logging enabled."""
     sfn = get_boto_client('stepfunctions')
@@ -320,8 +523,32 @@ def test_step_functions_logging(stack_resources):
     assert len(destinations) > 0, "State machine logging must have at least one destination"
 
 
+def test_step_functions_logging_uses_single_destination(stack_resources, template):
+    """Step Functions logging must use exactly one destination backed by the stack log group."""
+    sfn = get_boto_client('stepfunctions')
+    sm_arns = _physical_ids(stack_resources, 'AWS::StepFunctions::StateMachine')
+    assert len(sm_arns) == 1, f"Expected exactly 1 state machine, got {len(sm_arns)}"
+
+    try:
+        desc = sfn.describe_state_machine(stateMachineArn=sm_arns[0])
+    except ClientError as exc:
+        if not _is_runtime_capability_error(exc):
+            raise
+        state_machine = next(iter(_template_resources(template, 'AWS::StepFunctions::StateMachine')))
+        logging = state_machine.get('Properties', {}).get('LoggingConfiguration', {})
+        destinations = logging.get('Destinations', [])
+        assert len(destinations) == 1, f"Expected exactly 1 log destination, got {len(destinations)}"
+        log_group_lids = _template_resource_map(template, 'AWS::Logs::LogGroup').keys()
+        destination = destinations[0].get('CloudWatchLogsLogGroup', {}).get('LogGroupArn')
+        assert any(_resolve_ref(destination) == lid for lid in log_group_lids)
+        return
+
+    destinations = desc.get('loggingConfiguration', {}).get('destinations', [])
+    assert len(destinations) == 1, f"Expected exactly 1 log destination, got {len(destinations)}"
+
+
 def test_step_functions_definition_invokes_lambda(stack_resources):
-    """State machine definition must be a single Lambda invocation step targeting the migration Lambda."""
+    """State machine definition must stay a strict single Lambda invocation workflow."""
     import json as _json
     sfn = get_boto_client('stepfunctions')
     lam = get_boto_client('lambda')
@@ -351,17 +578,28 @@ def test_step_functions_definition_invokes_lambda(stack_resources):
     assert start_state, "State machine must have a StartAt state"
     states = definition.get('States', {})
     assert len(states) == 1, f"State machine must contain exactly 1 state, got {len(states)}"
+    assert list(states.keys()) == [start_state], "StartAt must point to the only state in the deployed workflow"
     assert start_state in states, f"StartAt '{start_state}' not found in States"
 
     task_state = states[start_state]
     assert task_state.get('Type') == 'Task', f"Expected Task type, got {task_state.get('Type')}"
     assert 'lambda:invoke' in task_state.get('Resource', '').lower(), \
         "Task must use lambda:invoke resource"
+    assert set(task_state.keys()) == {'Type', 'Resource', 'Parameters', 'End'}, \
+        f"Deployed workflow must not contain extra state semantics: {task_state.keys()}"
     params = task_state.get('Parameters', {})
+    assert set(params.keys()) == {'FunctionName', 'Payload.$'}, \
+        f"Migration task parameters must stay minimal: {params.keys()}"
     fn_name = params.get('FunctionName')
     assert fn_name and migration_fn_arn in fn_name, \
         f"Task must invoke the migration Lambda (expected {migration_fn_arn})"
     assert task_state.get('End') is True, "Migration step must be the final (and only) step"
+
+
+def test_step_functions_single_state_machine_count(template):
+    """The synthesized stack must expose exactly one Step Functions state machine."""
+    state_machines = _template_resources(template, 'AWS::StepFunctions::StateMachine')
+    assert len(state_machines) == 1, f"Expected exactly 1 synthesized state machine, got {len(state_machines)}"
 
 
 def test_sg_alb_ingress_rules(stack_resources, template):
@@ -416,6 +654,33 @@ def test_eventbridge_targets_sfn(stack_resources):
     assert found_sfn_target, "EventBridge rate(6 hours) rule must target the Step Functions state machine"
 
 
+def test_eventbridge_schedule_role_scoped_to_state_machine_only(stack_resources, template):
+    """EventBridge schedule role must only start executions on the migration state machine."""
+    iam = get_boto_client('iam')
+    role_resource = _find_stack_resource(stack_resources, 'AWS::IAM::Role', 'MigrationScheduleRole')
+    sm_resource = _find_stack_resource(stack_resources, 'AWS::StepFunctions::StateMachine', 'MigrationStateMachine')
+    assert sm_resource, "Could not find the migration state machine"
+
+    if role_resource:
+        statements = _get_role_policy_statements(iam, role_resource['PhysicalResourceId'])
+        assert statements, "EventBridge schedule role must have an inline policy"
+        assert len(statements) == 1, f"Expected exactly 1 schedule-role statement, got {len(statements)}"
+        statement = statements[0]
+        assert set(_statement_actions(statement)) == {'states:StartExecution'}
+        assert set(_statement_resources(statement)) == {sm_resource['PhysicalResourceId']}
+        return
+
+    role_logical_id = _template_role_logical_id(template, 'events.amazonaws.com')
+    assert role_logical_id, "Could not find the EventBridge role in the synthesized template"
+    statements = _template_policy_statements_for_role(template, role_logical_id)
+    assert len(statements) == 1, f"Expected exactly 1 schedule-role statement, got {len(statements)}"
+    statement = statements[0]
+    assert set(_statement_actions(statement)) == {'states:StartExecution'}
+    resources = _statement_resources(statement)
+    assert len(resources) == 1
+    assert _resolve_ref(resources[0]) == next(iter(_template_resource_map(template, 'AWS::StepFunctions::StateMachine').keys()))
+
+
 def _get_stack_security_groups(stack_resources):
     """Return a dict mapping logical-id-prefix -> SG physical ID from stack resources."""
     sgs = {}
@@ -457,6 +722,34 @@ def _resolve_source_descriptions(ec2_client, source_sg_ids, sg_desc_map=None):
         except Exception:
             pass
     return {sid: sg_desc_map.get(sid, '') for sid in source_sg_ids}
+
+
+def _live_ingress_rule_set(ec2_client, sg_id, sg_desc_map):
+    response = ec2_client.describe_security_groups(GroupIds=[sg_id])
+    rules = response['SecurityGroups'][0]['IpPermissions']
+    rule_set = set()
+    for rule in rules:
+        port = str(rule.get('FromPort', ''))
+        cidrs = [entry.get('CidrIp') for entry in rule.get('IpRanges', [])]
+        if cidrs:
+            for cidr in cidrs:
+                rule_set.add((port, cidr))
+        for pair in rule.get('UserIdGroupPairs', []):
+            source_id = pair.get('GroupId')
+            source_desc = sg_desc_map.get(source_id, '').lower()
+            if 'alb' in source_desc:
+                rule_set.add((port, 'alb'))
+            elif 'ecs' in source_desc:
+                rule_set.add((port, 'ecs'))
+            elif 'lambda' in source_desc:
+                rule_set.add((port, 'lambda'))
+            elif 'redis' in source_desc:
+                rule_set.add((port, 'redis'))
+            elif 'rds' in source_desc:
+                rule_set.add((port, 'rds'))
+            else:
+                rule_set.add((port, source_id))
+    return rule_set
 
 
 def test_sg_ecs_ingress_rules(stack_resources):
@@ -563,6 +856,59 @@ def test_sg_redis_ingress_rules(stack_resources):
                 f"Redis SG ingress from unexpected source {sid} (description: {desc})"
 
 
+def test_sg_ingress_rules_are_exclusive_across_app_security_groups(stack_resources, template):
+    """All application security groups must have exactly the allowed ingress rules and nothing else."""
+    expected_rules = {
+        'alb': {('80', '0.0.0.0/0')},
+        'ecs': {('8080', 'alb')},
+        'rds': {('5432', 'ecs'), ('5432', 'lambda')},
+        'redis': {('6379', 'ecs')},
+        'lambda': set(),
+    }
+
+    ec2 = get_boto_client('ec2')
+    sg_map = _get_stack_security_groups(stack_resources)
+    sg_ids = list(sg_map.values())
+
+    if sg_ids:
+        sg_desc_map = _get_all_sg_descriptions(ec2)
+        for fragment, expected in expected_rules.items():
+            sg_id = _find_sg_by_description(ec2, sg_ids, fragment)
+            assert sg_id, f"Could not find {fragment} security group"
+            actual = _live_ingress_rule_set(ec2, sg_id, sg_desc_map)
+            if _endpoint_override_configured() and not actual and fragment != 'lambda':
+                break
+            assert actual == expected, \
+                f"Unexpected live ingress rules for {fragment}: expected {expected}, got {actual}"
+        else:
+            return
+
+    for fragment, expected in expected_rules.items():
+        actual = set()
+        for rule in _template_sg_ingress_rules(template, fragment):
+            port = str(rule.get('FromPort', ''))
+            source = rule.get('CidrIp')
+            if source is None:
+                source_id = _resolve_ref(rule.get('SourceSecurityGroupId'))
+                if source_id:
+                    desc = str(template['Resources'][source_id]['Properties'].get('GroupDescription', '')).lower()
+                    if 'alb' in desc:
+                        source = 'alb'
+                    elif 'ecs' in desc:
+                        source = 'ecs'
+                    elif 'lambda' in desc:
+                        source = 'lambda'
+                    elif 'redis' in desc:
+                        source = 'redis'
+                    elif 'rds' in desc:
+                        source = 'rds'
+                    else:
+                        source = source_id
+            actual.add((port, source))
+        assert actual == expected, \
+            f"Unexpected template ingress rules for {fragment}: expected {expected}, got {actual}"
+
+
 def test_compute_ecs_cluster(stack_resources):
     """ECS cluster exists in the stack."""
     cluster_arns = _physical_ids(stack_resources, 'AWS::ECS::Cluster')
@@ -637,6 +983,49 @@ def test_compute_task_definition(stack_resources, template):
     assert has_secrets, "Container must have secrets injected"
 
 
+def test_compute_no_plaintext_db_credentials_runtime(stack_resources, template):
+    """Deployed compute resources must not expose DB credentials as plaintext environment variables."""
+    ecs = get_boto_client('ecs')
+    lam = get_boto_client('lambda')
+
+    td_arns = _physical_ids(stack_resources, 'AWS::ECS::TaskDefinition')
+    assert td_arns, "Expected at least 1 task definition"
+    try:
+        task_def = ecs.describe_task_definition(taskDefinition=td_arns[0])['taskDefinition']
+        containers = task_def['containerDefinitions']
+        for container in containers:
+            env_names = {entry['name'] for entry in container.get('environment', [])}
+            assert 'DB_PASSWORD' not in env_names
+            assert 'DB_USERNAME' not in env_names
+            secret_names = {entry['name'] for entry in container.get('secrets', [])}
+            assert {'DB_PASSWORD', 'DB_USERNAME'}.issubset(secret_names)
+    except ClientError as exc:
+        if not _is_runtime_capability_error(exc):
+            raise
+        task_defs = _template_resources(template, 'AWS::ECS::TaskDefinition')
+        for td in task_defs:
+            for container in td.get('Properties', {}).get('ContainerDefinitions', []):
+                env_names = {entry.get('Name') for entry in container.get('Environment', [])}
+                assert 'DB_PASSWORD' not in env_names
+                assert 'DB_USERNAME' not in env_names
+                secret_names = {entry.get('Name') for entry in container.get('Secrets', [])}
+                assert {'DB_PASSWORD', 'DB_USERNAME'}.issubset(secret_names)
+
+    fn_arns = _physical_ids(stack_resources, 'AWS::Lambda::Function')
+    assert fn_arns, "Expected at least 1 Lambda function"
+    for fn_arn in fn_arns:
+        try:
+            env_vars = lam.get_function_configuration(FunctionName=fn_arn).get('Environment', {}).get('Variables', {})
+        except ClientError as exc:
+            if not _is_runtime_capability_error(exc):
+                raise
+            for fn in _template_resources(template, 'AWS::Lambda::Function'):
+                env_vars = fn.get('Properties', {}).get('Environment', {}).get('Variables', {})
+                assert not {'DB_PASSWORD', 'DB_USERNAME', 'PASSWORD', 'USERNAME'}.intersection(env_vars.keys())
+            return
+        assert not {'DB_PASSWORD', 'DB_USERNAME', 'PASSWORD', 'USERNAME'}.intersection(env_vars.keys())
+
+
 def test_compute_lambda(stack_resources):
     """Migration Lambda: Node.js 20.x, timeout 60, memory 256, VPC-attached."""
     lam = get_boto_client('lambda')
@@ -701,6 +1090,123 @@ def test_compute_cloudwatch_alarm(stack_resources, template):
                 found = True
                 break
     assert found, "Expected a CloudWatch alarm on HTTPCode_Target_5XX_Count"
+
+
+def test_compute_cloudwatch_alarm_dimensions_are_exact(stack_resources, template):
+    """The HTTP 5XX alarm must evaluate a single 60-second metric bound to the stack ALB and target group."""
+    cw = get_boto_client('cloudwatch')
+    alarm_names = _physical_ids(stack_resources, 'AWS::CloudWatch::Alarm')
+    lb_arns = _physical_ids(stack_resources, 'AWS::ElasticLoadBalancingV2::LoadBalancer')
+    tg_arns = _physical_ids(stack_resources, 'AWS::ElasticLoadBalancingV2::TargetGroup')
+    assert len(alarm_names) >= 1, "Expected at least 1 CloudWatch alarm"
+
+    for name in alarm_names:
+        alarms = cw.describe_alarms(AlarmNames=[name])['MetricAlarms']
+        for alarm in alarms:
+            if alarm.get('MetricName') != 'HTTPCode_Target_5XX_Count':
+                continue
+            dimensions = {entry['Name']: entry['Value'] for entry in alarm.get('Dimensions', [])}
+            if dimensions:
+                assert set(dimensions.keys()) == {'LoadBalancer', 'TargetGroup'}
+                if lb_arns and tg_arns and not _endpoint_override_configured():
+                    assert any(dimensions['LoadBalancer'] in arn for arn in lb_arns)
+                    assert any(dimensions['TargetGroup'] in arn for arn in tg_arns)
+                return
+
+    alarm_templates = _template_resources(template, 'AWS::CloudWatch::Alarm')
+    matching = [alarm for alarm in alarm_templates if alarm.get('Properties', {}).get('MetricName') == 'HTTPCode_Target_5XX_Count']
+    assert len(matching) == 1, f"Expected exactly 1 HTTP 5XX alarm template, got {len(matching)}"
+    dimensions = {entry.get('Name'): entry.get('Value') for entry in matching[0].get('Properties', {}).get('Dimensions', [])}
+    assert set(dimensions.keys()) == {'LoadBalancer', 'TargetGroup'}
+    assert matching[0].get('Properties', {}).get('Period') == 60
+
+
+def test_iam_migration_lambda_role_is_scoped(stack_resources, template):
+    """Migration Lambda role must keep logs and parameter access tightly scoped to its own resources."""
+    iam = get_boto_client('iam')
+    role_resource = _find_stack_resource(stack_resources, 'AWS::IAM::Role', 'MigrationLambdaRole')
+
+    if role_resource:
+        statements = _get_role_policy_statements(iam, role_resource['PhysicalResourceId'])
+        assert statements, "Migration Lambda role must have inline policy statements"
+
+        log_statements = [stmt for stmt in statements if any(action.startswith('logs:') for action in _statement_actions(stmt))]
+        assert log_statements, "Migration Lambda role must have explicit log statements"
+        for stmt in log_statements:
+            assert set(_statement_actions(stmt)) == {'logs:CreateLogStream', 'logs:PutLogEvents'}
+            resources = set(_statement_resources(stmt))
+            assert all(resource != '*' for resource in resources)
+            assert len(resources) == 2, f"Expected log group ARN plus stream ARN, got {resources}"
+
+        ssm_statements = [stmt for stmt in statements if 'ssm:GetParameter' in _statement_actions(stmt)]
+        assert ssm_statements, "Migration Lambda role must be able to read the DB endpoint parameter"
+        for stmt in ssm_statements:
+            assert set(_statement_actions(stmt)) == {'ssm:GetParameter'}
+            assert len(_statement_resources(stmt)) == 1
+        return
+
+    role_logical_id = _template_role_logical_id(template, 'lambda.amazonaws.com')
+    assert role_logical_id, "Could not find the migration Lambda role in template"
+    statements = _template_policy_statements_for_role(template, role_logical_id)
+    log_group_lid = next(
+        logical_id for logical_id in _template_resource_map(template, 'AWS::Logs::LogGroup').keys()
+        if 'MigrationLambdaLogGroup' in logical_id
+    )
+    parameter_lid = next(iter(_template_resource_map(template, 'AWS::SSM::Parameter').keys()))
+
+    log_statements = [stmt for stmt in statements if any(action.startswith('logs:') for action in _statement_actions(stmt))]
+    assert log_statements, "Migration Lambda role must have explicit log statements"
+    for stmt in log_statements:
+        assert set(_statement_actions(stmt)) == {'logs:CreateLogStream', 'logs:PutLogEvents'}
+        resources = _statement_resources(stmt)
+        assert len(resources) == 2
+        for resource in resources:
+            assert resource != '*'
+            assert _resolve_ref(resource) == log_group_lid or log_group_lid in json.dumps(resource)
+
+    ssm_statements = [stmt for stmt in statements if 'ssm:GetParameter' in _statement_actions(stmt)]
+    assert ssm_statements, "Migration Lambda role must be able to read the DB endpoint parameter"
+    for stmt in ssm_statements:
+        assert set(_statement_actions(stmt)) == {'ssm:GetParameter'}
+        resources = _statement_resources(stmt)
+        assert len(resources) == 1
+        assert _resolve_ref(resources[0]) == parameter_lid or parameter_lid in json.dumps(resources[0])
+
+
+def test_iam_sfn_role_is_minimal(stack_resources, template):
+    """Step Functions role must only invoke the migration Lambda and use documented log-delivery actions."""
+    iam = get_boto_client('iam')
+    role_resource = _find_stack_resource(stack_resources, 'AWS::IAM::Role', 'MigrationStateMachineRole')
+    log_actions = {
+        'logs:CreateLogDelivery', 'logs:GetLogDelivery', 'logs:UpdateLogDelivery',
+        'logs:DeleteLogDelivery', 'logs:ListLogDeliveries', 'logs:PutResourcePolicy',
+        'logs:DescribeResourcePolicies', 'logs:DescribeLogGroups',
+    }
+
+    if role_resource:
+        statements = _get_role_policy_statements(iam, role_resource['PhysicalResourceId'])
+    else:
+        role_logical_id = _template_role_logical_id(template, 'states.')
+        assert role_logical_id, "Could not find the Step Functions role in template"
+        statements = _template_policy_statements_for_role(template, role_logical_id)
+
+    assert statements, "Step Functions role must have policy statements"
+    lambda_statements = [stmt for stmt in statements if any(action.startswith('lambda:') for action in _statement_actions(stmt))]
+    assert lambda_statements, "Step Functions role must include Lambda invoke permissions"
+    for stmt in lambda_statements:
+        assert set(_statement_actions(stmt)) == {'lambda:InvokeFunction'}
+        assert len(_statement_resources(stmt)) == 2, "Lambda invoke scope should cover only the function ARN and qualified ARNs"
+
+    log_statements = [stmt for stmt in statements if any(action.startswith('logs:') for action in _statement_actions(stmt))]
+    assert log_statements, "Step Functions role must include log delivery permissions"
+    for stmt in log_statements:
+        assert set(_statement_actions(stmt)) == log_actions
+        assert _statement_resources(stmt) == ['*']
+
+    forbidden_prefixes = ('ecs:', 'dynamodb:', 'sqs:', 'sns:', 'secretsmanager:', 'ssm:')
+    for stmt in statements:
+        for action in _statement_actions(stmt):
+            assert not action.startswith(forbidden_prefixes), f"Unexpected Step Functions action {action}"
 
 
 def test_dns_route53(stack_resources, stack_outputs):

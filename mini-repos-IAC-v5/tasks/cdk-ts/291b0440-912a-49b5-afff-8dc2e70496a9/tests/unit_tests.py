@@ -177,6 +177,52 @@ def _render_intrinsic_string(value):
     return json.dumps(value)
 
 
+def _statement_actions(statement):
+    """Return a statement's actions as a list."""
+    actions = statement.get("Action", [])
+    if isinstance(actions, str):
+        actions = [actions]
+    return actions
+
+
+def _statement_resources(statement):
+    """Return a statement's resources as a list."""
+    resources = statement.get("Resource", [])
+    if isinstance(resources, (str, dict)):
+        resources = [resources]
+    return resources
+
+
+def test_helper_resolve_ref_variants():
+    """Ref helper must normalize Ref, GetAtt, and unsupported literals consistently."""
+    assert _resolve_ref({"Ref": "MyResource"}) == "MyResource"
+    assert _resolve_ref({"Fn::GetAtt": ["MyResource", "Arn"]}) == "MyResource"
+    assert _resolve_ref("literal") is None
+
+
+def test_helper_statement_normalizers():
+    """IAM statement helper normalizers must accept both scalar and collection forms."""
+    assert _statement_actions({"Action": "logs:PutLogEvents"}) == ["logs:PutLogEvents"]
+    assert _statement_actions({"Action": ["logs:PutLogEvents"]}) == ["logs:PutLogEvents"]
+    assert _statement_resources({"Resource": "*"}) == ["*"]
+    assert _statement_resources({"Resource": {"Ref": "LogGroup"}}) == [{"Ref": "LogGroup"}]
+
+
+def test_helper_contains_reference_to_nested_structures():
+    """Reference scanner must find nested Ref/GetAtt values and ignore absent targets."""
+    value = {
+        "Fn::Join": [
+            "",
+            [
+                {"Ref": "FirstResource"},
+                {"nested": [{"Fn::GetAtt": ["TargetResource", "Arn"]}]},
+            ],
+        ]
+    }
+    assert _contains_reference_to(value, "TargetResource") is True
+    assert _contains_reference_to(value, "MissingResource") is False
+
+
 def test_deliverable_file_structure():
     """Requirement: Deliver one CDK app in a single file named app.ts"""
     assert os.path.exists("app.ts"), "Deliverable must be in a file named app.ts"
@@ -331,8 +377,22 @@ def test_compute_step_functions_logging(template):
     assert found_logging, "State machine must have LoggingConfiguration with logging enabled"
 
 
+def test_compute_step_functions_logging_has_single_destination(template):
+    """Step Functions logging must use exactly one CloudWatch destination tied to the dedicated log group."""
+    state_machines = get_resources(template, "AWS::StepFunctions::StateMachine")
+    log_groups = get_resources(template, "AWS::Logs::LogGroup")
+    assert len(state_machines) == 1, f"Expected exactly 1 state machine, got {len(state_machines)}"
+
+    state_machine = next(iter(state_machines.values()))
+    logging_config = state_machine.get("Properties", {}).get("LoggingConfiguration", {})
+    destinations = logging_config.get("Destinations", [])
+    assert len(destinations) == 1, f"Expected exactly 1 Step Functions log destination, got {len(destinations)}"
+    destination = destinations[0].get("CloudWatchLogsLogGroup", {}).get("LogGroupArn")
+    assert any(_contains_reference_to(destination, logical_id) for logical_id in log_groups.keys())
+
+
 def test_compute_step_functions_invokes_migration_lambda(template):
-    """State machine definition must contain a single Lambda invocation step targeting the migration Lambda."""
+    """State machine definition must be a strict single-step Lambda invoke workflow."""
     state_machines = get_resources(template, "AWS::StepFunctions::StateMachine")
     lambda_fns = get_resources(template, "AWS::Lambda::Function")
 
@@ -354,11 +414,17 @@ def test_compute_step_functions_invokes_migration_lambda(template):
         start_state = parsed.get("StartAt")
         states = parsed.get("States", {})
         assert len(states) == 1, "State machine must contain exactly one state"
+        assert list(states.keys()) == [start_state], \
+            "StartAt must point to the only state in the workflow"
         assert start_state in states, f"StartAt '{start_state}' not found in state map"
 
         task_state = states[start_state]
         params = task_state.get("Parameters", {})
         function_name = str(params.get("FunctionName", ""))
+        assert set(task_state.keys()) == {"Type", "Resource", "Parameters", "End"}, \
+            f"Single-step migration workflow must not include extra state semantics: {task_state.keys()}"
+        assert set(params.keys()) == {"FunctionName", "Payload.$"}, \
+            f"Migration task parameters must stay minimal and deterministic: {params.keys()}"
         if (
             task_state.get("Type") == "Task"
             and "lambda:invoke" in str(task_state.get("Resource", "")).lower()
@@ -369,6 +435,27 @@ def test_compute_step_functions_invokes_migration_lambda(template):
             break
     assert found_valid_definition, \
         "State machine definition must be a single terminal lambda:invoke step for the migration Lambda"
+
+
+def test_compute_step_functions_topology_is_exact(template):
+    """Step Functions topology must contain exactly one state machine with exactly one terminal state."""
+    state_machines = get_resources(template, "AWS::StepFunctions::StateMachine")
+    assert len(state_machines) == 1, f"Expected exactly 1 state machine, got {len(state_machines)}"
+
+    state_machine = next(iter(state_machines.values()))
+    definition = state_machine.get("Properties", {}).get("DefinitionString", {})
+    parsed = json.loads(_render_intrinsic_string(definition))
+    assert set(parsed.keys()) == {"StartAt", "States"}, \
+        f"State machine definition must not include extra top-level workflow fields: {parsed.keys()}"
+
+    start_state = parsed["StartAt"]
+    states = parsed["States"]
+    assert list(states.keys()) == [start_state], "The only state must also be the StartAt target"
+
+    task_state = states[start_state]
+    forbidden_fields = {"Next", "Catch", "Retry", "Choices", "Branches", "Iterator"}
+    assert forbidden_fields.isdisjoint(task_state.keys()), \
+        f"Single-step workflow must not include branching/retry semantics: {forbidden_fields.intersection(task_state.keys())}"
 
 
 def test_compute_cloudwatch_alarm(template):
@@ -396,6 +483,29 @@ def test_compute_cloudwatch_alarm(template):
             found = True
             break
     assert found, "Missing CloudWatch Alarm with correct metric, 60-second period, threshold, EvaluationPeriods=1, DatapointsToAlarm=1"
+
+
+def test_compute_cloudwatch_alarm_period_is_explicit_and_reference_based(template):
+    """CloudWatch alarm must declare the 60-second period directly and bind dimensions via references."""
+    alarms = get_resources_list(template, "AWS::CloudWatch::Alarm")
+    load_balancer_lid = next(iter(get_resources(template, "AWS::ElasticLoadBalancingV2::LoadBalancer").keys()))
+    target_group_lid = next(iter(get_resources(template, "AWS::ElasticLoadBalancingV2::TargetGroup").keys()))
+
+    matching = []
+    for alarm in alarms:
+        props = alarm.get("Properties", {})
+        if props.get("MetricName") == "HTTPCode_Target_5XX_Count":
+            matching.append(props)
+    assert len(matching) == 1, f"Expected exactly 1 HTTP 5XX alarm, got {len(matching)}"
+
+    props = matching[0]
+    assert props.get("Period") == 60, "CloudWatch alarm period must be expressed directly as 60 seconds"
+    assert not props.get("Metrics"), "This alarm must not hide the period inside a metric-math definition"
+    dimensions = {entry.get("Name"): entry.get("Value") for entry in props.get("Dimensions", [])}
+    assert set(dimensions.keys()) == {"LoadBalancer", "TargetGroup"}, \
+        f"Alarm must target exactly LoadBalancer and TargetGroup dimensions, got {dimensions.keys()}"
+    assert _contains_reference_to(dimensions["LoadBalancer"], load_balancer_lid)
+    assert _contains_reference_to(dimensions["TargetGroup"], target_group_lid)
 
 
 def test_network_vpc(template):
@@ -470,6 +580,29 @@ def test_network_security_group_ingress_exclusivity(template):
             actual_rules.add((port, source))
         assert actual_rules == allowed_rules, \
             f"Unexpected ingress rules for {sg_lid}: expected {allowed_rules}, got {actual_rules}"
+
+
+def test_network_security_group_egress_exclusivity(template):
+    """Application compute security groups must keep only the explicitly required egress rules."""
+    ecs_sg_lid = _find_sg_logical_id(template, "ecs")
+    lambda_sg_lid = _find_sg_logical_id(template, "lambda")
+    rds_sg_lid = _find_sg_logical_id(template, "rds")
+    redis_sg_lid = _find_sg_logical_id(template, "redis")
+    assert all([ecs_sg_lid, lambda_sg_lid, rds_sg_lid, redis_sg_lid])
+
+    expected = {
+        ecs_sg_lid: {("5432", rds_sg_lid), ("6379", redis_sg_lid), ("443", "0.0.0.0/0")},
+        lambda_sg_lid: {("5432", rds_sg_lid), ("443", "0.0.0.0/0")},
+    }
+
+    for sg_lid, allowed_rules in expected.items():
+        actual_rules = set()
+        for rule in _get_sg_egress_rules(template, sg_lid):
+            port = str(rule.get("FromPort", ""))
+            destination = rule.get("CidrIp") or _resolve_ref(rule.get("DestinationSecurityGroupId"))
+            actual_rules.add((port, destination))
+        assert actual_rules == allowed_rules, \
+            f"Unexpected egress rules for {sg_lid}: expected {allowed_rules}, got {actual_rules}"
 
 
 def test_alb_routing_rules_http_listener(template):
@@ -582,6 +715,30 @@ def test_persistence_no_plaintext_db_credentials(template):
             env_names = {entry.get("Name") for entry in container.get("Environment", [])}
             assert "DB_PASSWORD" not in env_names, "DB_PASSWORD must not be injected as plaintext environment"
             assert "DB_USERNAME" not in env_names, "DB_USERNAME must not be injected as plaintext environment"
+            secret_names = {entry.get("Name") for entry in container.get("Secrets", [])}
+            assert {"DB_PASSWORD", "DB_USERNAME"}.issubset(secret_names), \
+                "Database credentials must be delivered to ECS only through secret references"
+
+    lambdas = get_resources_list(template, "AWS::Lambda::Function")
+    for fn in lambdas:
+        env_vars = fn.get("Properties", {}).get("Environment", {}).get("Variables", {})
+        forbidden = {"DB_PASSWORD", "DB_USERNAME", "PASSWORD", "USERNAME"}
+        assert forbidden.isdisjoint(env_vars.keys()), \
+            f"Lambda environment must not carry plaintext credentials: {forbidden.intersection(env_vars.keys())}"
+
+
+def test_source_no_plaintext_password_assignments(app_source):
+    """Source must not assign plaintext passwords into environment variables or resource properties."""
+    import re
+
+    forbidden_patterns = [
+        r"DB_PASSWORD\s*:\s*['\"]",
+        r"DB_USERNAME\s*:\s*['\"]",
+        r"masterUserPassword\s*:\s*['\"]",
+    ]
+    for pattern in forbidden_patterns:
+        assert not re.search(pattern, app_source), \
+            f"Found plaintext credential assignment matching {pattern}"
 
 
 def test_persistence_dynamodb_config(template):
@@ -657,6 +814,18 @@ def test_io_eventbridge(template):
     )
 
 
+def test_io_eventbridge_single_schedule_rule(template):
+    """The migration schedule must be represented by exactly one scheduled EventBridge rule."""
+    rules = get_resources_list(template, "AWS::Events::Rule")
+    matching = [
+        rule for rule in rules
+        if rule.get("Properties", {}).get("ScheduleExpression") == "rate(6 hours)"
+    ]
+    assert len(matching) == 1, f"Expected exactly 1 rate(6 hours) rule, got {len(matching)}"
+    assert len(matching[0].get("Properties", {}).get("Targets", [])) == 1, \
+        "The schedule rule must declare exactly one target"
+
+
 def test_io_eventbridge_targets_sfn(template):
     """EventBridge rule target must be the Step Functions state machine."""
     rules = get_resources(template, "AWS::Events::Rule")
@@ -716,6 +885,12 @@ def test_iam_roles_exist(template):
                         states_assumed = True
     assert lambda_assumed, "Missing IAM Role assumable by Lambda"
     assert states_assumed, "Missing IAM Role assumable by Step Functions"
+
+
+def test_iam_expected_role_count(template):
+    """The stack should define the expected application IAM roles and no hidden extras for orchestration."""
+    roles = get_resources_list(template, "AWS::IAM::Role")
+    assert len(roles) == 5, f"Expected exactly 5 IAM roles, got {len(roles)}"
 
 
 def test_ecs_secret_referencing(template):
@@ -888,7 +1063,7 @@ def test_iam_ecs_task_role_no_admin_actions(template):
 
 
 def test_iam_lambda_role_has_secrets_read(template):
-    """Lambda execution role must have SecretsManager read for DB credentials."""
+    """Lambda execution role must have SecretsManager read plus scoped SSM reads."""
     lambda_roles = []
     for lid, res in template.get("Resources", {}).items():
         if res.get("Type") != "AWS::IAM::Role":
@@ -911,6 +1086,8 @@ def test_iam_lambda_role_has_secrets_read(template):
 
     assert any(a.startswith("secretsmanager:") for a in all_actions), \
         "Lambda role must have SecretsManager read for DB credentials"
+    assert "ssm:GetParameter" in all_actions, \
+        "Lambda role must be able to read the DB endpoint parameter it receives"
 
 
 def test_iam_sfn_role_invokes_lambda_only(template):
@@ -1017,21 +1194,100 @@ def test_iam_lambda_role_log_scoping(template):
         assert log_statements, "Migration Lambda role must have explicit log statements"
 
         for stmt in log_statements:
-            actions = stmt.get("Action", [])
-            if isinstance(actions, str):
-                actions = [actions]
+            actions = _statement_actions(stmt)
             assert set(actions).issubset({"logs:CreateLogStream", "logs:PutLogEvents"}), \
                 f"Unexpected Lambda log actions: {actions}"
-            resources = stmt.get("Resource", [])
-            if isinstance(resources, dict):
-                resources = [resources]
-            if isinstance(resources, str):
-                resources = [resources]
+            resources = _statement_resources(stmt)
             assert resources, "Lambda log statements must include explicit resources"
+            assert len(resources) == 2, "Lambda log scope must cover only the log group ARN and its streams"
             for resource in resources:
                 assert resource != "*", "Lambda log statements must not use wildcard resources"
                 assert _contains_reference_to(resource, migration_log_group_lid), \
                     "Lambda log statements must be scoped to the migration Lambda log group"
+
+
+def test_iam_log_permissions_are_role_specific(template):
+    """Migration Lambda and Step Functions log permissions must stay isolated to their respective roles."""
+    migration_log_group_lid = None
+    for lid, lg in get_resources(template, "AWS::Logs::LogGroup").items():
+        name = str(lg.get("Properties", {}).get("LogGroupName", ""))
+        if "/aws/lambda/" in name:
+            migration_log_group_lid = lid
+            break
+    assert migration_log_group_lid, "Could not find migration Lambda log group"
+
+    lambda_role_lid = _find_role_logical_id(template, "lambda.amazonaws.com")
+    sfn_role_lid = _find_role_logical_id(template, "states")
+    assert lambda_role_lid and sfn_role_lid
+
+    for role_lid in [lambda_role_lid, sfn_role_lid]:
+        statements = _get_policies_for_role(template, role_lid)
+        for stmt in statements:
+            actions = _statement_actions(stmt)
+            resources = _statement_resources(stmt)
+            if any(action.startswith("logs:CreateLog") or action == "logs:PutLogEvents" for action in actions):
+                if role_lid == lambda_role_lid:
+                    assert all(_contains_reference_to(resource, migration_log_group_lid) for resource in resources), \
+                        "Lambda log write permissions must stay bound to the migration Lambda log group"
+                else:
+                    assert resources == ["*"], \
+                        "Only the Step Functions role may use the documented wildcard log-delivery form"
+
+
+def test_determinism_security_group_rules_use_references(template):
+    """Security-group-to-security-group relationships must be expressed through CloudFormation references."""
+    ecs_sg_lid = _find_sg_logical_id(template, "ecs")
+    alb_sg_lid = _find_sg_logical_id(template, "alb")
+    rds_sg_lid = _find_sg_logical_id(template, "rds")
+    redis_sg_lid = _find_sg_logical_id(template, "redis")
+    lambda_sg_lid = _find_sg_logical_id(template, "lambda")
+    assert all([ecs_sg_lid, alb_sg_lid, rds_sg_lid, redis_sg_lid, lambda_sg_lid])
+
+    ingress_expectations = {
+        ecs_sg_lid: {alb_sg_lid},
+        rds_sg_lid: {ecs_sg_lid, lambda_sg_lid},
+        redis_sg_lid: {ecs_sg_lid},
+    }
+    for sg_lid, allowed_sources in ingress_expectations.items():
+        for rule in _get_sg_ingress_rules(template, sg_lid):
+            if rule.get("CidrIp"):
+                continue
+            source = rule.get("SourceSecurityGroupId")
+            assert isinstance(source, dict), "Inter-SG ingress must use CloudFormation references"
+            assert _resolve_ref(source) in allowed_sources
+
+    egress_expectations = {
+        ecs_sg_lid: {rds_sg_lid, redis_sg_lid},
+        lambda_sg_lid: {rds_sg_lid},
+    }
+    for sg_lid, allowed_destinations in egress_expectations.items():
+        for rule in _get_sg_egress_rules(template, sg_lid):
+            if rule.get("CidrIp"):
+                continue
+            destination = rule.get("DestinationSecurityGroupId")
+            assert isinstance(destination, dict), "Inter-SG egress must use CloudFormation references"
+            assert _resolve_ref(destination) in allowed_destinations
+
+
+def test_iam_lambda_role_ssm_scope_is_parameter_specific(template):
+    """Migration Lambda SSM reads must stay scoped to the single DB endpoint parameter."""
+    lambda_role_lid = _find_role_logical_id(template, "lambda.amazonaws.com")
+    assert lambda_role_lid, "Could not find a Lambda role"
+
+    parameter_lid = next(iter(get_resources(template, "AWS::SSM::Parameter").keys()))
+    statements = _get_policies_for_role(template, lambda_role_lid)
+    ssm_statements = [
+        stmt for stmt in statements
+        if "ssm:GetParameter" in _statement_actions(stmt)
+    ]
+    assert ssm_statements, "Migration Lambda role must include an SSM read statement"
+    for stmt in ssm_statements:
+        assert set(_statement_actions(stmt)) == {"ssm:GetParameter"}, \
+            "Migration Lambda SSM scope must stay minimal"
+        resources = _statement_resources(stmt)
+        assert len(resources) == 1, "Migration Lambda SSM scope must reference a single parameter"
+        assert _contains_reference_to(resources[0], parameter_lid), \
+            "Migration Lambda SSM permission must target the DB endpoint parameter"
 
 
 def test_iam_sfn_role_log_scoping(template):
@@ -1086,8 +1342,6 @@ def test_determinism_no_fixed_names(template):
 
 def test_determinism_relationships_use_references(template):
     """Critical relationships must be expressed through CloudFormation references, not hardcoded identifiers."""
-    resources = template.get("Resources", {})
-
     service = next(iter(get_resources(template, "AWS::ECS::Service").values()))
     cluster_lid = next(iter(get_resources(template, "AWS::ECS::Cluster").keys()))
     task_def_lid = next(iter(get_resources(template, "AWS::ECS::TaskDefinition").keys()))
@@ -1098,19 +1352,64 @@ def test_determinism_relationships_use_references(template):
     target_group_lid = next(iter(get_resources(template, "AWS::ElasticLoadBalancingV2::TargetGroup").keys()))
     assert _contains_reference_to(listener.get("Properties", {}).get("DefaultActions"), target_group_lid)
 
+    alarm = next(iter(get_resources(template, "AWS::CloudWatch::Alarm").values()))
+    load_balancer_lid = next(iter(get_resources(template, "AWS::ElasticLoadBalancingV2::LoadBalancer").keys()))
+    assert _contains_reference_to(alarm.get("Properties", {}).get("Dimensions"), load_balancer_lid)
+    assert _contains_reference_to(alarm.get("Properties", {}).get("Dimensions"), target_group_lid)
+
     db_instance = next(iter(get_resources(template, "AWS::RDS::DBInstance").values()))
     db_subnet_group_lid = next(iter(get_resources(template, "AWS::RDS::DBSubnetGroup").keys()))
     rds_sg_lid = _find_sg_logical_id(template, "rds")
     assert _contains_reference_to(db_instance.get("Properties", {}).get("DBSubnetGroupName"), db_subnet_group_lid)
     assert _contains_reference_to(db_instance.get("Properties", {}).get("VPCSecurityGroups"), rds_sg_lid)
 
-    parameter = next(iter(get_resources(template, "AWS::SSM::Parameter").values()))
+    parameter_lid = next(iter(get_resources(template, "AWS::SSM::Parameter").keys()))
+    parameter = template["Resources"][parameter_lid]
     db_instance_lid = next(iter(get_resources(template, "AWS::RDS::DBInstance").keys()))
     assert _contains_reference_to(parameter.get("Properties", {}).get("Value"), db_instance_lid)
 
-    rule = next(iter(get_resources(template, "AWS::Events::Rule").values()))
+    task_definition = next(iter(get_resources(template, "AWS::ECS::TaskDefinition").values()))
+    secret_lid = next(iter(get_resources(template, "AWS::SecretsManager::Secret").keys()))
+    table_lid = next(iter(get_resources(template, "AWS::DynamoDB::Table").keys()))
+    queue_lid = next(iter(get_resources(template, "AWS::SQS::Queue").keys()))
+    topic_lid = next(iter(get_resources(template, "AWS::SNS::Topic").keys()))
+    assert any(
+        _contains_reference_to(task_definition.get("Properties", {}).get("ExecutionRoleArn"), role_lid)
+        for role_lid in get_resources(template, "AWS::IAM::Role").keys()
+    ), "Task definition execution role must be linked through a CloudFormation reference"
+    for container in task_definition.get("Properties", {}).get("ContainerDefinitions", []):
+        assert _contains_reference_to(container.get("Secrets"), secret_lid)
+        assert _contains_reference_to(container.get("Environment"), parameter_lid)
+        assert _contains_reference_to(container.get("Environment"), table_lid)
+        assert _contains_reference_to(container.get("Environment"), queue_lid)
+        assert _contains_reference_to(container.get("Environment"), topic_lid)
+
+    lambda_lid = next(iter(get_resources(template, "AWS::Lambda::Function").keys()))
+    lambda_function = template["Resources"][lambda_lid]
+    lambda_role_lid = _find_role_logical_id(template, "lambda.amazonaws.com")
+    assert _contains_reference_to(lambda_function.get("Properties", {}).get("Role"), lambda_role_lid)
+    assert _contains_reference_to(lambda_function.get("Properties", {}).get("Environment"), secret_lid)
+    assert _contains_reference_to(lambda_function.get("Properties", {}).get("Environment"), parameter_lid)
+
     state_machine_lid = next(iter(get_resources(template, "AWS::StepFunctions::StateMachine").keys()))
+    state_machine = template["Resources"][state_machine_lid]
+    state_machine_role_lid = _find_role_logical_id(template, "states")
+    assert _contains_reference_to(state_machine.get("Properties", {}).get("RoleArn"), state_machine_role_lid)
+    assert _contains_reference_to(state_machine.get("Properties", {}).get("DefinitionString"), lambda_lid)
+    for log_group_lid, log_group in get_resources(template, "AWS::Logs::LogGroup").items():
+        if "MigrationStateMachineLogGroup" in log_group_lid:
+            assert _contains_reference_to(
+                state_machine.get("Properties", {}).get("LoggingConfiguration"),
+                log_group_lid,
+            )
+            break
+    else:
+        pytest.fail("Could not find Step Functions log group")
+
+    rule = next(iter(get_resources(template, "AWS::Events::Rule").values()))
     assert _contains_reference_to(rule.get("Properties", {}).get("Targets"), state_machine_lid)
+    eventbridge_role_lid = _find_role_logical_id(template, "events.amazonaws.com")
+    assert _contains_reference_to(rule.get("Properties", {}).get("Targets"), eventbridge_role_lid)
 
 
 def test_outputs_present(template):

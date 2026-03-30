@@ -352,8 +352,22 @@ class ThreeTierWebAppStack extends cdk.Stack {
     const migrationRole = new iam.Role(this, 'MigrationLambdaRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
-    migrationLogGroup.grantWrite(migrationRole);
+    migrationRole.addToPrincipalPolicy(
+      new iam.PolicyStatement({
+        actions: ['logs:CreateLogStream', 'logs:PutLogEvents'],
+        resources: [
+          migrationLogGroup.logGroupArn,
+          cdk.Fn.join('', [migrationLogGroup.logGroupArn, ':*']),
+        ],
+      }),
+    );
     databaseSecret.grantRead(migrationRole);
+    migrationRole.addToPrincipalPolicy(
+      new iam.PolicyStatement({
+        actions: ['ssm:GetParameter'],
+        resources: [dbEndpointParameter.parameterArn],
+      }),
+    );
 
     const migrationLambda = new lambda.Function(this, 'MigrationLambda', {
       functionName: migrationFunctionName,
@@ -405,6 +419,7 @@ exports.handler = async (event) => {
     const migrationStep = new tasks.LambdaInvoke(this, 'RunMigration', {
       lambdaFunction: migrationLambda,
       payloadResponseOnly: false,
+      retryOnServiceExceptions: false,
     });
 
     const stateMachine = new stepfunctions.StateMachine(this, 'MigrationStateMachine', {

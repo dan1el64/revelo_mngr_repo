@@ -60,6 +60,14 @@ def _load_template() -> dict:
     return template
 
 
+def _resources_by_type_in(template: dict, resource_type: str) -> dict[str, dict]:
+    return {
+        logical_id: resource
+        for logical_id, resource in template["Resources"].items()
+        if resource["Type"] == resource_type
+    }
+
+
 TEMPLATE = _load_template()
 RESOURCES = TEMPLATE["Resources"]
 OUTPUTS = TEMPLATE.get("Outputs", {})
@@ -193,12 +201,11 @@ def test_app_maps_aws_endpoint_to_sdk_endpoint_url_and_preserves_region():
             "AWS_ENDPOINT": "https://aws-endpoint.internal",
         }
     )
-    endpoint_resources = [
-        resource
-        for resource in template["Resources"].values()
-        if resource["Type"] == "AWS::EC2::VPCEndpoint"
-    ]
-    assert endpoint_resources == []
+    assert len(_resources_by_type_in(template, "AWS::EC2::VPCEndpoint")) == 1
+    assert len(_resources_by_type_in(template, "AWS::RDS::DBInstance")) == 1
+    assert len(_resources_by_type_in(template, "AWS::Pipes::Pipe")) == 1
+    assert len(_resources_by_type_in(template, "AWS::Lambda::EventSourceMapping")) == 1
+    assert len(_resources_by_type_in(template, "AWS::EC2::SecurityGroup")) == 3
 
     artifacts = manifest.get("artifacts", {})
     stack_artifact = next(value for key, value in artifacts.items() if key == "OrdersIngestStack")

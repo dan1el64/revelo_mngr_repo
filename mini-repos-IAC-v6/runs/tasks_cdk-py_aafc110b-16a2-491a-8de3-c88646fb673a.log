@@ -14,10 +14,10 @@ LocalStack is healthy.
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  Step: Setup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
-Starting worker container: harness-worker-32814
-921923657def36a5d4b08263d48b3ccca4a66fc18a4877d7e6034339c3b887d9
+Starting worker container: harness-worker-58647
+32be4b2c7fb70c2adf6d62427a72261142e870944880898807b77403a636fde5
 Installing dependencies (pip install -r requirements.txt)...
-Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/b08ac2a1-3768-4d46-a1e6-bc81acf8635b
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/e48c2e7c-550c-4dfc-bf96-3b743a3f0fc4
 [32m✅ Step passed: Setup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -38,31 +38,36 @@ cachedir: .pytest_cache
 rootdir: /work
 configfile: pytest.ini
 plugins: typeguard-2.13.3
-collecting ... collected 21 items
+collecting ... collected 26 items
 
-tests/unit_tests.py::TestModuleConfiguration::test_configure_aws_endpoint_environment_is_noop_when_unset PASSED [  4%]
-tests/unit_tests.py::TestModuleConfiguration::test_configure_aws_endpoint_environment_sets_all_sdk_overrides PASSED [  9%]
-tests/unit_tests.py::TestModuleConfiguration::test_default_region_falls_back_to_us_east_1 PASSED [ 14%]
-tests/unit_tests.py::TestModuleConfiguration::test_deliverable_is_self_contained_root_app PASSED [ 19%]
-tests/unit_tests.py::TestNetworkSecurity::test_database_security_group_only_allows_postgres_from_compute_group PASSED [ 23%]
-tests/unit_tests.py::TestNetworkSecurity::test_lambdas_run_in_private_subnets_with_compute_security_group PASSED [ 28%]
-tests/unit_tests.py::TestNetworkSecurity::test_rds_subnet_group_uses_only_private_subnets PASSED [ 33%]
-tests/unit_tests.py::TestNetworkSecurity::test_vpc_has_two_public_two_private_subnets_and_one_nat_gateway PASSED [ 38%]
-tests/unit_tests.py::TestApplicationResources::test_all_application_log_groups_use_14_day_retention PASSED [ 42%]
-tests/unit_tests.py::TestApplicationResources::test_api_gateway_exposes_only_post_events_with_expected_access_logs PASSED [ 47%]
-tests/unit_tests.py::TestApplicationResources::test_bucket_blocks_public_access_and_uses_s3_managed_encryption PASSED [ 52%]
-tests/unit_tests.py::TestApplicationResources::test_cloudwatch_alarms_target_api_errors_and_queue_backlog PASSED [ 57%]
-tests/unit_tests.py::TestApplicationResources::test_database_uses_secrets_manager_credentials_and_secure_storage PASSED [ 61%]
-tests/unit_tests.py::TestApplicationResources::test_lambda_runtime_configuration_and_environment_keys_are_minimal PASSED [ 66%]
-tests/unit_tests.py::TestApplicationResources::test_no_inline_secrets_exist_in_source_or_lambda_environment PASSED [ 71%]
-tests/unit_tests.py::TestApplicationResources::test_no_resources_use_retain_policies_or_termination_protection PASSED [ 76%]
-tests/unit_tests.py::TestApplicationResources::test_queue_uses_managed_encryption_and_expected_operational_settings PASSED [ 80%]
-tests/unit_tests.py::TestIamAndWorkflow::test_api_handler_permissions_are_scoped_to_queue_and_own_log_group PASSED [ 85%]
-tests/unit_tests.py::TestIamAndWorkflow::test_pipe_is_wired_from_queue_through_enrichment_to_state_machine PASSED [ 90%]
-tests/unit_tests.py::TestIamAndWorkflow::test_state_machine_invokes_worker_and_logs_all_execution_data PASSED [ 95%]
+tests/unit_tests.py::TestModuleConfiguration::test_api_handler_accepts_malformed_json_body_without_crashing PASSED [  3%]
+tests/unit_tests.py::TestModuleConfiguration::test_api_handler_accepts_missing_body_without_crashing PASSED [  7%]
+tests/unit_tests.py::TestModuleConfiguration::test_api_handler_wraps_plain_text_body_as_message_payload PASSED [ 11%]
+tests/unit_tests.py::TestModuleConfiguration::test_configure_aws_endpoint_environment_is_noop_when_unset PASSED [ 15%]
+tests/unit_tests.py::TestModuleConfiguration::test_configure_aws_endpoint_environment_sets_all_sdk_overrides PASSED [ 19%]
+tests/unit_tests.py::TestModuleConfiguration::test_default_region_falls_back_to_us_east_1 PASSED [ 23%]
+tests/unit_tests.py::TestModuleConfiguration::test_deliverable_is_self_contained_root_app PASSED [ 26%]
+tests/unit_tests.py::TestModuleConfiguration::test_worker_handles_missing_records_key_as_zero_processed PASSED [ 30%]
+tests/unit_tests.py::TestModuleConfiguration::test_worker_handles_non_list_records_as_zero_processed PASSED [ 34%]
+tests/unit_tests.py::TestNetworkSecurity::test_database_security_group_only_allows_postgres_from_compute_group PASSED [ 38%]
+tests/unit_tests.py::TestNetworkSecurity::test_lambdas_run_in_private_subnets_with_compute_security_group PASSED [ 42%]
+tests/unit_tests.py::TestNetworkSecurity::test_rds_subnet_group_uses_only_private_subnets PASSED [ 46%]
+tests/unit_tests.py::TestNetworkSecurity::test_vpc_has_two_public_two_private_subnets_and_one_nat_gateway PASSED [ 50%]
+tests/unit_tests.py::TestApplicationResources::test_all_application_log_groups_use_14_day_retention PASSED [ 53%]
+tests/unit_tests.py::TestApplicationResources::test_api_gateway_exposes_only_post_events_with_expected_access_logs PASSED [ 57%]
+tests/unit_tests.py::TestApplicationResources::test_bucket_blocks_public_access_and_uses_s3_managed_encryption PASSED [ 61%]
+tests/unit_tests.py::TestApplicationResources::test_cloudwatch_alarms_target_api_errors_and_queue_backlog PASSED [ 65%]
+tests/unit_tests.py::TestApplicationResources::test_database_uses_secrets_manager_credentials_and_secure_storage PASSED [ 69%]
+tests/unit_tests.py::TestApplicationResources::test_lambda_runtime_configuration_and_environment_keys_are_minimal PASSED [ 73%]
+tests/unit_tests.py::TestApplicationResources::test_no_inline_secrets_exist_in_source_or_lambda_environment PASSED [ 76%]
+tests/unit_tests.py::TestApplicationResources::test_no_resources_use_retain_policies_or_termination_protection PASSED [ 80%]
+tests/unit_tests.py::TestApplicationResources::test_queue_uses_managed_encryption_and_expected_operational_settings PASSED [ 84%]
+tests/unit_tests.py::TestIamAndWorkflow::test_api_handler_permissions_are_scoped_to_queue_and_own_log_group PASSED [ 88%]
+tests/unit_tests.py::TestIamAndWorkflow::test_pipe_is_wired_from_queue_through_enrichment_to_state_machine PASSED [ 92%]
+tests/unit_tests.py::TestIamAndWorkflow::test_state_machine_invokes_worker_and_logs_all_execution_data PASSED [ 96%]
 tests/unit_tests.py::TestIamAndWorkflow::test_worker_permissions_are_scoped_to_secret_and_own_log_group PASSED [100%]
 
-============================= 21 passed in 10.36s ==============================
+============================= 26 passed in 12.84s ==============================
 [32m✅ Step passed: Unit tests (pytest)[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -71,7 +76,7 @@ tests/unit_tests.py::TestIamAndWorkflow::test_worker_permissions_are_scoped_to_s
 Bootstrapping (if needed)...
 Running cdklocal deploy...
 
-✨  Synthesis time: 5.56s
+✨  Synthesis time: 5.7s
 
 SecureNotificationStack: start: Building 0a995441f51a69ee9386690aa23dad65e617373f795c25eb9697dfd7662194f8
 SecureNotificationStack: success: Built 0a995441f51a69ee9386690aa23dad65e617373f795c25eb9697dfd7662194f8
@@ -79,128 +84,128 @@ SecureNotificationStack: start: Publishing 0a995441f51a69ee9386690aa23dad65e6173
 SecureNotificationStack: success: Published 0a995441f51a69ee9386690aa23dad65e617373f795c25eb9697dfd7662194f8:current_account-us-east-1
 SecureNotificationStack: deploying... [1/1]
 SecureNotificationStack: creating CloudFormation changeset...
-SecureNotificationStack |  0/53 | 12:40:00 AM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack            | SecureNotificationStack User Initiated
-SecureNotificationStack |  0/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack            | SecureNotificationStack 
-SecureNotificationStack |  0/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | ApiAccessLogGroup (ApiAccessLogGroupCEA70788) 
-SecureNotificationStack |  0/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                         | NotificationVpc (NotificationVpc75E24247) 
-SecureNotificationStack |  1/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | ApiAccessLogGroup (ApiAccessLogGroupCEA70788) 
-SecureNotificationStack |  1/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | NotificationVpc/PrivateWithEgressSubnet2/RouteTable (NotificationVpcPrivateWithEgressSubnet2RouteTableCF8C2AC0) 
-SecureNotificationStack |  2/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::VPC                         | NotificationVpc (NotificationVpc75E24247) 
-SecureNotificationStack |  3/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | NotificationVpc/PrivateWithEgressSubnet2/RouteTable (NotificationVpcPrivateWithEgressSubnet2RouteTableCF8C2AC0) 
-SecureNotificationStack |  3/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | NotificationVpc/PrivateWithEgressSubnet2/Subnet (NotificationVpcPrivateWithEgressSubnet2Subnet50E991CB) 
-SecureNotificationStack |  3/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | NotificationVpc/PrivateWithEgressSubnet2/RouteTableAssociation (NotificationVpcPrivateWithEgressSubnet2RouteTableAssociationF5CD197D) 
-SecureNotificationStack |  4/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | NotificationVpc/PrivateWithEgressSubnet2/Subnet (NotificationVpcPrivateWithEgressSubnet2Subnet50E991CB) 
-SecureNotificationStack |  4/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway             | NotificationVpc/IGW (NotificationVpcIGW9893C597) 
-SecureNotificationStack |  5/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | NotificationVpc/PrivateWithEgressSubnet2/RouteTableAssociation (NotificationVpcPrivateWithEgressSubnet2RouteTableAssociationF5CD197D) 
-SecureNotificationStack |  5/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment        | NotificationVpc/VPCGW (NotificationVpcVPCGW012FA2D2) 
-SecureNotificationStack |  6/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::InternetGateway             | NotificationVpc/IGW (NotificationVpcIGW9893C597) 
-SecureNotificationStack |  6/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | NotificationVpc/PublicSubnet1/RouteTable (NotificationVpcPublicSubnet1RouteTable47D80F69) 
-SecureNotificationStack |  7/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment        | NotificationVpc/VPCGW (NotificationVpcVPCGW012FA2D2) 
-SecureNotificationStack |  7/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | NotificationVpc/PublicSubnet1/DefaultRoute (NotificationVpcPublicSubnet1DefaultRouteC071EE80) 
-SecureNotificationStack |  8/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | NotificationVpc/PublicSubnet1/RouteTable (NotificationVpcPublicSubnet1RouteTable47D80F69) 
-SecureNotificationStack |  9/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | NotificationVpc/PublicSubnet1/DefaultRoute (NotificationVpcPublicSubnet1DefaultRouteC071EE80) 
-SecureNotificationStack |  9/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | NotificationVpc/PublicSubnet1/Subnet (NotificationVpcPublicSubnet1Subnet181E6DA5) 
-SecureNotificationStack |  9/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | NotificationVpc/PublicSubnet1/RouteTableAssociation (NotificationVpcPublicSubnet1RouteTableAssociationFA89DE71) 
-SecureNotificationStack | 10/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | NotificationVpc/PublicSubnet1/Subnet (NotificationVpcPublicSubnet1Subnet181E6DA5) 
-SecureNotificationStack | 10/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                         | NotificationVpc/PublicSubnet1/EIP (NotificationVpcPublicSubnet1EIP057D8131) 
-SecureNotificationStack | 11/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | NotificationVpc/PublicSubnet1/RouteTableAssociation (NotificationVpcPublicSubnet1RouteTableAssociationFA89DE71) 
-SecureNotificationStack | 11/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                  | NotificationVpc/PublicSubnet1/NATGateway (NotificationVpcPublicSubnet1NATGateway49AD81DB) 
-SecureNotificationStack | 12/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::EIP                         | NotificationVpc/PublicSubnet1/EIP (NotificationVpcPublicSubnet1EIP057D8131) 
-SecureNotificationStack | 12/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | NotificationVpc/PrivateWithEgressSubnet1/RouteTable (NotificationVpcPrivateWithEgressSubnet1RouteTable9B66C4A2) 
-SecureNotificationStack | 13/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::NatGateway                  | NotificationVpc/PublicSubnet1/NATGateway (NotificationVpcPublicSubnet1NATGateway49AD81DB) 
-SecureNotificationStack | 13/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | NotificationVpc/PrivateWithEgressSubnet1/DefaultRoute (NotificationVpcPrivateWithEgressSubnet1DefaultRoute009C7FA1) 
-SecureNotificationStack | 14/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | NotificationVpc/PrivateWithEgressSubnet1/RouteTable (NotificationVpcPrivateWithEgressSubnet1RouteTable9B66C4A2) 
-SecureNotificationStack | 14/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                       | NotificationQueue (NotificationQueue36610CC1) 
-SecureNotificationStack | 15/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | NotificationVpc/PrivateWithEgressSubnet1/DefaultRoute (NotificationVpcPrivateWithEgressSubnet1DefaultRoute009C7FA1) 
-SecureNotificationStack | 15/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | ApiHandlerLogGroup (ApiHandlerLogGroup4D57C896) 
-SecureNotificationStack | 16/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::SQS::Queue                       | NotificationQueue (NotificationQueue36610CC1) 
-SecureNotificationStack | 17/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | ApiHandlerLogGroup (ApiHandlerLogGroup4D57C896) 
-SecureNotificationStack | 17/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | ApiHandlerRole (ApiHandlerRole7074C5BF) 
-SecureNotificationStack | 17/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | NotificationVpc/PrivateWithEgressSubnet2/DefaultRoute (NotificationVpcPrivateWithEgressSubnet2DefaultRoute1AE80197) 
-SecureNotificationStack | 18/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | ApiHandlerRole (ApiHandlerRole7074C5BF) 
-SecureNotificationStack | 19/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | NotificationVpc/PrivateWithEgressSubnet2/DefaultRoute (NotificationVpcPrivateWithEgressSubnet2DefaultRoute1AE80197) 
-SecureNotificationStack | 19/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | NotificationVpc/PrivateWithEgressSubnet1/Subnet (NotificationVpcPrivateWithEgressSubnet1SubnetC72AD487) 
-SecureNotificationStack | 19/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | NotificationVpc/PrivateWithEgressSubnet1/RouteTableAssociation (NotificationVpcPrivateWithEgressSubnet1RouteTableAssociationE918262B) 
-SecureNotificationStack | 20/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | NotificationVpc/PrivateWithEgressSubnet1/Subnet (NotificationVpcPrivateWithEgressSubnet1SubnetC72AD487) 
-SecureNotificationStack | 21/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | NotificationVpc/PrivateWithEgressSubnet1/RouteTableAssociation (NotificationVpcPrivateWithEgressSubnet1RouteTableAssociationE918262B) 
-SecureNotificationStack | 21/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | ComputeSecurityGroup (ComputeSecurityGroupF0F5C976) 
-SecureNotificationStack | 21/53 | 12:40:00 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | ApiHandlerFunction (ApiHandlerFunction9E589C02) 
-SecureNotificationStack | 22/53 | 12:40:00 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | ComputeSecurityGroup (ComputeSecurityGroupF0F5C976) 
-SecureNotificationStack | 22/53 | 12:40:01 AM | CREATE_IN_PROGRESS   | AWS::CloudWatch::Alarm                | ApiHandlerErrorAlarm (ApiHandlerErrorAlarmFE77973E) 
-SecureNotificationStack | 23/53 | 12:40:01 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | ApiHandlerFunction (ApiHandlerFunction9E589C02) 
-SecureNotificationStack | 23/53 | 12:40:02 AM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                       | ArtifactsBucket (ArtifactsBucket2AAC5544) 
-SecureNotificationStack | 24/53 | 12:40:02 AM | CREATE_COMPLETE      | AWS::CloudWatch::Alarm                | ApiHandlerErrorAlarm (ApiHandlerErrorAlarmFE77973E) 
-SecureNotificationStack | 24/53 | 12:40:02 AM | CREATE_IN_PROGRESS   | AWS::S3::BucketPolicy                 | ArtifactsBucket/Policy (ArtifactsBucketPolicy852CB646) 
-SecureNotificationStack | 25/53 | 12:40:02 AM | CREATE_COMPLETE      | AWS::S3::Bucket                       | ArtifactsBucket (ArtifactsBucket2AAC5544) 
-SecureNotificationStack | 25/53 | 12:40:02 AM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret           | DatabaseSecret (DatabaseSecret86DBB7B3) 
-SecureNotificationStack | 26/53 | 12:40:02 AM | CREATE_COMPLETE      | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
-SecureNotificationStack | 26/53 | 12:40:02 AM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
-SecureNotificationStack | 27/53 | 12:40:02 AM | CREATE_COMPLETE      | AWS::S3::BucketPolicy                 | ArtifactsBucket/Policy (ArtifactsBucketPolicy852CB646) 
-SecureNotificationStack | 27/53 | 12:40:02 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
-SecureNotificationStack | 28/53 | 12:40:02 AM | CREATE_COMPLETE      | AWS::SecretsManager::Secret           | DatabaseSecret (DatabaseSecret86DBB7B3) 
-SecureNotificationStack | 28/53 | 12:40:02 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress        | DatabaseSecurityGroup/from SecureNotificationStackComputeSecurityGroupCA2B7380:5432 (DatabaseSecurityGroupfromSecureNotificationStackComputeSecurityGroupCA2B73805432386C9E96) 
-SecureNotificationStack | 29/53 | 12:40:02 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
-SecureNotificationStack | 29/53 | 12:40:02 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi              | NotificationApi (NotificationApiD1F3F3AA) 
-SecureNotificationStack | 30/53 | 12:40:02 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress        | DatabaseSecurityGroup/from SecureNotificationStackComputeSecurityGroupCA2B7380:5432 (DatabaseSecurityGroupfromSecureNotificationStackComputeSecurityGroupCA2B73805432386C9E96) 
-SecureNotificationStack | 30/53 | 12:40:03 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource             | NotificationApi/Default/events (NotificationApievents1AE91C80) 
-SecureNotificationStack | 31/53 | 12:40:03 AM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi              | NotificationApi (NotificationApiD1F3F3AA) 
-SecureNotificationStack | 31/53 | 12:40:03 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method               | NotificationApi/Default/events/POST (NotificationApieventsPOST4C2DEFD0) 
-SecureNotificationStack | 32/53 | 12:40:03 AM | CREATE_COMPLETE      | AWS::ApiGateway::Resource             | NotificationApi/Default/events (NotificationApievents1AE91C80) 
-SecureNotificationStack | 32/53 | 12:40:03 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment           | NotificationApi/Deployment (NotificationApiDeployment21F412ED0144d447ffef36a262368a57e1e2a0a8) 
-SecureNotificationStack | 33/53 | 12:40:03 AM | CREATE_COMPLETE      | AWS::ApiGateway::Method               | NotificationApi/Default/events/POST (NotificationApieventsPOST4C2DEFD0) 
-SecureNotificationStack | 33/53 | 12:40:03 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage                | NotificationApi/DeploymentStage.prod (NotificationApiDeploymentStageprod3DC9D2D0) 
-SecureNotificationStack | 34/53 | 12:40:03 AM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment           | NotificationApi/Deployment (NotificationApiDeployment21F412ED0144d447ffef36a262368a57e1e2a0a8) 
-SecureNotificationStack | 34/53 | 12:40:03 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | NotificationApi/Default/events/POST/ApiPermission.SecureNotificationStackNotificationApi6CE1C518.POST..events (NotificationApieventsPOSTApiPermissionSecureNotificationStackNotificationApi6CE1C518POSTevents7B8DD756) 
-SecureNotificationStack | 35/53 | 12:40:03 AM | CREATE_COMPLETE      | AWS::ApiGateway::Stage                | NotificationApi/DeploymentStage.prod (NotificationApiDeploymentStageprod3DC9D2D0) 
-SecureNotificationStack | 35/53 | 12:40:03 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | NotificationApi/Default/events/POST/ApiPermission.Test.SecureNotificationStackNotificationApi6CE1C518.POST..events (NotificationApieventsPOSTApiPermissionTestSecureNotificationStackNotificationApi6CE1C518POSTevents881F82AF) 
-SecureNotificationStack | 36/53 | 12:40:03 AM | CREATE_COMPLETE      | AWS::Lambda::Permission               | NotificationApi/Default/events/POST/ApiPermission.SecureNotificationStackNotificationApi6CE1C518.POST..events (NotificationApieventsPOSTApiPermissionSecureNotificationStackNotificationApi6CE1C518POSTevents7B8DD756) 
-SecureNotificationStack | 36/53 | 12:40:03 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | WorkerLogGroup (WorkerLogGroup31FDBE4A) 
-SecureNotificationStack | 37/53 | 12:40:03 AM | CREATE_COMPLETE      | AWS::Lambda::Permission               | NotificationApi/Default/events/POST/ApiPermission.Test.SecureNotificationStackNotificationApi6CE1C518.POST..events (NotificationApieventsPOSTApiPermissionTestSecureNotificationStackNotificationApi6CE1C518POSTevents881F82AF) 
-SecureNotificationStack | 37/53 | 12:40:03 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | WorkerRole (WorkerRole8DD27D41) 
-SecureNotificationStack | 38/53 | 12:40:03 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | WorkerLogGroup (WorkerLogGroup31FDBE4A) 
-SecureNotificationStack | 38/53 | 12:40:03 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | WorkerRole/DefaultPolicy (WorkerRoleDefaultPolicy1750E153) 
-SecureNotificationStack | 39/53 | 12:40:03 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | WorkerRole (WorkerRole8DD27D41) 
-SecureNotificationStack | 39/53 | 12:40:03 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | WorkerFunction (WorkerFunctionACE6A4B0) 
-SecureNotificationStack | 40/53 | 12:40:03 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | WorkerRole/DefaultPolicy (WorkerRoleDefaultPolicy1750E153) 
-SecureNotificationStack | 41/53 | 12:40:03 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | WorkerFunction (WorkerFunctionACE6A4B0) 
-SecureNotificationStack | 41/53 | 12:40:03 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | NotificationStateMachine/Role (NotificationStateMachineRole5BBBB3C0) 
-SecureNotificationStack | 41/53 | 12:40:03 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | NotificationStateMachine/Role/DefaultPolicy (NotificationStateMachineRoleDefaultPolicyBEC4B829) 
-SecureNotificationStack | 42/53 | 12:40:03 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | NotificationStateMachine/Role (NotificationStateMachineRole5BBBB3C0) 
-SecureNotificationStack | 43/53 | 12:40:03 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | NotificationStateMachine/Role/DefaultPolicy (NotificationStateMachineRoleDefaultPolicyBEC4B829) 
-SecureNotificationStack | 43/53 | 12:40:03 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | StateMachineLogGroup (StateMachineLogGroup15B91BCB) 
-SecureNotificationStack | 43/53 | 12:40:03 AM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine      | NotificationStateMachine (NotificationStateMachine3933CE78) 
-SecureNotificationStack | 44/53 | 12:40:03 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | StateMachineLogGroup (StateMachineLogGroup15B91BCB) 
-SecureNotificationStack | 44/53 | 12:40:04 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | NotificationVpc/PublicSubnet2/RouteTable (NotificationVpcPublicSubnet2RouteTableA3587361) 
-SecureNotificationStack | 45/53 | 12:40:04 AM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine      | NotificationStateMachine (NotificationStateMachine3933CE78) 
-SecureNotificationStack | 45/53 | 12:40:04 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | NotificationVpc/PublicSubnet2/DefaultRoute (NotificationVpcPublicSubnet2DefaultRoute17A5F1B2) 
-SecureNotificationStack | 46/53 | 12:40:04 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | NotificationVpc/PublicSubnet2/RouteTable (NotificationVpcPublicSubnet2RouteTableA3587361) 
-SecureNotificationStack | 47/53 | 12:40:04 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | NotificationVpc/PublicSubnet2/DefaultRoute (NotificationVpcPublicSubnet2DefaultRoute17A5F1B2) 
-SecureNotificationStack | 47/53 | 12:40:04 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | NotificationVpc/PublicSubnet2/Subnet (NotificationVpcPublicSubnet2Subnet90F9EFD7) 
-SecureNotificationStack | 47/53 | 12:40:04 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | NotificationVpc/PublicSubnet2/RouteTableAssociation (NotificationVpcPublicSubnet2RouteTableAssociationDBC88681) 
-SecureNotificationStack | 48/53 | 12:40:04 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | NotificationVpc/PublicSubnet2/Subnet (NotificationVpcPublicSubnet2Subnet90F9EFD7) 
-SecureNotificationStack | 48/53 | 12:40:04 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
-SecureNotificationStack | 49/53 | 12:40:04 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | NotificationVpc/PublicSubnet2/RouteTableAssociation (NotificationVpcPublicSubnet2RouteTableAssociationDBC88681) 
-SecureNotificationStack | 49/53 | 12:40:04 AM | CREATE_IN_PROGRESS   | AWS::CloudWatch::Alarm                | QueueBacklogAlarm (QueueBacklogAlarm1412E3DE) 
-SecureNotificationStack | 50/53 | 12:40:04 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
-SecureNotificationStack | 50/53 | 12:40:04 AM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                      | QueueToStateMachinePipe 
-SecureNotificationStack | 51/53 | 12:40:04 AM | CREATE_COMPLETE      | AWS::CloudWatch::Alarm                | QueueBacklogAlarm (QueueBacklogAlarm1412E3DE) 
-SecureNotificationStack | 52/53 | 12:40:04 AM | CREATE_COMPLETE      | AWS::Pipes::Pipe                      | QueueToStateMachinePipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
-SecureNotificationStack | 53/53 | 12:40:04 AM | CREATE_COMPLETE      | AWS::CloudFormation::Stack            | SecureNotificationStack 
+SecureNotificationStack |  0/53 | 4:45:38 AM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack            | SecureNotificationStack User Initiated
+SecureNotificationStack |  0/53 | 4:45:38 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | ApiAccessLogGroup (ApiAccessLogGroupCEA70788) 
+SecureNotificationStack |  0/53 | 4:45:38 AM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack            | SecureNotificationStack 
+SecureNotificationStack |  0/53 | 4:45:38 AM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway             | NotificationVpc/IGW (NotificationVpcIGW9893C597) 
+SecureNotificationStack |  1/53 | 4:45:38 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | ApiAccessLogGroup (ApiAccessLogGroupCEA70788) 
+SecureNotificationStack |  1/53 | 4:45:38 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                         | NotificationVpc (NotificationVpc75E24247) 
+SecureNotificationStack |  2/53 | 4:45:38 AM | CREATE_COMPLETE      | AWS::EC2::InternetGateway             | NotificationVpc/IGW (NotificationVpcIGW9893C597) 
+SecureNotificationStack |  2/53 | 4:45:38 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment        | NotificationVpc/VPCGW (NotificationVpcVPCGW012FA2D2) 
+SecureNotificationStack |  3/53 | 4:45:38 AM | CREATE_COMPLETE      | AWS::EC2::VPC                         | NotificationVpc (NotificationVpc75E24247) 
+SecureNotificationStack |  3/53 | 4:45:38 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | NotificationVpc/PublicSubnet1/RouteTable (NotificationVpcPublicSubnet1RouteTable47D80F69) 
+SecureNotificationStack |  4/53 | 4:45:38 AM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment        | NotificationVpc/VPCGW (NotificationVpcVPCGW012FA2D2) 
+SecureNotificationStack |  4/53 | 4:45:38 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | NotificationVpc/PublicSubnet1/DefaultRoute (NotificationVpcPublicSubnet1DefaultRouteC071EE80) 
+SecureNotificationStack |  5/53 | 4:45:38 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | NotificationVpc/PublicSubnet1/RouteTable (NotificationVpcPublicSubnet1RouteTable47D80F69) 
+SecureNotificationStack |  6/53 | 4:45:38 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | NotificationVpc/PublicSubnet1/DefaultRoute (NotificationVpcPublicSubnet1DefaultRouteC071EE80) 
+SecureNotificationStack |  6/53 | 4:45:38 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | NotificationVpc/PublicSubnet1/Subnet (NotificationVpcPublicSubnet1Subnet181E6DA5) 
+SecureNotificationStack |  6/53 | 4:45:38 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | NotificationVpc/PublicSubnet1/RouteTableAssociation (NotificationVpcPublicSubnet1RouteTableAssociationFA89DE71) 
+SecureNotificationStack |  7/53 | 4:45:38 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | NotificationVpc/PublicSubnet1/Subnet (NotificationVpcPublicSubnet1Subnet181E6DA5) 
+SecureNotificationStack |  7/53 | 4:45:38 AM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                         | NotificationVpc/PublicSubnet1/EIP (NotificationVpcPublicSubnet1EIP057D8131) 
+SecureNotificationStack |  8/53 | 4:45:38 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | NotificationVpc/PublicSubnet1/RouteTableAssociation (NotificationVpcPublicSubnet1RouteTableAssociationFA89DE71) 
+SecureNotificationStack |  8/53 | 4:45:38 AM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                  | NotificationVpc/PublicSubnet1/NATGateway (NotificationVpcPublicSubnet1NATGateway49AD81DB) 
+SecureNotificationStack |  9/53 | 4:45:38 AM | CREATE_COMPLETE      | AWS::EC2::EIP                         | NotificationVpc/PublicSubnet1/EIP (NotificationVpcPublicSubnet1EIP057D8131) 
+SecureNotificationStack |  9/53 | 4:45:38 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | NotificationVpc/PrivateWithEgressSubnet2/RouteTable (NotificationVpcPrivateWithEgressSubnet2RouteTableCF8C2AC0) 
+SecureNotificationStack | 10/53 | 4:45:38 AM | CREATE_COMPLETE      | AWS::EC2::NatGateway                  | NotificationVpc/PublicSubnet1/NATGateway (NotificationVpcPublicSubnet1NATGateway49AD81DB) 
+SecureNotificationStack | 10/53 | 4:45:38 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | NotificationVpc/PrivateWithEgressSubnet2/DefaultRoute (NotificationVpcPrivateWithEgressSubnet2DefaultRoute1AE80197) 
+SecureNotificationStack | 11/53 | 4:45:38 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | NotificationVpc/PrivateWithEgressSubnet2/RouteTable (NotificationVpcPrivateWithEgressSubnet2RouteTableCF8C2AC0) 
+SecureNotificationStack | 12/53 | 4:45:38 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | NotificationVpc/PrivateWithEgressSubnet2/DefaultRoute (NotificationVpcPrivateWithEgressSubnet2DefaultRoute1AE80197) 
+SecureNotificationStack | 12/53 | 4:45:38 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | NotificationVpc/PrivateWithEgressSubnet2/Subnet (NotificationVpcPrivateWithEgressSubnet2Subnet50E991CB) 
+SecureNotificationStack | 12/53 | 4:45:38 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | NotificationVpc/PrivateWithEgressSubnet2/RouteTableAssociation (NotificationVpcPrivateWithEgressSubnet2RouteTableAssociationF5CD197D) 
+SecureNotificationStack | 13/53 | 4:45:38 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | NotificationVpc/PrivateWithEgressSubnet2/Subnet (NotificationVpcPrivateWithEgressSubnet2Subnet50E991CB) 
+SecureNotificationStack | 13/53 | 4:45:39 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | NotificationVpc/PrivateWithEgressSubnet1/RouteTable (NotificationVpcPrivateWithEgressSubnet1RouteTable9B66C4A2) 
+SecureNotificationStack | 14/53 | 4:45:39 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | NotificationVpc/PrivateWithEgressSubnet2/RouteTableAssociation (NotificationVpcPrivateWithEgressSubnet2RouteTableAssociationF5CD197D) 
+SecureNotificationStack | 15/53 | 4:45:39 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | NotificationVpc/PrivateWithEgressSubnet1/RouteTable (NotificationVpcPrivateWithEgressSubnet1RouteTable9B66C4A2) 
+SecureNotificationStack | 15/53 | 4:45:39 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | NotificationVpc/PrivateWithEgressSubnet1/Subnet (NotificationVpcPrivateWithEgressSubnet1SubnetC72AD487) 
+SecureNotificationStack | 15/53 | 4:45:39 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | NotificationVpc/PrivateWithEgressSubnet1/RouteTableAssociation (NotificationVpcPrivateWithEgressSubnet1RouteTableAssociationE918262B) 
+SecureNotificationStack | 16/53 | 4:45:39 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | NotificationVpc/PrivateWithEgressSubnet1/Subnet (NotificationVpcPrivateWithEgressSubnet1SubnetC72AD487) 
+SecureNotificationStack | 16/53 | 4:45:39 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                       | NotificationQueue (NotificationQueue36610CC1) 
+SecureNotificationStack | 17/53 | 4:45:39 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | NotificationVpc/PrivateWithEgressSubnet1/RouteTableAssociation (NotificationVpcPrivateWithEgressSubnet1RouteTableAssociationE918262B) 
+SecureNotificationStack | 17/53 | 4:45:39 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | ApiHandlerLogGroup (ApiHandlerLogGroup4D57C896) 
+SecureNotificationStack | 18/53 | 4:45:39 AM | CREATE_COMPLETE      | AWS::SQS::Queue                       | NotificationQueue (NotificationQueue36610CC1) 
+SecureNotificationStack | 18/53 | 4:45:39 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | ApiHandlerRole (ApiHandlerRole7074C5BF) 
+SecureNotificationStack | 19/53 | 4:45:39 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | ApiHandlerLogGroup (ApiHandlerLogGroup4D57C896) 
+SecureNotificationStack | 19/53 | 4:45:39 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | NotificationVpc/PrivateWithEgressSubnet1/DefaultRoute (NotificationVpcPrivateWithEgressSubnet1DefaultRoute009C7FA1) 
+SecureNotificationStack | 20/53 | 4:45:39 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | ApiHandlerRole (ApiHandlerRole7074C5BF) 
+SecureNotificationStack | 20/53 | 4:45:39 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | ComputeSecurityGroup (ComputeSecurityGroupF0F5C976) 
+SecureNotificationStack | 21/53 | 4:45:39 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | NotificationVpc/PrivateWithEgressSubnet1/DefaultRoute (NotificationVpcPrivateWithEgressSubnet1DefaultRoute009C7FA1) 
+SecureNotificationStack | 21/53 | 4:45:39 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | ApiHandlerFunction (ApiHandlerFunction9E589C02) 
+SecureNotificationStack | 22/53 | 4:45:39 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | ComputeSecurityGroup (ComputeSecurityGroupF0F5C976) 
+SecureNotificationStack | 22/53 | 4:45:40 AM | CREATE_IN_PROGRESS   | AWS::CloudWatch::Alarm                | ApiHandlerErrorAlarm (ApiHandlerErrorAlarmFE77973E) 
+SecureNotificationStack | 23/53 | 4:45:40 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | ApiHandlerFunction (ApiHandlerFunction9E589C02) 
+SecureNotificationStack | 23/53 | 4:45:40 AM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                       | ArtifactsBucket (ArtifactsBucket2AAC5544) 
+SecureNotificationStack | 24/53 | 4:45:40 AM | CREATE_COMPLETE      | AWS::CloudWatch::Alarm                | ApiHandlerErrorAlarm (ApiHandlerErrorAlarmFE77973E) 
+SecureNotificationStack | 24/53 | 4:45:40 AM | CREATE_IN_PROGRESS   | AWS::S3::BucketPolicy                 | ArtifactsBucket/Policy (ArtifactsBucketPolicy852CB646) 
+SecureNotificationStack | 25/53 | 4:45:40 AM | CREATE_COMPLETE      | AWS::S3::Bucket                       | ArtifactsBucket (ArtifactsBucket2AAC5544) 
+SecureNotificationStack | 25/53 | 4:45:40 AM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret           | DatabaseSecret (DatabaseSecret86DBB7B3) 
+SecureNotificationStack | 26/53 | 4:45:40 AM | CREATE_COMPLETE      | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+SecureNotificationStack | 26/53 | 4:45:40 AM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+SecureNotificationStack | 27/53 | 4:45:40 AM | CREATE_COMPLETE      | AWS::S3::BucketPolicy                 | ArtifactsBucket/Policy (ArtifactsBucketPolicy852CB646) 
+SecureNotificationStack | 27/53 | 4:45:40 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
+SecureNotificationStack | 28/53 | 4:45:40 AM | CREATE_COMPLETE      | AWS::SecretsManager::Secret           | DatabaseSecret (DatabaseSecret86DBB7B3) 
+SecureNotificationStack | 29/53 | 4:45:40 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
+SecureNotificationStack | 29/53 | 4:45:40 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress        | DatabaseSecurityGroup/from SecureNotificationStackComputeSecurityGroupCA2B7380:5432 (DatabaseSecurityGroupfromSecureNotificationStackComputeSecurityGroupCA2B73805432386C9E96) 
+SecureNotificationStack | 29/53 | 4:45:40 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi              | NotificationApi (NotificationApiD1F3F3AA) 
+SecureNotificationStack | 30/53 | 4:45:40 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress        | DatabaseSecurityGroup/from SecureNotificationStackComputeSecurityGroupCA2B7380:5432 (DatabaseSecurityGroupfromSecureNotificationStackComputeSecurityGroupCA2B73805432386C9E96) 
+SecureNotificationStack | 30/53 | 4:45:42 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource             | NotificationApi/Default/events (NotificationApievents1AE91C80) 
+SecureNotificationStack | 31/53 | 4:45:42 AM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi              | NotificationApi (NotificationApiD1F3F3AA) 
+SecureNotificationStack | 31/53 | 4:45:42 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method               | NotificationApi/Default/events/POST (NotificationApieventsPOST4C2DEFD0) 
+SecureNotificationStack | 32/53 | 4:45:42 AM | CREATE_COMPLETE      | AWS::ApiGateway::Resource             | NotificationApi/Default/events (NotificationApievents1AE91C80) 
+SecureNotificationStack | 32/53 | 4:45:42 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment           | NotificationApi/Deployment (NotificationApiDeployment21F412ED0144d447ffef36a262368a57e1e2a0a8) 
+SecureNotificationStack | 33/53 | 4:45:42 AM | CREATE_COMPLETE      | AWS::ApiGateway::Method               | NotificationApi/Default/events/POST (NotificationApieventsPOST4C2DEFD0) 
+SecureNotificationStack | 34/53 | 4:45:42 AM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment           | NotificationApi/Deployment (NotificationApiDeployment21F412ED0144d447ffef36a262368a57e1e2a0a8) 
+SecureNotificationStack | 34/53 | 4:45:42 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage                | NotificationApi/DeploymentStage.prod (NotificationApiDeploymentStageprod3DC9D2D0) 
+SecureNotificationStack | 34/53 | 4:45:42 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | NotificationApi/Default/events/POST/ApiPermission.SecureNotificationStackNotificationApi6CE1C518.POST..events (NotificationApieventsPOSTApiPermissionSecureNotificationStackNotificationApi6CE1C518POSTevents7B8DD756) 
+SecureNotificationStack | 35/53 | 4:45:42 AM | CREATE_COMPLETE      | AWS::ApiGateway::Stage                | NotificationApi/DeploymentStage.prod (NotificationApiDeploymentStageprod3DC9D2D0) 
+SecureNotificationStack | 35/53 | 4:45:42 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | NotificationApi/Default/events/POST/ApiPermission.Test.SecureNotificationStackNotificationApi6CE1C518.POST..events (NotificationApieventsPOSTApiPermissionTestSecureNotificationStackNotificationApi6CE1C518POSTevents881F82AF) 
+SecureNotificationStack | 36/53 | 4:45:42 AM | CREATE_COMPLETE      | AWS::Lambda::Permission               | NotificationApi/Default/events/POST/ApiPermission.SecureNotificationStackNotificationApi6CE1C518.POST..events (NotificationApieventsPOSTApiPermissionSecureNotificationStackNotificationApi6CE1C518POSTevents7B8DD756) 
+SecureNotificationStack | 37/53 | 4:45:42 AM | CREATE_COMPLETE      | AWS::Lambda::Permission               | NotificationApi/Default/events/POST/ApiPermission.Test.SecureNotificationStackNotificationApi6CE1C518.POST..events (NotificationApieventsPOSTApiPermissionTestSecureNotificationStackNotificationApi6CE1C518POSTevents881F82AF) 
+SecureNotificationStack | 37/53 | 4:45:42 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | WorkerLogGroup (WorkerLogGroup31FDBE4A) 
+SecureNotificationStack | 37/53 | 4:45:42 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | WorkerRole (WorkerRole8DD27D41) 
+SecureNotificationStack | 38/53 | 4:45:42 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | WorkerLogGroup (WorkerLogGroup31FDBE4A) 
+SecureNotificationStack | 38/53 | 4:45:42 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | WorkerRole/DefaultPolicy (WorkerRoleDefaultPolicy1750E153) 
+SecureNotificationStack | 39/53 | 4:45:42 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | WorkerRole (WorkerRole8DD27D41) 
+SecureNotificationStack | 40/53 | 4:45:42 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | WorkerRole/DefaultPolicy (WorkerRoleDefaultPolicy1750E153) 
+SecureNotificationStack | 40/53 | 4:45:42 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | WorkerFunction (WorkerFunctionACE6A4B0) 
+SecureNotificationStack | 40/53 | 4:45:42 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | NotificationStateMachine/Role (NotificationStateMachineRole5BBBB3C0) 
+SecureNotificationStack | 41/53 | 4:45:42 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | WorkerFunction (WorkerFunctionACE6A4B0) 
+SecureNotificationStack | 41/53 | 4:45:42 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | NotificationStateMachine/Role/DefaultPolicy (NotificationStateMachineRoleDefaultPolicyBEC4B829) 
+SecureNotificationStack | 42/53 | 4:45:42 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | NotificationStateMachine/Role (NotificationStateMachineRole5BBBB3C0) 
+SecureNotificationStack | 42/53 | 4:45:42 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | StateMachineLogGroup (StateMachineLogGroup15B91BCB) 
+SecureNotificationStack | 43/53 | 4:45:42 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | NotificationStateMachine/Role/DefaultPolicy (NotificationStateMachineRoleDefaultPolicyBEC4B829) 
+SecureNotificationStack | 43/53 | 4:45:43 AM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine      | NotificationStateMachine (NotificationStateMachine3933CE78) 
+SecureNotificationStack | 44/53 | 4:45:43 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | StateMachineLogGroup (StateMachineLogGroup15B91BCB) 
+SecureNotificationStack | 44/53 | 4:45:43 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | NotificationVpc/PublicSubnet2/RouteTable (NotificationVpcPublicSubnet2RouteTableA3587361) 
+SecureNotificationStack | 45/53 | 4:45:43 AM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine      | NotificationStateMachine (NotificationStateMachine3933CE78) 
+SecureNotificationStack | 45/53 | 4:45:43 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | NotificationVpc/PublicSubnet2/DefaultRoute (NotificationVpcPublicSubnet2DefaultRoute17A5F1B2) 
+SecureNotificationStack | 46/53 | 4:45:43 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | NotificationVpc/PublicSubnet2/RouteTable (NotificationVpcPublicSubnet2RouteTableA3587361) 
+SecureNotificationStack | 47/53 | 4:45:43 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | NotificationVpc/PublicSubnet2/DefaultRoute (NotificationVpcPublicSubnet2DefaultRoute17A5F1B2) 
+SecureNotificationStack | 47/53 | 4:45:43 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | NotificationVpc/PublicSubnet2/Subnet (NotificationVpcPublicSubnet2Subnet90F9EFD7) 
+SecureNotificationStack | 47/53 | 4:45:43 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | NotificationVpc/PublicSubnet2/RouteTableAssociation (NotificationVpcPublicSubnet2RouteTableAssociationDBC88681) 
+SecureNotificationStack | 48/53 | 4:45:43 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | NotificationVpc/PublicSubnet2/Subnet (NotificationVpcPublicSubnet2Subnet90F9EFD7) 
+SecureNotificationStack | 48/53 | 4:45:43 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
+SecureNotificationStack | 49/53 | 4:45:43 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | NotificationVpc/PublicSubnet2/RouteTableAssociation (NotificationVpcPublicSubnet2RouteTableAssociationDBC88681) 
+SecureNotificationStack | 49/53 | 4:45:43 AM | CREATE_IN_PROGRESS   | AWS::CloudWatch::Alarm                | QueueBacklogAlarm (QueueBacklogAlarm1412E3DE) 
+SecureNotificationStack | 50/53 | 4:45:43 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
+SecureNotificationStack | 50/53 | 4:45:43 AM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                      | QueueToStateMachinePipe 
+SecureNotificationStack | 51/53 | 4:45:43 AM | CREATE_COMPLETE      | AWS::CloudWatch::Alarm                | QueueBacklogAlarm (QueueBacklogAlarm1412E3DE) 
+SecureNotificationStack | 52/53 | 4:45:43 AM | CREATE_COMPLETE      | AWS::Pipes::Pipe                      | QueueToStateMachinePipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
+SecureNotificationStack | 53/53 | 4:45:43 AM | CREATE_COMPLETE      | AWS::CloudFormation::Stack            | SecureNotificationStack 
 
  ✅  SecureNotificationStack
 
-✨  Deployment time: 5.4s
+✨  Deployment time: 5.42s
 
 Outputs:
-SecureNotificationStack.ApiUrl = https://cpz5d79o4c.execute-api.localhost.localstack.cloud:4566/prod/
-SecureNotificationStack.BucketName = securenotificationstack-artifactsbucket2aac5544-f7401edf
+SecureNotificationStack.ApiUrl = https://ngmfcq9lke.execute-api.localhost.localstack.cloud:4566/prod/
+SecureNotificationStack.BucketName = securenotificationstack-artifactsbucket2aac5544-4045b8ca
 SecureNotificationStack.DatabaseEndpoint = database-not-deployed
-SecureNotificationStack.NotificationApiEndpointE4E92CA1 = https://cpz5d79o4c.execute-api.localhost.localstack.cloud:4566/prod/
-SecureNotificationStack.QueueUrl = http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/SecureNotificationStack-NotificationQueue36610CC-ad2eec61
+SecureNotificationStack.NotificationApiEndpointE4E92CA1 = https://ngmfcq9lke.execute-api.localhost.localstack.cloud:4566/prod/
+SecureNotificationStack.QueueUrl = http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/SecureNotificationStack-NotificationQueue36610CC-ce2590a7
 Stack ARN:
-arn:aws:cloudformation:us-east-1:000000000000:stack/SecureNotificationStack/51dc23f7-4acb-4b0a-9338-f3af1b9de0f9
+arn:aws:cloudformation:us-east-1:000000000000:stack/SecureNotificationStack/1ee0c2ac-a1fd-41c4-9cd5-ff8de6bf8e71
 
-✨  Total time: 10.96s
+✨  Total time: 11.12s
 
 [32m✅ Step passed: Deploy (LocalStack)[0m
 
@@ -214,26 +219,29 @@ cachedir: .pytest_cache
 rootdir: /work
 configfile: pytest.ini
 plugins: typeguard-2.13.3
-collecting ... collected 9 items
+collecting ... collected 12 items
 
-tests/integration_tests.py::TestIntegration::test_api_gateway_stage_has_expected_access_logs_and_post_route PASSED [ 11%]
-tests/integration_tests.py::TestIntegration::test_api_post_flows_end_to_end_through_queue_pipe_and_state_machine PASSED [ 22%]
-tests/integration_tests.py::TestIntegration::test_bucket_uses_block_all_and_s3_managed_encryption PASSED [ 33%]
-tests/integration_tests.py::TestIntegration::test_deployed_template_disables_retain_policies_and_uses_one_day_rds_backups PASSED [ 44%]
-tests/integration_tests.py::TestIntegration::test_live_queue_pipe_and_alarm_configuration_match_operational_requirements PASSED [ 55%]
+tests/integration_tests.py::TestIntegration::test_api_gateway_rejects_wrong_http_method_for_events_route PASSED [  8%]
+tests/integration_tests.py::TestIntegration::test_api_gateway_stage_has_expected_access_logs_and_post_route PASSED [ 16%]
+tests/integration_tests.py::TestIntegration::test_api_post_flows_end_to_end_through_queue_pipe_and_state_machine PASSED [ 25%]
+tests/integration_tests.py::TestIntegration::test_api_post_with_malformed_json_body_is_handled_without_crashing PASSED [ 33%]
+tests/integration_tests.py::TestIntegration::test_bucket_uses_block_all_and_s3_managed_encryption PASSED [ 41%]
+tests/integration_tests.py::TestIntegration::test_deployed_template_disables_retain_policies_and_uses_one_day_rds_backups PASSED [ 50%]
+tests/integration_tests.py::TestIntegration::test_live_queue_pipe_and_alarm_configuration_match_operational_requirements PASSED [ 58%]
 tests/integration_tests.py::TestIntegration::test_log_groups_and_lambda_environment_variables_are_deployed_securely PASSED [ 66%]
-tests/integration_tests.py::TestIntegration::test_sqs_message_is_routed_by_pipe_into_state_machine PASSED [ 77%]
-tests/integration_tests.py::TestIntegration::test_state_machine_execution_invokes_worker_lambda_and_loads_secret PASSED [ 88%]
+tests/integration_tests.py::TestIntegration::test_sqs_message_is_routed_by_pipe_into_state_machine PASSED [ 75%]
+tests/integration_tests.py::TestIntegration::test_state_machine_execution_invokes_worker_lambda_and_loads_secret PASSED [ 83%]
+tests/integration_tests.py::TestIntegration::test_step_functions_reject_invalid_json_input PASSED [ 91%]
 tests/integration_tests.py::TestIntegration::test_vpc_subnets_and_security_groups_preserve_private_processing_path PASSED [100%]
 
-============================== 9 passed in 7.34s ===============================
+============================== 12 passed in 7.45s ==============================
 [32m✅ Step passed: Integration tests[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  Step: Destroy / Cleanup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 Running cdklocal destroy...
-Cleaning up worker container: harness-worker-32814
+Cleaning up worker container: harness-worker-58647
 [32m✅ Step passed: Destroy / Cleanup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
