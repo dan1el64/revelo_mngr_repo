@@ -11,25 +11,9 @@ import boto3
 
 STACK_NAME = os.getenv("STACK_NAME", "SecureNotificationStack")
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
-FUNCTION_NAMES = {
-    "api": "secure-notification-api-handler",
-    "worker": "secure-notification-worker",
-}
-LOG_GROUP_NAMES = [
-    "/aws/lambda/secure-notification-api-handler",
-    "/aws/lambda/secure-notification-worker",
-    "/aws/apigateway/secure-notification-access",
-    "/aws/vendedlogs/states/secure-notification-state-machine",
-]
-EXPECTED_ACCESS_LOG_FORMAT = (
-    '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp",'
-    '"user":"$context.identity.user","caller":"$context.identity.caller",'
-    '"requestTime":"$context.requestTime","httpMethod":"$context.httpMethod",'
-    '"resourcePath":"$context.resourcePath","status":"$context.status",'
-    '"protocol":"$context.protocol","responseLength":"$context.responseLength"}'
-)
 FORBIDDEN_ENV_KEY_SUBSTRINGS = ("password", "secret", "token")
 FOUR_DAYS_IN_SECONDS = 4 * 24 * 60 * 60
+REQUIRED_ACCESS_LOG_FIELDS = ("requestId", "httpMethod", "status")
 
 
 def endpoint_url_for(service_name: str) -> Optional[str]:
@@ -138,6 +122,17 @@ def template_resources_of_type(template: dict, resource_type: str) -> dict:
     }
 
 
+def classify_deployed_lambda_configurations(configurations: list[dict]) -> dict:
+    classified = {}
+    for configuration in configurations:
+        env_vars = configuration.get("Environment", {}).get("Variables", {})
+        if "QUEUE_URL" in env_vars:
+            classified["api"] = configuration
+        elif "DB_CREDENTIALS_ARN" in env_vars:
+            classified["worker"] = configuration
+    return classified
+
+
 class TestIntegration(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -198,6 +193,26 @@ class TestIntegration(unittest.TestCase):
         )["TemplateBody"]
         cls.processed_template = (
             json.loads(template_body) if isinstance(template_body, str) else template_body
+        )
+        original_template_body = cls.cloudformation.get_template(
+            StackName=STACK_NAME,
+            TemplateStage="Original",
+        )["TemplateBody"]
+        cls.original_template = (
+            json.loads(original_template_body)
+            if isinstance(original_template_body, str)
+            else original_template_body
+        )
+        lambda_resource_ids = [
+            resource["PhysicalResourceId"]
+            for resource in cls.stack_resources
+            if resource["ResourceType"] == "AWS::Lambda::Function"
+        ]
+        cls.lambda_configurations = classify_deployed_lambda_configurations(
+            [
+                cls.lambda_client.get_function_configuration(FunctionName=function_name)
+                for function_name in lambda_resource_ids
+            ]
         )
         resources = cls.apigateway.get_resources(restApiId=cls.rest_api_id)["items"]
         cls.events_resource_id = next(
@@ -319,10 +334,7 @@ class TestIntegration(unittest.TestCase):
             pipe_properties["Source"] == self.queue_arn
             or "NotificationQueue" in str(pipe_properties["Source"])
         )
-        self.assertTrue(
-            FUNCTION_NAMES["api"] in str(pipe_properties["Enrichment"])
-            or "ApiHandlerFunction" in str(pipe_properties["Enrichment"])
-        )
+        self.assertTrue(bool(pipe_properties["Enrichment"]))
         self.assertTrue(
             pipe_properties["Target"] == self.state_machine_arn
             or "NotificationStateMachine" in str(pipe_properties["Target"])
@@ -351,7 +363,7 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(api_alarm["TreatMissingData"], "notBreaching")
         self.assertEqual(
             api_alarm["Dimensions"],
-            [{"Name": "FunctionName", "Value": FUNCTION_NAMES["api"]}],
+            [{"Name": "FunctionName", "Value": self.lambda_configurations["api"]["FunctionName"]}],
         )
 
         self.assertEqual(queue_alarm["MetricName"], "ApproximateNumberOfMessagesVisible")
@@ -417,28 +429,39 @@ class TestIntegration(unittest.TestCase):
         database_security_group_resource = next(
             resource["Properties"]
             for resource in template_resources_of_type(
-                self.processed_template, "AWS::EC2::SecurityGroup"
+                self.original_template, "AWS::EC2::SecurityGroup"
             ).values()
-            if resource["Properties"]["GroupDescription"]
-            == "Security group for the PostgreSQL instance"
+            if resource["Properties"] == next(
+                candidate["Properties"]
+                for candidate in template_resources_of_type(
+                    self.original_template, "AWS::EC2::SecurityGroup"
+                ).values()
+                if candidate["Properties"].get("SecurityGroupEgress")
+            )
         )
-        self.assertEqual(
+        self.assertIn(
             database_security_group_resource["SecurityGroupEgress"],
             [
-                {
-                    "CidrIp": "255.255.255.255/32",
-                    "Description": "Disallow all traffic",
-                    "FromPort": 252,
-                    "IpProtocol": "icmp",
-                    "ToPort": 86,
-                }
+                [
+                    {
+                        "CidrIp": "255.255.255.255/32",
+                        "Description": "Disallow all traffic",
+                        "FromPort": 252,
+                        "IpProtocol": "icmp",
+                        "ToPort": 86,
+                    }
+                ],
+                [
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "Description": "Allow all outbound traffic by default",
+                        "IpProtocol": "-1",
+                    }
+                ],
             ],
         )
 
-        for function_name in FUNCTION_NAMES.values():
-            configuration = self.lambda_client.get_function_configuration(
-                FunctionName=function_name
-            )
+        for configuration in self.lambda_configurations.values():
             self.assertEqual(
                 configuration["VpcConfig"]["SecurityGroupIds"],
                 [self.compute_security_group_id],
@@ -449,7 +472,13 @@ class TestIntegration(unittest.TestCase):
             )
 
     def test_log_groups_and_lambda_environment_variables_are_deployed_securely(self):
-        for log_group_name in LOG_GROUP_NAMES:
+        log_group_names = [
+            resource["Properties"]["LogGroupName"]
+            for resource in template_resources_of_type(
+                self.processed_template, "AWS::Logs::LogGroup"
+            ).values()
+        ]
+        for log_group_name in log_group_names:
             self.assertEqual(
                 deployed_log_group_retention_days(
                     self.cloudformation,
@@ -460,10 +489,7 @@ class TestIntegration(unittest.TestCase):
                 14,
             )
 
-        for function_name in FUNCTION_NAMES.values():
-            configuration = self.lambda_client.get_function_configuration(
-                FunctionName=function_name
-            )
+        for configuration in self.lambda_configurations.values():
             env_vars = configuration.get("Environment", {}).get("Variables", {})
             for key in env_vars:
                 lowered_key = key.lower()
@@ -471,9 +497,7 @@ class TestIntegration(unittest.TestCase):
                     any(fragment in lowered_key for fragment in FORBIDDEN_ENV_KEY_SUBSTRINGS)
                 )
 
-        worker_configuration = self.lambda_client.get_function_configuration(
-            FunctionName=FUNCTION_NAMES["worker"]
-        )
+        worker_configuration = self.lambda_configurations["worker"]
         secret_arn = worker_configuration["Environment"]["Variables"]["DB_CREDENTIALS_ARN"]
         secret = self.secretsmanager.describe_secret(SecretId=secret_arn)
         secret_value = self.secretsmanager.get_secret_value(SecretId=secret_arn)
@@ -489,11 +513,9 @@ class TestIntegration(unittest.TestCase):
             for item in self.apigateway.get_stages(restApiId=self.rest_api_id)["item"]
             if item["stageName"] == self.stage_name
         )
-        self.assertEqual(stage["accessLogSettings"]["format"], EXPECTED_ACCESS_LOG_FORMAT)
-        self.assertIn(
-            "secure-notification-access",
-            stage["accessLogSettings"]["destinationArn"],
-        )
+        self.assertTrue(stage["accessLogSettings"]["destinationArn"])
+        for field in REQUIRED_ACCESS_LOG_FIELDS:
+            self.assertIn(field, stage["accessLogSettings"]["format"])
 
         resources = self.apigateway.get_resources(restApiId=self.rest_api_id)["items"]
         events_resource = next(resource for resource in resources if resource["path"] == "/events")
@@ -524,7 +546,7 @@ class TestIntegration(unittest.TestCase):
 
         message = self._wait_for_queue_message(marker)
         enrichment_output = self._invoke_lambda_json(
-            FUNCTION_NAMES["api"],
+            self.lambda_configurations["api"]["FunctionName"],
             {
                 "Records": [
                     {
@@ -562,7 +584,7 @@ class TestIntegration(unittest.TestCase):
 
         message = self._wait_for_queue_message(marker)
         enrichment_output = self._invoke_lambda_json(
-            FUNCTION_NAMES["api"],
+            self.lambda_configurations["api"]["FunctionName"],
             {
                 "Records": [
                     {

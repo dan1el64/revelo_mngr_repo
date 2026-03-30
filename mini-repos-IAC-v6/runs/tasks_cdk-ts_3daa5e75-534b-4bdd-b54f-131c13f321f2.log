@@ -1,0 +1,229 @@
+Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v6/tasks/cdk-ts/3daa5e75-534b-4bdd-b54f-131c13f321f2 FRAMEWORK=cdk-ts
+
+
+Starting LocalStack (harness environment)...
+ Network iac-harness-network  Creating
+ Network iac-harness-network  Created
+ Container localstack-harness  Creating
+ Container localstack-harness  Created
+ Container localstack-harness  Starting
+ Container localstack-harness  Started
+Waiting for LocalStack health endpoint: http://localhost:4566/_localstack/health
+LocalStack is healthy.
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Setup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Starting worker container: harness-worker-53969
+27e239129a1b45922c7eee3b0dd54689ec4e62a4f30283bacde82428d500677d
+Installing dependencies (npm install)...
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+
+added 433 packages, and audited 493 packages in 31s
+
+41 packages are looking for funding
+  run `npm fund` for details
+
+10 vulnerabilities (3 moderate, 7 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible, run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.12.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
+npm notice To update run: npm install -g npm@11.12.1
+npm notice
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/023ff515-3966-493c-ab76-544ef4907af5
+[32m✅ Step passed: Setup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Syntax / Synth[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Checking for LocalStack references...
+Running cdklocal synth...
+Generating template.json for unit tests...
+[32m✅ Step passed: Syntax / Synth[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Unit tests (pytest)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest unit tests...
+============================= test session starts ==============================
+platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+collecting ... collected 9 items
+
+tests/unit_tests.py::test_delivery_is_single_source_file_and_synthesizes_from_app_ts PASSED [ 11%]
+tests/unit_tests.py::test_template_has_expected_resource_counts PASSED   [ 22%]
+tests/unit_tests.py::test_network_topology_matches_the_prompt PASSED     [ 33%]
+tests/unit_tests.py::test_app_maps_aws_endpoint_to_sdk_endpoint_url_and_preserves_region PASSED [ 44%]
+tests/unit_tests.py::test_storage_database_and_queue_configuration_are_exact PASSED [ 55%]
+tests/unit_tests.py::test_api_lambda_and_logs_match_the_contract PASSED  [ 66%]
+tests/unit_tests.py::test_eventbridge_pipe_stepfunctions_and_security_boundaries_are_scoped PASSED [ 77%]
+tests/unit_tests.py::test_global_iam_guardrails_and_generated_names_are_enforced PASSED [ 88%]
+tests/unit_tests.py::test_traffic_flow_wiring_matches_the_prompt_overview PASSED [100%]
+
+============================== 9 passed in 23.86s ==============================
+[32m✅ Step passed: Unit tests (pytest)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Deploy (LocalStack)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Bootstrapping (if needed)...
+Running cdklocal deploy...
+
+✨  Synthesis time: 11.22s
+
+OrdersIngestStack: start: Building 3723b4d157b00e52e3e0b8262ea9bb933c71238880c972d39032488be14395ea
+OrdersIngestStack: success: Built 3723b4d157b00e52e3e0b8262ea9bb933c71238880c972d39032488be14395ea
+OrdersIngestStack: start: Publishing 3723b4d157b00e52e3e0b8262ea9bb933c71238880c972d39032488be14395ea:current_account-us-east-1
+OrdersIngestStack: success: Published 3723b4d157b00e52e3e0b8262ea9bb933c71238880c972d39032488be14395ea:current_account-us-east-1
+OrdersIngestStack: deploying... [1/1]
+OrdersIngestStack: creating CloudFormation changeset...
+OrdersIngestStack |  0/32 | 3:31:04 AM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack       | OrdersIngestStack User Initiated
+OrdersIngestStack |  0/32 | 3:31:04 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                   | OrdersApiLambdaRole (OrdersApiLambdaRole8F121EE0) 
+OrdersIngestStack |  1/32 | 3:31:04 AM | CREATE_COMPLETE      | AWS::CDK::Metadata               | CDKMetadata/Default (CDKMetadata) 
+OrdersIngestStack |  1/32 | 3:31:04 AM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata               | CDKMetadata/Default (CDKMetadata) 
+OrdersIngestStack |  1/32 | 3:31:04 AM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack       | OrdersIngestStack 
+OrdersIngestStack |  1/32 | 3:31:04 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                  | OrdersQueue (OrdersQueue3DFA1D51) 
+OrdersIngestStack |  2/32 | 3:31:04 AM | CREATE_COMPLETE      | AWS::IAM::Role                   | OrdersApiLambdaRole (OrdersApiLambdaRole8F121EE0) 
+OrdersIngestStack |  2/32 | 3:31:04 AM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                  | OrdersArchiveBucket (OrdersArchiveBucketB2427C16) 
+OrdersIngestStack |  3/32 | 3:31:04 AM | CREATE_COMPLETE      | AWS::SQS::Queue                  | OrdersQueue (OrdersQueue3DFA1D51) 
+OrdersIngestStack |  3/32 | 3:31:04 AM | CREATE_IN_PROGRESS   | AWS::Events::EventBus            | OrdersEventBus (OrdersEventBus22F79DF3) 
+OrdersIngestStack |  4/32 | 3:31:04 AM | CREATE_COMPLETE      | AWS::S3::Bucket                  | OrdersArchiveBucket (OrdersArchiveBucketB2427C16) 
+OrdersIngestStack |  4/32 | 3:31:04 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function            | OrdersApiFunction (OrdersApiFunctionF46D4A7F) 
+OrdersIngestStack |  5/32 | 3:31:04 AM | CREATE_COMPLETE      | AWS::Events::EventBus            | OrdersEventBus (OrdersEventBus22F79DF3) 
+OrdersIngestStack |  5/32 | 3:31:05 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup              | OrdersApiLogGroup (OrdersApiLogGroup0E78A56E) 
+OrdersIngestStack |  6/32 | 3:31:05 AM | CREATE_COMPLETE      | AWS::Lambda::Function            | OrdersApiFunction (OrdersApiFunctionF46D4A7F) 
+OrdersIngestStack |  6/32 | 3:31:05 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                 | OrdersApiLambdaRole/DefaultPolicy (OrdersApiLambdaRoleDefaultPolicy5251A130) 
+OrdersIngestStack |  7/32 | 3:31:05 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup              | OrdersApiLogGroup (OrdersApiLogGroup0E78A56E) 
+OrdersIngestStack |  7/32 | 3:31:05 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function            | OrdersApiFunction (OrdersApiFunctionF46D4A7F) 
+OrdersIngestStack |  8/32 | 3:31:05 AM | CREATE_COMPLETE      | AWS::IAM::Policy                 | OrdersApiLambdaRole/DefaultPolicy (OrdersApiLambdaRoleDefaultPolicy5251A130) 
+OrdersIngestStack |  8/32 | 3:31:05 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi         | OrdersApiGateway (OrdersApiGatewayEBA21D04) 
+OrdersIngestStack |  7/32 | 3:31:05 AM | CREATE_COMPLETE      | AWS::Lambda::Function            | OrdersApiFunction (OrdersApiFunctionF46D4A7F) 
+OrdersIngestStack |  7/32 | 3:31:07 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource        | OrdersApiGateway/Default/orders (OrdersApiGatewayorders949F8DC5) 
+OrdersIngestStack |  8/32 | 3:31:07 AM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi         | OrdersApiGateway (OrdersApiGatewayEBA21D04) 
+OrdersIngestStack |  8/32 | 3:31:07 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method          | OrdersApiGateway/Default/orders/POST (OrdersApiGatewayordersPOST84B32994) 
+OrdersIngestStack |  9/32 | 3:31:07 AM | CREATE_COMPLETE      | AWS::ApiGateway::Resource        | OrdersApiGateway/Default/orders (OrdersApiGatewayorders949F8DC5) 
+OrdersIngestStack |  9/32 | 3:31:07 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment      | OrdersApiGateway/Deployment (OrdersApiGatewayDeployment4D79B0610c711d6e258227611195eeded8e98dbd) 
+OrdersIngestStack | 10/32 | 3:31:07 AM | CREATE_COMPLETE      | AWS::ApiGateway::Method          | OrdersApiGateway/Default/orders/POST (OrdersApiGatewayordersPOST84B32994) 
+OrdersIngestStack | 11/32 | 3:31:07 AM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment      | OrdersApiGateway/Deployment (OrdersApiGatewayDeployment4D79B0610c711d6e258227611195eeded8e98dbd) 
+OrdersIngestStack | 11/32 | 3:31:07 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage           | OrdersApiGateway/DeploymentStage.prod (OrdersApiGatewayDeploymentStageprodD5FD23E8) 
+OrdersIngestStack | 11/32 | 3:31:07 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission          | OrdersApiGateway/Default/orders/POST/ApiPermission.OrdersIngestStackOrdersApiGateway3909B7FF.POST..orders (OrdersApiGatewayordersPOSTApiPermissionOrdersIngestStackOrdersApiGateway3909B7FFPOSTordersA3AF6F85) 
+OrdersIngestStack | 12/32 | 3:31:07 AM | CREATE_COMPLETE      | AWS::ApiGateway::Stage           | OrdersApiGateway/DeploymentStage.prod (OrdersApiGatewayDeploymentStageprodD5FD23E8) 
+OrdersIngestStack | 13/32 | 3:31:07 AM | CREATE_COMPLETE      | AWS::Lambda::Permission          | OrdersApiGateway/Default/orders/POST/ApiPermission.OrdersIngestStackOrdersApiGateway3909B7FF.POST..orders (OrdersApiGatewayordersPOSTApiPermissionOrdersIngestStackOrdersApiGateway3909B7FFPOSTordersA3AF6F85) 
+OrdersIngestStack | 13/32 | 3:31:07 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission          | OrdersApiGateway/Default/orders/POST/ApiPermission.Test.OrdersIngestStackOrdersApiGateway3909B7FF.POST..orders (OrdersApiGatewayordersPOSTApiPermissionTestOrdersIngestStackOrdersApiGateway3909B7FFPOSTordersDF79D9D8) 
+OrdersIngestStack | 13/32 | 3:31:07 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                    | OrdersVpc (OrdersVpc87B48A85) 
+OrdersIngestStack | 14/32 | 3:31:07 AM | CREATE_COMPLETE      | AWS::Lambda::Permission          | OrdersApiGateway/Default/orders/POST/ApiPermission.Test.OrdersIngestStackOrdersApiGateway3909B7FF.POST..orders (OrdersApiGatewayordersPOSTApiPermissionTestOrdersIngestStackOrdersApiGateway3909B7FFPOSTordersDF79D9D8) 
+OrdersIngestStack | 14/32 | 3:31:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup          | OrdersApiSecurityGroup (OrdersApiSecurityGroup2460D543) 
+OrdersIngestStack | 15/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::EC2::VPC                    | OrdersVpc (OrdersVpc87B48A85) 
+OrdersIngestStack | 15/32 | 3:31:08 AM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret      | OrdersDatabaseSecret (OrdersDatabaseSecret54BBA7BC) 
+OrdersIngestStack | 16/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup          | OrdersApiSecurityGroup (OrdersApiSecurityGroup2460D543) 
+OrdersIngestStack | 16/32 | 3:31:08 AM | CREATE_IN_PROGRESS   | AWS::Events::Rule                | OrdersEventRule 
+OrdersIngestStack | 17/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::SecretsManager::Secret      | OrdersDatabaseSecret (OrdersDatabaseSecret54BBA7BC) 
+OrdersIngestStack | 17/32 | 3:31:08 AM | CREATE_IN_PROGRESS   | AWS::SNS::Topic                  | OrdersNotificationsTopic (OrdersNotificationsTopic5B69E507) 
+OrdersIngestStack | 18/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::Events::Rule                | OrdersEventRule 
+OrdersIngestStack | 18/32 | 3:31:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                 | OrdersPrivateSubnetA 
+OrdersIngestStack | 19/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::SNS::Topic                  | OrdersNotificationsTopic (OrdersNotificationsTopic5B69E507) 
+OrdersIngestStack | 19/32 | 3:31:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                 | OrdersPrivateSubnetB 
+OrdersIngestStack | 20/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                 | OrdersPrivateSubnetA 
+OrdersIngestStack | 21/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                 | OrdersPrivateSubnetB 
+OrdersIngestStack | 21/32 | 3:31:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                 | OrdersPublicSubnetA 
+OrdersIngestStack | 21/32 | 3:31:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                 | OrdersPublicSubnetB 
+OrdersIngestStack | 22/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                 | OrdersPublicSubnetA 
+OrdersIngestStack | 22/32 | 3:31:08 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                   | OrdersStateMachineRole (OrdersStateMachineRole41A165ED) 
+OrdersIngestStack | 23/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                 | OrdersPublicSubnetB 
+OrdersIngestStack | 23/32 | 3:31:08 AM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine | OrdersStateMachine (OrdersStateMachineACA3E708) 
+OrdersIngestStack | 24/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::IAM::Role                   | OrdersStateMachineRole (OrdersStateMachineRole41A165ED) 
+OrdersIngestStack | 24/32 | 3:31:08 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                   | OrdersWorkerLambdaRole (OrdersWorkerLambdaRole56260BC1) 
+OrdersIngestStack | 25/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine | OrdersStateMachine (OrdersStateMachineACA3E708) 
+OrdersIngestStack | 26/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::IAM::Role                   | OrdersWorkerLambdaRole (OrdersWorkerLambdaRole56260BC1) 
+OrdersIngestStack | 26/32 | 3:31:08 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function            | OrdersWorkerFunction (OrdersWorkerFunctionBF8D67EA) 
+OrdersIngestStack | 27/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::Lambda::Function            | OrdersWorkerFunction (OrdersWorkerFunctionBF8D67EA) 
+OrdersIngestStack | 27/32 | 3:31:08 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup              | OrdersWorkerLogGroup (OrdersWorkerLogGroup9E799552) 
+OrdersIngestStack | 27/32 | 3:31:08 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                 | OrdersWorkerLambdaRole/DefaultPolicy (OrdersWorkerLambdaRoleDefaultPolicy20556E65) 
+OrdersIngestStack | 28/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup              | OrdersWorkerLogGroup (OrdersWorkerLogGroup9E799552) 
+OrdersIngestStack | 28/32 | 3:31:08 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function            | OrdersWorkerFunction (OrdersWorkerFunctionBF8D67EA) 
+OrdersIngestStack | 29/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::IAM::Policy                 | OrdersWorkerLambdaRole/DefaultPolicy (OrdersWorkerLambdaRoleDefaultPolicy20556E65) 
+OrdersIngestStack | 29/32 | 3:31:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup          | OrdersWorkerSecurityGroup (OrdersWorkerSecurityGroup2EEBB271) 
+OrdersIngestStack | 28/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::Lambda::Function            | OrdersWorkerFunction (OrdersWorkerFunctionBF8D67EA) 
+OrdersIngestStack | 29/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup          | OrdersWorkerSecurityGroup (OrdersWorkerSecurityGroup2EEBB271) 
+OrdersIngestStack | 30/32 | 3:31:08 AM | CREATE_COMPLETE      | AWS::CloudFormation::Stack       | OrdersIngestStack 
+
+ ✅  OrdersIngestStack
+
+✨  Deployment time: 5.15s
+
+Outputs:
+OrdersIngestStack.OrdersApiGatewayEndpoint73A84051 = https://ej3igblqxl.execute-api.localhost.localstack.cloud:4566/prod/
+OrdersIngestStack.OrdersApiUrl = https://ej3igblqxl.execute-api.localhost.localstack.cloud:4566/prod/
+OrdersIngestStack.OrdersArchiveBucketName = ordersingeststack-ordersarchivebucketb2427-6adcfa6e
+OrdersIngestStack.OrdersNotificationsTopicArn = arn:aws:sns:us-east-1:000000000000:topic-2b594c35
+OrdersIngestStack.OrdersQueueUrl = http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/OrdersIngestStack-OrdersQueue3DFA1D51-efe3aa42
+Stack ARN:
+arn:aws:cloudformation:us-east-1:000000000000:stack/OrdersIngestStack/73628790-0de8-4b4b-b814-6ac8bd5e73de
+
+✨  Total time: 16.37s
+
+[32m✅ Step passed: Deploy (LocalStack)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Integration tests[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest integration tests...
+============================= test session starts ==============================
+platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+collecting ... collected 5 items
+
+tests/integration_tests.py::test_stack_outputs_and_resource_inventory_exist PASSED [ 20%]
+tests/integration_tests.py::test_deployed_network_layout_and_security_groups_match PASSED [ 40%]
+tests/integration_tests.py::test_deployed_storage_database_and_secret_configuration_match PASSED [ 60%]
+tests/integration_tests.py::test_deployed_api_lambdas_and_logs_match PASSED [ 80%]
+tests/integration_tests.py::test_deployed_eventing_and_workflow_chain_match PASSED [100%]
+
+============================== 5 passed in 0.41s ===============================
+[32m✅ Step passed: Integration tests[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Destroy / Cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running cdklocal destroy...
+Cleaning up worker container: harness-worker-53969
+[32m✅ Step passed: Destroy / Cleanup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  HARNESS SUMMARY[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ setup[0m
+[32m✅ syntax/plan[0m
+[32m✅ unit tests[0m
+[32m✅ deploy (localstack)[0m
+[32m✅ integration tests[0m
+[32m✅ destroy/cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ All steps passed.[0m
+
+Log saved to: /Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v6/runs/tasks_cdk-ts_3daa5e75-534b-4bdd-b54f-131c13f321f2.log
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+Stopping LocalStack...
+ Container localstack-harness  Stopping
+ Container localstack-harness  Stopped
+ Container localstack-harness  Removing
+ Container localstack-harness  Removed
+ Network iac-harness-network  Removing
+ Network iac-harness-network  Removed
