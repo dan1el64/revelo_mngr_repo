@@ -62,31 +62,35 @@ data "aws_availability_zones" "available" {
 }
 
 locals {
-  endpoint_mode               = var.aws_endpoint != null
-  endpoint_base               = var.aws_endpoint != null ? trimsuffix(var.aws_endpoint, "/") : null
-  endpoint_host               = var.aws_endpoint != null ? split(":", split("//", trimsuffix(var.aws_endpoint, "/"))[1])[0] : null
-  endpoint_port               = var.aws_endpoint != null ? tonumber(split(":", split("//", trimsuffix(var.aws_endpoint, "/"))[1])[1]) : null
-  endpoint_azs                = ["${var.aws_region}a", "${var.aws_region}b"]
-  endpoint_account_id         = "000000000000"
-  endpoint_suffix             = local.endpoint_mode ? formatdate("YYYYMMDDhhmmss", plantimestamp()) : null
-  endpoint_queue_url          = local.endpoint_mode ? "${local.endpoint_base}/${local.endpoint_account_id}/order-events-queue" : null
-  endpoint_queue_arn          = local.endpoint_mode ? "arn:aws:sqs:${var.aws_region}:${local.endpoint_account_id}:order-events-queue" : null
-  endpoint_topic_arn          = local.endpoint_mode ? "arn:aws:sns:${var.aws_region}:${local.endpoint_account_id}:order-events" : null
-  bucket_name                 = local.endpoint_mode ? "order-intake-archive-${local.endpoint_suffix}" : "order-intake-archive"
-  table_name                  = local.endpoint_mode ? "order-metadata-${local.endpoint_suffix}" : "order-metadata"
-  api_key_secret_name         = local.endpoint_mode ? "orderintake/api_key-${local.endpoint_suffix}" : "orderintake/api_key"
-  db_app_user_secret_name     = local.endpoint_mode ? "orderintake/db_app_user-${local.endpoint_suffix}" : "orderintake/db_app_user"
-  ingest_role_name            = local.endpoint_mode ? "ingest-fn-role-${local.endpoint_suffix}" : "ingest-fn-role"
-  analytics_role_name         = local.endpoint_mode ? "analytics-fn-role-${local.endpoint_suffix}" : "analytics-fn-role"
-  ingest_function_name        = local.endpoint_mode ? "ingest_fn_${local.endpoint_suffix}" : "ingest_fn"
-  analytics_function_name     = local.endpoint_mode ? "analytics_fn_${local.endpoint_suffix}" : "analytics_fn"
-  ingest_log_group_name       = "/aws/lambda/${local.ingest_function_name}"
-  analytics_log_group_name    = "/aws/lambda/${local.analytics_function_name}"
-  endpoint_api_key_secret_arn = local.endpoint_mode ? "arn:aws:secretsmanager:${var.aws_region}:${local.endpoint_account_id}:secret:${local.api_key_secret_name}" : null
-  endpoint_db_secret_arn      = local.endpoint_mode ? "arn:aws:secretsmanager:${var.aws_region}:${local.endpoint_account_id}:secret:${local.db_app_user_secret_name}" : null
-  endpoint_ingest_role_arn    = local.endpoint_mode ? "arn:aws:iam::${local.endpoint_account_id}:role/${local.ingest_role_name}" : null
-  endpoint_analytics_role_arn = local.endpoint_mode ? "arn:aws:iam::${local.endpoint_account_id}:role/${local.analytics_role_name}" : null
-  azs                         = local.endpoint_mode ? local.endpoint_azs : data.aws_availability_zones.available[0].names
+  endpoint_mode                    = var.aws_endpoint != null
+  endpoint_base                    = var.aws_endpoint != null ? trimsuffix(var.aws_endpoint, "/") : null
+  endpoint_host                    = var.aws_endpoint != null ? split(":", split("//", trimsuffix(var.aws_endpoint, "/"))[1])[0] : null
+  endpoint_port                    = var.aws_endpoint != null ? tonumber(split(":", split("//", trimsuffix(var.aws_endpoint, "/"))[1])[1]) : null
+  endpoint_azs                     = ["${var.aws_region}a", "${var.aws_region}b"]
+  endpoint_account_id              = "000000000000"
+  endpoint_suffix                  = local.endpoint_mode ? formatdate("YYYYMMDDhhmmss", plantimestamp()) : null
+  endpoint_queue_url               = local.endpoint_mode ? "${local.endpoint_base}/${local.endpoint_account_id}/order-events-queue" : null
+  endpoint_queue_arn               = local.endpoint_mode ? "arn:aws:sqs:${var.aws_region}:${local.endpoint_account_id}:order-events-queue" : null
+  endpoint_topic_arn               = local.endpoint_mode ? "arn:aws:sns:${var.aws_region}:${local.endpoint_account_id}:order-events" : null
+  endpoint_table_arn               = local.endpoint_mode ? "arn:aws:dynamodb:${var.aws_region}:${local.endpoint_account_id}:table/${local.table_name}" : null
+  bucket_name                      = local.endpoint_mode ? "order-intake-archive-${local.endpoint_suffix}" : "order-intake-archive"
+  endpoint_bucket_arn              = local.endpoint_mode ? "arn:aws:s3:::${local.bucket_name}" : null
+  table_name                       = local.endpoint_mode ? "order-metadata-${local.endpoint_suffix}" : "order-metadata"
+  api_key_secret_name              = local.endpoint_mode ? "orderintake/api_key-${local.endpoint_suffix}" : "orderintake/api_key"
+  db_app_user_secret_name          = local.endpoint_mode ? "orderintake/db_app_user-${local.endpoint_suffix}" : "orderintake/db_app_user"
+  ingest_role_name                 = local.endpoint_mode ? "ingest-fn-role-${local.endpoint_suffix}" : "ingest-fn-role"
+  analytics_role_name              = local.endpoint_mode ? "analytics-fn-role-${local.endpoint_suffix}" : "analytics-fn-role"
+  ingest_function_name             = local.endpoint_mode ? "ingest_fn_${local.endpoint_suffix}" : "ingest_fn"
+  analytics_function_name          = local.endpoint_mode ? "analytics_fn_${local.endpoint_suffix}" : "analytics_fn"
+  ingest_log_group_name            = "/aws/lambda/${local.ingest_function_name}"
+  analytics_log_group_name         = "/aws/lambda/${local.analytics_function_name}"
+  endpoint_ingest_log_group_arn    = local.endpoint_mode ? "arn:aws:logs:${var.aws_region}:${local.endpoint_account_id}:log-group:${local.ingest_log_group_name}" : null
+  endpoint_analytics_log_group_arn = local.endpoint_mode ? "arn:aws:logs:${var.aws_region}:${local.endpoint_account_id}:log-group:${local.analytics_log_group_name}" : null
+  endpoint_api_key_secret_arn      = local.endpoint_mode ? "arn:aws:secretsmanager:${var.aws_region}:${local.endpoint_account_id}:secret:${local.api_key_secret_name}" : null
+  endpoint_db_secret_arn           = local.endpoint_mode ? "arn:aws:secretsmanager:${var.aws_region}:${local.endpoint_account_id}:secret:${local.db_app_user_secret_name}" : null
+  endpoint_ingest_role_arn         = local.endpoint_mode ? "arn:aws:iam::${local.endpoint_account_id}:role/${local.ingest_role_name}" : null
+  endpoint_analytics_role_arn      = local.endpoint_mode ? "arn:aws:iam::${local.endpoint_account_id}:role/${local.analytics_role_name}" : null
+  azs                              = local.endpoint_mode ? local.endpoint_azs : data.aws_availability_zones.available[0].names
 }
 
 resource "aws_vpc" "order_intake" {
@@ -403,9 +407,15 @@ data "aws_secretsmanager_secret_version" "db_app_user" {
 }
 
 locals {
-  api_key_secret_arn     = local.endpoint_mode ? local.endpoint_api_key_secret_arn : aws_secretsmanager_secret.api_key.arn
-  db_app_user_secret_arn = local.endpoint_mode ? local.endpoint_db_secret_arn : aws_secretsmanager_secret.db_app_user.arn
-  db_app_user_secret     = jsondecode(data.aws_secretsmanager_secret_version.db_app_user.secret_string)
+  api_key_secret_arn      = local.endpoint_mode ? local.endpoint_api_key_secret_arn : aws_secretsmanager_secret.api_key.arn
+  db_app_user_secret_arn  = local.endpoint_mode ? local.endpoint_db_secret_arn : aws_secretsmanager_secret.db_app_user.arn
+  db_app_user_secret      = jsondecode(data.aws_secretsmanager_secret_version.db_app_user.secret_string)
+  table_arn               = local.endpoint_mode ? local.endpoint_table_arn : aws_dynamodb_table.order_metadata.arn
+  topic_arn               = local.endpoint_mode ? local.endpoint_topic_arn : aws_sns_topic.order_events.arn
+  queue_arn               = local.endpoint_mode ? local.endpoint_queue_arn : aws_sqs_queue.order_events.arn
+  bucket_arn              = local.endpoint_mode ? local.endpoint_bucket_arn : aws_s3_bucket.archive.arn
+  ingest_log_group_arn    = local.endpoint_mode ? local.endpoint_ingest_log_group_arn : aws_cloudwatch_log_group.ingest_fn.arn
+  analytics_log_group_arn = local.endpoint_mode ? local.endpoint_analytics_log_group_arn : aws_cloudwatch_log_group.analytics_fn.arn
 }
 
 resource "aws_iam_role" "ingest_fn" {
@@ -519,12 +529,12 @@ resource "aws_iam_role_policy" "ingest_fn" {
       {
         Effect   = "Allow"
         Action   = ["dynamodb:PutItem"]
-        Resource = aws_dynamodb_table.order_metadata.arn
+        Resource = local.table_arn
       },
       {
         Effect   = "Allow"
         Action   = ["sns:Publish"]
-        Resource = aws_sns_topic.order_events.arn
+        Resource = local.topic_arn
       },
       {
         Effect   = "Allow"
@@ -537,7 +547,7 @@ resource "aws_iam_role_policy" "ingest_fn" {
           "logs:CreateLogStream",
           "logs:PutLogEvents",
         ]
-        Resource = "${aws_cloudwatch_log_group.ingest_fn.arn}:*"
+        Resource = "${local.ingest_log_group_arn}:*"
       }
     ]
   })
@@ -557,12 +567,22 @@ resource "aws_iam_role_policy" "analytics_fn" {
           "sqs:DeleteMessage",
           "sqs:GetQueueAttributes",
         ]
-        Resource = aws_sqs_queue.order_events.arn
+        Resource = local.queue_arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
+        Resource = local.bucket_arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject"]
+        Resource = "${local.bucket_arn}/*"
       },
       {
         Effect   = "Allow"
         Action   = ["s3:PutObject"]
-        Resource = "${aws_s3_bucket.archive.arn}/raw/*"
+        Resource = "${local.bucket_arn}/raw/*"
       },
       {
         Effect   = "Allow"
@@ -575,7 +595,7 @@ resource "aws_iam_role_policy" "analytics_fn" {
           "logs:CreateLogStream",
           "logs:PutLogEvents",
         ]
-        Resource = "${aws_cloudwatch_log_group.analytics_fn.arn}:*"
+        Resource = "${local.analytics_log_group_arn}:*"
       }
     ]
   })
@@ -755,8 +775,8 @@ resource "aws_s3_bucket_policy" "archive" {
         Principal = "*"
         Action    = "s3:*"
         Resource = [
-          aws_s3_bucket.archive.arn,
-          "${aws_s3_bucket.archive.arn}/*",
+          local.bucket_arn,
+          "${local.bucket_arn}/*",
         ]
         Condition = {
           Bool = {
@@ -771,7 +791,7 @@ resource "aws_s3_bucket_policy" "archive" {
           AWS = local.endpoint_mode ? local.endpoint_analytics_role_arn : aws_iam_role.analytics_fn.arn
         }
         Action   = ["s3:ListBucket"]
-        Resource = aws_s3_bucket.archive.arn
+        Resource = local.bucket_arn
       },
       {
         Sid    = "AllowAnalyticsGetObject"
@@ -780,7 +800,7 @@ resource "aws_s3_bucket_policy" "archive" {
           AWS = local.endpoint_mode ? local.endpoint_analytics_role_arn : aws_iam_role.analytics_fn.arn
         }
         Action   = ["s3:GetObject"]
-        Resource = "${aws_s3_bucket.archive.arn}/*"
+        Resource = "${local.bucket_arn}/*"
       },
       {
         Sid    = "AllowIngestRawWrites"
@@ -789,7 +809,7 @@ resource "aws_s3_bucket_policy" "archive" {
           AWS = local.endpoint_mode ? local.endpoint_ingest_role_arn : aws_iam_role.ingest_fn.arn
         }
         Action   = ["s3:PutObject"]
-        Resource = "${aws_s3_bucket.archive.arn}/raw/*"
+        Resource = "${local.bucket_arn}/raw/*"
       },
     ]
   })

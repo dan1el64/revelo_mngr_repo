@@ -1,10 +1,12 @@
 import json
 import os
+import socket
 import time
 from pathlib import Path
 from typing import Optional
 from urllib.error import HTTPError
 from urllib.error import URLError
+from urllib.parse import urlunsplit
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
@@ -123,8 +125,27 @@ def _queue_url() -> str:
     return _client("sqs").get_queue_url(QueueName="order-events-queue")["QueueUrl"]
 
 
+def _queue_arn() -> str:
+    return _client("sqs").get_queue_attributes(
+        QueueUrl=_queue_url(),
+        AttributeNames=["QueueArn"],
+    )["Attributes"]["QueueArn"]
+
+
+def _queue_policy() -> dict:
+    policy = _client("sqs").get_queue_attributes(
+        QueueUrl=_queue_url(),
+        AttributeNames=["Policy"],
+    )["Attributes"]["Policy"]
+    return json.loads(policy)
+
+
 def _bucket_name() -> str:
     return _state_output("s3_bucket_name", "TEST_S3_BUCKET_NAME") or "order-intake-archive"
+
+
+def _bucket_policy() -> dict:
+    return json.loads(_client("s3").get_bucket_policy(Bucket=_bucket_name())["Policy"])
 
 
 def _table_name() -> str:
@@ -292,6 +313,23 @@ def _api_post(path: str, payload: dict) -> dict:
         raise AssertionError(f"API Gateway request failed: {exc}") from exc
 
 
+def _api_error(path: str, *, method="POST", payload: Optional[dict] = None) -> tuple[int, str]:
+    data = None if payload is None else json.dumps(payload).encode()
+    request = Request(
+        url=f"{_api_base_url().rstrip('/')}/{path.lstrip('/')}",
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method=method,
+    )
+    try:
+        with urlopen(request, timeout=20) as response:
+            raise AssertionError(f"Expected HTTP error, got {response.status}")
+    except HTTPError as exc:
+        return exc.code, exc.read().decode()
+    except URLError as exc:
+        raise AssertionError(f"API Gateway request failed: {exc}") from exc
+
+
 def _wait_for_item(table_name: str, key: dict) -> dict:
     kwargs = {"region_name": _region()}
     service_url = _service_url()
@@ -327,6 +365,29 @@ def _marker_exists(bucket_name: str) -> bool:
         return False
 
 
+def _assert_no_message(queue_url: str, *, timeout=15, interval=2):
+    sqs = _client("sqs")
+
+    def _assert_empty():
+        response = sqs.receive_message(
+            QueueUrl=queue_url,
+            MaxNumberOfMessages=1,
+            VisibilityTimeout=0,
+            WaitTimeSeconds=0,
+        )
+        assert response.get("Messages", []) == []
+        return True
+
+    return _wait_until(_assert_empty, timeout=timeout, interval=interval)
+
+
+def _publish_order_event(source: str):
+    _client("sns").publish(
+        TopicArn=_topic_arn(),
+        Message=json.dumps({"event": "order_received", "source": source}),
+    )
+
+
 @pytest.mark.integration
 def test_api_gateway_invokes_ingest_lambda_and_delivers_real_event():
     _require_deployed_environment()
@@ -356,6 +417,26 @@ def test_api_gateway_invokes_ingest_lambda_and_delivers_real_event():
 
 
 @pytest.mark.integration
+def test_api_gateway_rejects_unknown_route():
+    _require_deployed_environment()
+
+    status_code, body = _api_error("/does-not-exist", payload={"source": "negative-test"})
+
+    assert status_code in {403, 404}
+    assert body
+
+
+@pytest.mark.integration
+def test_api_gateway_rejects_unsupported_method_on_ingest():
+    _require_deployed_environment()
+
+    status_code, body = _api_error("/ingest", method="GET")
+
+    assert status_code in {403, 404, 405}
+    assert body
+
+
+@pytest.mark.integration
 def test_sns_topic_delivers_messages_to_sqs_subscription():
     _require_deployed_environment()
 
@@ -380,6 +461,49 @@ def test_sns_topic_delivers_messages_to_sqs_subscription():
 
 
 @pytest.mark.integration
+def test_sqs_queue_policy_blocks_messages_from_unauthorized_sns_topic():
+    _require_deployed_environment()
+
+    sns = _client("sns")
+    queue_url = _queue_url()
+    queue_arn = _queue_arn()
+    queue_policy = _queue_policy()
+
+    assert queue_policy["Version"] == "2012-10-17"
+    assert len(queue_policy["Statement"]) == 1
+    statement = queue_policy["Statement"][0]
+    assert statement["Sid"] == "AllowOrderEventsTopicOnly"
+    assert statement["Action"] == "sqs:SendMessage"
+    assert statement["Principal"] == {"Service": "sns.amazonaws.com"}
+    assert statement["Resource"] == queue_arn
+    assert statement["Condition"]["ArnEquals"]["aws:SourceArn"] == _topic_arn()
+
+    if _service_url():
+        return
+
+    _purge_queue(queue_url)
+
+    topic_arn = sns.create_topic(Name="order-events-unauthorized")["TopicArn"]
+    subscription_arn = sns.subscribe(
+        TopicArn=topic_arn,
+        Protocol="sqs",
+        Endpoint=queue_arn,
+        ReturnSubscriptionArn=True,
+    )["SubscriptionArn"]
+
+    try:
+        sns.publish(
+            TopicArn=topic_arn,
+            Message=json.dumps({"event": "order_received", "source": "unauthorized-topic"}),
+        )
+
+        assert _assert_no_message(queue_url) is True
+    finally:
+        sns.unsubscribe(SubscriptionArn=subscription_arn)
+        sns.delete_topic(TopicArn=topic_arn)
+
+
+@pytest.mark.integration
 def test_analytics_lambda_processes_real_queue_and_writes_real_s3_marker():
     _require_deployed_environment()
 
@@ -394,10 +518,7 @@ def test_analytics_lambda_processes_real_queue_and_writes_real_s3_marker():
     _purge_queue(queue_url)
     _delete_marker_if_exists(bucket_name)
 
-    sqs.send_message(
-        QueueUrl=queue_url,
-        MessageBody='{"event":"order_received","source":"api"}',
-    )
+    _publish_order_event("analytics-lambda-test")
 
     response = _invoke_lambda(_analytics_lambda_name())
     assert response["statusCode"] == 200
@@ -424,6 +545,65 @@ def test_analytics_lambda_returns_processed_false_for_empty_queue():
 
 
 @pytest.mark.integration
+def test_rds_outputs_are_present_and_local_endpoint_is_reachable():
+    _require_deployed_environment()
+
+    address = _state_output("rds_endpoint_address", "TEST_RDS_ENDPOINT_ADDRESS")
+    port = _state_output("rds_endpoint_port", "TEST_RDS_ENDPOINT_PORT")
+
+    assert address
+    assert port
+    assert int(port) > 0
+
+    if _service_url():
+        with socket.create_connection((str(address), int(port)), timeout=5):
+            pass
+
+
+@pytest.mark.integration
+def test_s3_bucket_denies_insecure_transport_when_supported():
+    _require_deployed_environment()
+
+    s3 = _client("s3")
+    bucket_name = _bucket_name()
+    bucket_policy = _bucket_policy()
+    deny_statement = next(
+        statement for statement in bucket_policy["Statement"]
+        if statement.get("Sid") == "DenyInsecureTransport"
+    )
+
+    assert deny_statement["Effect"] == "Deny"
+    assert deny_statement["Action"] == "s3:*"
+    assert deny_statement["Principal"] == "*"
+    assert deny_statement["Condition"] == {"Bool": {"aws:SecureTransport": "false"}}
+    assert deny_statement["Resource"] == [f"arn:aws:s3:::{bucket_name}", f"arn:aws:s3:::{bucket_name}/*"]
+
+    if _service_url():
+        return
+
+    key = "raw/insecure-transport-check.txt"
+
+    s3.put_object(
+        Bucket=bucket_name,
+        Key=key,
+        Body=b"check",
+    )
+
+    presigned_url = s3.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": bucket_name, "Key": key},
+        ExpiresIn=60,
+    )
+    parsed = urlsplit(presigned_url)
+    insecure_url = urlunsplit(("http", parsed.netloc, parsed.path, parsed.query, parsed.fragment))
+
+    with pytest.raises(HTTPError) as exc_info:
+        urlopen(insecure_url, timeout=20)
+
+    assert exc_info.value.code == 403
+
+
+@pytest.mark.integration
 def test_eventbridge_schedule_invokes_analytics_lambda_and_processes_queue():
     _require_deployed_environment()
 
@@ -447,16 +627,17 @@ def test_eventbridge_schedule_invokes_analytics_lambda_and_processes_queue():
         for statement in policy["Statement"]
     )
 
-    if _service_url():
-        return
-
     _purge_queue(queue_url)
     _delete_marker_if_exists(bucket_name)
 
-    sqs.send_message(
-        QueueUrl=queue_url,
-        MessageBody='{"event":"order_received","source":"eventbridge-schedule-test"}',
-    )
+    _publish_order_event("eventbridge-schedule-test")
 
-    assert _wait_for_marker(bucket_name, timeout=420, interval=15) == b"processed"
+    if _service_url():
+        response = _invoke_lambda(analytics_lambda_name)
+        assert response["statusCode"] == 200
+        assert json.loads(response["body"]) == {"processed": True}
+    else:
+        assert _wait_for_marker(bucket_name, timeout=420, interval=15) == b"processed"
+
+    assert _wait_for_marker(bucket_name) == b"processed"
     assert sqs.receive_message(QueueUrl=queue_url).get("Messages", []) == []
