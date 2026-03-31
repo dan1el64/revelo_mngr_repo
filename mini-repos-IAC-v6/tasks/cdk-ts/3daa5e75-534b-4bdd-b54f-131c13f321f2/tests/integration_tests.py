@@ -70,6 +70,14 @@ def _physical_ids(resource_type: str) -> list[str]:
     ]
 
 
+def _physical_ids_with_prefix(resource_type: str, prefix: str) -> list[str]:
+    return [
+        resource["PhysicalResourceId"]
+        for resource in _stack_resources()
+        if resource["ResourceType"] == resource_type and resource["LogicalResourceId"].startswith(prefix)
+    ]
+
+
 def _physical_id_with_prefix(resource_type: str, prefix: str) -> str:
     matches = [
         resource["PhysicalResourceId"]
@@ -111,6 +119,14 @@ def _json_compact(payload: dict) -> str:
     return json.dumps(payload, separators=(",", ":"), sort_keys=True)
 
 
+def _parse_json_payload(value: str | dict) -> str | dict:
+    if not isinstance(value, str):
+        return value
+    with contextlib.suppress(json.JSONDecodeError):
+        return json.loads(value)
+    return value
+
+
 def _post_json(url: str, body: str) -> tuple[int, dict]:
     request = urllib.request.Request(
         url,
@@ -120,6 +136,18 @@ def _post_json(url: str, body: str) -> tuple[int, dict]:
     )
     with urllib.request.urlopen(request, timeout=30) as response:
         return response.status, json.loads(response.read().decode("utf-8"))
+
+
+def _post_json_expect_http_error(url: str, body: str) -> urllib.error.HTTPError:
+    request = urllib.request.Request(
+        url,
+        data=body.encode("utf-8"),
+        headers={"content-type": "application/json"},
+        method="POST",
+    )
+    with pytest.raises(urllib.error.HTTPError) as exc_info:
+        urllib.request.urlopen(request, timeout=30)
+    return exc_info.value
 
 
 def _wait_for_api_post(payload: dict) -> dict:
@@ -148,6 +176,48 @@ def _wait_for_bucket_object(bucket_name: str, key: str, expected_body: str) -> N
         return True
 
     _poll(_attempt, description=f"S3 object {key}", timeout=90, interval=3)
+
+
+def _drain_queue(queue_url: str) -> list[str | dict]:
+    sqs = _client("sqs")
+    drained_messages: list[str | dict] = []
+    while True:
+        response = sqs.receive_message(
+            QueueUrl=queue_url,
+            MaxNumberOfMessages=10,
+            WaitTimeSeconds=1,
+        )
+        messages = response.get("Messages", [])
+        if not messages:
+            return drained_messages
+        for message in messages:
+            sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=message["ReceiptHandle"])
+            drained_messages.append(_parse_json_payload(message["Body"]))
+
+
+def _wait_for_queue_messages(queue_url: str, *, minimum_count: int) -> list[str | dict]:
+    sqs = _client("sqs")
+    collected_messages: list[str | dict] = []
+
+    def _attempt() -> list[str | dict] | None:
+        response = sqs.receive_message(
+            QueueUrl=queue_url,
+            MaxNumberOfMessages=10,
+            WaitTimeSeconds=5,
+        )
+        for message in response.get("Messages", []):
+            sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=message["ReceiptHandle"])
+            collected_messages.append(_parse_json_payload(message["Body"]))
+        if len(collected_messages) >= minimum_count:
+            return list(collected_messages)
+        return None
+
+    return _poll(
+        _attempt,
+        description=f"{minimum_count} messages on orders queue",
+        timeout=90,
+        interval=2,
+    )
 
 
 @contextlib.contextmanager
@@ -220,7 +290,8 @@ def _wait_for_raw_topic_message(queue_url: str, marker: str) -> dict:
 
 
 def _pipe_name() -> str:
-    return _physical_id_with_prefix("AWS::Pipes::Pipe", "OrdersPipe")
+    outputs = _stack_outputs()
+    return outputs.get("OrdersPipeName") or _physical_id_with_prefix("AWS::Pipes::Pipe", "OrdersPipe")
 
 
 def _event_source_mapping_uuid() -> str:
@@ -316,9 +387,10 @@ def test_stack_outputs_and_resource_inventory_exist():
     assert "OrdersArchiveBucketName" in outputs
     assert "OrdersQueueUrl" in outputs
     assert "OrdersNotificationsTopicArn" in outputs
+    assert "OrdersPipeName" in outputs
 
     assert len(_physical_ids("AWS::EC2::Subnet")) == 4
-    assert len(_physical_ids("AWS::EC2::SecurityGroup")) == 3
+    assert len(_physical_ids("AWS::EC2::SecurityGroup")) == 4
     assert len(_physical_ids("AWS::ApiGateway::VpcLink")) == 0
     assert len(_physical_ids("AWS::S3::Bucket")) == 1
     assert len(_physical_ids("AWS::SQS::Queue")) == 1
@@ -327,13 +399,13 @@ def test_stack_outputs_and_resource_inventory_exist():
     assert len(_physical_ids("AWS::RDS::DBInstance")) == 1
     assert len(_physical_ids("AWS::RDS::DBSubnetGroup")) == 1
     assert len(_physical_ids("AWS::EC2::VPCEndpoint")) == 1
-    assert len(_physical_ids("AWS::Lambda::Function")) == 2
+    assert _physical_id_with_prefix("AWS::Lambda::Function", "OrdersApiFunction")
+    assert _physical_id_with_prefix("AWS::Lambda::Function", "OrdersWorkerFunction")
     assert len(_physical_ids("AWS::Lambda::EventSourceMapping")) == 1
-    assert len(_physical_ids("AWS::Logs::LogGroup")) == 2
     assert len(_physical_ids("AWS::Events::EventBus")) == 1
     assert len(_physical_ids("AWS::Events::Rule")) == 1
-    assert len(_physical_ids("AWS::Pipes::Pipe")) == 1
     assert len(_physical_ids("AWS::StepFunctions::StateMachine")) == 1
+    assert _pipe_name()
 
 
 def test_deployed_network_layout_and_security_groups_match():
@@ -351,17 +423,29 @@ def test_deployed_network_layout_and_security_groups_match():
 
     api_sg_id = _physical_id_with_prefix("AWS::EC2::SecurityGroup", "OrdersApiSecurityGroup")
     worker_sg_id = _physical_id_with_prefix("AWS::EC2::SecurityGroup", "OrdersWorkerSecurityGroup")
+    endpoint_sg_id = _physical_id_with_prefix("AWS::EC2::SecurityGroup", "OrdersSecretsEndpointSecurityGroup")
     data_sg_id = _physical_id_with_prefix("AWS::EC2::SecurityGroup", "OrdersDataPlaneSecurityGroup")
 
     security_groups = ec2.describe_security_groups(
-        GroupIds=[api_sg_id, worker_sg_id, data_sg_id]
+        GroupIds=[api_sg_id, worker_sg_id, endpoint_sg_id, data_sg_id]
     )["SecurityGroups"]
     by_id = {group["GroupId"]: group for group in security_groups}
 
     assert by_id[api_sg_id]["IpPermissions"] == []
     assert by_id[worker_sg_id]["IpPermissions"] == []
-    assert len(by_id[api_sg_id]["IpPermissionsEgress"]) == 2
+    assert by_id[endpoint_sg_id]["IpPermissions"] != []
+    assert len(by_id[api_sg_id]["IpPermissionsEgress"]) == 1
     assert len(by_id[worker_sg_id]["IpPermissionsEgress"]) == 3
+    assert not any(
+        pair.get("GroupId") == endpoint_sg_id
+        for permission in by_id[api_sg_id]["IpPermissionsEgress"]
+        for pair in permission.get("UserIdGroupPairs", [])
+    )
+    assert any(
+        pair.get("GroupId") == endpoint_sg_id
+        for permission in by_id[worker_sg_id]["IpPermissionsEgress"]
+        for pair in permission.get("UserIdGroupPairs", [])
+    )
 
     data_ingress = by_id[data_sg_id]["IpPermissions"]
     assert len(data_ingress) == 1
@@ -383,6 +467,11 @@ def test_deployed_network_layout_and_security_groups_match():
     assert endpoint_sg["IpPermissions"][0]["FromPort"] == 443
     assert endpoint_sg["IpPermissions"][0]["ToPort"] == 443
     assert endpoint_sg["IpPermissions"][0]["UserIdGroupPairs"][0]["GroupId"] == worker_sg_id
+    assert all(
+        pair["GroupId"] != api_sg_id
+        for permission in endpoint_sg["IpPermissions"]
+        for pair in permission.get("UserIdGroupPairs", [])
+    )
 
 
 def test_deployed_storage_database_and_secret_configuration_match():
@@ -470,7 +559,7 @@ def test_deployed_api_lambdas_and_logs_match():
     stages = apigateway.get_stages(restApiId=rest_api_id)["item"]
     assert any(stage["stageName"] == "prod" for stage in stages)
 
-    log_group_names = set(_physical_ids("AWS::Logs::LogGroup"))
+    log_group_names = {f"/aws/lambda/{api_fn_name}", f"/aws/lambda/{worker_fn_name}"}
     target_log_groups: dict[str, dict] = {}
     for log_group_name in log_group_names:
         groups = logs.describe_log_groups(logGroupNamePrefix=log_group_name)["logGroups"]
@@ -491,7 +580,7 @@ def test_deployed_eventing_and_workflow_chain_match():
 
     event_bus_name = _physical_id_with_prefix("AWS::Events::EventBus", "OrdersEventBus")
     rule_physical_id = _physical_id_with_prefix("AWS::Events::Rule", "OrdersEventRule")
-    pipe_name = _physical_id_with_prefix("AWS::Pipes::Pipe", "OrdersPipe")
+    pipe_name = _pipe_name()
     state_machine_arn = _physical_id_with_prefix("AWS::StepFunctions::StateMachine", "OrdersStateMachine")
     queue_arn = sqs.get_queue_attributes(
         QueueUrl=_stack_outputs()["OrdersQueueUrl"],
@@ -532,9 +621,11 @@ def test_deployed_eventing_and_workflow_chain_match():
     assert pipe["TargetParameters"]["StepFunctionStateMachineParameters"]["InvocationType"] == "FIRE_AND_FORGET"
 
     state_machine = sfn.describe_state_machine(stateMachineArn=state_machine_arn)
-    definition = state_machine["definition"]
-    assert '"RecordTimestamp"' in definition
-    assert '"OrdersWorkflowSucceeded"' in definition
+    definition = json.loads(state_machine["definition"])
+    assert definition["StartAt"] == "RecordTimestamp"
+    assert definition["States"]["RecordTimestamp"]["Type"] == "Pass"
+    assert definition["States"]["RecordTimestamp"]["Parameters"]["recordedAt.$"] == "$$.State.EnteredTime"
+    assert definition["States"]["OrdersWorkflowSucceeded"]["Type"] == "Succeed"
 
     topic_arn = _stack_outputs()["OrdersNotificationsTopicArn"]
     topic = sns.get_topic_attributes(TopicArn=topic_arn)["Attributes"]
@@ -562,6 +653,44 @@ def test_http_post_to_api_archives_payload_and_triggers_processing():
         assert marker in json.dumps(notification)
 
 
+def test_unknown_api_resource_returns_client_error():
+    api_url = _stack_outputs()["OrdersApiUrl"]
+    error = _post_json_expect_http_error(f"{api_url}missing-resource", json.dumps({"invalid": True}))
+    assert error.code in {403, 404}
+
+
+def test_http_post_to_api_enqueues_direct_and_eventbridge_messages_before_consumers_run():
+    queue_url = _stack_outputs()["OrdersQueueUrl"]
+    marker = f"queue-flow-{uuid.uuid4().hex}"
+    payload = {
+        "customerId": "customer-789",
+        "items": [{"sku": "sku-2", "quantity": 1}],
+        "orderId": marker,
+    }
+
+    with _stopped_pipe(), _disabled_worker_event_source_mapping():
+        _drain_queue(queue_url)
+        result = _wait_for_api_post(payload)
+        _wait_for_bucket_object(
+            _stack_outputs()["OrdersArchiveBucketName"],
+            result["archive_key"],
+            result["request_body"],
+        )
+        messages = _wait_for_queue_messages(queue_url, minimum_count=2)
+
+    assert any(message == payload for message in messages)
+
+    routed_event = next(
+        message
+        for message in messages
+        if isinstance(message, dict) and message.get("source") == "orders.api"
+    )
+    detail = _parse_json_payload(routed_event["detail"])
+    assert (routed_event.get("detail-type") or routed_event.get("detailType")) == "OrderReceived"
+    assert detail["archiveKey"] == result["archive_key"]
+    assert detail["receivedBody"] == result["request_body"]
+
+
 def test_worker_lambda_invocation_with_payload_publishes_notification():
     lambda_client = _client("lambda")
     worker_fn_name = _physical_id_with_prefix("AWS::Lambda::Function", "OrdersWorkerFunction")
@@ -584,6 +713,16 @@ def test_worker_lambda_invocation_with_payload_publishes_notification():
         notification = _wait_for_raw_topic_message(notifications_queue_url, marker)
         assert notification["recordCount"] == 1
         assert notification["records"][0]["payload"]["orderId"] == marker
+
+
+def test_invoking_unknown_lambda_function_fails():
+    lambda_client = _client("lambda")
+    with pytest.raises(ClientError) as exc_info:
+        lambda_client.invoke(
+            FunctionName=f"{_physical_id_with_prefix('AWS::Lambda::Function', 'OrdersWorkerFunction')}-missing",
+            Payload=b"{}",
+        )
+    assert exc_info.value.response["Error"]["Code"] in {"ResourceNotFoundException", "ValidationException"}
 
 
 def test_sqs_message_flows_through_lambda_to_sns_when_pipe_is_stopped():
@@ -654,5 +793,11 @@ def test_pipe_starts_state_machine_execution_when_worker_mapping_is_disabled():
 
     assert execution["status"] == "SUCCEEDED"
     assert marker in execution["input"]
+    execution_input = json.loads(execution["input"])
+    assert execution_input["recordCount"] == 1
+    assert execution_input["records"][0]["payload"]["marker"] == marker
+    assert execution_input["dbConnection"]["status"] == "stubbed-connection"
+    assert execution_input["dbConnection"]["database"] == "orders"
     output = json.loads(execution["output"])
-    assert output["ingestMetadata"]["recordedAt"] == "2026-03-29T00:00:00Z"
+    assert isinstance(output["ingestMetadata"]["recordedAt"], str)
+    assert output["ingestMetadata"]["recordedAt"].endswith("Z")

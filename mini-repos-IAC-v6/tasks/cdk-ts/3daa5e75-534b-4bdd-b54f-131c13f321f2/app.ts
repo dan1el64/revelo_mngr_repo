@@ -13,19 +13,34 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as stepfunctions from 'aws-cdk-lib/aws-stepfunctions';
+import * as cr from 'aws-cdk-lib/custom-resources';
 import { Construct } from 'constructs';
 
-const awsRegion = process.env.AWS_REGION ?? 'us-east-1';
+const rawAwsRegion = process.env.AWS_REGION?.trim();
+const awsRegion = rawAwsRegion && rawAwsRegion.length > 0 ? rawAwsRegion : 'us-east-1';
+if (!/^[a-z]{2}(-gov)?-[a-z]+-\d+$/.test(awsRegion)) {
+  throw new Error(`AWS_REGION must be a valid AWS region, received "${awsRegion}"`);
+}
 process.env.AWS_REGION = awsRegion;
 process.env.AWS_DEFAULT_REGION = process.env.AWS_DEFAULT_REGION ?? awsRegion;
 process.env.CDK_DEFAULT_REGION = process.env.CDK_DEFAULT_REGION ?? awsRegion;
 
-const awsEndpoint = process.env.AWS_ENDPOINT;
+const awsEndpoint = process.env.AWS_ENDPOINT?.trim() || process.env.AWS_ENDPOINT_URL?.trim();
 if (awsEndpoint) {
+  let parsedEndpoint: URL;
+  try {
+    parsedEndpoint = new URL(awsEndpoint);
+  } catch {
+    throw new Error(`AWS_ENDPOINT must be a valid http(s) URL, received "${awsEndpoint}"`);
+  }
+  if (!['http:', 'https:'].includes(parsedEndpoint.protocol)) {
+    throw new Error(`AWS_ENDPOINT must use http or https, received "${awsEndpoint}"`);
+  }
   // CDK and the AWS SDKs look for AWS_ENDPOINT_URL; map the allowed input so
   // synth/deploy keeps the requested region but can still route to a custom endpoint.
-  process.env.AWS_ENDPOINT_URL = awsEndpoint;
+  process.env.AWS_ENDPOINT_URL = parsedEndpoint.toString();
 }
+const isLocalEndpointMode = Boolean(process.env.AWS_ENDPOINT_URL);
 
 const apiLambdaCode = `
 const { randomUUID } = require('node:crypto');
@@ -143,9 +158,82 @@ exports.handler = async (event) => {
 };
 `;
 
+const pipeManagerLambdaCode = `
+import json
+import os
+
+import boto3
+from botocore.exceptions import ClientError
+
+
+def _pipes_client():
+    kwargs = {
+        "region_name": os.environ.get("AWS_REGION", "us-east-1"),
+    }
+    endpoint = os.environ.get("AWS_ENDPOINT_URL")
+    if endpoint:
+        kwargs["endpoint_url"] = endpoint
+    return boto3.client("pipes", **kwargs)
+
+
+def _pipe_parameters(props):
+    return {
+        "Name": props["PipeName"],
+        "DesiredState": "RUNNING",
+        "RoleArn": props["RoleArn"],
+        "Source": props["SourceArn"],
+        "SourceParameters": {
+            "SqsQueueParameters": {
+                "BatchSize": 1,
+            },
+        },
+        "Enrichment": props["EnrichmentArn"],
+        "Target": props["TargetArn"],
+        "TargetParameters": {
+            "StepFunctionStateMachineParameters": {
+                "InvocationType": "FIRE_AND_FORGET",
+            },
+        },
+    }
+
+
+def _ignore_error(exc, code):
+    return exc.response.get("Error", {}).get("Code") == code
+
+
+def handler(event, _context):
+    props = event["ResourceProperties"]
+    pipe_name = props["PipeName"]
+    client = _pipes_client()
+    request_type = event["RequestType"]
+
+    if request_type == "Create":
+        try:
+            client.create_pipe(**_pipe_parameters(props))
+        except ClientError as exc:
+            if not _ignore_error(exc, "ConflictException"):
+                raise
+            client.update_pipe(Name=pipe_name, **{k: v for k, v in _pipe_parameters(props).items() if k != "Name"})
+        return {"PhysicalResourceId": pipe_name, "Data": {"PipeName": pipe_name}}
+
+    if request_type == "Update":
+        client.update_pipe(Name=pipe_name, **{k: v for k, v in _pipe_parameters(props).items() if k != "Name"})
+        return {"PhysicalResourceId": pipe_name, "Data": {"PipeName": pipe_name}}
+
+    try:
+        client.delete_pipe(Name=pipe_name)
+    except ClientError as exc:
+        if not _ignore_error(exc, "ResourceNotFoundException"):
+            raise
+    return {"PhysicalResourceId": pipe_name, "Data": {"PipeName": pipe_name}}
+`;
+
 class OrdersIngestStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    const lambdaLogGroupArnPattern = `arn:${cdk.Aws.PARTITION}:logs:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:log-group:/aws/lambda/*`;
+    const lambdaLogStreamArnPattern = `${lambdaLogGroupArnPattern}:*`;
 
     const availabilityZones = [cdk.Fn.select(0, cdk.Fn.getAzs()), cdk.Fn.select(1, cdk.Fn.getAzs())];
 
@@ -268,6 +356,12 @@ class OrdersIngestStack extends cdk.Stack {
       description: 'Attached to the orders-worker Lambda.',
     });
 
+    const secretsEndpointSecurityGroup = new ec2.SecurityGroup(this, 'OrdersSecretsEndpointSecurityGroup', {
+      vpc,
+      allowAllOutbound: false,
+      description: 'Attached to the Secrets Manager interface endpoint.',
+    });
+
     const dataPlaneSecurityGroup = new ec2.SecurityGroup(this, 'OrdersDataPlaneSecurityGroup', {
       vpc,
       description: 'Attached to the RDS instance.',
@@ -275,12 +369,13 @@ class OrdersIngestStack extends cdk.Stack {
 
     for (const sg of [apiLambdaSecurityGroup, workerLambdaSecurityGroup]) {
       sg.addEgressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(443), 'Public AWS service endpoints');
-      sg.addEgressRule(
-        ec2.Peer.securityGroupId(vpc.vpcDefaultSecurityGroup),
-        ec2.Port.tcp(443),
-        'Secrets Manager interface endpoint',
-      );
     }
+
+    workerLambdaSecurityGroup.addEgressRule(
+      ec2.Peer.securityGroupId(secretsEndpointSecurityGroup.securityGroupId),
+      ec2.Port.tcp(443),
+      'Secrets Manager interface endpoint',
+    );
 
     workerLambdaSecurityGroup.addEgressRule(
       ec2.Peer.securityGroupId(dataPlaneSecurityGroup.securityGroupId),
@@ -294,8 +389,8 @@ class OrdersIngestStack extends cdk.Stack {
       'Allow PostgreSQL only from the worker Lambda security group',
     );
 
-    new ec2.CfnSecurityGroupIngress(this, 'OrdersSecretsEndpointIngressFromWorker', {
-      groupId: vpc.vpcDefaultSecurityGroup,
+    new ec2.CfnSecurityGroupIngress(this, 'OrdersSecretsEndpointSecurityGroupIngressFromWorker', {
+      groupId: secretsEndpointSecurityGroup.securityGroupId,
       ipProtocol: 'tcp',
       fromPort: 443,
       toPort: 443,
@@ -354,7 +449,7 @@ class OrdersIngestStack extends cdk.Stack {
     const secretsManagerEndpoint = new ec2.InterfaceVpcEndpoint(this, 'OrdersSecretsManagerEndpoint', {
       vpc,
       service: ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
-      securityGroups: [ec2.SecurityGroup.fromSecurityGroupId(this, 'OrdersSecretsEndpointSecurityGroup', vpc.vpcDefaultSecurityGroup)],
+      securityGroups: [secretsEndpointSecurityGroup],
       open: false,
       subnets: {
         subnets: importedPrivateSubnets,
@@ -461,8 +556,13 @@ class OrdersIngestStack extends cdk.Stack {
     }));
 
     apiLambdaRole.addToPolicy(new iam.PolicyStatement({
+      actions: ['logs:CreateLogGroup'],
+      resources: [lambdaLogGroupArnPattern],
+    }));
+
+    apiLambdaRole.addToPolicy(new iam.PolicyStatement({
       actions: ['logs:CreateLogStream', 'logs:PutLogEvents'],
-      resources: [ordersApiLogGroup.logGroupArn, `${ordersApiLogGroup.logGroupArn}:*`],
+      resources: [lambdaLogStreamArnPattern],
     }));
 
     workerLambdaRole.addToPolicy(new iam.PolicyStatement({
@@ -481,8 +581,13 @@ class OrdersIngestStack extends cdk.Stack {
     }));
 
     workerLambdaRole.addToPolicy(new iam.PolicyStatement({
+      actions: ['logs:CreateLogGroup'],
+      resources: [lambdaLogGroupArnPattern],
+    }));
+
+    workerLambdaRole.addToPolicy(new iam.PolicyStatement({
       actions: ['logs:CreateLogStream', 'logs:PutLogEvents'],
-      resources: [ordersWorkerLogGroup.logGroupArn, `${ordersWorkerLogGroup.logGroupArn}:*`],
+      resources: [lambdaLogStreamArnPattern],
     }));
 
     const api = new apigateway.RestApi(this, 'OrdersApiGateway', {
@@ -538,9 +643,9 @@ class OrdersIngestStack extends cdk.Stack {
     });
 
     const definition = new stepfunctions.Pass(this, 'RecordTimestamp', {
-      result: stepfunctions.Result.fromObject({
-        recordedAt: '2026-03-29T00:00:00Z',
-      }),
+      parameters: {
+        'recordedAt.$': '$$.State.EnteredTime',
+      },
       resultPath: '$.ingestMetadata',
     }).next(new stepfunctions.Succeed(this, 'OrdersWorkflowSucceeded'));
 
@@ -569,22 +674,57 @@ class OrdersIngestStack extends cdk.Stack {
       resources: [stateMachine.stateMachineArn],
     }));
 
-    new pipes.CfnPipe(this, 'OrdersPipe', {
-      roleArn: pipeRole.roleArn,
-      source: ordersQueue.queueArn,
-      sourceParameters: {
-        sqsQueueParameters: {
-          batchSize: 1,
+    const pipeName = `${this.stackName}-orders-pipe`;
+
+    if (isLocalEndpointMode) {
+      const pipeManager = new lambda.Function(this, 'OrdersPipeManagerFunction', {
+        runtime: lambda.Runtime.PYTHON_3_11,
+        handler: 'index.handler',
+        code: lambda.Code.fromInline(pipeManagerLambdaCode),
+        timeout: cdk.Duration.seconds(60),
+        environment: {
+          AWS_ENDPOINT_URL: process.env.AWS_ENDPOINT_URL ?? '',
         },
-      },
-      enrichment: ordersWorker.functionArn,
-      target: stateMachine.stateMachineArn,
-      targetParameters: {
-        stepFunctionStateMachineParameters: {
-          invocationType: 'FIRE_AND_FORGET',
+      });
+
+      pipeManager.addToRolePolicy(new iam.PolicyStatement({
+        actions: ['pipes:CreatePipe', 'pipes:UpdatePipe', 'pipes:DeletePipe', 'pipes:DescribePipe'],
+        resources: ['*'],
+      }));
+
+      const pipeProvider = new cr.Provider(this, 'OrdersPipeProvider', {
+        onEventHandler: pipeManager,
+      });
+
+      new cdk.CustomResource(this, 'OrdersPipe', {
+        serviceToken: pipeProvider.serviceToken,
+        properties: {
+          PipeName: pipeName,
+          RoleArn: pipeRole.roleArn,
+          SourceArn: ordersQueue.queueArn,
+          EnrichmentArn: ordersWorker.functionArn,
+          TargetArn: stateMachine.stateMachineArn,
         },
-      },
-    });
+      });
+    } else {
+      new pipes.CfnPipe(this, 'OrdersPipe', {
+        name: pipeName,
+        roleArn: pipeRole.roleArn,
+        source: ordersQueue.queueArn,
+        sourceParameters: {
+          sqsQueueParameters: {
+            batchSize: 1,
+          },
+        },
+        enrichment: ordersWorker.functionArn,
+        target: stateMachine.stateMachineArn,
+        targetParameters: {
+          stepFunctionStateMachineParameters: {
+            invocationType: 'FIRE_AND_FORGET',
+          },
+        },
+      });
+    }
 
     new cdk.CfnOutput(this, 'OrdersApiUrl', {
       value: api.url,
@@ -600,6 +740,10 @@ class OrdersIngestStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'OrdersNotificationsTopicArn', {
       value: ordersNotificationsTopic.topicArn,
+    });
+
+    new cdk.CfnOutput(this, 'OrdersPipeName', {
+      value: pipeName,
     });
   }
 }

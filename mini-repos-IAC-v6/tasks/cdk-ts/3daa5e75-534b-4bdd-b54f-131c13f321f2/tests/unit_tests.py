@@ -33,26 +33,37 @@ def _base_app_env() -> dict[str, str]:
     return env
 
 
-def _synthesize_template(extra_env: dict[str, str] | None = None) -> tuple[dict, dict]:
+def _run_synth(extra_env: dict[str, str] | None = None, *, outdir: str) -> subprocess.CompletedProcess[str]:
     env = _base_app_env()
     if extra_env:
         env.update(extra_env)
+    env["CDK_OUTDIR"] = outdir
+    return subprocess.run(
+        ["npx", "ts-node", "app.ts"],
+        cwd=REPO_DIR,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def _synthesize_template(extra_env: dict[str, str] | None = None) -> tuple[dict, dict]:
     with tempfile.TemporaryDirectory() as tmpdir:
-        env["CDK_OUTDIR"] = tmpdir
-        result = subprocess.run(
-            ["npx", "ts-node", "app.ts"],
-            cwd=REPO_DIR,
-            env=env,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        result = _run_synth(extra_env, outdir=tmpdir)
         assert result.returncode == 0, result.stderr or result.stdout
         template_path = Path(tmpdir) / "OrdersIngestStack.template.json"
         assert template_path.exists(), "Synthesized full-mode template not found"
         manifest_path = Path(tmpdir) / "manifest.json"
         manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
         return json.loads(template_path.read_text()), manifest
+
+
+def _synthesize_failure(extra_env: dict[str, str]) -> str:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        result = _run_synth(extra_env, outdir=tmpdir)
+        assert result.returncode != 0
+        return result.stderr or result.stdout
 
 
 def _load_template() -> dict:
@@ -65,6 +76,14 @@ def _resources_by_type_in(template: dict, resource_type: str) -> dict[str, dict]
         logical_id: resource
         for logical_id, resource in template["Resources"].items()
         if resource["Type"] == resource_type
+    }
+
+
+def _resources_with_prefix_in(template: dict, prefix: str) -> dict[str, dict]:
+    return {
+        logical_id: resource
+        for logical_id, resource in template["Resources"].items()
+        if logical_id.startswith(prefix)
     }
 
 
@@ -148,7 +167,7 @@ def test_template_has_expected_resource_counts():
     assert len(_resources_by_type("AWS::Pipes::Pipe")) == 1
     assert len(_resources_by_type("AWS::StepFunctions::StateMachine")) == 1
     assert len(_resources_by_type("AWS::Logs::LogGroup")) == 2
-    assert len(_resources_by_type("AWS::EC2::SecurityGroup")) == 3
+    assert len(_resources_by_type("AWS::EC2::SecurityGroup")) == 4
     _ensure_no_retain_or_snapshot()
 
 
@@ -186,14 +205,16 @@ def test_network_topology_matches_the_prompt():
     assert endpoint_props["PrivateDnsEnabled"] is True
     assert len(endpoint_props["SubnetIds"]) == 2
     assert endpoint_props["ServiceName"] == "com.amazonaws.us-east-1.secretsmanager"
-    assert endpoint_props["SecurityGroupIds"][0]["Fn::GetAtt"][1] == "DefaultSecurityGroup"
+    endpoint_sg_id, _ = _resource_with_prefix("AWS::EC2::SecurityGroup", "OrdersSecretsEndpointSecurityGroup")
+    assert endpoint_props["SecurityGroupIds"][0]["Fn::GetAtt"][0] == endpoint_sg_id
 
 
 def test_app_maps_aws_endpoint_to_sdk_endpoint_url_and_preserves_region():
-    assert "const awsEndpoint = process.env.AWS_ENDPOINT;" in APP_SOURCE
-    assert "process.env.AWS_ENDPOINT_URL = awsEndpoint;" in APP_SOURCE
+    assert "process.env.AWS_ENDPOINT?.trim() || process.env.AWS_ENDPOINT_URL?.trim()" in APP_SOURCE
+    assert "process.env.AWS_ENDPOINT_URL = parsedEndpoint.toString();" in APP_SOURCE
     assert "process.env.AWS_REGION = awsRegion;" in APP_SOURCE
     assert "process.env.CDK_DEFAULT_REGION = process.env.CDK_DEFAULT_REGION ?? awsRegion;" in APP_SOURCE
+    assert "new URL(awsEndpoint)" in APP_SOURCE
 
     template, manifest = _synthesize_template(
         {
@@ -203,13 +224,57 @@ def test_app_maps_aws_endpoint_to_sdk_endpoint_url_and_preserves_region():
     )
     assert len(_resources_by_type_in(template, "AWS::EC2::VPCEndpoint")) == 1
     assert len(_resources_by_type_in(template, "AWS::RDS::DBInstance")) == 1
-    assert len(_resources_by_type_in(template, "AWS::Pipes::Pipe")) == 1
     assert len(_resources_by_type_in(template, "AWS::Lambda::EventSourceMapping")) == 1
-    assert len(_resources_by_type_in(template, "AWS::EC2::SecurityGroup")) == 3
+    assert len(_resources_by_type_in(template, "AWS::EC2::SecurityGroup")) == 4
+    assert len(
+        [
+            logical_id
+            for logical_id, resource in _resources_with_prefix_in(template, "OrdersPipe").items()
+            if resource["Type"] == "AWS::CloudFormation::CustomResource"
+        ]
+    ) == 1
+    assert "OrdersPipeName" in template.get("Outputs", {})
 
     artifacts = manifest.get("artifacts", {})
     stack_artifact = next(value for key, value in artifacts.items() if key == "OrdersIngestStack")
     assert stack_artifact["environment"].endswith("/us-west-2")
+
+
+def test_invalid_aws_region_fails_fast():
+    failure_output = _synthesize_failure({"AWS_REGION": "definitely-not-a-region"})
+    assert 'AWS_REGION must be a valid AWS region' in failure_output
+
+
+def test_malformed_aws_endpoint_fails_fast():
+    failure_output = _synthesize_failure(
+        {
+            "AWS_REGION": "us-east-1",
+            "AWS_ENDPOINT": "not-a-valid-url",
+        }
+    )
+    assert 'AWS_ENDPOINT must be a valid http(s) URL' in failure_output
+
+
+def test_inline_lambda_handlers_encode_the_required_cross_service_flows():
+    assert "await Promise.all([" in APP_SOURCE
+    assert "new SendMessageCommand({" in APP_SOURCE
+    assert "QueueUrl: process.env.QUEUE_URL" in APP_SOURCE
+    assert "new PutObjectCommand({" in APP_SOURCE
+    assert "Bucket: process.env.BUCKET_NAME" in APP_SOURCE
+    assert "new PutEventsCommand({" in APP_SOURCE
+    assert "EventBusName: process.env.EVENT_BUS_NAME" in APP_SOURCE
+    assert "DetailType: 'OrderReceived'" in APP_SOURCE
+    assert "statusCode: 202" in APP_SOURCE
+    assert "status: 'accepted'" in APP_SOURCE
+    assert "new GetSecretValueCommand({" in APP_SOURCE
+    assert "SecretId: process.env.DB_SECRET_ARN" in APP_SOURCE
+    assert "const records = Array.isArray(event && event.Records)" in APP_SOURCE
+    assert "new PublishCommand({" in APP_SOURCE
+    assert "Subject: 'orders-worker-processed'" in APP_SOURCE
+    assert "status: 'stubbed-connection'" in APP_SOURCE
+    assert 'client.create_pipe(**_pipe_parameters(props))' in APP_SOURCE
+    assert 'client.update_pipe(Name=pipe_name' in APP_SOURCE
+    assert 'client.delete_pipe(Name=pipe_name)' in APP_SOURCE
 
 
 def test_storage_database_and_queue_configuration_are_exact():
@@ -312,6 +377,28 @@ def test_api_lambda_and_logs_match_the_contract():
     assert "OrdersNotificationsTopicArn" in OUTPUTS
 
 
+def test_log_policies_do_not_reintroduce_lambda_to_log_group_dependency_cycles():
+    for policy_prefix in ("OrdersApiLambdaRoleDefaultPolicy", "OrdersWorkerLambdaRoleDefaultPolicy"):
+        policy_document = _policy_document(policy_prefix)
+        policy_json = json.dumps(policy_document)
+        assert "OrdersApiLogGroup" not in policy_json
+        assert "OrdersWorkerLogGroup" not in policy_json
+        assert "log-group:/aws/lambda/*" in policy_json
+        assert "log-group:/aws/lambda/*:*" in policy_json
+
+        statements = policy_document["Statement"]
+        assert any(
+            statement["Action"] == "logs:CreateLogGroup"
+            and "log-group:/aws/lambda/*" in json.dumps(statement["Resource"])
+            for statement in statements
+        )
+        assert any(
+            statement["Action"] == ["logs:CreateLogStream", "logs:PutLogEvents"]
+            and "log-group:/aws/lambda/*:*" in json.dumps(statement["Resource"])
+            for statement in statements
+        )
+
+
 def test_eventbridge_pipe_stepfunctions_and_security_boundaries_are_scoped():
     queue_logical_id, _ = _resource_with_prefix("AWS::SQS::Queue", "OrdersQueue")
     event_bus_logical_id, _ = _resource_with_prefix("AWS::Events::EventBus", "OrdersEventBus")
@@ -336,17 +423,21 @@ def test_eventbridge_pipe_stepfunctions_and_security_boundaries_are_scoped():
     assert state_machine["Properties"]["StateMachineType"] == "STANDARD"
     assert definition["StartAt"] == "RecordTimestamp"
     assert definition["States"]["RecordTimestamp"]["Type"] == "Pass"
-    assert definition["States"]["RecordTimestamp"]["Result"]["recordedAt"] == "2026-03-29T00:00:00Z"
+    assert definition["States"]["RecordTimestamp"]["Parameters"]["recordedAt.$"] == "$$.State.EnteredTime"
     assert definition["States"]["OrdersWorkflowSucceeded"]["Type"] == "Succeed"
 
     api_sg_id, api_sg = _resource_with_prefix("AWS::EC2::SecurityGroup", "OrdersApiSecurityGroup")
     worker_sg_id, worker_sg = _resource_with_prefix("AWS::EC2::SecurityGroup", "OrdersWorkerSecurityGroup")
+    endpoint_sg_id, endpoint_sg = _resource_with_prefix("AWS::EC2::SecurityGroup", "OrdersSecretsEndpointSecurityGroup")
     data_sg_id, data_sg = _resource_with_prefix("AWS::EC2::SecurityGroup", "OrdersDataPlaneSecurityGroup")
 
     assert "SecurityGroupIngress" not in api_sg["Properties"]
     assert "SecurityGroupIngress" not in worker_sg["Properties"]
-    assert len(api_sg["Properties"]["SecurityGroupEgress"]) == 2
+    assert "SecurityGroupIngress" not in endpoint_sg["Properties"]
+    assert len(api_sg["Properties"]["SecurityGroupEgress"]) == 1
     assert len(worker_sg["Properties"]["SecurityGroupEgress"]) == 3
+    assert not any(endpoint_sg_id in json.dumps(rule) for rule in api_sg["Properties"]["SecurityGroupEgress"])
+    assert any(endpoint_sg_id in json.dumps(rule) for rule in worker_sg["Properties"]["SecurityGroupEgress"])
 
     data_ingress = data_sg["Properties"]["SecurityGroupIngress"]
     assert len(data_ingress) == 1
@@ -354,10 +445,13 @@ def test_eventbridge_pipe_stepfunctions_and_security_boundaries_are_scoped():
     assert data_ingress[0]["ToPort"] == 5432
     assert data_ingress[0]["SourceSecurityGroupId"]["Fn::GetAtt"][0] == worker_sg_id
 
-    _, endpoint_ingress = _resource_with_prefix("AWS::EC2::SecurityGroupIngress", "OrdersSecretsEndpointIngressFromWorker")
+    _, endpoint_ingress = _resource_with_prefix(
+        "AWS::EC2::SecurityGroupIngress", "OrdersSecretsEndpointSecurityGroupIngressFromWorker"
+    )
     endpoint_ingress_props = endpoint_ingress["Properties"]
     assert endpoint_ingress_props["FromPort"] == 443
     assert endpoint_ingress_props["ToPort"] == 443
+    assert endpoint_ingress_props["GroupId"]["Fn::GetAtt"][0] == endpoint_sg_id
     assert endpoint_ingress_props["SourceSecurityGroupId"]["Fn::GetAtt"][0] == worker_sg_id
 
     api_policy = _policy_document("OrdersApiLambdaRoleDefaultPolicy")
@@ -375,6 +469,16 @@ def test_eventbridge_pipe_stepfunctions_and_security_boundaries_are_scoped():
         for statement in api_statements
     )
     assert sum(1 for statement in api_statements if statement["Resource"] == "*") == 1
+    assert any(
+        statement["Action"] == "logs:CreateLogGroup"
+        and "log-group:/aws/lambda/*" in json.dumps(statement["Resource"])
+        for statement in api_statements
+    )
+    assert any(
+        statement["Action"] == ["logs:CreateLogStream", "logs:PutLogEvents"]
+        and "log-group:/aws/lambda/*:*" in json.dumps(statement["Resource"])
+        for statement in api_statements
+    )
 
     worker_policy = _policy_document("OrdersWorkerLambdaRoleDefaultPolicy")
     worker_statements = worker_policy["Statement"]
@@ -387,6 +491,16 @@ def test_eventbridge_pipe_stepfunctions_and_security_boundaries_are_scoped():
         for statement in worker_statements
     )
     assert sum(1 for statement in worker_statements if statement["Resource"] == "*") == 1
+    assert any(
+        statement["Action"] == "logs:CreateLogGroup"
+        and "log-group:/aws/lambda/*" in json.dumps(statement["Resource"])
+        for statement in worker_statements
+    )
+    assert any(
+        statement["Action"] == ["logs:CreateLogStream", "logs:PutLogEvents"]
+        and "log-group:/aws/lambda/*:*" in json.dumps(statement["Resource"])
+        for statement in worker_statements
+    )
 
     pipe_policy = _policy_document("OrdersPipeRoleDefaultPolicy")
     pipe_actions = {
@@ -405,11 +519,17 @@ def test_global_iam_guardrails_and_generated_names_are_enforced():
         assert all("AdministratorAccess" not in json.dumps(arn) for arn in managed_policy_arns)
 
     wildcard_action_violations: list[tuple[object, object]] = []
+    wildcard_resource_statements: list[dict] = []
     iam_namespace_violations: list[str] = []
     for statement in _all_policy_statements():
         actions = statement["Action"]
         if not isinstance(actions, list):
             actions = [actions]
+        resources = statement["Resource"]
+        if not isinstance(resources, list):
+            resources = [resources]
+        if "*" in resources:
+            wildcard_resource_statements.append(statement)
         for action in actions:
             if action == "*" or action.endswith(":*"):
                 wildcard_action_violations.append((action, statement["Resource"]))
@@ -418,6 +538,22 @@ def test_global_iam_guardrails_and_generated_names_are_enforced():
 
     assert wildcard_action_violations == []
     assert iam_namespace_violations == []
+    assert len(wildcard_resource_statements) == 2
+    assert all(
+        set(statement["Action"])
+        == {
+            "ec2:CreateNetworkInterface",
+            "ec2:DescribeNetworkInterfaces",
+            "ec2:DeleteNetworkInterface",
+            "ec2:AssignPrivateIpAddresses",
+            "ec2:UnassignPrivateIpAddresses",
+            "ec2:DescribeSubnets",
+            "ec2:DescribeSecurityGroups",
+            "ec2:DescribeVpcs",
+        }
+        for statement in wildcard_resource_statements
+    )
+    assert "wildcard statement isolated to the minimum" in APP_SOURCE
 
     physical_name_fields = {
         ("AWS::S3::Bucket", "BucketName"),
@@ -445,6 +581,54 @@ def test_global_iam_guardrails_and_generated_names_are_enforced():
         APP_SOURCE,
     )
     assert hardcoded_name_props == []
+
+
+def test_local_mode_pipe_manager_resources_and_policy_are_validated():
+    template, _ = _synthesize_template(
+        {
+            "AWS_REGION": "us-west-2",
+            "AWS_ENDPOINT_URL": "https://aws-endpoint.internal",
+        }
+    )
+
+    _, manager_lambda = next(
+        (
+            logical_id,
+            resource,
+        )
+        for logical_id, resource in _resources_by_type_in(template, "AWS::Lambda::Function").items()
+        if logical_id.startswith("OrdersPipeManagerFunction")
+    )
+    manager_props = manager_lambda["Properties"]
+    assert manager_props["Runtime"] == "python3.11"
+    assert manager_props["Timeout"] == 60
+    assert manager_props["Environment"]["Variables"]["AWS_ENDPOINT_URL"] == "https://aws-endpoint.internal/"
+    assert len(_resources_by_type_in(template, "AWS::Pipes::Pipe")) == 0
+    assert len(
+        [
+            logical_id
+            for logical_id, resource in _resources_with_prefix_in(template, "OrdersPipe").items()
+            if resource["Type"] == "AWS::CloudFormation::CustomResource"
+        ]
+    ) == 1
+
+    policies = _resources_by_type_in(template, "AWS::IAM::Policy")
+    manager_policy = next(
+        resource["Properties"]["PolicyDocument"]
+        for resource in policies.values()
+        if "pipes:CreatePipe" in json.dumps(resource["Properties"]["PolicyDocument"])
+    )
+    manager_statements = manager_policy["Statement"]
+    assert any(
+        statement["Action"] == [
+            "pipes:CreatePipe",
+            "pipes:UpdatePipe",
+            "pipes:DeletePipe",
+            "pipes:DescribePipe",
+        ]
+        and statement["Resource"] == "*"
+        for statement in manager_statements
+    )
 
 
 def test_traffic_flow_wiring_matches_the_prompt_overview():
