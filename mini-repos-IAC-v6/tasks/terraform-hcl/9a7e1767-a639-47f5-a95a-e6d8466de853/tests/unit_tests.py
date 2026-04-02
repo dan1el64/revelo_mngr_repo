@@ -27,11 +27,29 @@ def planned_resources(module):
     return resources
 
 
+def configured_resources(module):
+    resources = list(module.get("resources", []))
+    for module_call in module.get("module_calls", {}).values():
+        child_module = module_call.get("module")
+        if child_module:
+            resources.extend(configured_resources(child_module))
+    return resources
+
+
 def resources_by_type(plan, resource_type):
     root_module = plan["planned_values"]["root_module"]
     return [
         resource
         for resource in planned_resources(root_module)
+        if resource["type"] == resource_type and resource.get("mode", "managed") == "managed"
+    ]
+
+
+def configured_resources_by_type(plan, resource_type):
+    root_module = plan["configuration"]["root_module"]
+    return [
+        resource
+        for resource in configured_resources(root_module)
         if resource["type"] == resource_type and resource.get("mode", "managed") == "managed"
     ]
 
@@ -56,6 +74,11 @@ def is_allow_all_egress(rule):
         and rule.get("from_port") == 0
         and rule.get("to_port") == 0
     )
+
+
+def expression_references(resource, expression_name):
+    expression = resource.get("expressions", {}).get(expression_name, {})
+    return expression.get("references", [])
 
 
 def has_endpoint_gate(main_tf, resource_type, resource_name):
@@ -122,12 +145,12 @@ def test_network_topology_matches_contract():
     assert "route_table_id         = aws_route_table.public.id" in main_tf
 
     private_route_table = resource_values(plan, "aws_route_table", "private")
-    default_routes = [
-        planned_route["values"]
-        for planned_route in resources_by_type(plan, "aws_route")
-        if planned_route["values"]["destination_cidr_block"] == "0.0.0.0/0"
+    private_table_routes = [
+        configured_route
+        for configured_route in configured_resources_by_type(plan, "aws_route")
+        if "aws_route_table.private.id" in expression_references(configured_route, "route_table_id")
     ]
-    assert len(default_routes) == 1
+    assert private_table_routes == []
     assert "route_table_id         = aws_route_table.private.id" not in main_tf
     assert private_route_table.get("route") in (None, [])
 

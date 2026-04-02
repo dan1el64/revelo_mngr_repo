@@ -14,11 +14,11 @@ LocalStack is healthy.
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  Step: Setup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
-Starting worker container: harness-worker-63367
-c97a7a182cbb3c36a6a74a867cd37a83c442d3a0ee99e0d93b27a2c165e28b20
+Starting worker container: harness-worker-66364
+311c41c286e3f7fae0c3beec6256f3235ad51a9b15afd53e6bba2a5ae81a507d
 Installing dependencies (npm install)...
 
-up to date, audited 491 packages in 11s
+up to date, audited 491 packages in 10s
 
 39 packages are looking for funding
   run `npm fund` for details
@@ -40,7 +40,7 @@ npm notice New major version of npm available! 10.8.2 -> 11.12.1
 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
 npm notice To update run: npm install -g npm@11.12.1
 npm notice
-Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/f9d911d8-d6fd-477a-9e83-ce863cfbbe27
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/a4468447-6dde-48e6-869c-da218edd686b
 [32m✅ Step passed: Setup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -60,27 +60,29 @@ platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
 cachedir: .pytest_cache
 rootdir: /work
 configfile: pytest.ini
-collecting ... collected 17 items
+collecting ... collected 19 items
 
 tests/unit_tests.py::test_delivery_is_single_source_file_and_synthesizes_from_app_ts PASSED [  5%]
-tests/unit_tests.py::test_template_has_expected_resource_counts PASSED   [ 11%]
-tests/unit_tests.py::test_network_topology_matches_the_prompt PASSED     [ 17%]
-tests/unit_tests.py::test_app_maps_aws_endpoint_to_sdk_endpoint_url_and_preserves_region PASSED [ 23%]
-tests/unit_tests.py::test_invalid_aws_region_fails_fast PASSED           [ 29%]
-tests/unit_tests.py::test_blank_aws_region_defaults_to_us_east_1 PASSED  [ 35%]
-tests/unit_tests.py::test_malformed_aws_endpoint_fails_fast PASSED       [ 41%]
-tests/unit_tests.py::test_inline_api_lambda_executes_the_required_cross_service_flow PASSED [ 47%]
-tests/unit_tests.py::test_inline_worker_lambda_fetches_secret_parses_records_and_publishes_notification PASSED [ 52%]
-tests/unit_tests.py::test_inline_pipe_manager_handler_source_covers_create_update_and_delete PASSED [ 58%]
-tests/unit_tests.py::test_storage_database_and_queue_configuration_are_exact PASSED [ 64%]
-tests/unit_tests.py::test_api_lambda_and_logs_match_the_contract PASSED  [ 70%]
-tests/unit_tests.py::test_log_policies_do_not_reintroduce_lambda_to_log_group_dependency_cycles PASSED [ 76%]
-tests/unit_tests.py::test_eventbridge_pipe_stepfunctions_and_security_boundaries_are_scoped PASSED [ 82%]
-tests/unit_tests.py::test_global_iam_guardrails_and_generated_names_are_enforced PASSED [ 88%]
+tests/unit_tests.py::test_template_has_expected_resource_counts PASSED   [ 10%]
+tests/unit_tests.py::test_network_topology_matches_the_prompt PASSED     [ 15%]
+tests/unit_tests.py::test_app_maps_aws_endpoint_to_sdk_endpoint_url_and_preserves_region PASSED [ 21%]
+tests/unit_tests.py::test_name_prefix_scopes_the_deployed_stack_name_without_changing_the_stack_artifact_id PASSED [ 26%]
+tests/unit_tests.py::test_invalid_name_prefix_fails_fast PASSED          [ 31%]
+tests/unit_tests.py::test_invalid_aws_region_fails_fast PASSED           [ 36%]
+tests/unit_tests.py::test_blank_aws_region_defaults_to_us_east_1 PASSED  [ 42%]
+tests/unit_tests.py::test_malformed_aws_endpoint_fails_fast PASSED       [ 47%]
+tests/unit_tests.py::test_inline_api_lambda_executes_the_required_cross_service_flow PASSED [ 52%]
+tests/unit_tests.py::test_inline_worker_lambda_fetches_secret_parses_records_and_publishes_notification PASSED [ 57%]
+tests/unit_tests.py::test_inline_pipe_manager_handler_source_covers_create_update_and_delete PASSED [ 63%]
+tests/unit_tests.py::test_storage_database_and_queue_configuration_are_exact PASSED [ 68%]
+tests/unit_tests.py::test_api_lambda_and_logs_match_the_contract PASSED  [ 73%]
+tests/unit_tests.py::test_log_policies_do_not_reintroduce_lambda_to_log_group_dependency_cycles PASSED [ 78%]
+tests/unit_tests.py::test_eventbridge_pipe_stepfunctions_and_security_boundaries_are_scoped PASSED [ 84%]
+tests/unit_tests.py::test_global_iam_guardrails_and_generated_names_are_enforced PASSED [ 89%]
 tests/unit_tests.py::test_local_mode_pipe_manager_resources_and_policy_are_validated PASSED [ 94%]
 tests/unit_tests.py::test_traffic_flow_wiring_matches_the_prompt_overview PASSED [100%]
 
-======================== 17 passed in 91.57s (0:01:31) =========================
+======================== 19 passed in 113.51s (0:01:53) ========================
 [32m✅ Step passed: Unit tests (pytest)[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -89,18 +91,18 @@ tests/unit_tests.py::test_traffic_flow_wiring_matches_the_prompt_overview PASSED
 Bootstrapping (if needed)...
 Running cdklocal deploy...
 
-✨  Synthesis time: 12.69s
+✨  Synthesis time: 12.94s
 
-OrdersIngestStack: start: Building bdc104ed9cab1b5b6421713c8155f0b753380595356f710400609664d3635eca
-OrdersIngestStack: success: Built bdc104ed9cab1b5b6421713c8155f0b753380595356f710400609664d3635eca
-OrdersIngestStack: start: Building a3518cae189ee34f99432c1108355486cfe11fd010670ae9d272b1ec2859e540
-OrdersIngestStack: success: Built a3518cae189ee34f99432c1108355486cfe11fd010670ae9d272b1ec2859e540
-OrdersIngestStack: start: Publishing bdc104ed9cab1b5b6421713c8155f0b753380595356f710400609664d3635eca:current_account-us-east-1
-OrdersIngestStack: start: Publishing a3518cae189ee34f99432c1108355486cfe11fd010670ae9d272b1ec2859e540:current_account-us-east-1
-OrdersIngestStack: success: Published a3518cae189ee34f99432c1108355486cfe11fd010670ae9d272b1ec2859e540:current_account-us-east-1
-OrdersIngestStack: success: Published bdc104ed9cab1b5b6421713c8155f0b753380595356f710400609664d3635eca:current_account-us-east-1
-OrdersIngestStack: deploying... [1/1]
-OrdersIngestStack: creating CloudFormation changeset...
+cdk-71eb17dec74c11af-OrdersIngestStack: start: Building bdc104ed9cab1b5b6421713c8155f0b753380595356f710400609664d3635eca
+cdk-71eb17dec74c11af-OrdersIngestStack: success: Built bdc104ed9cab1b5b6421713c8155f0b753380595356f710400609664d3635eca
+cdk-71eb17dec74c11af-OrdersIngestStack: start: Building a099d210ffb29d16e888c4115bcd403378b28337682399615224c679c7443fd2
+cdk-71eb17dec74c11af-OrdersIngestStack: success: Built a099d210ffb29d16e888c4115bcd403378b28337682399615224c679c7443fd2
+cdk-71eb17dec74c11af-OrdersIngestStack: start: Publishing bdc104ed9cab1b5b6421713c8155f0b753380595356f710400609664d3635eca:current_account-us-east-1
+cdk-71eb17dec74c11af-OrdersIngestStack: start: Publishing a099d210ffb29d16e888c4115bcd403378b28337682399615224c679c7443fd2:current_account-us-east-1
+cdk-71eb17dec74c11af-OrdersIngestStack: success: Published a099d210ffb29d16e888c4115bcd403378b28337682399615224c679c7443fd2:current_account-us-east-1
+cdk-71eb17dec74c11af-OrdersIngestStack: success: Published bdc104ed9cab1b5b6421713c8155f0b753380595356f710400609664d3635eca:current_account-us-east-1
+OrdersIngestStack (cdk-71eb17dec74c11af-OrdersIngestStack): deploying... [1/1]
+cdk-71eb17dec74c11af-OrdersIngestStack: creating CloudFormation changeset...
 [32m✅ Step passed: Deploy (LocalStack)[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -113,9 +115,9 @@ Running pytest integration tests...
 [34m  Step: Destroy / Cleanup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 Running cdklocal destroy...
-Cleaning up worker container: harness-worker-63367
+Cleaning up worker container: harness-worker-66364
 [32m✅ Step passed: Destroy / Cleanup[0m
-Cleaning up worker container: harness-worker-63367
+Cleaning up worker container: harness-worker-66364
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  HARNESS SUMMARY[0m
@@ -132,9 +134,11 @@ Cleaning up worker container: harness-worker-63367
 Log saved to: /Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v6/runs/tasks_cdk-ts_3daa5e75-534b-4bdd-b54f-131c13f321f2.log
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 
-Removing worker container: harness-worker-63367
+Removing worker container: harness-worker-66364
 
 Stopping LocalStack...
- Container localstack-harness  Stopping
- Container localstack-harness  Error while Stopping
+unknown shorthand flag: 'f' in -f
 
+Usage:  docker [OPTIONS] COMMAND [ARG...]
+
+Run 'docker --help' for more information

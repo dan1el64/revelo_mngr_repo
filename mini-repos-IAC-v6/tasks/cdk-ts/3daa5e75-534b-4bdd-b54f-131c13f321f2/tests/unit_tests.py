@@ -428,6 +428,19 @@ def test_app_maps_aws_endpoint_to_sdk_endpoint_url_and_preserves_region():
     assert stack_artifact["environment"].endswith("/us-west-2")
 
 
+def test_name_prefix_scopes_the_deployed_stack_name_without_changing_the_stack_artifact_id():
+    template, manifest = _synthesize_template({"NAME_PREFIX": "testrun"})
+    assert template["Outputs"]["OrdersStackName"]["Value"] == "testrun-OrdersIngestStack"
+
+    artifacts = manifest.get("artifacts", {})
+    assert "OrdersIngestStack" in artifacts
+
+
+def test_invalid_name_prefix_fails_fast():
+    failure_output = _synthesize_failure({"NAME_PREFIX": "9invalid-prefix"})
+    assert 'NAME_PREFIX must start with a letter and contain only letters, numbers, and hyphens' in failure_output
+
+
 def test_invalid_aws_region_fails_fast():
     failure_output = _synthesize_failure({"AWS_REGION": "definitely-not-a-region"})
     assert 'AWS_REGION must be a valid AWS region' in failure_output
@@ -655,6 +668,7 @@ def test_api_lambda_and_logs_match_the_contract():
     assert "OrdersArchiveBucketName" in OUTPUTS
     assert "OrdersQueueUrl" in OUTPUTS
     assert "OrdersNotificationsTopicArn" in OUTPUTS
+    assert "OrdersStackName" in OUTPUTS
 
 
 def test_log_policies_do_not_reintroduce_lambda_to_log_group_dependency_cycles():

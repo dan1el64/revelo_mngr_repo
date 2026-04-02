@@ -42,6 +42,18 @@ if (awsEndpoint) {
 }
 const isLocalEndpointMode = Boolean(process.env.AWS_ENDPOINT_URL);
 
+const rawNamePrefix = process.env.NAME_PREFIX?.trim();
+const namePrefix = rawNamePrefix && rawNamePrefix.length > 0 ? rawNamePrefix : undefined;
+if (namePrefix && !/^[A-Za-z][A-Za-z0-9-]*$/.test(namePrefix)) {
+  throw new Error(`NAME_PREFIX must start with a letter and contain only letters, numbers, and hyphens, received "${namePrefix}"`);
+}
+
+const stackBaseName = 'OrdersIngestStack';
+const deployedStackName = namePrefix ? `${namePrefix}-${stackBaseName}` : stackBaseName;
+if (deployedStackName.length > 128) {
+  throw new Error(`Resolved stack name "${deployedStackName}" exceeds the 128 character CloudFormation limit`);
+}
+
 const apiLambdaCode = `
 const { randomUUID } = require('node:crypto');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
@@ -775,6 +787,10 @@ class OrdersIngestStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'OrdersPipeName', {
       value: pipeName,
     });
+
+    new cdk.CfnOutput(this, 'OrdersStackName', {
+      value: this.stackName,
+    });
   }
 }
 
@@ -786,6 +802,7 @@ new OrdersIngestStack(app, 'OrdersIngestStack', {
   env: {
     region: awsRegion,
   },
+  stackName: deployedStackName,
 });
 
 app.synth();

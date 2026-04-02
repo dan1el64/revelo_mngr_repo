@@ -14,9 +14,9 @@ LocalStack is healthy.
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  Step: Setup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
-Starting worker container: harness-worker-11806
-78287f53be943f6549b24e3d71c222ab6c2fffdbe9994ec0117a4dc9e8739539
-Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/95ff6433-5ed5-4f6d-9d8a-9ae7a991541c
+Starting worker container: harness-worker-61073
+7e28cc8a1b6399dfc460a09449875413af2478284798ecb671ded1e8ecf4c7c8
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/2b928d77-d0d6-4b90-8ac7-06810b4f1cad
 [32m✅ Step passed: Setup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -27,15 +27,15 @@ Running terraform fmt -check...
 Running terraform init...
 [0m[1mInitializing provider plugins...[0m
 - terraform.io/builtin/terraform is built in to Terraform
+- Finding hashicorp/archive versions matching "~> 2.5"...
 - Finding hashicorp/aws versions matching "~> 5.0"...
 - Finding hashicorp/random versions matching "~> 3.6"...
-- Finding hashicorp/archive versions matching "~> 2.5"...
+- Installing hashicorp/archive v2.7.1...
+- Installed hashicorp/archive v2.7.1 (signed by HashiCorp)
 - Installing hashicorp/aws v5.100.0...
 - Installed hashicorp/aws v5.100.0 (signed by HashiCorp)
 - Installing hashicorp/random v3.8.1...
 - Installed hashicorp/random v3.8.1 (signed by HashiCorp)
-- Installing hashicorp/archive v2.7.1...
-- Installed hashicorp/archive v2.7.1 (signed by HashiCorp)
 Terraform has created a lock file [1m.terraform.lock.hcl[0m to record the provider
 selections it made above. Include this file in your version control repository
 so that Terraform can guarantee to make the same selections by default when
@@ -55,7 +55,7 @@ Running terraform validate...
 [0m
 Running terraform plan (no apply)...
 [0m[1mdata.archive_file.lambda: Reading...[0m[0m
-[0m[1mdata.archive_file.lambda: Read complete after 0s [id=82afa8ad94b20bc11901eaa5717dc4d1e9178a2a][0m
+[0m[1mdata.archive_file.lambda: Read complete after 1s [id=82afa8ad94b20bc11901eaa5717dc4d1e9178a2a][0m
 
 Terraform used the selected providers to generate the following execution
 plan. Resource actions are indicated with the following symbols:
@@ -922,7 +922,7 @@ tests/unit_tests.py::test_iam_configuration_matches_contract PASSED      [ 71%]
 tests/unit_tests.py::test_storage_and_logging_resources_match_contract PASSED [ 85%]
 tests/unit_tests.py::test_disallowed_protection_settings_are_not_configured PASSED [100%]
 
-============================== 7 passed in 0.08s ===============================
+============================== 7 passed in 0.09s ===============================
 [32m✅ Step passed: Unit tests (pytest)[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -1774,75 +1774,75 @@ Terraform will perform the following actions:
 [0m[1mrandom_password.db: Creating...[0m[0m
 [0m[1mrandom_password.db: Creation complete after 0s [id=none][0m
 [0m[1maws_vpc.payments: Creating...[0m[0m
-[0m[1mterraform_data.preclean_named_resources: Creation complete after 6s [id=0d67bed3-3abb-0dec-740f-639a05d45212][0m
+[0m[1mterraform_data.preclean_named_resources: Creation complete after 5s [id=604826da-1919-c86a-51ef-44f81e00fdc0][0m
+[0m[1maws_cloudwatch_log_group.step_functions: Creating...[0m[0m
+[0m[1maws_cloudwatch_log_group.lambda: Creating...[0m[0m
+[0m[1maws_secretsmanager_secret.db: Creating...[0m[0m
 [0m[1maws_api_gateway_rest_api.ingest: Creating...[0m[0m
 [0m[1maws_s3_bucket.archive: Creating...[0m[0m
-[0m[1maws_cloudwatch_log_group.step_functions: Creating...[0m[0m
-[0m[1maws_secretsmanager_secret.db: Creating...[0m[0m
-[0m[1maws_iam_role.lambda: Creating...[0m[0m
-[0m[1maws_iam_role.pipes: Creating...[0m[0m
-[0m[1maws_cloudwatch_log_group.lambda: Creating...[0m[0m
 [0m[1maws_sqs_queue.ingest: Creating...[0m[0m
 [0m[1maws_iam_role.step_functions: Creating...[0m[0m
-[0m[1maws_secretsmanager_secret.db: Creation complete after 0s [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-HqzeuI][0m
+[0m[1maws_iam_role.lambda: Creating...[0m[0m
+[0m[1maws_iam_role.pipes: Creating...[0m[0m
+[0m[1maws_secretsmanager_secret.db: Creation complete after 0s [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-LbePVe][0m
+[0m[1maws_cloudwatch_log_group.lambda: Creation complete after 0s [id=/aws/lambda/ingest-function][0m
+[0m[1maws_cloudwatch_log_group.step_functions: Creation complete after 0s [id=/aws/vendedlogs/states/ingest-state-machine][0m
 [0m[1maws_secretsmanager_secret_version.db: Creating...[0m[0m
 [0m[1maws_iam_role.pipes: Creation complete after 0s [id=eventbridge-pipes-role][0m
-[0m[1maws_iam_role.step_functions: Creation complete after 0s [id=step-functions-role][0m
 [0m[1maws_iam_role.lambda: Creation complete after 0s [id=lambda-execution-role][0m
-[0m[1maws_secretsmanager_secret_version.db: Creation complete after 0s [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-HqzeuI|terraform-20260401160209683600000002][0m
-[0m[1maws_api_gateway_rest_api.ingest: Creation complete after 0s [id=rmizf185pu][0m
-[0m[1maws_cloudwatch_log_group.lambda: Creation complete after 0s [id=/aws/lambda/ingest-function][0m
+[0m[1maws_iam_role.step_functions: Creation complete after 0s [id=step-functions-role][0m
+[0m[1maws_api_gateway_rest_api.ingest: Creation complete after 0s [id=1go505g4zx][0m
+[0m[1maws_secretsmanager_secret_version.db: Creation complete after 0s [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-LbePVe|terraform-20260402161849858200000002][0m
 [0m[1maws_api_gateway_resource.ingest: Creating...[0m[0m
-[0m[1maws_cloudwatch_log_group.step_functions: Creation complete after 0s [id=/aws/vendedlogs/states/ingest-state-machine][0m
-[0m[1maws_api_gateway_resource.ingest: Creation complete after 0s [id=n4ceaoc6cu][0m
+[0m[1maws_api_gateway_resource.ingest: Creation complete after 0s [id=ps0nok8v3o][0m
 [0m[1maws_api_gateway_method.post: Creating...[0m[0m
-[0m[1maws_api_gateway_method.post: Creation complete after 0s [id=agm-rmizf185pu-n4ceaoc6cu-POST][0m
+[0m[1maws_api_gateway_method.post: Creation complete after 0s [id=agm-1go505g4zx-ps0nok8v3o-POST][0m
 [0m[1maws_s3_bucket.archive: Creation complete after 0s [id=payments-ingest-bucket][0m
 [0m[1maws_s3_bucket_public_access_block.archive: Creating...[0m[0m
-[0m[1maws_s3_bucket_ownership_controls.archive: Creating...[0m[0m
 [0m[1maws_s3_bucket_policy.archive: Creating...[0m[0m
+[0m[1maws_s3_bucket_ownership_controls.archive: Creating...[0m[0m
 [0m[1maws_s3_bucket_server_side_encryption_configuration.archive: Creating...[0m[0m
-[0m[1maws_s3_bucket_policy.archive: Creation complete after 0s [id=payments-ingest-bucket][0m
-[0m[1maws_s3_bucket_ownership_controls.archive: Creation complete after 0s [id=payments-ingest-bucket][0m
 [0m[1maws_s3_bucket_public_access_block.archive: Creation complete after 0s [id=payments-ingest-bucket][0m
+[0m[1maws_s3_bucket_policy.archive: Creation complete after 0s [id=payments-ingest-bucket][0m
 [0m[1maws_s3_bucket_server_side_encryption_configuration.archive: Creation complete after 0s [id=payments-ingest-bucket][0m
+[0m[1maws_s3_bucket_ownership_controls.archive: Creation complete after 0s [id=payments-ingest-bucket][0m
 [0m[1maws_vpc.payments: Still creating... [10s elapsed][0m[0m
-[0m[1maws_vpc.payments: Creation complete after 11s [id=vpc-2a1e99786e12e7625][0m
-[0m[1maws_route_table.public: Creating...[0m[0m
-[0m[1maws_subnet.public_b: Creating...[0m[0m
+[0m[1maws_vpc.payments: Creation complete after 11s [id=vpc-184b5e886bb48dc69][0m
 [0m[1maws_internet_gateway.payments: Creating...[0m[0m
-[0m[1maws_subnet.private_b: Creating...[0m[0m
-[0m[1maws_route_table.private: Creating...[0m[0m
-[0m[1maws_subnet.public_a: Creating...[0m[0m
+[0m[1maws_subnet.public_b: Creating...[0m[0m
 [0m[1maws_subnet.private_a: Creating...[0m[0m
+[0m[1maws_subnet.private_b: Creating...[0m[0m
+[0m[1maws_subnet.public_a: Creating...[0m[0m
+[0m[1maws_route_table.public: Creating...[0m[0m
+[0m[1maws_route_table.private: Creating...[0m[0m
 [0m[1maws_security_group.worker: Creating...[0m[0m
 [0m[1maws_security_group.api: Creating...[0m[0m
-[0m[1maws_subnet.private_b: Creation complete after 0s [id=subnet-2b177313ca8d97bbf][0m
-[0m[1maws_subnet.private_a: Creation complete after 0s [id=subnet-4519de44d93f57770][0m
-[0m[1maws_internet_gateway.payments: Creation complete after 0s [id=igw-e01ecc7c6a8f70ea7][0m
-[0m[1maws_route_table.public: Creation complete after 0s [id=rtb-ecfb3530cb3d11ed3][0m
-[0m[1maws_route_table.private: Creation complete after 0s [id=rtb-00b135fd62a7f0054][0m
-[0m[1maws_route.public_default: Creating...[0m[0m
+[0m[1maws_subnet.private_a: Creation complete after 0s [id=subnet-f6fee7b62c24147d3][0m
+[0m[1maws_subnet.private_b: Creation complete after 0s [id=subnet-bbb4955fe77f54bff][0m
+[0m[1maws_internet_gateway.payments: Creation complete after 0s [id=igw-0aa77ba1b72df959f][0m
+[0m[1maws_route_table.public: Creation complete after 0s [id=rtb-7226efdcb0e3e6d60][0m
+[0m[1maws_route_table.private: Creation complete after 0s [id=rtb-a4df3346a5fe968cc][0m
 [0m[1maws_route_table_association.private_a: Creating...[0m[0m
+[0m[1maws_route.public_default: Creating...[0m[0m
 [0m[1maws_route_table_association.private_b: Creating...[0m[0m
 [0m[1maws_vpc_endpoint.s3: Creating...[0m[0m
-[0m[1maws_route_table_association.private_a: Creation complete after 0s [id=rtbassoc-1b0bb694d2d6822e4][0m
-[0m[1maws_route_table_association.private_b: Creation complete after 0s [id=rtbassoc-a226cc169f92c186e][0m
-[0m[1maws_security_group.worker: Creation complete after 0s [id=sg-97bf3c95012939fd7][0m
-[0m[1maws_security_group.api: Creation complete after 0s [id=sg-f03af15615f74d13e][0m
+[0m[1maws_route_table_association.private_b: Creation complete after 1s [id=rtbassoc-cbfca06b88b56b5f0][0m
+[0m[1maws_route_table_association.private_a: Creation complete after 1s [id=rtbassoc-f2609c769bea556a5][0m
+[0m[1maws_security_group.api: Creation complete after 1s [id=sg-02a096a7078695916][0m
+[0m[1maws_security_group.worker: Creation complete after 1s [id=sg-3d02f80403718e2bd][0m
 [0m[1maws_security_group.database: Creating...[0m[0m
-[0m[1maws_route.public_default: Creation complete after 0s [id=r-rtb-ecfb3530cb3d11ed31080289494][0m
-[0m[1maws_security_group.database: Creation complete after 0s [id=sg-f43d9550c5b2deb18][0m
+[0m[1maws_route.public_default: Creation complete after 1s [id=r-rtb-7226efdcb0e3e6d601080289494][0m
+[0m[1maws_security_group.database: Creation complete after 0s [id=sg-69ea4fa93ef26e629][0m
 [0m[1maws_sqs_queue.ingest: Still creating... [10s elapsed][0m[0m
-[0m[1maws_vpc_endpoint.s3: Creation complete after 5s [id=vpce-8955982e58864c00c][0m
+[0m[1maws_vpc_endpoint.s3: Creation complete after 6s [id=vpce-c22d94e754f8f657a][0m
 [0m[1maws_subnet.public_a: Still creating... [10s elapsed][0m[0m
 [0m[1maws_subnet.public_b: Still creating... [10s elapsed][0m[0m
-[0m[1maws_subnet.public_b: Creation complete after 10s [id=subnet-54d1980528c2b6553][0m
-[0m[1maws_subnet.public_a: Creation complete after 10s [id=subnet-fb82613e44683a9dc][0m
+[0m[1maws_subnet.public_a: Creation complete after 10s [id=subnet-a561ad295def9fad5][0m
 [0m[1maws_route_table_association.public_a: Creating...[0m[0m
+[0m[1maws_subnet.public_b: Creation complete after 10s [id=subnet-aec64f41aa6270620][0m
 [0m[1maws_route_table_association.public_b: Creating...[0m[0m
-[0m[1maws_route_table_association.public_a: Creation complete after 0s [id=rtbassoc-e4eba0fe231a688cb][0m
-[0m[1maws_route_table_association.public_b: Creation complete after 0s [id=rtbassoc-060b6cbfca10df59f][0m
+[0m[1maws_route_table_association.public_a: Creation complete after 0s [id=rtbassoc-cba6a3fed5c40560a][0m
+[0m[1maws_route_table_association.public_b: Creation complete after 0s [id=rtbassoc-58d5d9f17ef088280][0m
 [0m[1maws_sqs_queue.ingest: Still creating... [20s elapsed][0m[0m
 [0m[1maws_sqs_queue.ingest: Creation complete after 25s [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/ingest-queue][0m
 [0m[1maws_iam_role_policy.lambda: Creating...[0m[0m
@@ -1856,14 +1856,14 @@ Terraform will perform the following actions:
 [0m[1maws_iam_role_policy.step_functions: Creation complete after 0s [id=step-functions-role:step-functions-inline-policy][0m
 [0m[1maws_lambda_permission.apigateway: Creation complete after 0s [id=AllowApiGatewayInvoke][0m
 [0m[1maws_sfn_state_machine.ingest: Creating...[0m[0m
-[0m[1maws_api_gateway_integration.ingest: Creation complete after 0s [id=agi-rmizf185pu-n4ceaoc6cu-POST][0m
+[0m[1maws_api_gateway_integration.ingest: Creation complete after 0s [id=agi-1go505g4zx-ps0nok8v3o-POST][0m
 [0m[1maws_api_gateway_deployment.ingest: Creating...[0m[0m
-[0m[1maws_api_gateway_deployment.ingest: Creation complete after 0s [id=kjrzmsolxp][0m
+[0m[1maws_api_gateway_deployment.ingest: Creation complete after 0s [id=o0oolc2id4][0m
 [0m[1maws_api_gateway_stage.ingest: Creating...[0m[0m
 [0m[1maws_sfn_state_machine.ingest: Creation complete after 0s [id=arn:aws:states:us-east-1:000000000000:stateMachine:ingest-state-machine][0m
 [0m[1maws_iam_role_policy.pipes: Creating...[0m[0m
-[0m[1maws_api_gateway_stage.ingest: Creation complete after 0s [id=ags-rmizf185pu-prod][0m
-[0m[1maws_lambda_event_source_mapping.ingest: Creation complete after 0s [id=87ebded5-cb74-4d1c-bf8a-3bd045b7d1a8][0m
+[0m[1maws_api_gateway_stage.ingest: Creation complete after 0s [id=ags-1go505g4zx-prod][0m
+[0m[1maws_lambda_event_source_mapping.ingest: Creation complete after 0s [id=378663f1-6970-4f8b-abc1-363c37a1d0fc][0m
 [0m[1maws_iam_role_policy.pipes: Creation complete after 0s [id=eventbridge-pipes-role:eventbridge-pipes-inline-policy][0m
 [0m[1m[32m
 Apply complete! Resources: 45 added, 0 changed, 0 destroyed.
@@ -1888,59 +1888,59 @@ tests/integration_tests.py::test_workflow_resources_match_contract PASSED [ 66%]
 tests/integration_tests.py::test_iam_configuration_matches_contract PASSED [ 83%]
 tests/integration_tests.py::test_storage_resources_match_contract PASSED [100%]
 
-============================== 6 passed in 0.64s ===============================
+============================== 6 passed in 0.62s ===============================
 [32m✅ Step passed: Integration tests[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  Step: Destroy / Cleanup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 Running terraform destroy...
-[0m[1mterraform_data.preclean_named_resources: Refreshing state... [id=0d67bed3-3abb-0dec-740f-639a05d45212][0m
-[0m[1mrandom_password.db: Refreshing state... [id=none][0m
+[0m[1mterraform_data.preclean_named_resources: Refreshing state... [id=604826da-1919-c86a-51ef-44f81e00fdc0][0m
 [0m[1mdata.archive_file.lambda: Reading...[0m[0m
 [0m[1mdata.archive_file.lambda: Read complete after 0s [id=82afa8ad94b20bc11901eaa5717dc4d1e9178a2a][0m
+[0m[1mrandom_password.db: Refreshing state... [id=none][0m
 [0m[1maws_cloudwatch_log_group.lambda: Refreshing state... [id=/aws/lambda/ingest-function][0m
-[0m[1maws_sqs_queue.ingest: Refreshing state... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/ingest-queue][0m
+[0m[1maws_vpc.payments: Refreshing state... [id=vpc-184b5e886bb48dc69][0m
 [0m[1maws_cloudwatch_log_group.step_functions: Refreshing state... [id=/aws/vendedlogs/states/ingest-state-machine][0m
-[0m[1maws_vpc.payments: Refreshing state... [id=vpc-2a1e99786e12e7625][0m
-[0m[1maws_iam_role.step_functions: Refreshing state... [id=step-functions-role][0m
-[0m[1maws_secretsmanager_secret.db: Refreshing state... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-HqzeuI][0m
+[0m[1maws_sqs_queue.ingest: Refreshing state... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/ingest-queue][0m
 [0m[1maws_iam_role.lambda: Refreshing state... [id=lambda-execution-role][0m
 [0m[1maws_iam_role.pipes: Refreshing state... [id=eventbridge-pipes-role][0m
+[0m[1maws_iam_role.step_functions: Refreshing state... [id=step-functions-role][0m
+[0m[1maws_secretsmanager_secret.db: Refreshing state... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-LbePVe][0m
+[0m[1maws_api_gateway_rest_api.ingest: Refreshing state... [id=1go505g4zx][0m
 [0m[1maws_s3_bucket.archive: Refreshing state... [id=payments-ingest-bucket][0m
-[0m[1maws_api_gateway_rest_api.ingest: Refreshing state... [id=rmizf185pu][0m
-[0m[1maws_api_gateway_resource.ingest: Refreshing state... [id=n4ceaoc6cu][0m
-[0m[1maws_secretsmanager_secret_version.db: Refreshing state... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-HqzeuI|terraform-20260401160209683600000002][0m
-[0m[1maws_api_gateway_method.post: Refreshing state... [id=agm-rmizf185pu-n4ceaoc6cu-POST][0m
-[0m[1maws_security_group.worker: Refreshing state... [id=sg-97bf3c95012939fd7][0m
-[0m[1maws_subnet.private_b: Refreshing state... [id=subnet-2b177313ca8d97bbf][0m
-[0m[1maws_route_table.public: Refreshing state... [id=rtb-ecfb3530cb3d11ed3][0m
-[0m[1maws_internet_gateway.payments: Refreshing state... [id=igw-e01ecc7c6a8f70ea7][0m
-[0m[1maws_subnet.public_a: Refreshing state... [id=subnet-fb82613e44683a9dc][0m
-[0m[1maws_subnet.public_b: Refreshing state... [id=subnet-54d1980528c2b6553][0m
-[0m[1maws_subnet.private_a: Refreshing state... [id=subnet-4519de44d93f57770][0m
-[0m[1maws_route_table.private: Refreshing state... [id=rtb-00b135fd62a7f0054][0m
-[0m[1maws_security_group.api: Refreshing state... [id=sg-f03af15615f74d13e][0m
-[0m[1maws_vpc_endpoint.s3: Refreshing state... [id=vpce-8955982e58864c00c][0m
-[0m[1maws_security_group.database: Refreshing state... [id=sg-f43d9550c5b2deb18][0m
-[0m[1maws_route.public_default: Refreshing state... [id=r-rtb-ecfb3530cb3d11ed31080289494][0m
-[0m[1maws_route_table_association.public_a: Refreshing state... [id=rtbassoc-e4eba0fe231a688cb][0m
-[0m[1maws_route_table_association.private_b: Refreshing state... [id=rtbassoc-a226cc169f92c186e][0m
-[0m[1maws_route_table_association.public_b: Refreshing state... [id=rtbassoc-060b6cbfca10df59f][0m
-[0m[1maws_route_table_association.private_a: Refreshing state... [id=rtbassoc-1b0bb694d2d6822e4][0m
-[0m[1maws_s3_bucket_ownership_controls.archive: Refreshing state... [id=payments-ingest-bucket][0m
+[0m[1maws_api_gateway_resource.ingest: Refreshing state... [id=ps0nok8v3o][0m
+[0m[1maws_secretsmanager_secret_version.db: Refreshing state... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-LbePVe|terraform-20260402161849858200000002][0m
+[0m[1maws_api_gateway_method.post: Refreshing state... [id=agm-1go505g4zx-ps0nok8v3o-POST][0m
+[0m[1maws_route_table.public: Refreshing state... [id=rtb-7226efdcb0e3e6d60][0m
+[0m[1maws_subnet.public_a: Refreshing state... [id=subnet-a561ad295def9fad5][0m
+[0m[1maws_internet_gateway.payments: Refreshing state... [id=igw-0aa77ba1b72df959f][0m
+[0m[1maws_route_table.private: Refreshing state... [id=rtb-a4df3346a5fe968cc][0m
+[0m[1maws_subnet.private_b: Refreshing state... [id=subnet-bbb4955fe77f54bff][0m
+[0m[1maws_security_group.worker: Refreshing state... [id=sg-3d02f80403718e2bd][0m
+[0m[1maws_subnet.private_a: Refreshing state... [id=subnet-f6fee7b62c24147d3][0m
+[0m[1maws_security_group.api: Refreshing state... [id=sg-02a096a7078695916][0m
+[0m[1maws_subnet.public_b: Refreshing state... [id=subnet-aec64f41aa6270620][0m
+[0m[1maws_vpc_endpoint.s3: Refreshing state... [id=vpce-c22d94e754f8f657a][0m
+[0m[1maws_security_group.database: Refreshing state... [id=sg-69ea4fa93ef26e629][0m
+[0m[1maws_route.public_default: Refreshing state... [id=r-rtb-7226efdcb0e3e6d601080289494][0m
+[0m[1maws_route_table_association.private_a: Refreshing state... [id=rtbassoc-f2609c769bea556a5][0m
+[0m[1maws_route_table_association.public_a: Refreshing state... [id=rtbassoc-cba6a3fed5c40560a][0m
+[0m[1maws_route_table_association.private_b: Refreshing state... [id=rtbassoc-cbfca06b88b56b5f0][0m
+[0m[1maws_route_table_association.public_b: Refreshing state... [id=rtbassoc-58d5d9f17ef088280][0m
 [0m[1maws_s3_bucket_policy.archive: Refreshing state... [id=payments-ingest-bucket][0m
-[0m[1maws_iam_role_policy.lambda: Refreshing state... [id=lambda-execution-role:lambda-inline-policy][0m
 [0m[1maws_s3_bucket_public_access_block.archive: Refreshing state... [id=payments-ingest-bucket][0m
-[0m[1maws_lambda_function.ingest: Refreshing state... [id=ingest-function][0m
+[0m[1maws_s3_bucket_ownership_controls.archive: Refreshing state... [id=payments-ingest-bucket][0m
+[0m[1maws_iam_role_policy.lambda: Refreshing state... [id=lambda-execution-role:lambda-inline-policy][0m
 [0m[1maws_s3_bucket_server_side_encryption_configuration.archive: Refreshing state... [id=payments-ingest-bucket][0m
+[0m[1maws_lambda_function.ingest: Refreshing state... [id=ingest-function][0m
 [0m[1maws_iam_role_policy.step_functions: Refreshing state... [id=step-functions-role:step-functions-inline-policy][0m
 [0m[1maws_lambda_permission.apigateway: Refreshing state... [id=AllowApiGatewayInvoke][0m
 [0m[1maws_sfn_state_machine.ingest: Refreshing state... [id=arn:aws:states:us-east-1:000000000000:stateMachine:ingest-state-machine][0m
-[0m[1maws_api_gateway_integration.ingest: Refreshing state... [id=agi-rmizf185pu-n4ceaoc6cu-POST][0m
-[0m[1maws_lambda_event_source_mapping.ingest: Refreshing state... [id=87ebded5-cb74-4d1c-bf8a-3bd045b7d1a8][0m
-[0m[1maws_api_gateway_deployment.ingest: Refreshing state... [id=kjrzmsolxp][0m
-[0m[1maws_api_gateway_stage.ingest: Refreshing state... [id=ags-rmizf185pu-prod][0m
+[0m[1maws_lambda_event_source_mapping.ingest: Refreshing state... [id=378663f1-6970-4f8b-abc1-363c37a1d0fc][0m
+[0m[1maws_api_gateway_integration.ingest: Refreshing state... [id=agi-1go505g4zx-ps0nok8v3o-POST][0m
+[0m[1maws_api_gateway_deployment.ingest: Refreshing state... [id=o0oolc2id4][0m
+[0m[1maws_api_gateway_stage.ingest: Refreshing state... [id=ags-1go505g4zx-prod][0m
 [0m[1maws_iam_role_policy.pipes: Refreshing state... [id=eventbridge-pipes-role:eventbridge-pipes-inline-policy][0m
 
 Terraform used the selected providers to generate the following execution
@@ -1951,27 +1951,27 @@ Terraform will perform the following actions:
 
 [1m  # aws_api_gateway_deployment.ingest[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_api_gateway_deployment" "ingest" {
-      [31m-[0m[0m created_date  = "2026-04-01T16:02:40Z" [90m-> null[0m[0m
-      [31m-[0m[0m execution_arn = "arn:aws:execute-api:us-east-1::rmizf185pu/" [90m-> null[0m[0m
-      [31m-[0m[0m id            = "kjrzmsolxp" [90m-> null[0m[0m
-      [31m-[0m[0m invoke_url    = "https://rmizf185pu.execute-api.us-east-1.amazonaws.com/" [90m-> null[0m[0m
-      [31m-[0m[0m rest_api_id   = "rmizf185pu" [90m-> null[0m[0m
+      [31m-[0m[0m created_date  = "2026-04-02T16:19:20Z" [90m-> null[0m[0m
+      [31m-[0m[0m execution_arn = "arn:aws:execute-api:us-east-1::1go505g4zx/" [90m-> null[0m[0m
+      [31m-[0m[0m id            = "o0oolc2id4" [90m-> null[0m[0m
+      [31m-[0m[0m invoke_url    = "https://1go505g4zx.execute-api.us-east-1.amazonaws.com/" [90m-> null[0m[0m
+      [31m-[0m[0m rest_api_id   = "1go505g4zx" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_api_gateway_integration.ingest[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_api_gateway_integration" "ingest" {
       [31m-[0m[0m cache_key_parameters    = [] [90m-> null[0m[0m
-      [31m-[0m[0m cache_namespace         = "n4ceaoc6cu" [90m-> null[0m[0m
+      [31m-[0m[0m cache_namespace         = "ps0nok8v3o" [90m-> null[0m[0m
       [31m-[0m[0m connection_type         = "INTERNET" [90m-> null[0m[0m
       [31m-[0m[0m http_method             = "POST" [90m-> null[0m[0m
-      [31m-[0m[0m id                      = "agi-rmizf185pu-n4ceaoc6cu-POST" [90m-> null[0m[0m
+      [31m-[0m[0m id                      = "agi-1go505g4zx-ps0nok8v3o-POST" [90m-> null[0m[0m
       [31m-[0m[0m integration_http_method = "POST" [90m-> null[0m[0m
       [31m-[0m[0m passthrough_behavior    = "WHEN_NO_MATCH" [90m-> null[0m[0m
       [31m-[0m[0m request_parameters      = {} [90m-> null[0m[0m
       [31m-[0m[0m request_templates       = {} [90m-> null[0m[0m
-      [31m-[0m[0m resource_id             = "n4ceaoc6cu" [90m-> null[0m[0m
-      [31m-[0m[0m rest_api_id             = "rmizf185pu" [90m-> null[0m[0m
+      [31m-[0m[0m resource_id             = "ps0nok8v3o" [90m-> null[0m[0m
+      [31m-[0m[0m rest_api_id             = "1go505g4zx" [90m-> null[0m[0m
       [31m-[0m[0m timeout_milliseconds    = 29000 [90m-> null[0m[0m
       [31m-[0m[0m type                    = "AWS_PROXY" [90m-> null[0m[0m
       [31m-[0m[0m uri                     = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:ingest-function/invocations" [90m-> null[0m[0m
@@ -1984,34 +1984,34 @@ Terraform will perform the following actions:
       [31m-[0m[0m authorization        = "NONE" [90m-> null[0m[0m
       [31m-[0m[0m authorization_scopes = [] [90m-> null[0m[0m
       [31m-[0m[0m http_method          = "POST" [90m-> null[0m[0m
-      [31m-[0m[0m id                   = "agm-rmizf185pu-n4ceaoc6cu-POST" [90m-> null[0m[0m
+      [31m-[0m[0m id                   = "agm-1go505g4zx-ps0nok8v3o-POST" [90m-> null[0m[0m
       [31m-[0m[0m request_models       = {} [90m-> null[0m[0m
       [31m-[0m[0m request_parameters   = {} [90m-> null[0m[0m
-      [31m-[0m[0m resource_id          = "n4ceaoc6cu" [90m-> null[0m[0m
-      [31m-[0m[0m rest_api_id          = "rmizf185pu" [90m-> null[0m[0m
+      [31m-[0m[0m resource_id          = "ps0nok8v3o" [90m-> null[0m[0m
+      [31m-[0m[0m rest_api_id          = "1go505g4zx" [90m-> null[0m[0m
         [90m# (3 unchanged attributes hidden)[0m[0m
     }
 
 [1m  # aws_api_gateway_resource.ingest[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_api_gateway_resource" "ingest" {
-      [31m-[0m[0m id          = "n4ceaoc6cu" [90m-> null[0m[0m
-      [31m-[0m[0m parent_id   = "wrqfromdyw" [90m-> null[0m[0m
+      [31m-[0m[0m id          = "ps0nok8v3o" [90m-> null[0m[0m
+      [31m-[0m[0m parent_id   = "ytuo2x8dmu" [90m-> null[0m[0m
       [31m-[0m[0m path        = "/ingest" [90m-> null[0m[0m
       [31m-[0m[0m path_part   = "ingest" [90m-> null[0m[0m
-      [31m-[0m[0m rest_api_id = "rmizf185pu" [90m-> null[0m[0m
+      [31m-[0m[0m rest_api_id = "1go505g4zx" [90m-> null[0m[0m
     }
 
 [1m  # aws_api_gateway_rest_api.ingest[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_api_gateway_rest_api" "ingest" {
       [31m-[0m[0m api_key_source               = "HEADER" [90m-> null[0m[0m
-      [31m-[0m[0m arn                          = "arn:aws:apigateway:us-east-1::/restapis/rmizf185pu" [90m-> null[0m[0m
+      [31m-[0m[0m arn                          = "arn:aws:apigateway:us-east-1::/restapis/1go505g4zx" [90m-> null[0m[0m
       [31m-[0m[0m binary_media_types           = [] [90m-> null[0m[0m
-      [31m-[0m[0m created_date                 = "2026-04-01T16:02:09Z" [90m-> null[0m[0m
+      [31m-[0m[0m created_date                 = "2026-04-02T16:18:49Z" [90m-> null[0m[0m
       [31m-[0m[0m disable_execute_api_endpoint = false [90m-> null[0m[0m
-      [31m-[0m[0m execution_arn                = "arn:aws:execute-api:us-east-1::rmizf185pu" [90m-> null[0m[0m
-      [31m-[0m[0m id                           = "rmizf185pu" [90m-> null[0m[0m
+      [31m-[0m[0m execution_arn                = "arn:aws:execute-api:us-east-1::1go505g4zx" [90m-> null[0m[0m
+      [31m-[0m[0m id                           = "1go505g4zx" [90m-> null[0m[0m
       [31m-[0m[0m name                         = "ingest-api" [90m-> null[0m[0m
-      [31m-[0m[0m root_resource_id             = "wrqfromdyw" [90m-> null[0m[0m
+      [31m-[0m[0m root_resource_id             = "ytuo2x8dmu" [90m-> null[0m[0m
       [31m-[0m[0m tags                         = {} [90m-> null[0m[0m
       [31m-[0m[0m tags_all                     = {} [90m-> null[0m[0m
         [90m# (3 unchanged attributes hidden)[0m[0m
@@ -2027,13 +2027,13 @@ Terraform will perform the following actions:
 
 [1m  # aws_api_gateway_stage.ingest[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_api_gateway_stage" "ingest" {
-      [31m-[0m[0m arn                   = "arn:aws:apigateway:us-east-1::/restapis/rmizf185pu/stages/prod" [90m-> null[0m[0m
+      [31m-[0m[0m arn                   = "arn:aws:apigateway:us-east-1::/restapis/1go505g4zx/stages/prod" [90m-> null[0m[0m
       [31m-[0m[0m cache_cluster_enabled = false [90m-> null[0m[0m
-      [31m-[0m[0m deployment_id         = "kjrzmsolxp" [90m-> null[0m[0m
-      [31m-[0m[0m execution_arn         = "arn:aws:execute-api:us-east-1::rmizf185pu/prod" [90m-> null[0m[0m
-      [31m-[0m[0m id                    = "ags-rmizf185pu-prod" [90m-> null[0m[0m
-      [31m-[0m[0m invoke_url            = "https://rmizf185pu.execute-api.us-east-1.amazonaws.com/prod" [90m-> null[0m[0m
-      [31m-[0m[0m rest_api_id           = "rmizf185pu" [90m-> null[0m[0m
+      [31m-[0m[0m deployment_id         = "o0oolc2id4" [90m-> null[0m[0m
+      [31m-[0m[0m execution_arn         = "arn:aws:execute-api:us-east-1::1go505g4zx/prod" [90m-> null[0m[0m
+      [31m-[0m[0m id                    = "ags-1go505g4zx-prod" [90m-> null[0m[0m
+      [31m-[0m[0m invoke_url            = "https://1go505g4zx.execute-api.us-east-1.amazonaws.com/prod" [90m-> null[0m[0m
+      [31m-[0m[0m rest_api_id           = "1go505g4zx" [90m-> null[0m[0m
       [31m-[0m[0m stage_name            = "prod" [90m-> null[0m[0m
       [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
       [31m-[0m[0m tags_all              = {} [90m-> null[0m[0m
@@ -2085,7 +2085,7 @@ Terraform will perform the following actions:
               [31m-[0m[0m Version   = "2012-10-17"
             }
         ) [90m-> null[0m[0m
-      [31m-[0m[0m create_date           = "2026-04-01T16:02:09Z" [90m-> null[0m[0m
+      [31m-[0m[0m create_date           = "2026-04-02T16:18:49Z" [90m-> null[0m[0m
       [31m-[0m[0m force_detach_policies = false [90m-> null[0m[0m
       [31m-[0m[0m id                    = "lambda-execution-role" [90m-> null[0m[0m
       [31m-[0m[0m managed_policy_arns   = [] [90m-> null[0m[0m
@@ -2094,7 +2094,7 @@ Terraform will perform the following actions:
       [31m-[0m[0m path                  = "/" [90m-> null[0m[0m
       [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
       [31m-[0m[0m tags_all              = {} [90m-> null[0m[0m
-      [31m-[0m[0m unique_id             = "AROAQAAAAAAALSDYHIKP2" [90m-> null[0m[0m
+      [31m-[0m[0m unique_id             = "AROAQAAAAAAAEVMUU7LQN" [90m-> null[0m[0m
         [90m# (3 unchanged attributes hidden)[0m[0m
 
       [31m-[0m[0m inline_policy {
@@ -2123,7 +2123,7 @@ Terraform will perform the following actions:
                               [31m-[0m[0m "secretsmanager:GetSecretValue",
                             ]
                           [31m-[0m[0m Effect   = "Allow"
-                          [31m-[0m[0m Resource = "arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-HqzeuI"
+                          [31m-[0m[0m Resource = "arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-LbePVe"
                           [31m-[0m[0m Sid      = "ReadDatabaseSecret"
                         },
                       [31m-[0m[0m {
@@ -2162,7 +2162,7 @@ Terraform will perform the following actions:
               [31m-[0m[0m Version   = "2012-10-17"
             }
         ) [90m-> null[0m[0m
-      [31m-[0m[0m create_date           = "2026-04-01T16:02:09Z" [90m-> null[0m[0m
+      [31m-[0m[0m create_date           = "2026-04-02T16:18:49Z" [90m-> null[0m[0m
       [31m-[0m[0m force_detach_policies = false [90m-> null[0m[0m
       [31m-[0m[0m id                    = "eventbridge-pipes-role" [90m-> null[0m[0m
       [31m-[0m[0m managed_policy_arns   = [] [90m-> null[0m[0m
@@ -2171,7 +2171,7 @@ Terraform will perform the following actions:
       [31m-[0m[0m path                  = "/" [90m-> null[0m[0m
       [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
       [31m-[0m[0m tags_all              = {} [90m-> null[0m[0m
-      [31m-[0m[0m unique_id             = "AROAQAAAAAAAEBI6BPAEH" [90m-> null[0m[0m
+      [31m-[0m[0m unique_id             = "AROAQAAAAAAAMZVHLBXVA" [90m-> null[0m[0m
         [90m# (3 unchanged attributes hidden)[0m[0m
 
       [31m-[0m[0m inline_policy {
@@ -2230,7 +2230,7 @@ Terraform will perform the following actions:
               [31m-[0m[0m Version   = "2012-10-17"
             }
         ) [90m-> null[0m[0m
-      [31m-[0m[0m create_date           = "2026-04-01T16:02:09Z" [90m-> null[0m[0m
+      [31m-[0m[0m create_date           = "2026-04-02T16:18:49Z" [90m-> null[0m[0m
       [31m-[0m[0m force_detach_policies = false [90m-> null[0m[0m
       [31m-[0m[0m id                    = "step-functions-role" [90m-> null[0m[0m
       [31m-[0m[0m managed_policy_arns   = [] [90m-> null[0m[0m
@@ -2239,7 +2239,7 @@ Terraform will perform the following actions:
       [31m-[0m[0m path                  = "/" [90m-> null[0m[0m
       [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
       [31m-[0m[0m tags_all              = {} [90m-> null[0m[0m
-      [31m-[0m[0m unique_id             = "AROAQAAAAAAAP7ADTBJGB" [90m-> null[0m[0m
+      [31m-[0m[0m unique_id             = "AROAQAAAAAAAKRN6XN5VP" [90m-> null[0m[0m
         [90m# (3 unchanged attributes hidden)[0m[0m
 
       [31m-[0m[0m inline_policy {
@@ -2317,7 +2317,7 @@ Terraform will perform the following actions:
                           [31m-[0m[0m "secretsmanager:GetSecretValue",
                         ]
                       [31m-[0m[0m Effect   = "Allow"
-                      [31m-[0m[0m Resource = "arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-HqzeuI"
+                      [31m-[0m[0m Resource = "arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-LbePVe"
                       [31m-[0m[0m Sid      = "ReadDatabaseSecret"
                     },
                   [31m-[0m[0m {
@@ -2434,8 +2434,8 @@ Terraform will perform the following actions:
 
 [1m  # aws_internet_gateway.payments[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_internet_gateway" "payments" {
-      [31m-[0m[0m arn      = "arn:aws:ec2:us-east-1:000000000000:internet-gateway/igw-e01ecc7c6a8f70ea7" [90m-> null[0m[0m
-      [31m-[0m[0m id       = "igw-e01ecc7c6a8f70ea7" [90m-> null[0m[0m
+      [31m-[0m[0m arn      = "arn:aws:ec2:us-east-1:000000000000:internet-gateway/igw-0aa77ba1b72df959f" [90m-> null[0m[0m
+      [31m-[0m[0m id       = "igw-0aa77ba1b72df959f" [90m-> null[0m[0m
       [31m-[0m[0m owner_id = "000000000000" [90m-> null[0m[0m
       [31m-[0m[0m tags     = {
           [31m-[0m[0m "Name" = "payments-ingestion-igw"
@@ -2443,12 +2443,12 @@ Terraform will perform the following actions:
       [31m-[0m[0m tags_all = {
           [31m-[0m[0m "Name" = "payments-ingestion-igw"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id   = "vpc-2a1e99786e12e7625" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id   = "vpc-184b5e886bb48dc69" [90m-> null[0m[0m
     }
 
 [1m  # aws_lambda_event_source_mapping.ingest[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_lambda_event_source_mapping" "ingest" {
-      [31m-[0m[0m arn                                = "arn:aws:lambda:us-east-1:000000000000:event-source-mapping:87ebded5-cb74-4d1c-bf8a-3bd045b7d1a8" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                = "arn:aws:lambda:us-east-1:000000000000:event-source-mapping:378663f1-6970-4f8b-abc1-363c37a1d0fc" [90m-> null[0m[0m
       [31m-[0m[0m batch_size                         = 10 [90m-> null[0m[0m
       [31m-[0m[0m bisect_batch_on_function_error     = false [90m-> null[0m[0m
       [31m-[0m[0m enabled                            = true [90m-> null[0m[0m
@@ -2456,8 +2456,8 @@ Terraform will perform the following actions:
       [31m-[0m[0m function_arn                       = "arn:aws:lambda:us-east-1:000000000000:function:ingest-function" [90m-> null[0m[0m
       [31m-[0m[0m function_name                      = "arn:aws:lambda:us-east-1:000000000000:function:ingest-function" [90m-> null[0m[0m
       [31m-[0m[0m function_response_types            = [] [90m-> null[0m[0m
-      [31m-[0m[0m id                                 = "87ebded5-cb74-4d1c-bf8a-3bd045b7d1a8" [90m-> null[0m[0m
-      [31m-[0m[0m last_modified                      = "2026-04-01T16:02:40Z" [90m-> null[0m[0m
+      [31m-[0m[0m id                                 = "378663f1-6970-4f8b-abc1-363c37a1d0fc" [90m-> null[0m[0m
+      [31m-[0m[0m last_modified                      = "2026-04-02T16:19:20Z" [90m-> null[0m[0m
       [31m-[0m[0m maximum_batching_window_in_seconds = 0 [90m-> null[0m[0m
       [31m-[0m[0m maximum_record_age_in_seconds      = 0 [90m-> null[0m[0m
       [31m-[0m[0m maximum_retry_attempts             = 0 [90m-> null[0m[0m
@@ -2469,7 +2469,7 @@ Terraform will perform the following actions:
       [31m-[0m[0m tags_all                           = {} [90m-> null[0m[0m
       [31m-[0m[0m topics                             = [] [90m-> null[0m[0m
       [31m-[0m[0m tumbling_window_in_seconds         = 0 [90m-> null[0m[0m
-      [31m-[0m[0m uuid                               = "87ebded5-cb74-4d1c-bf8a-3bd045b7d1a8" [90m-> null[0m[0m
+      [31m-[0m[0m uuid                               = "378663f1-6970-4f8b-abc1-363c37a1d0fc" [90m-> null[0m[0m
         [90m# (4 unchanged attributes hidden)[0m[0m
     }
 
@@ -2485,7 +2485,7 @@ Terraform will perform the following actions:
       [31m-[0m[0m handler                        = "index.handler" [90m-> null[0m[0m
       [31m-[0m[0m id                             = "ingest-function" [90m-> null[0m[0m
       [31m-[0m[0m invoke_arn                     = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:ingest-function/invocations" [90m-> null[0m[0m
-      [31m-[0m[0m last_modified                  = "2026-04-01T16:02:34.840062+0000" [90m-> null[0m[0m
+      [31m-[0m[0m last_modified                  = "2026-04-02T16:19:14.876332+0000" [90m-> null[0m[0m
       [31m-[0m[0m layers                         = [] [90m-> null[0m[0m
       [31m-[0m[0m memory_size                    = 256 [90m-> null[0m[0m
       [31m-[0m[0m package_type                   = "Zip" [90m-> null[0m[0m
@@ -2508,7 +2508,7 @@ Terraform will perform the following actions:
           [31m-[0m[0m variables = {
               [31m-[0m[0m "ARCHIVE_BUCKET" = "payments-ingest-bucket"
               [31m-[0m[0m "QUEUE_URL"      = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/ingest-queue"
-              [31m-[0m[0m "SECRET_ARN"     = "arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-HqzeuI"
+              [31m-[0m[0m "SECRET_ARN"     = "arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-LbePVe"
             } [90m-> null[0m[0m
         }
 
@@ -2529,13 +2529,13 @@ Terraform will perform the following actions:
       [31m-[0m[0m vpc_config {
           [31m-[0m[0m ipv6_allowed_for_dual_stack = false [90m-> null[0m[0m
           [31m-[0m[0m security_group_ids          = [
-              [31m-[0m[0m "sg-97bf3c95012939fd7",
+              [31m-[0m[0m "sg-3d02f80403718e2bd",
             ] [90m-> null[0m[0m
           [31m-[0m[0m subnet_ids                  = [
-              [31m-[0m[0m "subnet-2b177313ca8d97bbf",
-              [31m-[0m[0m "subnet-4519de44d93f57770",
+              [31m-[0m[0m "subnet-bbb4955fe77f54bff",
+              [31m-[0m[0m "subnet-f6fee7b62c24147d3",
             ] [90m-> null[0m[0m
-          [31m-[0m[0m vpc_id                      = "vpc-2a1e99786e12e7625" [90m-> null[0m[0m
+          [31m-[0m[0m vpc_id                      = "vpc-184b5e886bb48dc69" [90m-> null[0m[0m
         }
     }
 
@@ -2545,7 +2545,7 @@ Terraform will perform the following actions:
       [31m-[0m[0m function_name       = "ingest-function" [90m-> null[0m[0m
       [31m-[0m[0m id                  = "AllowApiGatewayInvoke" [90m-> null[0m[0m
       [31m-[0m[0m principal           = "apigateway.amazonaws.com" [90m-> null[0m[0m
-      [31m-[0m[0m source_arn          = "arn:aws:execute-api:us-east-1::rmizf185pu/*/POST/ingest" [90m-> null[0m[0m
+      [31m-[0m[0m source_arn          = "arn:aws:execute-api:us-east-1::1go505g4zx/*/POST/ingest" [90m-> null[0m[0m
       [31m-[0m[0m statement_id        = "AllowApiGatewayInvoke" [90m-> null[0m[0m
         [90m# (2 unchanged attributes hidden)[0m[0m
     }
@@ -2553,18 +2553,18 @@ Terraform will perform the following actions:
 [1m  # aws_route.public_default[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_route" "public_default" {
       [31m-[0m[0m destination_cidr_block      = "0.0.0.0/0" [90m-> null[0m[0m
-      [31m-[0m[0m gateway_id                  = "igw-e01ecc7c6a8f70ea7" [90m-> null[0m[0m
-      [31m-[0m[0m id                          = "r-rtb-ecfb3530cb3d11ed31080289494" [90m-> null[0m[0m
+      [31m-[0m[0m gateway_id                  = "igw-0aa77ba1b72df959f" [90m-> null[0m[0m
+      [31m-[0m[0m id                          = "r-rtb-7226efdcb0e3e6d601080289494" [90m-> null[0m[0m
       [31m-[0m[0m origin                      = "CreateRoute" [90m-> null[0m[0m
-      [31m-[0m[0m route_table_id              = "rtb-ecfb3530cb3d11ed3" [90m-> null[0m[0m
+      [31m-[0m[0m route_table_id              = "rtb-7226efdcb0e3e6d60" [90m-> null[0m[0m
       [31m-[0m[0m state                       = "active" [90m-> null[0m[0m
         [90m# (13 unchanged attributes hidden)[0m[0m
     }
 
 [1m  # aws_route_table.private[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_route_table" "private" {
-      [31m-[0m[0m arn              = "arn:aws:ec2:us-east-1:000000000000:route-table/rtb-00b135fd62a7f0054" [90m-> null[0m[0m
-      [31m-[0m[0m id               = "rtb-00b135fd62a7f0054" [90m-> null[0m[0m
+      [31m-[0m[0m arn              = "arn:aws:ec2:us-east-1:000000000000:route-table/rtb-a4df3346a5fe968cc" [90m-> null[0m[0m
+      [31m-[0m[0m id               = "rtb-a4df3346a5fe968cc" [90m-> null[0m[0m
       [31m-[0m[0m owner_id         = "000000000000" [90m-> null[0m[0m
       [31m-[0m[0m propagating_vgws = [] [90m-> null[0m[0m
       [31m-[0m[0m route            = [] [90m-> null[0m[0m
@@ -2574,19 +2574,19 @@ Terraform will perform the following actions:
       [31m-[0m[0m tags_all         = {
           [31m-[0m[0m "Name" = "payments-private-rt"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id           = "vpc-2a1e99786e12e7625" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id           = "vpc-184b5e886bb48dc69" [90m-> null[0m[0m
     }
 
 [1m  # aws_route_table.public[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_route_table" "public" {
-      [31m-[0m[0m arn              = "arn:aws:ec2:us-east-1:000000000000:route-table/rtb-ecfb3530cb3d11ed3" [90m-> null[0m[0m
-      [31m-[0m[0m id               = "rtb-ecfb3530cb3d11ed3" [90m-> null[0m[0m
+      [31m-[0m[0m arn              = "arn:aws:ec2:us-east-1:000000000000:route-table/rtb-7226efdcb0e3e6d60" [90m-> null[0m[0m
+      [31m-[0m[0m id               = "rtb-7226efdcb0e3e6d60" [90m-> null[0m[0m
       [31m-[0m[0m owner_id         = "000000000000" [90m-> null[0m[0m
       [31m-[0m[0m propagating_vgws = [] [90m-> null[0m[0m
       [31m-[0m[0m route            = [
           [31m-[0m[0m {
               [31m-[0m[0m cidr_block                 = "0.0.0.0/0"
-              [31m-[0m[0m gateway_id                 = "igw-e01ecc7c6a8f70ea7"
+              [31m-[0m[0m gateway_id                 = "igw-0aa77ba1b72df959f"
                 [90m# (11 unchanged attributes hidden)[0m[0m
             },
         ] [90m-> null[0m[0m
@@ -2596,38 +2596,38 @@ Terraform will perform the following actions:
       [31m-[0m[0m tags_all         = {
           [31m-[0m[0m "Name" = "payments-public-rt"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id           = "vpc-2a1e99786e12e7625" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id           = "vpc-184b5e886bb48dc69" [90m-> null[0m[0m
     }
 
 [1m  # aws_route_table_association.private_a[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_route_table_association" "private_a" {
-      [31m-[0m[0m id             = "rtbassoc-1b0bb694d2d6822e4" [90m-> null[0m[0m
-      [31m-[0m[0m route_table_id = "rtb-00b135fd62a7f0054" [90m-> null[0m[0m
-      [31m-[0m[0m subnet_id      = "subnet-4519de44d93f57770" [90m-> null[0m[0m
+      [31m-[0m[0m id             = "rtbassoc-f2609c769bea556a5" [90m-> null[0m[0m
+      [31m-[0m[0m route_table_id = "rtb-a4df3346a5fe968cc" [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id      = "subnet-f6fee7b62c24147d3" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_route_table_association.private_b[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_route_table_association" "private_b" {
-      [31m-[0m[0m id             = "rtbassoc-a226cc169f92c186e" [90m-> null[0m[0m
-      [31m-[0m[0m route_table_id = "rtb-00b135fd62a7f0054" [90m-> null[0m[0m
-      [31m-[0m[0m subnet_id      = "subnet-2b177313ca8d97bbf" [90m-> null[0m[0m
+      [31m-[0m[0m id             = "rtbassoc-cbfca06b88b56b5f0" [90m-> null[0m[0m
+      [31m-[0m[0m route_table_id = "rtb-a4df3346a5fe968cc" [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id      = "subnet-bbb4955fe77f54bff" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_route_table_association.public_a[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_route_table_association" "public_a" {
-      [31m-[0m[0m id             = "rtbassoc-e4eba0fe231a688cb" [90m-> null[0m[0m
-      [31m-[0m[0m route_table_id = "rtb-ecfb3530cb3d11ed3" [90m-> null[0m[0m
-      [31m-[0m[0m subnet_id      = "subnet-fb82613e44683a9dc" [90m-> null[0m[0m
+      [31m-[0m[0m id             = "rtbassoc-cba6a3fed5c40560a" [90m-> null[0m[0m
+      [31m-[0m[0m route_table_id = "rtb-7226efdcb0e3e6d60" [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id      = "subnet-a561ad295def9fad5" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_route_table_association.public_b[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_route_table_association" "public_b" {
-      [31m-[0m[0m id             = "rtbassoc-060b6cbfca10df59f" [90m-> null[0m[0m
-      [31m-[0m[0m route_table_id = "rtb-ecfb3530cb3d11ed3" [90m-> null[0m[0m
-      [31m-[0m[0m subnet_id      = "subnet-54d1980528c2b6553" [90m-> null[0m[0m
+      [31m-[0m[0m id             = "rtbassoc-58d5d9f17ef088280" [90m-> null[0m[0m
+      [31m-[0m[0m route_table_id = "rtb-7226efdcb0e3e6d60" [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id      = "subnet-aec64f41aa6270620" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
@@ -2761,9 +2761,9 @@ Terraform will perform the following actions:
 
 [1m  # aws_secretsmanager_secret.db[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_secretsmanager_secret" "db" {
-      [31m-[0m[0m arn                            = "arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-HqzeuI" [90m-> null[0m[0m
+      [31m-[0m[0m arn                            = "arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-LbePVe" [90m-> null[0m[0m
       [31m-[0m[0m force_overwrite_replica_secret = false [90m-> null[0m[0m
-      [31m-[0m[0m id                             = "arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-HqzeuI" [90m-> null[0m[0m
+      [31m-[0m[0m id                             = "arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-LbePVe" [90m-> null[0m[0m
       [31m-[0m[0m name                           = "db-credentials" [90m-> null[0m[0m
       [31m-[0m[0m recovery_window_in_days        = 30 [90m-> null[0m[0m
       [31m-[0m[0m tags                           = {} [90m-> null[0m[0m
@@ -2773,11 +2773,11 @@ Terraform will perform the following actions:
 
 [1m  # aws_secretsmanager_secret_version.db[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_secretsmanager_secret_version" "db" {
-      [31m-[0m[0m arn            = "arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-HqzeuI" [90m-> null[0m[0m
-      [31m-[0m[0m id             = "arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-HqzeuI|terraform-20260401160209683600000002" [90m-> null[0m[0m
-      [31m-[0m[0m secret_id      = "arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-HqzeuI" [90m-> null[0m[0m
+      [31m-[0m[0m arn            = "arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-LbePVe" [90m-> null[0m[0m
+      [31m-[0m[0m id             = "arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-LbePVe|terraform-20260402161849858200000002" [90m-> null[0m[0m
+      [31m-[0m[0m secret_id      = "arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-LbePVe" [90m-> null[0m[0m
       [31m-[0m[0m secret_string  = (sensitive value) [90m-> null[0m[0m
-      [31m-[0m[0m version_id     = "terraform-20260401160209683600000002" [90m-> null[0m[0m
+      [31m-[0m[0m version_id     = "terraform-20260402161849858200000002" [90m-> null[0m[0m
       [31m-[0m[0m version_stages = [
           [31m-[0m[0m "AWSCURRENT",
         ] [90m-> null[0m[0m
@@ -2786,7 +2786,7 @@ Terraform will perform the following actions:
 
 [1m  # aws_security_group.api[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_security_group" "api" {
-      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-1:000000000000:security-group/sg-f03af15615f74d13e" [90m-> null[0m[0m
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-1:000000000000:security-group/sg-02a096a7078695916" [90m-> null[0m[0m
       [31m-[0m[0m description            = "API layer security group" [90m-> null[0m[0m
       [31m-[0m[0m egress                 = [
           [31m-[0m[0m {
@@ -2803,7 +2803,7 @@ Terraform will perform the following actions:
               [31m-[0m[0m to_port          = 0
             },
         ] [90m-> null[0m[0m
-      [31m-[0m[0m id                     = "sg-f03af15615f74d13e" [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sg-02a096a7078695916" [90m-> null[0m[0m
       [31m-[0m[0m ingress                = [
           [31m-[0m[0m {
               [31m-[0m[0m cidr_blocks      = [
@@ -2824,16 +2824,16 @@ Terraform will perform the following actions:
       [31m-[0m[0m revoke_rules_on_delete = false [90m-> null[0m[0m
       [31m-[0m[0m tags                   = {} [90m-> null[0m[0m
       [31m-[0m[0m tags_all               = {} [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id                 = "vpc-2a1e99786e12e7625" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                 = "vpc-184b5e886bb48dc69" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_security_group.database[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_security_group" "database" {
-      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-1:000000000000:security-group/sg-f43d9550c5b2deb18" [90m-> null[0m[0m
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-1:000000000000:security-group/sg-69ea4fa93ef26e629" [90m-> null[0m[0m
       [31m-[0m[0m description            = "Database security group" [90m-> null[0m[0m
       [31m-[0m[0m egress                 = [] [90m-> null[0m[0m
-      [31m-[0m[0m id                     = "sg-f43d9550c5b2deb18" [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sg-69ea4fa93ef26e629" [90m-> null[0m[0m
       [31m-[0m[0m ingress                = [
           [31m-[0m[0m {
               [31m-[0m[0m cidr_blocks      = []
@@ -2843,7 +2843,7 @@ Terraform will perform the following actions:
               [31m-[0m[0m prefix_list_ids  = []
               [31m-[0m[0m protocol         = "tcp"
               [31m-[0m[0m security_groups  = [
-                  [31m-[0m[0m "sg-97bf3c95012939fd7",
+                  [31m-[0m[0m "sg-3d02f80403718e2bd",
                 ]
               [31m-[0m[0m self             = false
               [31m-[0m[0m to_port          = 5432
@@ -2854,13 +2854,13 @@ Terraform will perform the following actions:
       [31m-[0m[0m revoke_rules_on_delete = false [90m-> null[0m[0m
       [31m-[0m[0m tags                   = {} [90m-> null[0m[0m
       [31m-[0m[0m tags_all               = {} [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id                 = "vpc-2a1e99786e12e7625" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                 = "vpc-184b5e886bb48dc69" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_security_group.worker[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_security_group" "worker" {
-      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-1:000000000000:security-group/sg-97bf3c95012939fd7" [90m-> null[0m[0m
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-1:000000000000:security-group/sg-3d02f80403718e2bd" [90m-> null[0m[0m
       [31m-[0m[0m description            = "Lambda worker security group" [90m-> null[0m[0m
       [31m-[0m[0m egress                 = [
           [31m-[0m[0m {
@@ -2877,21 +2877,21 @@ Terraform will perform the following actions:
               [31m-[0m[0m to_port          = 0
             },
         ] [90m-> null[0m[0m
-      [31m-[0m[0m id                     = "sg-97bf3c95012939fd7" [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sg-3d02f80403718e2bd" [90m-> null[0m[0m
       [31m-[0m[0m ingress                = [] [90m-> null[0m[0m
       [31m-[0m[0m name                   = "worker-security-group" [90m-> null[0m[0m
       [31m-[0m[0m owner_id               = "000000000000" [90m-> null[0m[0m
       [31m-[0m[0m revoke_rules_on_delete = false [90m-> null[0m[0m
       [31m-[0m[0m tags                   = {} [90m-> null[0m[0m
       [31m-[0m[0m tags_all               = {} [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id                 = "vpc-2a1e99786e12e7625" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                 = "vpc-184b5e886bb48dc69" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_sfn_state_machine.ingest[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_sfn_state_machine" "ingest" {
       [31m-[0m[0m arn                       = "arn:aws:states:us-east-1:000000000000:stateMachine:ingest-state-machine" [90m-> null[0m[0m
-      [31m-[0m[0m creation_date             = "2026-04-01T16:02:40Z" [90m-> null[0m[0m
+      [31m-[0m[0m creation_date             = "2026-04-02T16:19:20Z" [90m-> null[0m[0m
       [31m-[0m[0m definition                = jsonencode(
             {
               [31m-[0m[0m StartAt = "InvokeIngestFunction"
@@ -2947,7 +2947,7 @@ Terraform will perform the following actions:
 
 [1m  # aws_subnet.private_a[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_subnet" "private_a" {
-      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-4519de44d93f57770" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-f6fee7b62c24147d3" [90m-> null[0m[0m
       [31m-[0m[0m assign_ipv6_address_on_creation                = false [90m-> null[0m[0m
       [31m-[0m[0m availability_zone                              = "us-east-1a" [90m-> null[0m[0m
       [31m-[0m[0m availability_zone_id                           = "use1-az6" [90m-> null[0m[0m
@@ -2956,7 +2956,7 @@ Terraform will perform the following actions:
       [31m-[0m[0m enable_lni_at_device_index                     = 0 [90m-> null[0m[0m
       [31m-[0m[0m enable_resource_name_dns_a_record_on_launch    = false [90m-> null[0m[0m
       [31m-[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false [90m-> null[0m[0m
-      [31m-[0m[0m id                                             = "subnet-4519de44d93f57770" [90m-> null[0m[0m
+      [31m-[0m[0m id                                             = "subnet-f6fee7b62c24147d3" [90m-> null[0m[0m
       [31m-[0m[0m ipv6_native                                    = false [90m-> null[0m[0m
       [31m-[0m[0m map_customer_owned_ip_on_launch                = false [90m-> null[0m[0m
       [31m-[0m[0m map_public_ip_on_launch                        = false [90m-> null[0m[0m
@@ -2968,13 +2968,13 @@ Terraform will perform the following actions:
       [31m-[0m[0m tags_all                                       = {
           [31m-[0m[0m "Name" = "payments-private-a"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id                                         = "vpc-2a1e99786e12e7625" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                                         = "vpc-184b5e886bb48dc69" [90m-> null[0m[0m
         [90m# (4 unchanged attributes hidden)[0m[0m
     }
 
 [1m  # aws_subnet.private_b[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_subnet" "private_b" {
-      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-2b177313ca8d97bbf" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-bbb4955fe77f54bff" [90m-> null[0m[0m
       [31m-[0m[0m assign_ipv6_address_on_creation                = false [90m-> null[0m[0m
       [31m-[0m[0m availability_zone                              = "us-east-1b" [90m-> null[0m[0m
       [31m-[0m[0m availability_zone_id                           = "use1-az1" [90m-> null[0m[0m
@@ -2983,7 +2983,7 @@ Terraform will perform the following actions:
       [31m-[0m[0m enable_lni_at_device_index                     = 0 [90m-> null[0m[0m
       [31m-[0m[0m enable_resource_name_dns_a_record_on_launch    = false [90m-> null[0m[0m
       [31m-[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false [90m-> null[0m[0m
-      [31m-[0m[0m id                                             = "subnet-2b177313ca8d97bbf" [90m-> null[0m[0m
+      [31m-[0m[0m id                                             = "subnet-bbb4955fe77f54bff" [90m-> null[0m[0m
       [31m-[0m[0m ipv6_native                                    = false [90m-> null[0m[0m
       [31m-[0m[0m map_customer_owned_ip_on_launch                = false [90m-> null[0m[0m
       [31m-[0m[0m map_public_ip_on_launch                        = false [90m-> null[0m[0m
@@ -2995,13 +2995,13 @@ Terraform will perform the following actions:
       [31m-[0m[0m tags_all                                       = {
           [31m-[0m[0m "Name" = "payments-private-b"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id                                         = "vpc-2a1e99786e12e7625" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                                         = "vpc-184b5e886bb48dc69" [90m-> null[0m[0m
         [90m# (4 unchanged attributes hidden)[0m[0m
     }
 
 [1m  # aws_subnet.public_a[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_subnet" "public_a" {
-      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-fb82613e44683a9dc" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-a561ad295def9fad5" [90m-> null[0m[0m
       [31m-[0m[0m assign_ipv6_address_on_creation                = false [90m-> null[0m[0m
       [31m-[0m[0m availability_zone                              = "us-east-1a" [90m-> null[0m[0m
       [31m-[0m[0m availability_zone_id                           = "use1-az6" [90m-> null[0m[0m
@@ -3010,7 +3010,7 @@ Terraform will perform the following actions:
       [31m-[0m[0m enable_lni_at_device_index                     = 0 [90m-> null[0m[0m
       [31m-[0m[0m enable_resource_name_dns_a_record_on_launch    = false [90m-> null[0m[0m
       [31m-[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false [90m-> null[0m[0m
-      [31m-[0m[0m id                                             = "subnet-fb82613e44683a9dc" [90m-> null[0m[0m
+      [31m-[0m[0m id                                             = "subnet-a561ad295def9fad5" [90m-> null[0m[0m
       [31m-[0m[0m ipv6_native                                    = false [90m-> null[0m[0m
       [31m-[0m[0m map_customer_owned_ip_on_launch                = false [90m-> null[0m[0m
       [31m-[0m[0m map_public_ip_on_launch                        = true [90m-> null[0m[0m
@@ -3022,13 +3022,13 @@ Terraform will perform the following actions:
       [31m-[0m[0m tags_all                                       = {
           [31m-[0m[0m "Name" = "payments-public-a"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id                                         = "vpc-2a1e99786e12e7625" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                                         = "vpc-184b5e886bb48dc69" [90m-> null[0m[0m
         [90m# (4 unchanged attributes hidden)[0m[0m
     }
 
 [1m  # aws_subnet.public_b[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_subnet" "public_b" {
-      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-54d1980528c2b6553" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-aec64f41aa6270620" [90m-> null[0m[0m
       [31m-[0m[0m assign_ipv6_address_on_creation                = false [90m-> null[0m[0m
       [31m-[0m[0m availability_zone                              = "us-east-1b" [90m-> null[0m[0m
       [31m-[0m[0m availability_zone_id                           = "use1-az1" [90m-> null[0m[0m
@@ -3037,7 +3037,7 @@ Terraform will perform the following actions:
       [31m-[0m[0m enable_lni_at_device_index                     = 0 [90m-> null[0m[0m
       [31m-[0m[0m enable_resource_name_dns_a_record_on_launch    = false [90m-> null[0m[0m
       [31m-[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false [90m-> null[0m[0m
-      [31m-[0m[0m id                                             = "subnet-54d1980528c2b6553" [90m-> null[0m[0m
+      [31m-[0m[0m id                                             = "subnet-aec64f41aa6270620" [90m-> null[0m[0m
       [31m-[0m[0m ipv6_native                                    = false [90m-> null[0m[0m
       [31m-[0m[0m map_customer_owned_ip_on_launch                = false [90m-> null[0m[0m
       [31m-[0m[0m map_public_ip_on_launch                        = true [90m-> null[0m[0m
@@ -3049,26 +3049,26 @@ Terraform will perform the following actions:
       [31m-[0m[0m tags_all                                       = {
           [31m-[0m[0m "Name" = "payments-public-b"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id                                         = "vpc-2a1e99786e12e7625" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                                         = "vpc-184b5e886bb48dc69" [90m-> null[0m[0m
         [90m# (4 unchanged attributes hidden)[0m[0m
     }
 
 [1m  # aws_vpc.payments[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_vpc" "payments" {
-      [31m-[0m[0m arn                                  = "arn:aws:ec2:us-east-1:000000000000:vpc/vpc-2a1e99786e12e7625" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                  = "arn:aws:ec2:us-east-1:000000000000:vpc/vpc-184b5e886bb48dc69" [90m-> null[0m[0m
       [31m-[0m[0m assign_generated_ipv6_cidr_block     = false [90m-> null[0m[0m
       [31m-[0m[0m cidr_block                           = "10.20.0.0/16" [90m-> null[0m[0m
-      [31m-[0m[0m default_network_acl_id               = "acl-5cdb8a9aceae7f20d" [90m-> null[0m[0m
-      [31m-[0m[0m default_route_table_id               = "rtb-f242d802a17dcea5c" [90m-> null[0m[0m
-      [31m-[0m[0m default_security_group_id            = "sg-1a09d4ad5b4a4b6ee" [90m-> null[0m[0m
+      [31m-[0m[0m default_network_acl_id               = "acl-cd105ede9145b981a" [90m-> null[0m[0m
+      [31m-[0m[0m default_route_table_id               = "rtb-d4cb95fb610a95307" [90m-> null[0m[0m
+      [31m-[0m[0m default_security_group_id            = "sg-1e4aa37003f34a2fb" [90m-> null[0m[0m
       [31m-[0m[0m dhcp_options_id                      = "default" [90m-> null[0m[0m
       [31m-[0m[0m enable_dns_hostnames                 = true [90m-> null[0m[0m
       [31m-[0m[0m enable_dns_support                   = true [90m-> null[0m[0m
       [31m-[0m[0m enable_network_address_usage_metrics = false [90m-> null[0m[0m
-      [31m-[0m[0m id                                   = "vpc-2a1e99786e12e7625" [90m-> null[0m[0m
+      [31m-[0m[0m id                                   = "vpc-184b5e886bb48dc69" [90m-> null[0m[0m
       [31m-[0m[0m instance_tenancy                     = "default" [90m-> null[0m[0m
       [31m-[0m[0m ipv6_netmask_length                  = 0 [90m-> null[0m[0m
-      [31m-[0m[0m main_route_table_id                  = "rtb-f242d802a17dcea5c" [90m-> null[0m[0m
+      [31m-[0m[0m main_route_table_id                  = "rtb-d4cb95fb610a95307" [90m-> null[0m[0m
       [31m-[0m[0m owner_id                             = "000000000000" [90m-> null[0m[0m
       [31m-[0m[0m tags                                 = {
           [31m-[0m[0m "Name" = "payments-ingestion-vpc"
@@ -3081,10 +3081,10 @@ Terraform will perform the following actions:
 
 [1m  # aws_vpc_endpoint.s3[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_vpc_endpoint" "s3" {
-      [31m-[0m[0m arn                        = "arn:aws:ec2:us-east-1:000000000000:vpc-endpoint/vpce-8955982e58864c00c" [90m-> null[0m[0m
+      [31m-[0m[0m arn                        = "arn:aws:ec2:us-east-1:000000000000:vpc-endpoint/vpce-c22d94e754f8f657a" [90m-> null[0m[0m
       [31m-[0m[0m cidr_blocks                = [] [90m-> null[0m[0m
       [31m-[0m[0m dns_entry                  = [] [90m-> null[0m[0m
-      [31m-[0m[0m id                         = "vpce-8955982e58864c00c" [90m-> null[0m[0m
+      [31m-[0m[0m id                         = "vpce-c22d94e754f8f657a" [90m-> null[0m[0m
       [31m-[0m[0m ip_address_type            = "ipv4" [90m-> null[0m[0m
       [31m-[0m[0m network_interface_ids      = [] [90m-> null[0m[0m
       [31m-[0m[0m owner_id                   = "000000000000" [90m-> null[0m[0m
@@ -3100,11 +3100,11 @@ Terraform will perform the following actions:
                 ]
             }
         ) [90m-> null[0m[0m
-      [31m-[0m[0m prefix_list_id             = "pl-7cb124f0e96274cab" [90m-> null[0m[0m
+      [31m-[0m[0m prefix_list_id             = "pl-f830d460500af6eed" [90m-> null[0m[0m
       [31m-[0m[0m private_dns_enabled        = false [90m-> null[0m[0m
       [31m-[0m[0m requester_managed          = false [90m-> null[0m[0m
       [31m-[0m[0m route_table_ids            = [
-          [31m-[0m[0m "rtb-00b135fd62a7f0054",
+          [31m-[0m[0m "rtb-a4df3346a5fe968cc",
         ] [90m-> null[0m[0m
       [31m-[0m[0m security_group_ids         = [] [90m-> null[0m[0m
       [31m-[0m[0m service_name               = "com.amazonaws.us-east-1.s3" [90m-> null[0m[0m
@@ -3117,7 +3117,7 @@ Terraform will perform the following actions:
           [31m-[0m[0m "Name" = "payments-s3-endpoint"
         } [90m-> null[0m[0m
       [31m-[0m[0m vpc_endpoint_type          = "Gateway" [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id                     = "vpc-2a1e99786e12e7625" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                     = "vpc-184b5e886bb48dc69" [90m-> null[0m[0m
         [90m# (3 unchanged attributes hidden)[0m[0m
 
       [31m-[0m[0m dns_options {
@@ -3146,7 +3146,7 @@ Terraform will perform the following actions:
 
 [1m  # terraform_data.preclean_named_resources[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "terraform_data" "preclean_named_resources" {
-      [31m-[0m[0m id               = "0d67bed3-3abb-0dec-740f-639a05d45212" [90m-> null[0m[0m
+      [31m-[0m[0m id               = "604826da-1919-c86a-51ef-44f81e00fdc0" [90m-> null[0m[0m
       [31m-[0m[0m triggers_replace = {
           [31m-[0m[0m aws_endpoint = "http://localhost:4566"
           [31m-[0m[0m aws_region   = "us-east-1"
@@ -3154,99 +3154,99 @@ Terraform will perform the following actions:
     }
 
 [1mPlan:[0m 0 to add, 0 to change, 45 to destroy.
-[0m[0m[1maws_iam_role_policy.lambda: Destroying... [id=lambda-execution-role:lambda-inline-policy][0m[0m
-[0m[1maws_s3_bucket_public_access_block.archive: Destroying... [id=payments-ingest-bucket][0m[0m
-[0m[1maws_route_table_association.public_b: Destroying... [id=rtbassoc-060b6cbfca10df59f][0m[0m
-[0m[1maws_iam_role_policy.pipes: Destroying... [id=eventbridge-pipes-role:eventbridge-pipes-inline-policy][0m[0m
-[0m[1maws_route.public_default: Destroying... [id=r-rtb-ecfb3530cb3d11ed31080289494][0m[0m
-[0m[1maws_route_table_association.private_a: Destroying... [id=rtbassoc-1b0bb694d2d6822e4][0m[0m
-[0m[1maws_s3_bucket_policy.archive: Destroying... [id=payments-ingest-bucket][0m[0m
+[0m[0m[1maws_iam_role_policy.pipes: Destroying... [id=eventbridge-pipes-role:eventbridge-pipes-inline-policy][0m[0m
+[0m[1maws_route_table_association.public_b: Destroying... [id=rtbassoc-58d5d9f17ef088280][0m[0m
+[0m[1maws_s3_bucket_server_side_encryption_configuration.archive: Destroying... [id=payments-ingest-bucket][0m[0m
+[0m[1maws_iam_role_policy.step_functions: Destroying... [id=step-functions-role:step-functions-inline-policy][0m[0m
+[0m[1maws_iam_role_policy.lambda: Destroying... [id=lambda-execution-role:lambda-inline-policy][0m[0m
 [0m[1maws_s3_bucket_ownership_controls.archive: Destroying... [id=payments-ingest-bucket][0m[0m
-[0m[1maws_security_group.database: Destroying... [id=sg-f43d9550c5b2deb18][0m[0m
-[0m[1maws_security_group.api: Destroying... [id=sg-f03af15615f74d13e][0m[0m
+[0m[1maws_secretsmanager_secret_version.db: Destroying... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-LbePVe|terraform-20260402161849858200000002][0m[0m
+[0m[1maws_api_gateway_stage.ingest: Destroying... [id=ags-1go505g4zx-prod][0m[0m
+[0m[1maws_lambda_event_source_mapping.ingest: Destroying... [id=378663f1-6970-4f8b-abc1-363c37a1d0fc][0m[0m
+[0m[1maws_security_group.api: Destroying... [id=sg-02a096a7078695916][0m[0m
+[0m[1maws_api_gateway_stage.ingest: Destruction complete after 0s[0m
 [0m[1maws_iam_role_policy.pipes: Destruction complete after 0s[0m
 [0m[1maws_iam_role_policy.lambda: Destruction complete after 0s[0m
-[0m[1maws_route_table_association.public_a: Destroying... [id=rtbassoc-e4eba0fe231a688cb][0m[0m
-[0m[1maws_route_table_association.public_b: Destruction complete after 0s[0m
-[0m[1maws_route_table_association.private_a: Destruction complete after 0s[0m
-[0m[1maws_secretsmanager_secret_version.db: Destroying... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-HqzeuI|terraform-20260401160209683600000002][0m[0m
-[0m[1maws_iam_role_policy.step_functions: Destroying... [id=step-functions-role:step-functions-inline-policy][0m[0m
-[0m[1maws_s3_bucket_server_side_encryption_configuration.archive: Destroying... [id=payments-ingest-bucket][0m[0m
-[0m[1maws_route_table_association.public_a: Destruction complete after 0s[0m
-[0m[1maws_route_table_association.private_b: Destroying... [id=rtbassoc-a226cc169f92c186e][0m[0m
-[0m[1maws_iam_role_policy.step_functions: Destruction complete after 0s[0m
-[0m[1maws_lambda_event_source_mapping.ingest: Destroying... [id=87ebded5-cb74-4d1c-bf8a-3bd045b7d1a8][0m[0m
-[0m[1maws_s3_bucket_ownership_controls.archive: Destruction complete after 0s[0m
-[0m[1maws_s3_bucket_policy.archive: Destruction complete after 0s[0m
-[0m[1maws_s3_bucket_public_access_block.archive: Destruction complete after 0s[0m
 [0m[1maws_lambda_permission.apigateway: Destroying... [id=AllowApiGatewayInvoke][0m[0m
-[0m[1maws_vpc_endpoint.s3: Destroying... [id=vpce-8955982e58864c00c][0m[0m
-[0m[1maws_api_gateway_stage.ingest: Destroying... [id=ags-rmizf185pu-prod][0m[0m
-[0m[1maws_security_group.api: Destruction complete after 0s[0m
-[0m[1maws_security_group.database: Destruction complete after 0s[0m
+[0m[1maws_iam_role_policy.step_functions: Destruction complete after 0s[0m
 [0m[1maws_s3_bucket_server_side_encryption_configuration.archive: Destruction complete after 0s[0m
+[0m[1maws_route_table_association.public_a: Destroying... [id=rtbassoc-cba6a3fed5c40560a][0m[0m
+[0m[1maws_s3_bucket_public_access_block.archive: Destroying... [id=payments-ingest-bucket][0m[0m
+[0m[1maws_secretsmanager_secret_version.db: Destruction complete after 0s[0m
+[0m[1maws_route_table_association.private_b: Destroying... [id=rtbassoc-cbfca06b88b56b5f0][0m[0m
+[0m[1maws_vpc_endpoint.s3: Destroying... [id=vpce-c22d94e754f8f657a][0m[0m
+[0m[1maws_route_table_association.private_a: Destroying... [id=rtbassoc-f2609c769bea556a5][0m[0m
+[0m[1maws_route_table_association.public_b: Destruction complete after 0s[0m
+[0m[1maws_s3_bucket_ownership_controls.archive: Destruction complete after 1s[0m
+[0m[1maws_lambda_event_source_mapping.ingest: Destruction complete after 1s[0m
+[0m[1maws_route.public_default: Destroying... [id=r-rtb-7226efdcb0e3e6d601080289494][0m[0m
+[0m[1maws_route_table_association.public_a: Destruction complete after 1s[0m
+[0m[1maws_route_table_association.private_b: Destruction complete after 1s[0m
+[0m[1maws_security_group.database: Destroying... [id=sg-69ea4fa93ef26e629][0m[0m
+[0m[1maws_s3_bucket_policy.archive: Destroying... [id=payments-ingest-bucket][0m[0m
+[0m[1maws_route_table_association.private_a: Destruction complete after 1s[0m
+[0m[1maws_api_gateway_deployment.ingest: Destroying... [id=o0oolc2id4][0m[0m
 [0m[1maws_sfn_state_machine.ingest: Destroying... [id=arn:aws:states:us-east-1:000000000000:stateMachine:ingest-state-machine][0m[0m
 [0m[1maws_iam_role.pipes: Destroying... [id=eventbridge-pipes-role][0m[0m
-[0m[1maws_route_table_association.private_b: Destruction complete after 0s[0m
-[0m[1maws_secretsmanager_secret_version.db: Destruction complete after 0s[0m
-[0m[1maws_subnet.public_b: Destroying... [id=subnet-54d1980528c2b6553][0m[0m
-[0m[1maws_api_gateway_stage.ingest: Destruction complete after 0s[0m
-[0m[1maws_lambda_event_source_mapping.ingest: Destruction complete after 0s[0m
-[0m[1maws_subnet.public_a: Destroying... [id=subnet-fb82613e44683a9dc][0m[0m
-[0m[1maws_lambda_permission.apigateway: Destruction complete after 0s[0m
-[0m[1maws_api_gateway_deployment.ingest: Destroying... [id=kjrzmsolxp][0m[0m
-[0m[1maws_subnet.public_a: Destruction complete after 0s[0m
-[0m[1maws_subnet.public_b: Destruction complete after 0s[0m
-[0m[1maws_sfn_state_machine.ingest: Destruction complete after 0s[0m
+[0m[1maws_s3_bucket_public_access_block.archive: Destruction complete after 1s[0m
+[0m[1maws_lambda_permission.apigateway: Destruction complete after 1s[0m
 [0m[1maws_api_gateway_deployment.ingest: Destruction complete after 0s[0m
-[0m[1maws_iam_role.pipes: Destruction complete after 0s[0m
+[0m[1maws_s3_bucket_policy.archive: Destruction complete after 0s[0m
+[0m[1maws_security_group.api: Destruction complete after 1s[0m
+[0m[1maws_subnet.public_b: Destroying... [id=subnet-aec64f41aa6270620][0m[0m
+[0m[1maws_api_gateway_integration.ingest: Destroying... [id=agi-1go505g4zx-ps0nok8v3o-POST][0m[0m
+[0m[1maws_subnet.public_a: Destroying... [id=subnet-a561ad295def9fad5][0m[0m
+[0m[1maws_sfn_state_machine.ingest: Destruction complete after 0s[0m
+[0m[1maws_security_group.database: Destruction complete after 0s[0m
+[0m[1maws_subnet.public_b: Destruction complete after 0s[0m
 [0m[1maws_cloudwatch_log_group.step_functions: Destroying... [id=/aws/vendedlogs/states/ingest-state-machine][0m[0m
 [0m[1maws_iam_role.step_functions: Destroying... [id=step-functions-role][0m[0m
-[0m[1maws_api_gateway_integration.ingest: Destroying... [id=agi-rmizf185pu-n4ceaoc6cu-POST][0m[0m
 [0m[1mrandom_password.db: Destroying... [id=none][0m[0m
-[0m[1maws_cloudwatch_log_group.step_functions: Destruction complete after 0s[0m
-[0m[1mrandom_password.db: Destruction complete after 0s[0m
 [0m[1maws_api_gateway_integration.ingest: Destruction complete after 0s[0m
-[0m[1maws_route.public_default: Destruction complete after 0s[0m
-[0m[1maws_iam_role.step_functions: Destruction complete after 0s[0m
-[0m[1maws_api_gateway_method.post: Destroying... [id=agm-rmizf185pu-n4ceaoc6cu-POST][0m[0m
-[0m[1maws_route_table.public: Destroying... [id=rtb-ecfb3530cb3d11ed3][0m[0m
+[0m[1mrandom_password.db: Destruction complete after 0s[0m
+[0m[1maws_iam_role.pipes: Destruction complete after 0s[0m
+[0m[1maws_subnet.public_a: Destruction complete after 0s[0m
+[0m[1maws_api_gateway_method.post: Destroying... [id=agm-1go505g4zx-ps0nok8v3o-POST][0m[0m
 [0m[1maws_lambda_function.ingest: Destroying... [id=ingest-function][0m[0m
-[0m[1maws_internet_gateway.payments: Destroying... [id=igw-e01ecc7c6a8f70ea7][0m[0m
+[0m[1maws_cloudwatch_log_group.step_functions: Destruction complete after 0s[0m
+[0m[1maws_iam_role.step_functions: Destruction complete after 0s[0m
 [0m[1maws_api_gateway_method.post: Destruction complete after 0s[0m
-[0m[1maws_api_gateway_resource.ingest: Destroying... [id=n4ceaoc6cu][0m[0m
+[0m[1maws_lambda_function.ingest: Destruction complete after 0s[0m
+[0m[1maws_api_gateway_resource.ingest: Destroying... [id=ps0nok8v3o][0m[0m
 [0m[1maws_api_gateway_resource.ingest: Destruction complete after 0s[0m
-[0m[1maws_api_gateway_rest_api.ingest: Destroying... [id=rmizf185pu][0m[0m
-[0m[1maws_internet_gateway.payments: Destruction complete after 1s[0m
-[0m[1maws_lambda_function.ingest: Destruction complete after 1s[0m
-[0m[1maws_api_gateway_rest_api.ingest: Destruction complete after 0s[0m
-[0m[1maws_cloudwatch_log_group.lambda: Destroying... [id=/aws/lambda/ingest-function][0m[0m
 [0m[1maws_sqs_queue.ingest: Destroying... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/ingest-queue][0m[0m
-[0m[1maws_secretsmanager_secret.db: Destroying... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-HqzeuI][0m[0m
-[0m[1maws_subnet.private_a: Destroying... [id=subnet-4519de44d93f57770][0m[0m
-[0m[1maws_security_group.worker: Destroying... [id=sg-97bf3c95012939fd7][0m[0m
+[0m[1maws_secretsmanager_secret.db: Destroying... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:db-credentials-LbePVe][0m[0m
 [0m[1maws_iam_role.lambda: Destroying... [id=lambda-execution-role][0m[0m
-[0m[1maws_subnet.private_b: Destroying... [id=subnet-2b177313ca8d97bbf][0m[0m
+[0m[1maws_subnet.private_a: Destroying... [id=subnet-f6fee7b62c24147d3][0m[0m
+[0m[1maws_subnet.private_b: Destroying... [id=subnet-bbb4955fe77f54bff][0m[0m
 [0m[1maws_s3_bucket.archive: Destroying... [id=payments-ingest-bucket][0m[0m
+[0m[1maws_security_group.worker: Destroying... [id=sg-3d02f80403718e2bd][0m[0m
+[0m[1maws_cloudwatch_log_group.lambda: Destroying... [id=/aws/lambda/ingest-function][0m[0m
 [0m[1maws_cloudwatch_log_group.lambda: Destruction complete after 0s[0m
 [0m[1maws_subnet.private_a: Destruction complete after 0s[0m
-[0m[1maws_iam_role.lambda: Destruction complete after 0s[0m
+[0m[1maws_api_gateway_rest_api.ingest: Destroying... [id=1go505g4zx][0m[0m
 [0m[1maws_subnet.private_b: Destruction complete after 0s[0m
+[0m[1maws_route.public_default: Destruction complete after 0s[0m
+[0m[1maws_iam_role.lambda: Destruction complete after 0s[0m
 [0m[1maws_secretsmanager_secret.db: Destruction complete after 0s[0m
+[0m[1maws_internet_gateway.payments: Destroying... [id=igw-0aa77ba1b72df959f][0m[0m
+[0m[1maws_route_table.public: Destroying... [id=rtb-7226efdcb0e3e6d60][0m[0m
+[0m[1maws_api_gateway_rest_api.ingest: Destruction complete after 0s[0m
 [0m[1maws_security_group.worker: Destruction complete after 0s[0m
 [0m[1maws_s3_bucket.archive: Destruction complete after 0s[0m
-[0m[1maws_route_table.public: Destruction complete after 1s[0m
+[0m[1maws_internet_gateway.payments: Destruction complete after 0s[0m
+[0m[1maws_route_table.public: Destruction complete after 0s[0m
 [0m[1maws_sqs_queue.ingest: Destruction complete after 1s[0m
-[0m[1mterraform_data.preclean_named_resources: Destroying... [id=0d67bed3-3abb-0dec-740f-639a05d45212][0m[0m
+[0m[1mterraform_data.preclean_named_resources: Destroying... [id=604826da-1919-c86a-51ef-44f81e00fdc0][0m[0m
 [0m[1mterraform_data.preclean_named_resources: Destruction complete after 0s[0m
-[0m[1maws_vpc_endpoint.s3: Destruction complete after 5s[0m
-[0m[1maws_route_table.private: Destroying... [id=rtb-00b135fd62a7f0054][0m[0m
-[0m[1maws_route_table.private: Destruction complete after 1s[0m
-[0m[1maws_vpc.payments: Destroying... [id=vpc-2a1e99786e12e7625][0m[0m
+[0m[1maws_vpc_endpoint.s3: Destruction complete after 6s[0m
+[0m[1maws_route_table.private: Destroying... [id=rtb-a4df3346a5fe968cc][0m[0m
+[0m[1maws_route_table.private: Destruction complete after 0s[0m
+[0m[1maws_vpc.payments: Destroying... [id=vpc-184b5e886bb48dc69][0m[0m
 [0m[1maws_vpc.payments: Destruction complete after 0s[0m
 [0m[1m[32m
 Destroy complete! Resources: 45 destroyed.
-[0mCleaning up worker container: harness-worker-11806
+[0mCleaning up worker container: harness-worker-61073
 [32m✅ Step passed: Destroy / Cleanup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m

@@ -23,6 +23,11 @@ def _region() -> str:
     return os.environ.get("AWS_REGION", "us-east-1")
 
 
+def _expected_stack_name() -> str:
+    prefix = (os.environ.get("NAME_PREFIX") or "").strip()
+    return f"{prefix}-OrdersIngestStack" if prefix else "OrdersIngestStack"
+
+
 def _client(service_name: str):
     kwargs = {
         "region_name": _region(),
@@ -40,17 +45,18 @@ def _stack() -> dict:
     if not _endpoint_url() and not os.environ.get("AWS_ACCESS_KEY_ID"):
         pytest.skip("Integration environment unavailable: no AWS endpoint or credentials configured")
 
+    expected_stack_name = _expected_stack_name()
     try:
         cfn = _client("cloudformation")
         paginator = cfn.get_paginator("list_stacks")
         for page in paginator.paginate(StackStatusFilter=["CREATE_COMPLETE", "UPDATE_COMPLETE"]):
             for summary in page.get("StackSummaries", []):
                 stack_name = summary["StackName"]
-                if stack_name == "OrdersIngestStack" or "OrdersIngestStack" in stack_name:
+                if stack_name == expected_stack_name:
                     return cfn.describe_stacks(StackName=stack_name)["Stacks"][0]
     except (BotoCoreError, ClientError, EndpointConnectionError) as exc:
         pytest.skip(f"Integration environment unavailable: {exc}")
-    pytest.skip("OrdersIngestStack is not deployed")
+    pytest.skip(f"{expected_stack_name} is not deployed")
 
 
 @lru_cache(maxsize=1)
