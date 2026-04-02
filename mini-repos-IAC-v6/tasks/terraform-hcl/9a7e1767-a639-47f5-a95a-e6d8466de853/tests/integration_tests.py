@@ -1,16 +1,33 @@
 import json
 import os
 import re
-from pathlib import Path
-from urllib.parse import urlparse
 
 import boto3
-import pytest
 from botocore.config import Config
 
 
-REPO_DIR = Path(__file__).resolve().parent.parent
-STATE_PATH = REPO_DIR / "state.json"
+VPC_NAME = "payments-ingestion-vpc"
+PUBLIC_ROUTE_TABLE_NAME = "payments-public-rt"
+PRIVATE_ROUTE_TABLE_NAME = "payments-private-rt"
+PUBLIC_SUBNET_A_NAME = "payments-public-a"
+PUBLIC_SUBNET_B_NAME = "payments-public-b"
+PRIVATE_SUBNET_A_NAME = "payments-private-a"
+PRIVATE_SUBNET_B_NAME = "payments-private-b"
+API_SECURITY_GROUP_NAME = "api-security-group"
+WORKER_SECURITY_GROUP_NAME = "worker-security-group"
+DATABASE_SECURITY_GROUP_NAME = "database-security-group"
+LAMBDA_FUNCTION_NAME = "ingest-function"
+QUEUE_NAME = "ingest-queue"
+REST_API_NAME = "ingest-api"
+STATE_MACHINE_NAME = "ingest-state-machine"
+PIPE_NAME = "ingest-pipe"
+S3_BUCKET_NAME = "payments-ingest-bucket"
+SECRET_NAME = "db-credentials"
+DB_INSTANCE_IDENTIFIER = "payments-db"
+DB_SUBNET_GROUP_NAME = "payments-db-subnet-group"
+LAMBDA_ROLE_NAME = "lambda-execution-role"
+STEP_FUNCTIONS_ROLE_NAME = "step-functions-role"
+PIPES_ROLE_NAME = "eventbridge-pipes-role"
 
 
 def aws_region():
@@ -23,34 +40,11 @@ def aws_region():
 
 
 def discover_endpoint():
-    endpoint = (
+    return (
         os.environ.get("TF_VAR_aws_endpoint")
         or os.environ.get("AWS_ENDPOINT_URL")
         or os.environ.get("AWS_ENDPOINT")
     )
-    if endpoint:
-        return endpoint
-
-    if not STATE_PATH.exists():
-        return None
-
-    state = json.loads(STATE_PATH.read_text())
-    for resource in state_resources(state["values"]["root_module"]):
-        values = resource.get("values", {})
-        for key in ("id", "url", "invoke_url", "queue_url"):
-            candidate = values.get(key)
-            if isinstance(candidate, str) and candidate.startswith(("http://", "https://")):
-                parsed = urlparse(candidate)
-                hostname = parsed.hostname or ""
-                labels = hostname.split(".")
-                port = f":{parsed.port}" if parsed.port else ""
-                region = aws_region()
-                if len(labels) > 2 and labels[1] == region:
-                    generic_host = ".".join(labels[2:])
-                    if generic_host:
-                        return f"{parsed.scheme}://{generic_host}{port}"
-                return f"{parsed.scheme}://{parsed.netloc}"
-    return None
 
 
 def aws_client(service_name):
@@ -67,39 +61,53 @@ def aws_client(service_name):
     return boto3.client(service_name, **kwargs)
 
 
-def load_state():
-    if not STATE_PATH.exists():
-        pytest.fail("state.json must exist before running integration tests")
-    return json.loads(STATE_PATH.read_text())
+def describe_one(items, description):
+    assert len(items) == 1, f"expected exactly one {description}, found {len(items)}"
+    return items[0]
 
 
-def state_resources(module):
-    resources = list(module.get("resources", []))
-    for child in module.get("child_modules", []):
-        resources.extend(state_resources(child))
-    return resources
+def get_vpc(ec2):
+    return describe_one(
+        ec2.describe_vpcs(Filters=[{"Name": "tag:Name", "Values": [VPC_NAME]}])["Vpcs"],
+        f"VPC tagged {VPC_NAME}",
+    )
 
 
-def resources_by_type(state, resource_type):
-    root_module = state["values"]["root_module"]
-    return [
-        resource
-        for resource in state_resources(root_module)
-        if resource["type"] == resource_type and resource.get("mode", "managed") == "managed"
+def get_subnet_by_name(ec2, subnet_name):
+    return describe_one(
+        ec2.describe_subnets(Filters=[{"Name": "tag:Name", "Values": [subnet_name]}])["Subnets"],
+        f"subnet tagged {subnet_name}",
+    )
+
+
+def get_route_table_by_name(ec2, route_table_name):
+    return describe_one(
+        ec2.describe_route_tables(Filters=[{"Name": "tag:Name", "Values": [route_table_name]}])["RouteTables"],
+        f"route table tagged {route_table_name}",
+    )
+
+
+def get_security_group_by_name(ec2, group_name):
+    return describe_one(
+        ec2.describe_security_groups(Filters=[{"Name": "group-name", "Values": [group_name]}])["SecurityGroups"],
+        f"security group named {group_name}",
+    )
+
+
+def get_rest_api(apigateway):
+    apis = [api for api in apigateway.get_rest_apis().get("items", []) if api.get("name") == REST_API_NAME]
+    return describe_one(apis, f"REST API named {REST_API_NAME}")
+
+
+def get_state_machine(stepfunctions):
+    machines = [
+        machine for machine in stepfunctions.list_state_machines().get("stateMachines", []) if machine["name"] == STATE_MACHINE_NAME
     ]
+    return describe_one(machines, f"state machine named {STATE_MACHINE_NAME}")
 
 
-def one_resource(state, resource_type):
-    resources = resources_by_type(state, resource_type)
-    assert len(resources) == 1, f"expected exactly one {resource_type}, found {len(resources)}"
-    return resources[0]
-
-
-def resource_values(state, resource_type, resource_name):
-    for resource in resources_by_type(state, resource_type):
-        if resource["name"] == resource_name:
-            return resource["values"]
-    raise AssertionError(f"{resource_type}.{resource_name} not found")
+def get_secret(secretsmanager):
+    return secretsmanager.describe_secret(SecretId=SECRET_NAME)
 
 
 def inline_policy(role_name, policy_name):
@@ -111,17 +119,28 @@ def permission_has_cidr(permission, cidr):
     return any(ip_range.get("CidrIp") == cidr for ip_range in permission.get("IpRanges", []))
 
 
+def permission_is_allow_all_egress(permission):
+    ip_protocol = permission.get("IpProtocol")
+    return ip_protocol == "-1" and permission_has_cidr(permission, "0.0.0.0/0")
+
+
+def uses_aws_endpoint():
+    endpoint = discover_endpoint()
+    return endpoint is None or "amazonaws.com" in endpoint
+
+
 def test_network_topology_matches_contract():
-    state = load_state()
     ec2 = aws_client("ec2")
 
-    vpc = one_resource(state, "aws_vpc")["values"]
-    assert vpc["cidr_block"] == "10.20.0.0/16"
+    vpc = get_vpc(ec2)
+    assert vpc["CidrBlock"] == "10.20.0.0/16"
 
-    subnets = resources_by_type(state, "aws_subnet")
-    assert len(subnets) == 4
-    subnet_ids = [subnet["values"]["id"] for subnet in subnets]
-    subnet_details = ec2.describe_subnets(SubnetIds=subnet_ids)["Subnets"]
+    subnet_details = [
+        get_subnet_by_name(ec2, PUBLIC_SUBNET_A_NAME),
+        get_subnet_by_name(ec2, PUBLIC_SUBNET_B_NAME),
+        get_subnet_by_name(ec2, PRIVATE_SUBNET_A_NAME),
+        get_subnet_by_name(ec2, PRIVATE_SUBNET_B_NAME),
+    ]
     assert {subnet["CidrBlock"] for subnet in subnet_details} == {
         "10.20.0.0/24",
         "10.20.1.0/24",
@@ -136,37 +155,50 @@ def test_network_topology_matches_contract():
     assert len({subnet["AvailabilityZone"] for subnet in private_subnets}) == 2
     assert {subnet["AvailabilityZone"] for subnet in public_subnets} == {subnet["AvailabilityZone"] for subnet in private_subnets}
 
-    igw = one_resource(state, "aws_internet_gateway")["values"]
-    described_igw = ec2.describe_internet_gateways(InternetGatewayIds=[igw["id"]])["InternetGateways"][0]
-    assert described_igw["Attachments"][0]["VpcId"] == vpc["id"]
+    described_igw = describe_one(
+        ec2.describe_internet_gateways(Filters=[{"Name": "attachment.vpc-id", "Values": [vpc["VpcId"]]}])["InternetGateways"],
+        f"internet gateway attached to {VPC_NAME}",
+    )
+    assert described_igw["Attachments"][0]["VpcId"] == vpc["VpcId"]
 
-    route_tables = ec2.describe_route_tables(Filters=[{"Name": "vpc-id", "Values": [vpc["id"]]}])["RouteTables"]
-    managed_route_table_ids = {
-        resource_values(state, "aws_route_table", "public")["id"],
-        resource_values(state, "aws_route_table", "private")["id"],
-    }
-    route_tables = [route_table for route_table in route_tables if route_table["RouteTableId"] in managed_route_table_ids]
-    assert len(route_tables) == 2
+    public_route_table = get_route_table_by_name(ec2, PUBLIC_ROUTE_TABLE_NAME)
+    private_route_table = get_route_table_by_name(ec2, PRIVATE_ROUTE_TABLE_NAME)
 
-    endpoint = one_resource(state, "aws_vpc_endpoint")["values"]
-    described_endpoint = ec2.describe_vpc_endpoints(VpcEndpointIds=[endpoint["id"]])["VpcEndpoints"][0]
+    public_default_routes = [
+        route
+        for route in public_route_table["Routes"]
+        if route.get("DestinationCidrBlock") == "0.0.0.0/0"
+        and route.get("GatewayId") == described_igw["InternetGatewayId"]
+        and route.get("State") == "active"
+    ]
+    assert len(public_default_routes) == 1
+
+    private_default_routes = [
+        route
+        for route in private_route_table["Routes"]
+        if route.get("DestinationCidrBlock") == "0.0.0.0/0"
+    ]
+    assert private_default_routes == []
+
+    described_endpoint = describe_one(
+        ec2.describe_vpc_endpoints(
+            Filters=[
+                {"Name": "vpc-id", "Values": [vpc["VpcId"]]},
+                {"Name": "service-name", "Values": [f"com.amazonaws.{aws_region()}.s3"]},
+            ]
+        )["VpcEndpoints"],
+        "S3 gateway VPC endpoint",
+    )
     assert described_endpoint["VpcEndpointType"] == "Gateway"
+    assert private_route_table["RouteTableId"] in described_endpoint["RouteTableIds"]
 
 
 def test_security_groups_and_private_wiring_match_contract():
-    state = load_state()
     ec2 = aws_client("ec2")
     lambda_client = aws_client("lambda")
     rds = aws_client("rds")
 
-    api_sg = resource_values(state, "aws_security_group", "api")
-    worker_sg = resource_values(state, "aws_security_group", "worker")
-    db_sg = resource_values(state, "aws_security_group", "database")
-
-    groups = ec2.describe_security_groups(GroupIds=[api_sg["id"], worker_sg["id"], db_sg["id"]])["SecurityGroups"]
-    groups_by_id = {group["GroupId"]: group for group in groups}
-
-    api_group = groups_by_id[api_sg["id"]]
+    api_group = get_security_group_by_name(ec2, API_SECURITY_GROUP_NAME)
     assert any(
         permission["FromPort"] == 443
         and permission["ToPort"] == 443
@@ -174,37 +206,41 @@ def test_security_groups_and_private_wiring_match_contract():
         and permission_has_cidr(permission, "0.0.0.0/0")
         for permission in api_group["IpPermissions"]
     )
+    assert len(api_group["IpPermissionsEgress"]) == 1
+    assert permission_is_allow_all_egress(api_group["IpPermissionsEgress"][0])
 
-    worker_group = groups_by_id[worker_sg["id"]]
+    worker_group = get_security_group_by_name(ec2, WORKER_SECURITY_GROUP_NAME)
     assert worker_group["IpPermissions"] == []
+    assert len(worker_group["IpPermissionsEgress"]) == 1
+    assert permission_is_allow_all_egress(worker_group["IpPermissionsEgress"][0])
 
-    database_group = groups_by_id[db_sg["id"]]
+    database_group = get_security_group_by_name(ec2, DATABASE_SECURITY_GROUP_NAME)
     assert len(database_group["IpPermissions"]) == 1
     permission = database_group["IpPermissions"][0]
     assert permission["FromPort"] == 5432
     assert permission["ToPort"] == 5432
-    assert permission["UserIdGroupPairs"][0]["GroupId"] == worker_sg["id"]
+    assert permission["UserIdGroupPairs"][0]["GroupId"] == worker_group["GroupId"]
 
-    function = lambda_client.get_function(FunctionName="ingest-function")["Configuration"]
-    assert function["VpcConfig"]["SecurityGroupIds"] == [worker_sg["id"]]
+    function = lambda_client.get_function(FunctionName=LAMBDA_FUNCTION_NAME)["Configuration"]
+    assert function["VpcConfig"]["SecurityGroupIds"] == [worker_group["GroupId"]]
 
-    db_instance = rds.describe_db_instances(DBInstanceIdentifier="payments-db")["DBInstances"][0]
-    assert db_instance["VpcSecurityGroups"][0]["VpcSecurityGroupId"] == db_sg["id"]
+    if uses_aws_endpoint():
+        db_instance = rds.describe_db_instances(DBInstanceIdentifier=DB_INSTANCE_IDENTIFIER)["DBInstances"][0]
+        assert db_instance["VpcSecurityGroups"][0]["VpcSecurityGroupId"] == database_group["GroupId"]
 
 
 def test_compute_resources_match_contract():
-    state = load_state()
     apigateway = aws_client("apigateway")
     lambda_client = aws_client("lambda")
     sqs = aws_client("sqs")
 
-    function = lambda_client.get_function(FunctionName="ingest-function")["Configuration"]
+    function = lambda_client.get_function(FunctionName=LAMBDA_FUNCTION_NAME)["Configuration"]
     assert function["Runtime"] == "python3.12"
     assert function["MemorySize"] == 256
     assert function["Timeout"] == 10
     assert function["PackageType"] == "Zip"
 
-    queue_url = sqs.get_queue_url(QueueName="ingest-queue")["QueueUrl"]
+    queue_url = sqs.get_queue_url(QueueName=QUEUE_NAME)["QueueUrl"]
     queue_attrs = sqs.get_queue_attributes(
         QueueUrl=queue_url,
         AttributeNames=["VisibilityTimeout", "SqsManagedSseEnabled"],
@@ -212,12 +248,13 @@ def test_compute_resources_match_contract():
     assert queue_attrs["VisibilityTimeout"] == "30"
     assert queue_attrs["SqsManagedSseEnabled"] == "true"
 
-    mappings = lambda_client.list_event_source_mappings(FunctionName="ingest-function")["EventSourceMappings"]
+    mappings = lambda_client.list_event_source_mappings(FunctionName=LAMBDA_FUNCTION_NAME)["EventSourceMappings"]
     assert len(mappings) == 1
     assert mappings[0]["BatchSize"] == 10
-    assert mappings[0]["EventSourceArn"] == resource_values(state, "aws_sqs_queue", "ingest")["arn"]
+    queue_arn = sqs.get_queue_attributes(QueueUrl=queue_url, AttributeNames=["QueueArn"])["Attributes"]["QueueArn"]
+    assert mappings[0]["EventSourceArn"] == queue_arn
 
-    api = one_resource(state, "aws_api_gateway_rest_api")["values"]
+    api = get_rest_api(apigateway)
     resources = apigateway.get_resources(restApiId=api["id"])["items"]
     ingest_resource = next(resource for resource in resources if resource["path"] == "/ingest")
     method = apigateway.get_method(restApiId=api["id"], resourceId=ingest_resource["id"], httpMethod="POST")
@@ -228,7 +265,6 @@ def test_compute_resources_match_contract():
 
 
 def test_workflow_resources_match_contract():
-    state = load_state()
     logs = aws_client("logs")
     stepfunctions = aws_client("stepfunctions")
     pipes = aws_client("pipes")
@@ -239,63 +275,75 @@ def test_workflow_resources_match_contract():
     }
     assert log_groups["/aws/lambda/ingest-function"]["retentionInDays"] == 14
     assert log_groups["/aws/vendedlogs/states/ingest-state-machine"]["retentionInDays"] == 7
+    assert not log_groups["/aws/vendedlogs/states/ingest-state-machine"].get("kmsKeyId")
 
-    machine = stepfunctions.describe_state_machine(
-        stateMachineArn=resource_values(state, "aws_sfn_state_machine", "ingest")["arn"]
-    )
+    machine_summary = get_state_machine(stepfunctions)
+    machine = stepfunctions.describe_state_machine(stateMachineArn=machine_summary["stateMachineArn"])
     definition = json.loads(machine["definition"])
     assert machine["type"] == "STANDARD"
     assert definition["StartAt"] == "InvokeIngestFunction"
     assert definition["States"]["InvokeIngestFunction"]["Type"] == "Task"
     assert definition["States"]["InvokeIngestFunction"]["End"] is True
 
-    pipe = pipes.describe_pipe(Name="ingest-pipe")
-    assert pipe["Source"] == resource_values(state, "aws_sqs_queue", "ingest")["arn"]
-    assert pipe["Enrichment"] == resource_values(state, "aws_lambda_function", "ingest")["arn"]
-    assert pipe["Target"] == resource_values(state, "aws_sfn_state_machine", "ingest")["arn"]
-    assert pipe["SourceParameters"]["SqsQueueParameters"]["BatchSize"] == 10
+    queue_url = aws_client("sqs").get_queue_url(QueueName=QUEUE_NAME)["QueueUrl"]
+    queue_arn = aws_client("sqs").get_queue_attributes(QueueUrl=queue_url, AttributeNames=["QueueArn"])["Attributes"]["QueueArn"]
+    function_arn = aws_client("lambda").get_function(FunctionName=LAMBDA_FUNCTION_NAME)["Configuration"]["FunctionArn"]
+    if uses_aws_endpoint():
+        pipe = pipes.describe_pipe(Name=PIPE_NAME)
+        assert pipe["Source"] == queue_arn
+        assert pipe["Enrichment"] == function_arn
+        assert pipe["Target"] == machine_summary["stateMachineArn"]
+        assert pipe["SourceParameters"]["SqsQueueParameters"]["BatchSize"] == 10
 
 
 def test_iam_configuration_matches_contract():
-    state = load_state()
     iam = aws_client("iam")
+    lambda_client = aws_client("lambda")
+    secretsmanager = aws_client("secretsmanager")
+    sqs = aws_client("sqs")
+    stepfunctions = aws_client("stepfunctions")
 
-    lambda_role = iam.get_role(RoleName="lambda-execution-role")["Role"]
-    sfn_role = iam.get_role(RoleName="step-functions-role")["Role"]
-    pipes_role = iam.get_role(RoleName="eventbridge-pipes-role")["Role"]
+    lambda_role = iam.get_role(RoleName=LAMBDA_ROLE_NAME)["Role"]
+    sfn_role = iam.get_role(RoleName=STEP_FUNCTIONS_ROLE_NAME)["Role"]
+    pipes_role = iam.get_role(RoleName=PIPES_ROLE_NAME)["Role"]
 
     assert lambda_role["AssumeRolePolicyDocument"]["Statement"][0]["Principal"]["Service"] == "lambda.amazonaws.com"
     assert sfn_role["AssumeRolePolicyDocument"]["Statement"][0]["Principal"]["Service"] == "states.amazonaws.com"
     assert pipes_role["AssumeRolePolicyDocument"]["Statement"][0]["Principal"]["Service"] == "pipes.amazonaws.com"
 
-    lambda_policy = inline_policy("lambda-execution-role", "lambda-inline-policy")
-    sfn_policy = inline_policy("step-functions-role", "step-functions-inline-policy")
-    pipe_policy = inline_policy("eventbridge-pipes-role", "eventbridge-pipes-inline-policy")
+    lambda_policy = inline_policy(LAMBDA_ROLE_NAME, "lambda-inline-policy")
+    sfn_policy = inline_policy(STEP_FUNCTIONS_ROLE_NAME, "step-functions-inline-policy")
+    pipe_policy = inline_policy(PIPES_ROLE_NAME, "eventbridge-pipes-inline-policy")
+
+    queue_url = sqs.get_queue_url(QueueName=QUEUE_NAME)["QueueUrl"]
+    queue_arn = sqs.get_queue_attributes(QueueUrl=queue_url, AttributeNames=["QueueArn"])["Attributes"]["QueueArn"]
+    secret_arn = get_secret(secretsmanager)["ARN"]
+    function_arn = lambda_client.get_function(FunctionName=LAMBDA_FUNCTION_NAME)["Configuration"]["FunctionArn"]
+    state_machine_arn = get_state_machine(stepfunctions)["stateMachineArn"]
 
     lambda_statements = {statement["Sid"]: statement for statement in lambda_policy["Statement"]}
-    assert lambda_statements["SendToQueue"]["Resource"] == resource_values(state, "aws_sqs_queue", "ingest")["arn"]
+    assert lambda_statements["SendToQueue"]["Resource"] == queue_arn
     assert lambda_statements["ArchivePayloads"]["Resource"] == "arn:aws:s3:::payments-ingest-bucket/*"
-    assert lambda_statements["ReadDatabaseSecret"]["Resource"] == resource_values(state, "aws_secretsmanager_secret", "db")["arn"]
+    assert lambda_statements["ReadDatabaseSecret"]["Resource"] == secret_arn
 
     sfn_statements = {statement["Sid"]: statement for statement in sfn_policy["Statement"]}
-    assert sfn_statements["InvokeIngestLambda"]["Resource"] == resource_values(state, "aws_lambda_function", "ingest")["arn"]
+    assert sfn_statements["InvokeIngestLambda"]["Resource"] == function_arn
 
     pipe_statements = {statement["Sid"]: statement for statement in pipe_policy["Statement"]}
-    assert pipe_statements["ConsumeIngestQueue"]["Resource"] == resource_values(state, "aws_sqs_queue", "ingest")["arn"]
-    assert pipe_statements["InvokeEnrichmentLambda"]["Resource"] == resource_values(state, "aws_lambda_function", "ingest")["arn"]
-    assert pipe_statements["StartStateMachineExecution"]["Resource"] == resource_values(state, "aws_sfn_state_machine", "ingest")["arn"]
+    assert pipe_statements["ConsumeIngestQueue"]["Resource"] == queue_arn
+    assert pipe_statements["InvokeEnrichmentLambda"]["Resource"] == function_arn
+    assert pipe_statements["StartStateMachineExecution"]["Resource"] == state_machine_arn
 
 
 def test_storage_resources_match_contract():
-    state = load_state()
     s3 = aws_client("s3")
     secretsmanager = aws_client("secretsmanager")
     rds = aws_client("rds")
 
-    encryption = s3.get_bucket_encryption(Bucket="payments-ingest-bucket")
-    public_access = s3.get_public_access_block(Bucket="payments-ingest-bucket")["PublicAccessBlockConfiguration"]
-    ownership = s3.get_bucket_ownership_controls(Bucket="payments-ingest-bucket")["OwnershipControls"]["Rules"][0]
-    bucket_policy = json.loads(s3.get_bucket_policy(Bucket="payments-ingest-bucket")["Policy"])
+    encryption = s3.get_bucket_encryption(Bucket=S3_BUCKET_NAME)
+    public_access = s3.get_public_access_block(Bucket=S3_BUCKET_NAME)["PublicAccessBlockConfiguration"]
+    ownership = s3.get_bucket_ownership_controls(Bucket=S3_BUCKET_NAME)["OwnershipControls"]["Rules"][0]
+    bucket_policy = json.loads(s3.get_bucket_policy(Bucket=S3_BUCKET_NAME)["Policy"])
 
     assert encryption["ServerSideEncryptionConfiguration"]["Rules"][0]["ApplyServerSideEncryptionByDefault"]["SSEAlgorithm"] == "AES256"
     assert public_access["BlockPublicAcls"] is True
@@ -307,23 +355,25 @@ def test_storage_resources_match_contract():
     deny_statement = next(statement for statement in bucket_policy["Statement"] if statement["Sid"] == "DenyInsecureTransport")
     assert deny_statement["Condition"]["Bool"]["aws:SecureTransport"] == "false"
 
-    credentials = json.loads(secretsmanager.get_secret_value(SecretId="db-credentials")["SecretString"])
+    credentials = json.loads(secretsmanager.get_secret_value(SecretId=SECRET_NAME)["SecretString"])
     assert credentials["username"] == "appuser"
     assert len(credentials["password"]) == 20
     assert re.search(r"\d", credentials["password"])
     assert re.search(r"[^A-Za-z0-9]", credentials["password"])
 
-    db_instance = rds.describe_db_instances(DBInstanceIdentifier="payments-db")["DBInstances"][0]
-    assert db_instance["Engine"] == "postgres"
-    assert db_instance["EngineVersion"] == "16.3"
-    assert db_instance["DBInstanceClass"] == "db.t3.micro"
-    assert db_instance["AllocatedStorage"] == 20
-    assert db_instance["StorageType"] == "gp2"
-    assert db_instance["PubliclyAccessible"] is False
-    assert db_instance["StorageEncrypted"] is True
+    if uses_aws_endpoint():
+        db_instance = rds.describe_db_instances(DBInstanceIdentifier=DB_INSTANCE_IDENTIFIER)["DBInstances"][0]
+        assert db_instance["Engine"] == "postgres"
+        assert db_instance["EngineVersion"] == "16.3"
+        assert db_instance["DBInstanceClass"] == "db.t3.micro"
+        assert db_instance["AllocatedStorage"] == 20
+        assert db_instance["StorageType"] == "gp2"
+        assert db_instance["PubliclyAccessible"] is False
+        assert db_instance["StorageEncrypted"] is True
 
-    subnet_group = rds.describe_db_subnet_groups(DBSubnetGroupName="payments-db-subnet-group")["DBSubnetGroups"][0]
-    assert {subnet["SubnetIdentifier"] for subnet in subnet_group["Subnets"]} == {
-        resource_values(state, "aws_subnet", "private_a")["id"],
-        resource_values(state, "aws_subnet", "private_b")["id"],
-    }
+        ec2 = aws_client("ec2")
+        subnet_group = rds.describe_db_subnet_groups(DBSubnetGroupName=DB_SUBNET_GROUP_NAME)["DBSubnetGroups"][0]
+        assert {subnet["SubnetIdentifier"] for subnet in subnet_group["Subnets"]} == {
+            get_subnet_by_name(ec2, PRIVATE_SUBNET_A_NAME)["SubnetId"],
+            get_subnet_by_name(ec2, PRIVATE_SUBNET_B_NAME)["SubnetId"],
+        }

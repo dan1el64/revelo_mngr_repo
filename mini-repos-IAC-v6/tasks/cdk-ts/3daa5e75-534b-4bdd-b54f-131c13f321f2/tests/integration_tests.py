@@ -7,6 +7,7 @@ import time
 import urllib.error
 import urllib.request
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 
 import boto3
@@ -138,6 +139,26 @@ def _post_json(url: str, body: str) -> tuple[int, dict]:
         return response.status, json.loads(response.read().decode("utf-8"))
 
 
+def _post_json_with_status(url: str, body: str) -> tuple[int, str | dict]:
+    request = urllib.request.Request(
+        url,
+        data=body.encode("utf-8"),
+        headers={"content-type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            payload = response.read().decode("utf-8")
+            with contextlib.suppress(json.JSONDecodeError):
+                return response.status, json.loads(payload)
+            return response.status, payload
+    except urllib.error.HTTPError as error:
+        payload = error.read().decode("utf-8")
+        with contextlib.suppress(json.JSONDecodeError):
+            return error.code, json.loads(payload)
+        return error.code, payload
+
+
 def _post_json_expect_http_error(url: str, body: str) -> urllib.error.HTTPError:
     request = urllib.request.Request(
         url,
@@ -164,6 +185,18 @@ def _wait_for_api_post(payload: dict) -> dict:
         }
 
     return _poll(_attempt, description="Orders API POST", timeout=90, interval=3)
+
+
+def _invoke_lambda_json(function_name: str, payload: dict) -> tuple[dict, str | dict]:
+    lambda_client = _client("lambda")
+    response = lambda_client.invoke(
+        FunctionName=function_name,
+        Payload=json.dumps(payload).encode("utf-8"),
+    )
+    raw_payload = response["Payload"].read().decode("utf-8")
+    with contextlib.suppress(json.JSONDecodeError):
+        return response, json.loads(raw_payload)
+    return response, raw_payload
 
 
 def _wait_for_bucket_object(bucket_name: str, key: str, expected_body: str) -> None:
@@ -296,6 +329,93 @@ def _pipe_name() -> str:
 
 def _event_source_mapping_uuid() -> str:
     return _only_physical_id("AWS::Lambda::EventSourceMapping")
+
+
+def _wait_for_lambda_configuration(function_name: str, expected_variables: dict[str, str]) -> None:
+    lambda_client = _client("lambda")
+    _poll(
+        lambda: True
+        if (
+            lambda_client.get_function_configuration(FunctionName=function_name)
+            .get("Environment", {})
+            .get("Variables", {})
+            == expected_variables
+            and lambda_client.get_function_configuration(FunctionName=function_name).get(
+                "LastUpdateStatus", "Successful"
+            )
+            == "Successful"
+        )
+        else None,
+        description=f"Lambda configuration update for {function_name}",
+        timeout=180,
+        interval=3,
+    )
+
+
+@contextlib.contextmanager
+def _temporary_lambda_environment(function_name: str, **overrides: str):
+    lambda_client = _client("lambda")
+    original = lambda_client.get_function_configuration(FunctionName=function_name)
+    original_variables = dict(original.get("Environment", {}).get("Variables", {}))
+    updated_variables = {**original_variables, **overrides}
+
+    lambda_client.update_function_configuration(
+        FunctionName=function_name,
+        Environment={"Variables": updated_variables},
+    )
+    _wait_for_lambda_configuration(function_name, updated_variables)
+
+    try:
+        yield
+    finally:
+        lambda_client.update_function_configuration(
+            FunctionName=function_name,
+            Environment={"Variables": original_variables},
+        )
+        _wait_for_lambda_configuration(function_name, original_variables)
+
+
+def _worker_public_https_egress_exists(worker_sg_id: str) -> bool:
+    ec2 = _client("ec2")
+    security_group = ec2.describe_security_groups(GroupIds=[worker_sg_id])["SecurityGroups"][0]
+    return any(
+        permission.get("IpProtocol") == "tcp"
+        and permission.get("FromPort") == 443
+        and permission.get("ToPort") == 443
+        and any(ip_range.get("CidrIp") == "0.0.0.0/0" for ip_range in permission.get("IpRanges", []))
+        for permission in security_group.get("IpPermissionsEgress", [])
+    )
+
+
+@contextlib.contextmanager
+def _temporary_revoke_worker_public_https_egress():
+    ec2 = _client("ec2")
+    worker_sg_id = _physical_id_with_prefix("AWS::EC2::SecurityGroup", "OrdersWorkerSecurityGroup")
+    permission = {
+        "IpProtocol": "tcp",
+        "FromPort": 443,
+        "ToPort": 443,
+        "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+    }
+
+    ec2.revoke_security_group_egress(GroupId=worker_sg_id, IpPermissions=[permission])
+    _poll(
+        lambda: True if not _worker_public_https_egress_exists(worker_sg_id) else None,
+        description="worker public HTTPS egress revoked",
+        timeout=90,
+        interval=3,
+    )
+
+    try:
+        yield
+    finally:
+        ec2.authorize_security_group_egress(GroupId=worker_sg_id, IpPermissions=[permission])
+        _poll(
+            lambda: True if _worker_public_https_egress_exists(worker_sg_id) else None,
+            description="worker public HTTPS egress restored",
+            timeout=90,
+            interval=3,
+        )
 
 
 def _wait_for_pipe_state(name: str, state: str) -> None:
@@ -557,7 +677,9 @@ def test_deployed_api_lambdas_and_logs_match():
     assert "POST" in orders_resource["resourceMethods"]
 
     stages = apigateway.get_stages(restApiId=rest_api_id)["item"]
-    assert any(stage["stageName"] == "prod" for stage in stages)
+    prod_stage = next(stage for stage in stages if stage["stageName"] == "prod")
+    assert prod_stage["methodSettings"]["*/*"]["throttlingBurstLimit"] == 1
+    assert prod_stage["methodSettings"]["*/*"]["throttlingRateLimit"] == 1.0
 
     log_group_names = {f"/aws/lambda/{api_fn_name}", f"/aws/lambda/{worker_fn_name}"}
     target_log_groups: dict[str, dict] = {}
@@ -715,6 +837,78 @@ def test_worker_lambda_invocation_with_payload_publishes_notification():
         assert notification["records"][0]["payload"]["orderId"] == marker
 
 
+def test_worker_lambda_preserves_plain_text_sqs_message_bodies():
+    sqs = _client("sqs")
+    raw_body = f"plain-text::{uuid.uuid4().hex}"
+
+    with _stopped_pipe(), _temporary_topic_subscription() as notifications_queue_url:
+        sqs.send_message(
+            QueueUrl=_stack_outputs()["OrdersQueueUrl"],
+            MessageBody=raw_body,
+        )
+
+        notification = _wait_for_raw_topic_message(notifications_queue_url, raw_body)
+        assert notification["recordCount"] == 1
+        assert notification["records"][0]["payload"] == raw_body
+
+
+def test_worker_lambda_fails_when_database_secret_is_invalid():
+    worker_fn_name = _physical_id_with_prefix("AWS::Lambda::Function", "OrdersWorkerFunction")
+
+    with _temporary_lambda_environment(
+        worker_fn_name,
+        DB_SECRET_ARN=f"missing-secret-{uuid.uuid4().hex}",
+    ):
+        response, payload = _invoke_lambda_json(
+            worker_fn_name,
+            {"orderId": f"missing-secret-{uuid.uuid4().hex}"},
+        )
+
+    assert response["StatusCode"] == 200
+    assert response["FunctionError"] == "Unhandled"
+    assert payload["errorMessage"] == "Failed to load the database secret for orders-worker"
+
+
+def test_api_returns_502_when_downstream_persistence_fails():
+    api_fn_name = _physical_id_with_prefix("AWS::Lambda::Function", "OrdersApiFunction")
+    api_url = _stack_outputs()["OrdersApiUrl"]
+    payload = {
+        "customerId": "customer-downstream-failure",
+        "items": [{"sku": "sku-downstream", "quantity": 1}],
+        "orderId": f"api-failure-{uuid.uuid4().hex}",
+    }
+
+    with _temporary_lambda_environment(
+        api_fn_name,
+        QUEUE_URL=f"https://sqs.{_region()}.amazonaws.com/123456789012/missing-queue",
+        BUCKET_NAME=f"missing-bucket-{uuid.uuid4().hex}",
+    ):
+        status, response_body = _post_json_with_status(f"{api_url}orders", _json_compact(payload))
+
+    assert status == 502
+    assert response_body == {
+        "status": "error",
+        "message": "Failed to persist the order across downstream services",
+    }
+
+
+def test_worker_reaches_secrets_manager_via_vpc_endpoint_when_public_egress_is_removed():
+    worker_fn_name = _physical_id_with_prefix("AWS::Lambda::Function", "OrdersWorkerFunction")
+
+    with _temporary_lambda_environment(worker_fn_name, AWS_MAX_ATTEMPTS="1"), _temporary_revoke_worker_public_https_egress():
+        response, payload = _invoke_lambda_json(
+            worker_fn_name,
+            {"orderId": f"endpoint-route-{uuid.uuid4().hex}"},
+        )
+
+    assert response["StatusCode"] == 200
+    assert response["FunctionError"] == "Unhandled"
+    assert (
+        payload["errorMessage"]
+        == "Failed to publish the worker notification after loading the database secret for orders_app"
+    )
+
+
 def test_invoking_unknown_lambda_function_fails():
     lambda_client = _client("lambda")
     with pytest.raises(ClientError) as exc_info:
@@ -801,3 +995,30 @@ def test_pipe_starts_state_machine_execution_when_worker_mapping_is_disabled():
     output = json.loads(execution["output"])
     assert isinstance(output["ingestMetadata"]["recordedAt"], str)
     assert output["ingestMetadata"]["recordedAt"].endswith("Z")
+
+
+def test_api_gateway_enforces_throttling_with_429_responses():
+    apigateway = _client("apigateway")
+    rest_api_id = _physical_id_with_prefix("AWS::ApiGateway::RestApi", "OrdersApiGateway")
+    stage = apigateway.get_stage(restApiId=rest_api_id, stageName="prod")
+    assert stage["methodSettings"]["*/*"]["throttlingBurstLimit"] == 1
+    assert stage["methodSettings"]["*/*"]["throttlingRateLimit"] == 1.0
+
+    api_url = _stack_outputs()["OrdersApiUrl"]
+    request_bodies = [
+        _json_compact(
+            {
+                "customerId": "throttle-check",
+                "items": [{"sku": "sku-throttle", "quantity": 1}],
+                "orderId": f"throttle-{index}-{uuid.uuid4().hex}",
+            }
+        )
+        for index in range(6)
+    ]
+
+    with ThreadPoolExecutor(max_workers=len(request_bodies)) as executor:
+        results = list(executor.map(lambda body: _post_json_with_status(f"{api_url}orders", body), request_bodies))
+
+    statuses = [status for status, _ in results]
+    assert 202 in statuses
+    assert 429 in statuses

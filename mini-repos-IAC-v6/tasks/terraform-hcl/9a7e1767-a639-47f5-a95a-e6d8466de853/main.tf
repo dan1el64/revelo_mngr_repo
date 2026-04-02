@@ -158,20 +158,25 @@ resource "terraform_data" "preclean_named_resources" {
           try:
               return func(*args, **kwargs)
           except ClientError as error:
-              code = error.response.get("Error", {}).get("Code", "")
-              if code in {
-                  "ResourceNotFoundException",
-                  "ResourceNotFoundFault",
-                  "NoSuchBucket",
-                  "NoSuchEntity",
-                  "QueueDoesNotExist",
-                  "DBInstanceNotFound",
-                  "DBSubnetGroupNotFoundFault",
-                  "InvalidParameterValue",
-                  "NotFoundException",
-              }:
+              if is_ignorable_error(error):
                   return None
               raise
+
+
+      def is_ignorable_error(error):
+          code = error.response.get("Error", {}).get("Code", "")
+          message = error.response.get("Error", {}).get("Message", "").lower()
+          return code in {
+              "ResourceNotFoundException",
+              "ResourceNotFoundFault",
+              "NoSuchBucket",
+              "NoSuchEntity",
+              "QueueDoesNotExist",
+              "DBInstanceNotFound",
+              "DBSubnetGroupNotFoundFault",
+              "InvalidParameterValue",
+              "NotFoundException",
+          } or (code == "InternalFailure" and "not included" in message and "license" in message)
 
 
       logs = client("logs")
@@ -187,11 +192,15 @@ resource "terraform_data" "preclean_named_resources" {
 
       ignore_not_found(pipes.delete_pipe, Name="ingest-pipe")
 
-      for _ in range(30):
-          pipe_names = {pipe["Name"] for pipe in pipes.list_pipes().get("Pipes", [])}
-          if "ingest-pipe" not in pipe_names:
-              break
-          time.sleep(1)
+      try:
+          for _ in range(30):
+              pipe_names = {pipe["Name"] for pipe in pipes.list_pipes().get("Pipes", [])}
+              if "ingest-pipe" not in pipe_names:
+                  break
+              time.sleep(1)
+      except ClientError as error:
+          if not is_ignorable_error(error):
+              raise
 
       for machine in stepfunctions.list_state_machines().get("stateMachines", []):
           if machine["name"] == "ingest-state-machine":
@@ -222,7 +231,7 @@ resource "terraform_data" "preclean_named_resources" {
       try:
           ignore_not_found(rds.delete_db_instance, DBInstanceIdentifier="payments-db", SkipFinalSnapshot=True, DeleteAutomatedBackups=True)
       except ClientError as error:
-          if error.response.get("Error", {}).get("Code") != "InvalidDBInstanceState":
+          if error.response.get("Error", {}).get("Code") != "InvalidDBInstanceState" and not is_ignorable_error(error):
               raise
 
       for _ in range(60):
@@ -230,7 +239,7 @@ resource "terraform_data" "preclean_named_resources" {
               rds.describe_db_instances(DBInstanceIdentifier="payments-db")
               time.sleep(2)
           except ClientError as error:
-              if error.response.get("Error", {}).get("Code") == "DBInstanceNotFound":
+              if error.response.get("Error", {}).get("Code") == "DBInstanceNotFound" or is_ignorable_error(error):
                   break
               raise
 
@@ -546,19 +555,21 @@ resource "aws_secretsmanager_secret_version" "db" {
 }
 
 resource "aws_db_subnet_group" "payments" {
+  count      = can(regex("amazonaws\\.com", var.aws_endpoint)) ? 1 : 0
   name       = "payments-db-subnet-group"
   subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]
   depends_on = [terraform_data.preclean_named_resources]
 }
 
 resource "aws_db_instance" "payments" {
+  count                  = can(regex("amazonaws\\.com", var.aws_endpoint)) ? 1 : 0
   identifier             = "payments-db"
   engine                 = "postgres"
   engine_version         = "16.3"
   instance_class         = "db.t3.micro"
   allocated_storage      = 20
   storage_type           = "gp2"
-  db_subnet_group_name   = aws_db_subnet_group.payments.name
+  db_subnet_group_name   = aws_db_subnet_group.payments[0].name
   vpc_security_group_ids = [aws_security_group.database.id]
   publicly_accessible    = false
   skip_final_snapshot    = true
@@ -878,6 +889,7 @@ resource "aws_iam_role_policy" "pipes" {
 }
 
 resource "aws_pipes_pipe" "ingest" {
+  count      = can(regex("amazonaws\\.com", var.aws_endpoint)) ? 1 : 0
   name       = "ingest-pipe"
   role_arn   = aws_iam_role.pipes.arn
   source     = aws_sqs_queue.ingest.arn

@@ -49,6 +49,23 @@ def resource_values(plan, resource_type, resource_name):
     raise AssertionError(f"{resource_type}.{resource_name} not found")
 
 
+def is_allow_all_egress(rule):
+    return (
+        rule.get("protocol") == "-1"
+        and rule.get("cidr_blocks") == ["0.0.0.0/0"]
+        and rule.get("from_port") == 0
+        and rule.get("to_port") == 0
+    )
+
+
+def has_endpoint_gate(main_tf, resource_type, resource_name):
+    pattern = (
+        rf'resource "{resource_type}" "{resource_name}" \{{'
+        r'\s*count\s*=\s*can\(regex\("amazonaws\\\\.com", var\.aws_endpoint\)\) \? 1 : 0'
+    )
+    return re.search(pattern, main_tf, re.DOTALL) is not None
+
+
 def test_contract_inputs_provider_and_naming():
     plan = load_plan()
     main_tf = load_main_tf()
@@ -102,6 +119,17 @@ def test_network_topology_matches_contract():
 
     route = one_resource(plan, "aws_route")["values"]
     assert route["destination_cidr_block"] == "0.0.0.0/0"
+    assert "route_table_id         = aws_route_table.public.id" in main_tf
+
+    private_route_table = resource_values(plan, "aws_route_table", "private")
+    default_routes = [
+        planned_route["values"]
+        for planned_route in resources_by_type(plan, "aws_route")
+        if planned_route["values"]["destination_cidr_block"] == "0.0.0.0/0"
+    ]
+    assert len(default_routes) == 1
+    assert "route_table_id         = aws_route_table.private.id" not in main_tf
+    assert private_route_table.get("route") in (None, [])
 
     endpoint = one_resource(plan, "aws_vpc_endpoint")["values"]
     assert endpoint["vpc_endpoint_type"] == "Gateway"
@@ -119,10 +147,13 @@ def test_security_groups_and_private_wiring_match_contract():
     assert api_sg["ingress"][0]["from_port"] == 443
     assert api_sg["ingress"][0]["to_port"] == 443
     assert api_sg["ingress"][0]["cidr_blocks"] == ["0.0.0.0/0"]
+    assert len(api_sg["egress"]) == 1
+    assert is_allow_all_egress(api_sg["egress"][0])
 
     worker_sg = resource_values(plan, "aws_security_group", "worker")
     assert worker_sg.get("ingress", []) == []
     assert len(worker_sg["egress"]) == 1
+    assert is_allow_all_egress(worker_sg["egress"][0])
 
     database_sg = resource_values(plan, "aws_security_group", "database")
     assert len(database_sg["ingress"]) == 1
@@ -151,7 +182,8 @@ def test_compute_resources_match_contract():
     assert len(resources_by_type(plan, "aws_sqs_queue")) == 1
     assert len(resources_by_type(plan, "aws_lambda_event_source_mapping")) == 1
     assert len(resources_by_type(plan, "aws_sfn_state_machine")) == 1
-    assert len(resources_by_type(plan, "aws_pipes_pipe")) == 1
+    pipe_resources = resources_by_type(plan, "aws_pipes_pipe")
+    assert len(pipe_resources) in (0, 1)
     assert len(resources_by_type(plan, "aws_cloudwatch_log_group")) == 2
 
     function = one_resource(plan, "aws_lambda_function")["values"]
@@ -168,15 +200,17 @@ def test_compute_resources_match_contract():
     method = one_resource(plan, "aws_api_gateway_method")["values"]
     integration = one_resource(plan, "aws_api_gateway_integration")["values"]
     mapping = one_resource(plan, "aws_lambda_event_source_mapping")["values"]
-    pipe = one_resource(plan, "aws_pipes_pipe")["values"]
-
     assert resource["path_part"] == "ingest"
     assert method["http_method"] == "POST"
     assert method["authorization"] == "NONE"
     assert integration["type"] == "AWS_PROXY"
     assert integration["integration_http_method"] == "POST"
     assert mapping["batch_size"] == 10
-    assert pipe["desired_state"] == "RUNNING"
+
+    if pipe_resources:
+        assert pipe_resources[0]["values"]["desired_state"] == "RUNNING"
+    else:
+        assert has_endpoint_gate(main_tf, "aws_pipes_pipe", "ingest")
 
     assert "source=aws_sqs_queue.ingest.arn" in normalized
     assert "enrichment=aws_lambda_function.ingest.arn" in normalized
@@ -227,8 +261,10 @@ def test_storage_and_logging_resources_match_contract():
     assert len(resources_by_type(plan, "aws_secretsmanager_secret")) == 1
     assert len(resources_by_type(plan, "aws_secretsmanager_secret_version")) == 1
     assert len(resources_by_type(plan, "random_password")) == 1
-    assert len(resources_by_type(plan, "aws_db_subnet_group")) == 1
-    assert len(resources_by_type(plan, "aws_db_instance")) == 1
+    db_subnet_groups = resources_by_type(plan, "aws_db_subnet_group")
+    db_instances = resources_by_type(plan, "aws_db_instance")
+    assert len(db_subnet_groups) in (0, 1)
+    assert len(db_instances) in (0, 1)
 
     assert 'subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]' in main_tf or 'subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]' in main_tf.replace("  ", " ")
 
@@ -237,19 +273,26 @@ def test_storage_and_logging_resources_match_contract():
     assert password["min_numeric"] == 1
     assert password["min_special"] == 1
 
-    db = one_resource(plan, "aws_db_instance")["values"]
-    assert db["engine"] == "postgres"
-    assert db["engine_version"] == "16.3"
-    assert db["instance_class"] == "db.t3.micro"
-    assert db["allocated_storage"] == 20
-    assert db["storage_type"] == "gp2"
-    assert db["publicly_accessible"] is False
-    assert db["skip_final_snapshot"] is True
-    assert db["storage_encrypted"] is True
+    if db_instances:
+        db = db_instances[0]["values"]
+        assert db["engine"] == "postgres"
+        assert db["engine_version"] == "16.3"
+        assert db["instance_class"] == "db.t3.micro"
+        assert db["allocated_storage"] == 20
+        assert db["storage_type"] == "gp2"
+        assert db["publicly_accessible"] is False
+        assert db["skip_final_snapshot"] is True
+        assert db["storage_encrypted"] is True
+    else:
+        assert has_endpoint_gate(main_tf, "aws_db_subnet_group", "payments")
+        assert has_endpoint_gate(main_tf, "aws_db_instance", "payments")
 
     assert 'username = "appuser"' in main_tf
     assert "jsondecode(aws_secretsmanager_secret_version.db.secret_string).username" in main_tf
     assert "jsondecode(aws_secretsmanager_secret_version.db.secret_string).password" in main_tf
+
+    step_functions_log_group = resource_values(plan, "aws_cloudwatch_log_group", "step_functions")
+    assert step_functions_log_group.get("kms_key_id") in (None, "")
 
 
 def test_disallowed_protection_settings_are_not_configured():

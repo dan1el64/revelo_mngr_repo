@@ -2,8 +2,10 @@ Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/m
 
 
 Starting LocalStack (harness environment)...
- Container localstack-harness  Recreate
- Container localstack-harness  Recreated
+ Network iac-harness-network  Creating
+ Network iac-harness-network  Created
+ Container localstack-harness  Creating
+ Container localstack-harness  Created
  Container localstack-harness  Starting
  Container localstack-harness  Started
 Waiting for LocalStack health endpoint: http://localhost:4566/_localstack/health
@@ -12,16 +14,16 @@ LocalStack is healthy.
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  Step: Setup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
-Starting worker container: harness-worker-10329
-c23adebd26069f5988d00064245eba7ac82a7bcb2c8b442b7a55bd595a42f451
+Starting worker container: harness-worker-63367
+c97a7a182cbb3c36a6a74a867cd37a83c442d3a0ee99e0d93b27a2c165e28b20
 Installing dependencies (npm install)...
 
-up to date, audited 492 packages in 5s
+up to date, audited 491 packages in 11s
 
-41 packages are looking for funding
+39 packages are looking for funding
   run `npm fund` for details
 
-10 vulnerabilities (3 moderate, 7 high)
+31 vulnerabilities (3 moderate, 27 high, 1 critical)
 
 To address issues that do not require attention, run:
   npm audit fix
@@ -38,7 +40,7 @@ npm notice New major version of npm available! 10.8.2 -> 11.12.1
 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
 npm notice To update run: npm install -g npm@11.12.1
 npm notice
-Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/73e65add-d6bd-41ac-9e6e-d0c528009775
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/f9d911d8-d6fd-477a-9e83-ce863cfbbe27
 [32m✅ Step passed: Setup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -58,24 +60,27 @@ platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
 cachedir: .pytest_cache
 rootdir: /work
 configfile: pytest.ini
-collecting ... collected 14 items
+collecting ... collected 17 items
 
-tests/unit_tests.py::test_delivery_is_single_source_file_and_synthesizes_from_app_ts PASSED [  7%]
-tests/unit_tests.py::test_template_has_expected_resource_counts PASSED   [ 14%]
-tests/unit_tests.py::test_network_topology_matches_the_prompt PASSED     [ 21%]
-tests/unit_tests.py::test_app_maps_aws_endpoint_to_sdk_endpoint_url_and_preserves_region PASSED [ 28%]
-tests/unit_tests.py::test_invalid_aws_region_fails_fast PASSED           [ 35%]
-tests/unit_tests.py::test_malformed_aws_endpoint_fails_fast PASSED       [ 42%]
-tests/unit_tests.py::test_inline_lambda_handlers_encode_the_required_cross_service_flows PASSED [ 50%]
-tests/unit_tests.py::test_storage_database_and_queue_configuration_are_exact PASSED [ 57%]
-tests/unit_tests.py::test_api_lambda_and_logs_match_the_contract PASSED  [ 64%]
-tests/unit_tests.py::test_log_policies_do_not_reintroduce_lambda_to_log_group_dependency_cycles PASSED [ 71%]
-tests/unit_tests.py::test_eventbridge_pipe_stepfunctions_and_security_boundaries_are_scoped PASSED [ 78%]
-tests/unit_tests.py::test_global_iam_guardrails_and_generated_names_are_enforced PASSED [ 85%]
-tests/unit_tests.py::test_local_mode_pipe_manager_resources_and_policy_are_validated PASSED [ 92%]
+tests/unit_tests.py::test_delivery_is_single_source_file_and_synthesizes_from_app_ts PASSED [  5%]
+tests/unit_tests.py::test_template_has_expected_resource_counts PASSED   [ 11%]
+tests/unit_tests.py::test_network_topology_matches_the_prompt PASSED     [ 17%]
+tests/unit_tests.py::test_app_maps_aws_endpoint_to_sdk_endpoint_url_and_preserves_region PASSED [ 23%]
+tests/unit_tests.py::test_invalid_aws_region_fails_fast PASSED           [ 29%]
+tests/unit_tests.py::test_blank_aws_region_defaults_to_us_east_1 PASSED  [ 35%]
+tests/unit_tests.py::test_malformed_aws_endpoint_fails_fast PASSED       [ 41%]
+tests/unit_tests.py::test_inline_api_lambda_executes_the_required_cross_service_flow PASSED [ 47%]
+tests/unit_tests.py::test_inline_worker_lambda_fetches_secret_parses_records_and_publishes_notification PASSED [ 52%]
+tests/unit_tests.py::test_inline_pipe_manager_handler_source_covers_create_update_and_delete PASSED [ 58%]
+tests/unit_tests.py::test_storage_database_and_queue_configuration_are_exact PASSED [ 64%]
+tests/unit_tests.py::test_api_lambda_and_logs_match_the_contract PASSED  [ 70%]
+tests/unit_tests.py::test_log_policies_do_not_reintroduce_lambda_to_log_group_dependency_cycles PASSED [ 76%]
+tests/unit_tests.py::test_eventbridge_pipe_stepfunctions_and_security_boundaries_are_scoped PASSED [ 82%]
+tests/unit_tests.py::test_global_iam_guardrails_and_generated_names_are_enforced PASSED [ 88%]
+tests/unit_tests.py::test_local_mode_pipe_manager_resources_and_policy_are_validated PASSED [ 94%]
 tests/unit_tests.py::test_traffic_flow_wiring_matches_the_prompt_overview PASSED [100%]
 
-======================== 14 passed in 65.46s (0:01:05) =========================
+======================== 17 passed in 91.57s (0:01:31) =========================
 [32m✅ Step passed: Unit tests (pytest)[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -84,15 +89,52 @@ tests/unit_tests.py::test_traffic_flow_wiring_matches_the_prompt_overview PASSED
 Bootstrapping (if needed)...
 Running cdklocal deploy...
 
-✨  Synthesis time: 13.12s
+✨  Synthesis time: 12.69s
 
 OrdersIngestStack: start: Building bdc104ed9cab1b5b6421713c8155f0b753380595356f710400609664d3635eca
 OrdersIngestStack: success: Built bdc104ed9cab1b5b6421713c8155f0b753380595356f710400609664d3635eca
-OrdersIngestStack: start: Building 3b1d31a6c66719c9f615c785dea19885313adc30abcba321457b91dfe530ef8c
-OrdersIngestStack: success: Built 3b1d31a6c66719c9f615c785dea19885313adc30abcba321457b91dfe530ef8c
+OrdersIngestStack: start: Building a3518cae189ee34f99432c1108355486cfe11fd010670ae9d272b1ec2859e540
+OrdersIngestStack: success: Built a3518cae189ee34f99432c1108355486cfe11fd010670ae9d272b1ec2859e540
 OrdersIngestStack: start: Publishing bdc104ed9cab1b5b6421713c8155f0b753380595356f710400609664d3635eca:current_account-us-east-1
-OrdersIngestStack: start: Publishing 3b1d31a6c66719c9f615c785dea19885313adc30abcba321457b91dfe530ef8c:current_account-us-east-1
-OrdersIngestStack: success: Published 3b1d31a6c66719c9f615c785dea19885313adc30abcba321457b91dfe530ef8c:current_account-us-east-1
+OrdersIngestStack: start: Publishing a3518cae189ee34f99432c1108355486cfe11fd010670ae9d272b1ec2859e540:current_account-us-east-1
+OrdersIngestStack: success: Published a3518cae189ee34f99432c1108355486cfe11fd010670ae9d272b1ec2859e540:current_account-us-east-1
 OrdersIngestStack: success: Published bdc104ed9cab1b5b6421713c8155f0b753380595356f710400609664d3635eca:current_account-us-east-1
 OrdersIngestStack: deploying... [1/1]
 OrdersIngestStack: creating CloudFormation changeset...
+[32m✅ Step passed: Deploy (LocalStack)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Integration tests[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest integration tests...
+[32m✅ Step passed: Integration tests[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Destroy / Cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running cdklocal destroy...
+Cleaning up worker container: harness-worker-63367
+[32m✅ Step passed: Destroy / Cleanup[0m
+Cleaning up worker container: harness-worker-63367
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  HARNESS SUMMARY[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ setup[0m
+[32m✅ syntax/plan[0m
+[32m✅ unit tests[0m
+[32m✅ deploy (localstack)[0m
+[32m✅ integration tests[0m
+[32m✅ destroy/cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ All steps passed.[0m
+
+Log saved to: /Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v6/runs/tasks_cdk-ts_3daa5e75-534b-4bdd-b54f-131c13f321f2.log
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+Removing worker container: harness-worker-63367
+
+Stopping LocalStack...
+ Container localstack-harness  Stopping
+ Container localstack-harness  Error while Stopping
+

@@ -1,0 +1,12 @@
+{
+  "app": "python3 app.py",
+  "context": {
+    "@aws-cdk/aws-apigateway:usagePlanKeyRequired": true,
+    "@aws-cdk/core:stackTraceMechanism": false,
+    "@aws-cdk/aws-ecr-assets:parallelAssetCompilation": true,
+    "@aws-cdk/aws-lambda:useCdkManagedPolicies": true,
+    "@aws-cdk/aws-lambda-nodejs:typescript": true,
+    "@aws-cdk/aws-sqs:grantWriteForUrl": true
+  },
+  "test": "pytest tests/"
+}

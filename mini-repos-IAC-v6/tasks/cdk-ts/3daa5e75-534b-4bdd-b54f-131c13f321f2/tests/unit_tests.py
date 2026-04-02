@@ -110,6 +110,11 @@ def _resource_with_prefix(resource_type: str, prefix: str) -> tuple[str, dict]:
     return matches[0]
 
 
+def _lambda_inline_code(prefix: str) -> str:
+    _, resource = _resource_with_prefix("AWS::Lambda::Function", prefix)
+    return resource["Properties"]["Code"]["ZipFile"]
+
+
 def _policy_document(prefix: str) -> dict:
     _, resource = _resource_with_prefix("AWS::IAM::Policy", prefix)
     return resource["Properties"]["PolicyDocument"]
@@ -124,6 +129,189 @@ def _all_policy_statements() -> list[dict]:
         else:
             statements.extend(policy_statements)
     return statements
+
+
+def _wildcard_resource_statements(template: dict) -> list[dict]:
+    statements: list[dict] = []
+    for resource in _resources_by_type_in(template, "AWS::IAM::Policy").values():
+        policy_statements = resource["Properties"]["PolicyDocument"]["Statement"]
+        if isinstance(policy_statements, dict):
+            policy_statements = [policy_statements]
+        for statement in policy_statements:
+            resources = statement["Resource"]
+            if not isinstance(resources, list):
+                resources = [resources]
+            if "*" in resources:
+                statements.append(statement)
+    return statements
+
+
+def _invoke_inline_lambda(prefix: str, *, event: dict, env: dict[str, str]) -> dict:
+    node_script = """
+const vm = require('node:vm');
+const Module = require('node:module');
+
+const code = process.env.INLINE_LAMBDA_CODE;
+const event = JSON.parse(process.env.INLINE_LAMBDA_EVENT || '{}');
+const calls = [];
+
+class FixedDate extends Date {
+  constructor(...args) {
+    if (args.length > 0) {
+      super(...args);
+      return;
+    }
+    super('2024-01-02T03:04:05.000Z');
+  }
+
+  static now() {
+    return 1704164645000;
+  }
+}
+
+class PutObjectCommand {
+  constructor(input) {
+    this.input = input;
+  }
+}
+
+class SendMessageCommand {
+  constructor(input) {
+    this.input = input;
+  }
+}
+
+class PutEventsCommand {
+  constructor(input) {
+    this.input = input;
+  }
+}
+
+class GetSecretValueCommand {
+  constructor(input) {
+    this.input = input;
+  }
+}
+
+class PublishCommand {
+  constructor(input) {
+    this.input = input;
+  }
+}
+
+function clientFactory(serviceName) {
+  return class MockClient {
+    async send(command) {
+      calls.push({
+        service: serviceName,
+        command: command.constructor.name,
+        input: command.input,
+      });
+      if (serviceName === 'secretsmanager') {
+        return {
+          SecretString: JSON.stringify({
+            username: 'orders_app',
+            dbname: 'orders',
+          }),
+        };
+      }
+      if (serviceName === 'eventbridge') {
+        return { FailedEntryCount: 0, Entries: [] };
+      }
+      if (serviceName === 'sns') {
+        return { MessageId: 'sns-message-id' };
+      }
+      if (serviceName === 'sqs') {
+        return { MessageId: 'sqs-message-id' };
+      }
+      return {};
+    }
+  };
+}
+
+const moduleMocks = {
+  '@aws-sdk/client-s3': {
+    S3Client: clientFactory('s3'),
+    PutObjectCommand,
+  },
+  '@aws-sdk/client-sqs': {
+    SQSClient: clientFactory('sqs'),
+    SendMessageCommand,
+  },
+  '@aws-sdk/client-eventbridge': {
+    EventBridgeClient: clientFactory('eventbridge'),
+    PutEventsCommand,
+  },
+  '@aws-sdk/client-secrets-manager': {
+    SecretsManagerClient: clientFactory('secretsmanager'),
+    GetSecretValueCommand,
+  },
+  '@aws-sdk/client-sns': {
+    SNSClient: clientFactory('sns'),
+    PublishCommand,
+  },
+  'node:crypto': {
+    randomUUID: () => '123e4567-e89b-12d3-a456-426614174000',
+  },
+};
+
+const originalLoad = Module._load;
+Module._load = function patchedLoad(request, parent, isMain) {
+  if (request in moduleMocks) {
+    return moduleMocks[request];
+  }
+  return originalLoad.call(this, request, parent, isMain);
+};
+
+(async () => {
+  try {
+    const moduleObject = { exports: {} };
+    const sandbox = {
+      module: moduleObject,
+      exports: moduleObject.exports,
+      require,
+      process,
+      console,
+      Buffer,
+      Date: FixedDate,
+      setTimeout,
+      clearTimeout,
+      setInterval,
+      clearInterval,
+    };
+    vm.runInNewContext(code, sandbox, { filename: 'inline-handler.js' });
+    const handler = moduleObject.exports.handler || sandbox.exports.handler;
+    const result = await handler(event);
+    process.stdout.write(JSON.stringify({ result, calls }));
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  } finally {
+    Module._load = originalLoad;
+  }
+})();
+"""
+    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as script_file:
+        script_file.write(node_script)
+        script_path = Path(script_file.name)
+    try:
+        result = subprocess.run(
+            ["node", str(script_path)],
+            cwd=REPO_DIR,
+            env={
+                **_base_app_env(),
+                **env,
+                "INLINE_LAMBDA_CODE": _lambda_inline_code(prefix),
+                "INLINE_LAMBDA_EVENT": json.dumps(event),
+            },
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    finally:
+        script_path.unlink(missing_ok=True)
+    assert result.returncode == 0, result.stderr or result.stdout
+    return json.loads(result.stdout)
 
 
 def _ensure_no_retain_or_snapshot() -> None:
@@ -245,6 +433,14 @@ def test_invalid_aws_region_fails_fast():
     assert 'AWS_REGION must be a valid AWS region' in failure_output
 
 
+def test_blank_aws_region_defaults_to_us_east_1():
+    template, manifest = _synthesize_template({"AWS_REGION": "   "})
+    assert len(_resources_by_type_in(template, "AWS::Lambda::Function")) >= 2
+    artifacts = manifest.get("artifacts", {})
+    stack_artifact = next(value for key, value in artifacts.items() if key == "OrdersIngestStack")
+    assert stack_artifact["environment"].endswith("/us-east-1")
+
+
 def test_malformed_aws_endpoint_fails_fast():
     failure_output = _synthesize_failure(
         {
@@ -255,23 +451,96 @@ def test_malformed_aws_endpoint_fails_fast():
     assert 'AWS_ENDPOINT must be a valid http(s) URL' in failure_output
 
 
-def test_inline_lambda_handlers_encode_the_required_cross_service_flows():
-    assert "await Promise.all([" in APP_SOURCE
-    assert "new SendMessageCommand({" in APP_SOURCE
-    assert "QueueUrl: process.env.QUEUE_URL" in APP_SOURCE
-    assert "new PutObjectCommand({" in APP_SOURCE
-    assert "Bucket: process.env.BUCKET_NAME" in APP_SOURCE
-    assert "new PutEventsCommand({" in APP_SOURCE
-    assert "EventBusName: process.env.EVENT_BUS_NAME" in APP_SOURCE
-    assert "DetailType: 'OrderReceived'" in APP_SOURCE
-    assert "statusCode: 202" in APP_SOURCE
-    assert "status: 'accepted'" in APP_SOURCE
-    assert "new GetSecretValueCommand({" in APP_SOURCE
-    assert "SecretId: process.env.DB_SECRET_ARN" in APP_SOURCE
-    assert "const records = Array.isArray(event && event.Records)" in APP_SOURCE
-    assert "new PublishCommand({" in APP_SOURCE
-    assert "Subject: 'orders-worker-processed'" in APP_SOURCE
-    assert "status: 'stubbed-connection'" in APP_SOURCE
+def test_inline_api_lambda_executes_the_required_cross_service_flow():
+    payload = {"orderId": "unit-api-1", "items": [{"sku": "sku-1", "quantity": 2}]}
+    response = _invoke_inline_lambda(
+        "OrdersApiFunction",
+        event={"body": json.dumps(payload)},
+        env={
+            "AWS_REGION": "us-east-1",
+            "QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/123456789012/orders",
+            "BUCKET_NAME": "orders-archive-bucket",
+            "EVENT_BUS_NAME": "orders-bus",
+        },
+    )
+    calls_by_service = {call["service"]: call for call in response["calls"]}
+
+    assert response["result"]["statusCode"] == 202
+    body = json.loads(response["result"]["body"])
+    assert body["status"] == "accepted"
+    assert body["archiveKey"] == "orders/1704164645000-123e4567-e89b-12d3-a456-426614174000.json"
+
+    assert calls_by_service["sqs"]["command"] == "SendMessageCommand"
+    assert calls_by_service["sqs"]["input"] == {
+        "QueueUrl": "https://sqs.us-east-1.amazonaws.com/123456789012/orders",
+        "MessageBody": json.dumps(payload),
+    }
+
+    assert calls_by_service["s3"]["command"] == "PutObjectCommand"
+    assert calls_by_service["s3"]["input"] == {
+        "Bucket": "orders-archive-bucket",
+        "Key": body["archiveKey"],
+        "Body": json.dumps(payload),
+        "ContentType": "application/json",
+    }
+
+    assert calls_by_service["eventbridge"]["command"] == "PutEventsCommand"
+    entry = calls_by_service["eventbridge"]["input"]["Entries"][0]
+    assert entry["EventBusName"] == "orders-bus"
+    assert entry["Source"] == "orders.api"
+    assert entry["DetailType"] == "OrderReceived"
+    assert json.loads(entry["Detail"]) == {
+        "archiveKey": body["archiveKey"],
+        "receivedBody": json.dumps(payload),
+    }
+
+
+def test_inline_worker_lambda_fetches_secret_parses_records_and_publishes_notification():
+    response = _invoke_inline_lambda(
+        "OrdersWorkerFunction",
+        event={
+            "Records": [
+                {"messageId": "record-1", "body": json.dumps({"orderId": "unit-worker-1"})},
+                {"messageId": "record-2", "body": "plain-text-body"},
+            ]
+        },
+        env={
+            "AWS_REGION": "us-east-1",
+            "DB_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:orders-db",
+            "DB_HOST": "orders.cluster.local",
+            "DB_PORT": "5432",
+            "DB_NAME": "orders",
+            "TOPIC_ARN": "arn:aws:sns:us-east-1:123456789012:orders-topic",
+        },
+    )
+    calls_by_service = {call["service"]: call for call in response["calls"]}
+
+    assert response["result"]["recordCount"] == 2
+    assert response["result"]["dbConnection"]["host"] == "orders.cluster.local"
+    assert response["result"]["dbConnection"]["port"] == 5432
+    assert response["result"]["dbConnection"]["username"] == "orders_app"
+    assert response["result"]["dbConnection"]["database"] == "orders"
+    assert response["result"]["dbConnection"]["status"] == "stubbed-connection"
+
+    assert calls_by_service["secretsmanager"]["command"] == "GetSecretValueCommand"
+    assert calls_by_service["secretsmanager"]["input"] == {
+        "SecretId": "arn:aws:secretsmanager:us-east-1:123456789012:secret:orders-db"
+    }
+
+    assert calls_by_service["sns"]["command"] == "PublishCommand"
+    publish_input = calls_by_service["sns"]["input"]
+    assert publish_input["TopicArn"] == "arn:aws:sns:us-east-1:123456789012:orders-topic"
+    assert publish_input["Subject"] == "orders-worker-processed"
+    published_message = json.loads(publish_input["Message"])
+    assert published_message["records"] == [
+        {"messageId": "record-1", "payload": {"orderId": "unit-worker-1"}},
+        {"messageId": "record-2", "payload": "plain-text-body"},
+    ]
+    assert published_message["dbConnection"]["username"] == "orders_app"
+    assert published_message["dbConnection"]["status"] == "stubbed-connection"
+
+
+def test_inline_pipe_manager_handler_source_covers_create_update_and_delete():
     assert 'client.create_pipe(**_pipe_parameters(props))' in APP_SOURCE
     assert 'client.update_pipe(Name=pipe_name' in APP_SOURCE
     assert 'client.delete_pipe(Name=pipe_name)' in APP_SOURCE
@@ -320,6 +589,7 @@ def test_storage_database_and_queue_configuration_are_exact():
 def test_api_lambda_and_logs_match_the_contract():
     api_logical_id, api_lambda = _resource_with_prefix("AWS::Lambda::Function", "OrdersApiFunction")
     worker_logical_id, worker_lambda = _resource_with_prefix("AWS::Lambda::Function", "OrdersWorkerFunction")
+    queue_logical_id, _ = _resource_with_prefix("AWS::SQS::Queue", "OrdersQueue")
 
     api_props = api_lambda["Properties"]
     worker_props = worker_lambda["Properties"]
@@ -350,12 +620,22 @@ def test_api_lambda_and_logs_match_the_contract():
     mapping_props = mapping["Properties"]
     assert mapping_props["BatchSize"] == 1
     assert mapping_props["FunctionName"]["Ref"] == worker_logical_id
+    assert mapping_props["EventSourceArn"]["Fn::GetAtt"][0] == queue_logical_id
 
     _, rest_api = next(iter(_resources_by_type("AWS::ApiGateway::RestApi").items()))
     assert rest_api["Properties"]["EndpointConfiguration"]["Types"] == ["REGIONAL"]
 
     _, stage = _resource_with_prefix("AWS::ApiGateway::Stage", "OrdersApiGatewayDeploymentStageprod")
     assert stage["Properties"]["StageName"] == "prod"
+    assert stage["Properties"]["MethodSettings"] == [
+        {
+            "DataTraceEnabled": False,
+            "HttpMethod": "*",
+            "ResourcePath": "/*",
+            "ThrottlingBurstLimit": 1,
+            "ThrottlingRateLimit": 1,
+        }
+    ]
 
     _, resource = _resource_with_prefix("AWS::ApiGateway::Resource", "OrdersApiGatewayorders")
     assert resource["Properties"]["PathPart"] == "orders"
@@ -468,6 +748,13 @@ def test_eventbridge_pipe_stepfunctions_and_security_boundaries_are_scoped():
         statement["Action"] == "events:PutEvents" and statement["Resource"]["Fn::GetAtt"][0] == event_bus_logical_id
         for statement in api_statements
     )
+    assert not any(statement["Action"] == "sqs:ReceiveMessage" for statement in api_statements)
+    assert not any(statement["Action"] == "secretsmanager:GetSecretValue" for statement in api_statements)
+    assert not any(
+        action.startswith("rds:")
+        for statement in api_statements
+        for action in (statement["Action"] if isinstance(statement["Action"], list) else [statement["Action"]])
+    )
     assert sum(1 for statement in api_statements if statement["Resource"] == "*") == 1
     assert any(
         statement["Action"] == "logs:CreateLogGroup"
@@ -490,6 +777,8 @@ def test_eventbridge_pipe_stepfunctions_and_security_boundaries_are_scoped():
         statement["Action"] == "sns:Publish" and statement["Resource"]["Ref"] == topic_logical_id
         for statement in worker_statements
     )
+    assert not any(statement["Action"] == "s3:PutObject" for statement in worker_statements)
+    assert not any(statement["Action"] == "events:PutEvents" for statement in worker_statements)
     assert sum(1 for statement in worker_statements if statement["Resource"] == "*") == 1
     assert any(
         statement["Action"] == "logs:CreateLogGroup"
@@ -519,17 +808,11 @@ def test_global_iam_guardrails_and_generated_names_are_enforced():
         assert all("AdministratorAccess" not in json.dumps(arn) for arn in managed_policy_arns)
 
     wildcard_action_violations: list[tuple[object, object]] = []
-    wildcard_resource_statements: list[dict] = []
     iam_namespace_violations: list[str] = []
     for statement in _all_policy_statements():
         actions = statement["Action"]
         if not isinstance(actions, list):
             actions = [actions]
-        resources = statement["Resource"]
-        if not isinstance(resources, list):
-            resources = [resources]
-        if "*" in resources:
-            wildcard_resource_statements.append(statement)
         for action in actions:
             if action == "*" or action.endswith(":*"):
                 wildcard_action_violations.append((action, statement["Resource"]))
@@ -538,7 +821,8 @@ def test_global_iam_guardrails_and_generated_names_are_enforced():
 
     assert wildcard_action_violations == []
     assert iam_namespace_violations == []
-    assert len(wildcard_resource_statements) == 2
+    default_wildcard_statements = _wildcard_resource_statements(TEMPLATE)
+    assert len(default_wildcard_statements) == 2
     assert all(
         set(statement["Action"])
         == {
@@ -551,7 +835,37 @@ def test_global_iam_guardrails_and_generated_names_are_enforced():
             "ec2:DescribeSecurityGroups",
             "ec2:DescribeVpcs",
         }
-        for statement in wildcard_resource_statements
+        for statement in default_wildcard_statements
+    )
+
+    local_template, _ = _synthesize_template(
+        {
+            "AWS_REGION": "us-west-2",
+            "AWS_ENDPOINT_URL": "https://aws-endpoint.internal",
+        }
+    )
+    local_wildcard_statements = _wildcard_resource_statements(local_template)
+    assert len(local_wildcard_statements) == 3
+    assert sum(
+        1
+        for statement in local_wildcard_statements
+        if set(statement["Action"])
+        == {
+            "ec2:CreateNetworkInterface",
+            "ec2:DescribeNetworkInterfaces",
+            "ec2:DeleteNetworkInterface",
+            "ec2:AssignPrivateIpAddresses",
+            "ec2:UnassignPrivateIpAddresses",
+            "ec2:DescribeSubnets",
+            "ec2:DescribeSecurityGroups",
+            "ec2:DescribeVpcs",
+        }
+    ) == 2
+    assert any(
+        statement["Action"]
+        == ["pipes:CreatePipe", "pipes:UpdatePipe", "pipes:DeletePipe", "pipes:DescribePipe"]
+        and statement["Resource"] == "*"
+        for statement in local_wildcard_statements
     )
     assert "wildcard statement isolated to the minimum" in APP_SOURCE
 

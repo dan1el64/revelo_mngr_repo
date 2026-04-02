@@ -54,47 +54,61 @@ const sqs = new SQSClient({ region });
 const eventBridge = new EventBridgeClient({ region });
 
 exports.handler = async (event) => {
-  const rawBody = typeof event.body === 'string' && event.body.length > 0
-    ? event.body
-    : JSON.stringify({});
-  const key = 'orders/' + Date.now() + '-' + randomUUID() + '.json';
+  try {
+    const rawBody = typeof event.body === 'string' && event.body.length > 0
+      ? event.body
+      : JSON.stringify({});
+    const key = 'orders/' + Date.now() + '-' + randomUUID() + '.json';
 
-  await Promise.all([
-    sqs.send(new SendMessageCommand({
-      QueueUrl: process.env.QUEUE_URL,
-      MessageBody: rawBody,
-    })),
-    s3.send(new PutObjectCommand({
-      Bucket: process.env.BUCKET_NAME,
-      Key: key,
-      Body: rawBody,
-      ContentType: 'application/json',
-    })),
-    eventBridge.send(new PutEventsCommand({
-      Entries: [
-        {
-          EventBusName: process.env.EVENT_BUS_NAME,
-          Source: 'orders.api',
-          DetailType: 'OrderReceived',
-          Detail: JSON.stringify({
-            archiveKey: key,
-            receivedBody: rawBody,
-          }),
-        },
-      ],
-    })),
-  ]);
+    await Promise.all([
+      sqs.send(new SendMessageCommand({
+        QueueUrl: process.env.QUEUE_URL,
+        MessageBody: rawBody,
+      })),
+      s3.send(new PutObjectCommand({
+        Bucket: process.env.BUCKET_NAME,
+        Key: key,
+        Body: rawBody,
+        ContentType: 'application/json',
+      })),
+      eventBridge.send(new PutEventsCommand({
+        Entries: [
+          {
+            EventBusName: process.env.EVENT_BUS_NAME,
+            Source: 'orders.api',
+            DetailType: 'OrderReceived',
+            Detail: JSON.stringify({
+              archiveKey: key,
+              receivedBody: rawBody,
+            }),
+          },
+        ],
+      })),
+    ]);
 
-  return {
-    statusCode: 202,
-    headers: {
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      status: 'accepted',
-      archiveKey: key,
-    }),
-  };
+    return {
+      statusCode: 202,
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        status: 'accepted',
+        archiveKey: key,
+      }),
+    };
+  } catch (error) {
+    console.error('orders-api downstream failure', error);
+    return {
+      statusCode: 502,
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        status: 'error',
+        message: 'Failed to persist the order across downstream services',
+      }),
+    };
+  }
 };
 `;
 
@@ -119,10 +133,16 @@ function parseBody(body) {
 }
 
 exports.handler = async (event) => {
-  const secretResponse = await secretsManager.send(new GetSecretValueCommand({
-    SecretId: process.env.DB_SECRET_ARN,
-  }));
-  const credentials = JSON.parse(secretResponse.SecretString || '{}');
+  let credentials;
+  try {
+    const secretResponse = await secretsManager.send(new GetSecretValueCommand({
+      SecretId: process.env.DB_SECRET_ARN,
+    }));
+    credentials = JSON.parse(secretResponse.SecretString || '{}');
+  } catch (error) {
+    console.error('orders-worker secret retrieval failure', error);
+    throw new Error('Failed to load the database secret for orders-worker');
+  }
 
   const records = Array.isArray(event && event.Records)
     ? event.Records.map((record) => ({
@@ -140,15 +160,23 @@ exports.handler = async (event) => {
     status: 'stubbed-connection',
   };
 
-  await sns.send(new PublishCommand({
-    TopicArn: process.env.TOPIC_ARN,
-    Subject: 'orders-worker-processed',
-    Message: JSON.stringify({
-      processedAt,
-      records,
-      dbConnection,
-    }),
-  }));
+  try {
+    await sns.send(new PublishCommand({
+      TopicArn: process.env.TOPIC_ARN,
+      Subject: 'orders-worker-processed',
+      Message: JSON.stringify({
+        processedAt,
+        records,
+        dbConnection,
+      }),
+    }));
+  } catch (error) {
+    console.error('orders-worker publish failure', error);
+    throw new Error(
+      'Failed to publish the worker notification after loading the database secret for ' +
+      (credentials.username || 'unknown-user'),
+    );
+  }
 
   return {
     processedAt,
@@ -597,6 +625,8 @@ class OrdersIngestStack extends cdk.Stack {
       },
       deployOptions: {
         stageName: 'prod',
+        throttlingBurstLimit: 1,
+        throttlingRateLimit: 1,
       },
     });
 
