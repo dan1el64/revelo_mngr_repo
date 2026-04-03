@@ -15,5 +15,13 @@ This task contains a single Terraform module in `main.tf`.
 
 ```bash
 terraform validate
-python3 -m pytest tests/unit_tests.py tests/integration_tests.py -q
+python3 -m pytest tests/unit_tests.py -q
+```
+
+Integration tests query deployed resources through `boto3` and require `state.json`:
+
+```bash
+terraform apply
+terraform show -json > state.json
+python3 -m pytest tests/integration_tests.py -q
 ```
