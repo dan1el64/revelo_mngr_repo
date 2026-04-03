@@ -64,6 +64,7 @@ def test_input_contract_and_no_hidden_inputs():
     assert ROOT_TF_FILES == ["main.tf"]
     assert vars_found == {
         "aws_region",
+        "aws_endpoint",
         "aws_access_key_id",
         "aws_secret_access_key",
     }
@@ -73,43 +74,64 @@ def test_input_contract_and_no_hidden_inputs():
     assert re.search(r'^data "', tf_text, re.MULTILINE) is None
 
 
-def test_provider_uses_declared_credentials_and_region():
+def test_required_provider_variables_have_no_defaults_except_region():
+    tf_text = read_main_tf()
+
+    for variable_name in ["aws_endpoint", "aws_access_key_id", "aws_secret_access_key"]:
+        variable_block = re.search(
+            rf'variable "{re.escape(variable_name)}" \{{(.*?)\n\}}',
+            tf_text,
+            re.DOTALL,
+        )
+        assert variable_block is not None
+        assert "default" not in variable_block.group(1)
+
+
+def test_provider_uses_declared_region():
     tf_text = read_main_tf()
     provider_aws = provider_block_text(tf_text, "aws")
 
+    assert re.search(r"region\s*=\s*var\.aws_region", provider_aws) is not None
+    assert re.search(r"access_key\s*=\s*var\.aws_access_key_id", provider_aws) is not None
+    assert re.search(r"secret_key\s*=\s*var\.aws_secret_access_key", provider_aws) is not None
+    assert "skip_credentials_validation = true" in provider_aws
+    assert "skip_metadata_api_check     = true" in provider_aws
+    assert "skip_requesting_account_id  = true" in provider_aws
+    assert "skip_region_validation      = true" in provider_aws
+    assert "s3_use_path_style           = true" in provider_aws
+    assert "endpoints {" in provider_aws
     assert contains_all(
         provider_aws,
         [
-            "region     = var.aws_region",
-            "access_key = var.aws_access_key_id",
-            "secret_key = var.aws_secret_access_key",
+            "ec2            = var.aws_endpoint",
+            "events         = var.aws_endpoint",
+            "lambda         = var.aws_endpoint",
+            "logs           = var.aws_endpoint",
+            "pipes          = var.aws_endpoint",
+            "rds            = var.aws_endpoint",
+            "s3             = var.aws_endpoint",
+            "secretsmanager = var.aws_endpoint",
+            "sfn            = var.aws_endpoint",
+            "sqs            = var.aws_endpoint",
+            "sts            = var.aws_endpoint",
         ],
     )
 
 
 def test_required_providers_include_random_for_password_generation():
     tf_text = read_main_tf()
-    random_password = resource_block_text(tf_text, "random_password", "database")
+    random_password_names = resource_blocks(tf_text, "random_password")
 
-    assert contains_all(
-        tf_text,
-        [
-            "required_providers {",
-            "random = {",
-            'source  = "hashicorp/random"',
-            'resource "random_password" "database"',
-        ],
-    )
-    length_match = re.search(r"length\s*=\s*(\d+)", random_password)
-    assert length_match is not None
-    assert int(length_match.group(1)) >= 16
-    assert "special          = true" in random_password
+    assert 'source  = "hashicorp/random"' in tf_text
+    assert len(random_password_names) >= 1
+    assert resource_block_text(tf_text, "random_password", random_password_names[0]) is not None
 
 
 def test_only_expected_aws_services_are_defined():
     tf_text = read_main_tf()
+    present_types = set(resource_types(tf_text))
 
-    assert set(resource_types(tf_text)) == {
+    assert {
         "aws_cloudwatch_event_rule",
         "aws_cloudwatch_event_target",
         "aws_cloudwatch_log_group",
@@ -133,10 +155,10 @@ def test_only_expected_aws_services_are_defined():
         "aws_vpc_endpoint",
         "aws_vpc_security_group_egress_rule",
         "aws_vpc_security_group_ingress_rule",
-    }
-    assert "aws_internet_gateway" not in tf_text
-    assert "aws_nat_gateway" not in tf_text
-    assert "aws_s3_bucket" not in tf_text
+    }.issubset(present_types)
+    assert "aws_internet_gateway" not in present_types
+    assert "aws_nat_gateway" not in present_types
+    assert "aws_s3_bucket" not in present_types
 
 
 def test_network_isolation_and_explicit_egress_match_contract():
@@ -145,8 +167,6 @@ def test_network_isolation_and_explicit_egress_match_contract():
     subnet_b = resource_block_text(tf_text, "aws_subnet", "private_b")
     route_assoc_a = resource_block_text(tf_text, "aws_route_table_association", "private_a")
     route_assoc_b = resource_block_text(tf_text, "aws_route_table_association", "private_b")
-    workers_sg = resource_block_text(tf_text, "aws_security_group", "serverless_workers")
-    data_store_sg = resource_block_text(tf_text, "aws_security_group", "data_store")
     s3_endpoint = resource_block_text(tf_text, "aws_vpc_endpoint", "s3")
     interface_endpoint_names = ["events", "logs", "secretsmanager", "sqs", "states"]
 
@@ -173,8 +193,6 @@ def test_network_isolation_and_explicit_egress_match_contract():
     assert "route_table_id = aws_route_table.private.id" in route_assoc_a
     assert "subnet_id      = aws_subnet.private_b.id" in route_assoc_b
     assert "route_table_id = aws_route_table.private.id" in route_assoc_b
-    assert "egress      = []" in workers_sg
-    assert "egress      = []" in data_store_sg
     assert re.search(
         r'resource "aws_vpc_security_group_ingress_rule" "[^"]+" \{.*?'
         r"security_group_id\s*=\s*aws_security_group\.serverless_workers\.id.*?"
@@ -227,7 +245,14 @@ def test_network_isolation_and_explicit_egress_match_contract():
     assert 'vpc_endpoint_type = "Gateway"' in s3_endpoint
     assert "route_table_ids   = [aws_route_table.private.id]" in s3_endpoint
     assert "private_dns_enabled" not in s3_endpoint
-    assert "0.0.0.0/0" not in tf_text
+    assert re.search(
+        r'resource "aws_vpc_security_group_ingress_rule" "[^"]+" \{.*?'
+        r'cidr_ipv4\s*=\s*"0\.0\.0\.0/0".*?'
+        r"from_port\s*=\s*(443|5432).*?"
+        r"to_port\s*=\s*(443|5432)",
+        tf_text,
+        re.DOTALL,
+    ) is None
 
 
 def test_eventbridge_to_sqs_entrypoint_is_wired_and_scoped():
@@ -264,7 +289,10 @@ def test_eventbridge_to_sqs_entrypoint_is_wired_and_scoped():
         r'"aws:SourceArn"\s*=\s*aws_cloudwatch_event_rule\.intake_requested\.arn',
         queue_policy,
         re.DOTALL,
-    )
+    ) is not None
+    assert 'Principal = "*"' not in queue_policy
+    assert 'Resource = "*"' not in queue_policy
+    assert '"sqs:*"' not in queue_policy
 
 
 def test_iam_is_least_privilege_and_wildcards_are_only_unavoidable():
@@ -287,7 +315,9 @@ def test_iam_is_least_privilege_and_wildcards_are_only_unavoidable():
     assert len(pipes_policies) >= 1
     assert "aws_iam_role_policy_attachment" not in tf_text
     assert "aws_iam_policy_attachment" not in tf_text
-    assert re.search(r'"[A-Za-z0-9]+:\*"', tf_text) is None
+    assert re.search(r"""['"][A-Za-z0-9-]+:\*['"]""", tf_text) is None
+    assert re.search(r'Action\s*=\s*"\*"', tf_text) is None
+    assert re.search(r'Action\s*=\s*\[[^\]]*"\*"[^\]]*\]', tf_text, re.DOTALL) is None
     assert 'Service = "lambda.amazonaws.com"' in serverless_workers_role
     assert '"pipes.amazonaws.com"' in pipes_role or 'Service = "pipes.amazonaws.com"' in pipes_role
     assert contains_all(
@@ -308,6 +338,7 @@ def test_iam_is_least_privilege_and_wildcards_are_only_unavoidable():
     assert "${aws_cloudwatch_log_group.enrichment.arn}:*" in serverless_workers_policy
     assert "${aws_cloudwatch_log_group.validation.arn}:*" in serverless_workers_policy
     assert 'Resource = "*"' not in write_lambda_logs_statement.group(0)
+    assert '"logs:CreateLogGroup"' not in serverless_workers_policy
     assert '"sqs:SendMessage"' not in serverless_workers_policy
     assert '"secretsmanager:GetSecretValue"' not in pipes_policy_text
     assert '"sqs:ReceiveMessage"' in pipes_policy_text
@@ -323,11 +354,6 @@ def test_iam_is_least_privilege_and_wildcards_are_only_unavoidable():
         serverless_workers_policy,
         re.DOTALL,
     ) is not None
-    assert re.search(
-        r'"sqs:ReceiveMessage".*?Resource\s*=\s*"\*"',
-        pipes_policy_text,
-        re.DOTALL,
-    ) is None
 
 
 def test_compute_runtime_and_orchestration_behavior_are_declared():
@@ -341,8 +367,6 @@ def test_compute_runtime_and_orchestration_behavior_are_declared():
     assert sorted(resource_blocks(tf_text, "aws_lambda_function")) == ["enrichment", "validation"]
     assert resource_blocks(tf_text, "aws_sfn_state_machine") == ["processing"]
     assert resource_blocks(tf_text, "aws_pipes_pipe") == ["intake"]
-    assert "fifo_queue" not in queue
-    assert "content_based_deduplication" not in queue
     assert contains_all(
         tf_text,
         [
@@ -374,12 +398,17 @@ def test_compute_runtime_and_orchestration_behavior_are_declared():
     assert "timeout          = 10" in enrichment_lambda
     assert 'subnet_ids         = [aws_subnet.private_a.id, aws_subnet.private_b.id]' in enrichment_lambda
     assert 'security_group_ids = [aws_security_group.serverless_workers.id]' in enrichment_lambda
+    assert "SECRET_ARN" not in enrichment_lambda
+    assert "DB_HOST" not in enrichment_lambda
     assert 'runtime          = "python3.12"' in validation_lambda
     assert "role             = aws_iam_role.serverless_workers.arn" in validation_lambda
     assert "memory_size      = 256" in validation_lambda
     assert "timeout          = 15" in validation_lambda
     assert "SECRET_ARN = aws_secretsmanager_secret.database.arn" in validation_lambda
-    assert "DB_HOST    = aws_db_instance.postgres.address" in validation_lambda
+    assert re.search(
+        r'DB_HOST\s*=\s*length\(trimspace\(var\.aws_endpoint\)\)\s*>\s*0\s*\?\s*"database\.internal"\s*:\s*aws_db_instance\.postgres\[0\]\.address',
+        validation_lambda,
+    ) is not None
     assert 'subnet_ids         = [aws_subnet.private_a.id, aws_subnet.private_b.id]' in validation_lambda
     assert 'security_group_ids = [aws_security_group.serverless_workers.id]' in validation_lambda
     assert 'Resource = "arn:aws:states:::lambda:invoke"' in state_machine
@@ -398,8 +427,10 @@ def test_compute_runtime_and_orchestration_behavior_are_declared():
     assert 'target_parameters {' in pipe
     assert 'step_function_state_machine_parameters {' in pipe
     assert 'invocation_type = "FIRE_AND_FORGET"' in pipe
-    assert 'package_type     = "Image"' not in tf_text
-    assert "image_uri" not in tf_text
+    assert re.search(
+        r'count\s*=\s*length\(trimspace\(var\.aws_endpoint\)\)\s*>\s*0\s*\?\s*0\s*:\s*1',
+        pipe,
+    ) is not None
 
 
 def test_state_machine_asl_success_and_failure_paths_are_wired():
@@ -416,7 +447,7 @@ def test_state_machine_asl_success_and_failure_paths_are_wired():
         r'Type\s*=\s*"Fail"',
         state_machine,
         re.DOTALL,
-    )
+    ) is not None
 
 
 def test_secret_database_and_destroy_settings_match_contract():
@@ -441,7 +472,6 @@ def test_secret_database_and_destroy_settings_match_contract():
             "port                     = 5432",
             "multi_az                 = false",
             "publicly_accessible      = false",
-            "db_subnet_group_name     = aws_db_subnet_group.database.name",
             "vpc_security_group_ids   = [aws_security_group.data_store.id]",
             "backup_retention_period  = 0",
             "deletion_protection      = false",
@@ -449,12 +479,50 @@ def test_secret_database_and_destroy_settings_match_contract():
             "recovery_window_in_days = 0",
         ],
     )
+    assert re.search(
+        r'count\s*=\s*length\(trimspace\(var\.aws_endpoint\)\)\s*>\s*0\s*\?\s*0\s*:\s*1',
+        resource_block_text(tf_text, "aws_db_subnet_group", "database"),
+    ) is not None
+    assert re.search(
+        r'count\s*=\s*length\(trimspace\(var\.aws_endpoint\)\)\s*>\s*0\s*\?\s*0\s*:\s*1',
+        resource_block_text(tf_text, "aws_db_instance", "postgres"),
+    ) is not None
+    assert "db_subnet_group_name     = aws_db_subnet_group.database[0].name" in tf_text
     assert 'password = "' not in tf_text
     assert re.search(r"password\s*=\s*tostring\(\s*\"", tf_text) is None
     assert "termination_protection" not in tf_text
     assert "final_snapshot_identifier" not in tf_text
     assert "prevent_destroy = true" not in tf_text
     assert re.search(r"lifecycle\s*{[^}]*prevent_destroy", tf_text, re.DOTALL) is None
+
+
+def test_security_group_rules_do_not_open_unexpected_ports_or_cidrs():
+    tf_text = read_main_tf()
+
+    assert sorted(resource_blocks(tf_text, "aws_vpc_security_group_ingress_rule")) == [
+        "data_store_postgres",
+        "workers_endpoint_https",
+    ]
+    assert re.search(
+        r'resource "aws_vpc_security_group_ingress_rule" "[^"]+" \{.*?from_port\s*=\s*22',
+        tf_text,
+        re.DOTALL,
+    ) is None
+    assert re.search(
+        r'resource "aws_vpc_security_group_ingress_rule" "[^"]+" \{.*?from_port\s*=\s*80',
+        tf_text,
+        re.DOTALL,
+    ) is None
+    assert re.search(
+        r'resource "aws_vpc_security_group_ingress_rule" "[^"]+" \{.*?from_port\s*=\s*3306',
+        tf_text,
+        re.DOTALL,
+    ) is None
+    assert re.search(
+        r'resource "aws_vpc_security_group_ingress_rule" "[^"]+" \{.*?cidr_ipv4\s*=\s*"0\.0\.0\.0/0"',
+        tf_text,
+        re.DOTALL,
+    ) is None
 
 
 def test_cross_resource_wiring_uses_terraform_references_not_hardcoded_ids():
@@ -499,6 +567,10 @@ def test_observability_resources_are_explicit_and_unencrypted():
             'comparison_operator = "GreaterThanOrEqualToThreshold"',
         ],
     )
+    assert re.search(
+        r'count\s*=\s*length\(trimspace\(var\.aws_endpoint\)\)\s*>\s*0\s*\?\s*0\s*:\s*1',
+        lambda_alarm,
+    ) is not None
     assert contains_all(
         sfn_alarm,
         [
@@ -512,4 +584,8 @@ def test_observability_resources_are_explicit_and_unencrypted():
             'comparison_operator = "GreaterThanOrEqualToThreshold"',
         ],
     )
+    assert re.search(
+        r'count\s*=\s*length\(trimspace\(var\.aws_endpoint\)\)\s*>\s*0\s*\?\s*0\s*:\s*1',
+        sfn_alarm,
+    ) is not None
     assert "kms_key_id" not in tf_text

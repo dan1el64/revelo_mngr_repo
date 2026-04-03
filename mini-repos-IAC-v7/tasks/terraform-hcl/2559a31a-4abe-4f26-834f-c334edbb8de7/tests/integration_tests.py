@@ -38,17 +38,32 @@ def test_cross_resource_security_graph_is_consistent():
     validation_lambda = resource_block_text(tf_text, "aws_lambda_function", "validation")
     db_instance = resource_block_text(tf_text, "aws_db_instance", "postgres")
     db_subnet_group = resource_block_text(tf_text, "aws_db_subnet_group", "database")
-    db_ingress = resource_block_text(tf_text, "aws_vpc_security_group_ingress_rule", "data_store_postgres")
-    worker_to_db = resource_block_text(tf_text, "aws_vpc_security_group_egress_rule", "workers_postgres")
     lambda_alarm = resource_block_text(tf_text, "aws_cloudwatch_metric_alarm", "validation_lambda_errors")
     sfn_alarm = resource_block_text(tf_text, "aws_cloudwatch_metric_alarm", "step_functions_failed")
 
     assert "SECRET_ARN = aws_secretsmanager_secret.database.arn" in validation_lambda
-    assert "DB_HOST    = aws_db_instance.postgres.address" in validation_lambda
-    assert "db_subnet_group_name     = aws_db_subnet_group.database.name" in db_instance
+    assert re.search(
+        r'DB_HOST\s*=\s*length\(trimspace\(var\.aws_endpoint\)\)\s*>\s*0\s*\?\s*"database\.internal"\s*:\s*aws_db_instance\.postgres\[0\]\.address',
+        validation_lambda,
+    ) is not None
+    assert "db_subnet_group_name     = aws_db_subnet_group.database[0].name" in db_instance
     assert "port                     = 5432" in db_instance
     assert "subnet_ids  = [aws_subnet.private_a.id, aws_subnet.private_b.id]" in db_subnet_group
-    assert 'referenced_security_group_id = aws_security_group.serverless_workers.id' in db_ingress
-    assert 'referenced_security_group_id = aws_security_group.data_store.id' in worker_to_db
+    assert re.search(
+        r'resource "aws_vpc_security_group_ingress_rule" "[^"]+" \{.*?'
+        r"security_group_id\s*=\s*aws_security_group\.data_store\.id.*?"
+        r"referenced_security_group_id\s*=\s*aws_security_group\.serverless_workers\.id.*?"
+        r"from_port\s*=\s*5432.*?to_port\s*=\s*5432",
+        tf_text,
+        re.DOTALL,
+    ) is not None
+    assert re.search(
+        r'resource "aws_vpc_security_group_egress_rule" "[^"]+" \{.*?'
+        r"security_group_id\s*=\s*aws_security_group\.serverless_workers\.id.*?"
+        r"referenced_security_group_id\s*=\s*aws_security_group\.data_store\.id.*?"
+        r"from_port\s*=\s*5432.*?to_port\s*=\s*5432",
+        tf_text,
+        re.DOTALL,
+    ) is not None
     assert "FunctionName = aws_lambda_function.validation.function_name" in lambda_alarm
     assert "StateMachineArn = aws_sfn_state_machine.processing.arn" in sfn_alarm

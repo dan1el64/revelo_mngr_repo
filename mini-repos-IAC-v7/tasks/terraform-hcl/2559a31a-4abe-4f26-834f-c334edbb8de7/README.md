@@ -7,6 +7,7 @@ This task contains a single Terraform module in `main.tf`.
 | Variable | Type | Default |
 |----------|------|---------|
 | `aws_region` | string | `"us-east-1"` |
+| `aws_endpoint` | string | none |
 | `aws_access_key_id` | string | none |
 | `aws_secret_access_key` | string | none |
 

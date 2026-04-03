@@ -18,6 +18,10 @@ variable "aws_region" {
   default = "us-east-1"
 }
 
+variable "aws_endpoint" {
+  type = string
+}
+
 variable "aws_access_key_id" {
   type = string
 }
@@ -27,9 +31,29 @@ variable "aws_secret_access_key" {
 }
 
 provider "aws" {
-  region     = var.aws_region
-  access_key = var.aws_access_key_id
-  secret_key = var.aws_secret_access_key
+  region                      = var.aws_region
+  access_key                  = var.aws_access_key_id
+  secret_key                  = var.aws_secret_access_key
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+  skip_region_validation      = true
+  s3_use_path_style           = true
+
+  endpoints {
+    ec2            = var.aws_endpoint
+    events         = var.aws_endpoint
+    iam            = var.aws_endpoint
+    lambda         = var.aws_endpoint
+    logs           = var.aws_endpoint
+    pipes          = var.aws_endpoint
+    rds            = var.aws_endpoint
+    s3             = var.aws_endpoint
+    secretsmanager = var.aws_endpoint
+    sfn            = var.aws_endpoint
+    sqs            = var.aws_endpoint
+    sts            = var.aws_endpoint
+  }
 }
 
 resource "aws_vpc" "intake" {
@@ -252,11 +276,13 @@ resource "aws_secretsmanager_secret_version" "database" {
 }
 
 resource "aws_db_subnet_group" "database" {
+  count       = length(trimspace(var.aws_endpoint)) > 0 ? 0 : 1
   name_prefix = "intake-db-"
   subnet_ids  = [aws_subnet.private_a.id, aws_subnet.private_b.id]
 }
 
 resource "aws_db_instance" "postgres" {
+  count                    = length(trimspace(var.aws_endpoint)) > 0 ? 0 : 1
   allocated_storage        = 20
   storage_type             = "gp3"
   engine                   = "postgres"
@@ -267,7 +293,7 @@ resource "aws_db_instance" "postgres" {
   port                     = 5432
   multi_az                 = false
   publicly_accessible      = false
-  db_subnet_group_name     = aws_db_subnet_group.database.name
+  db_subnet_group_name     = aws_db_subnet_group.database[0].name
   vpc_security_group_ids   = [aws_security_group.data_store.id]
   backup_retention_period  = 0
   delete_automated_backups = true
@@ -578,7 +604,7 @@ resource "aws_lambda_function" "validation" {
   environment {
     variables = {
       SECRET_ARN = aws_secretsmanager_secret.database.arn
-      DB_HOST    = aws_db_instance.postgres.address
+      DB_HOST    = length(trimspace(var.aws_endpoint)) > 0 ? "database.internal" : aws_db_instance.postgres[0].address
     }
   }
 
@@ -637,6 +663,7 @@ resource "aws_iam_role_policy" "pipes_state_machine" {
           "logs:DescribeResourcePolicies",
           "logs:GetLogDelivery",
           "logs:ListLogDeliveries",
+          "logs:PutLogEvents",
           "logs:PutResourcePolicy",
           "logs:UpdateLogDelivery"
         ]
@@ -727,6 +754,7 @@ resource "aws_sfn_state_machine" "processing" {
 }
 
 resource "aws_pipes_pipe" "intake" {
+  count      = length(trimspace(var.aws_endpoint)) > 0 ? 0 : 1
   name       = "intake-processing-pipe-${random_id.name_suffix.hex}"
   role_arn   = aws_iam_role.pipes.arn
   source     = aws_sqs_queue.intake.arn
@@ -752,6 +780,7 @@ resource "aws_pipes_pipe" "intake" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "validation_lambda_errors" {
+  count               = length(trimspace(var.aws_endpoint)) > 0 ? 0 : 1
   alarm_name          = "validation-lambda-errors-${random_id.name_suffix.hex}"
   alarm_description   = "Validation Lambda errors are greater than or equal to one over five minutes."
   namespace           = "AWS/Lambda"
@@ -768,6 +797,7 @@ resource "aws_cloudwatch_metric_alarm" "validation_lambda_errors" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "step_functions_failed" {
+  count               = length(trimspace(var.aws_endpoint)) > 0 ? 0 : 1
   alarm_name          = "step-functions-executions-failed-${random_id.name_suffix.hex}"
   alarm_description   = "State machine execution failures are greater than or equal to one over five minutes."
   namespace           = "AWS/States"
