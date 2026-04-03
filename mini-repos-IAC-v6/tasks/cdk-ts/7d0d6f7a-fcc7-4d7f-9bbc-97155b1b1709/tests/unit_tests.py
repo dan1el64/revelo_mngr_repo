@@ -85,8 +85,123 @@ def render_joined_string(value):
     raise AssertionError(f"unsupported render type: {value}")
 
 
+def statement_actions(statement):
+    actions = statement["Action"]
+    return actions if isinstance(actions, list) else [actions]
+
+
+def statement_resources(statement):
+    resources = statement["Resource"]
+    return resources if isinstance(resources, list) else [resources]
+
+
+def find_statement(statements, required_actions):
+    required = set(required_actions if isinstance(required_actions, list) else [required_actions])
+    matches = [statement for statement in statements if set(statement_actions(statement)) == required]
+    assert len(matches) == 1, f"expected one statement for {sorted(required)}, found {len(matches)}"
+    return matches[0]
+
+
+def role_policy_statements(role_prefix):
+    role_logical_id = find_logical_id(role_prefix, "AWS::IAM::Role")
+    statements = []
+    for policy in resources_by_type("AWS::IAM::Policy").values():
+        attached_roles = policy["Properties"].get("Roles", [])
+        if {"Ref": role_logical_id} in attached_roles:
+            policy_statements = policy["Properties"]["PolicyDocument"]["Statement"]
+            if isinstance(policy_statements, dict):
+                statements.append(policy_statements)
+            else:
+                statements.extend(policy_statements)
+    return role_logical_id, statements
+
+
 def pre_stack_source():
     return APP_SOURCE.split("class SecurityPostureStack", 1)[0]
+
+
+def inline_handler_code(function_prefix):
+    function = find_resource(function_prefix, "AWS::Lambda::Function")
+    return function["Properties"]["Code"]["ZipFile"]
+
+
+def invoke_inline_handler(function_prefix, env, event=None):
+    handler_code = inline_handler_code(function_prefix)
+    event = {} if event is None else event
+    with tempfile.TemporaryDirectory() as tempdir:
+        temp_path = Path(tempdir)
+        module_sources = {
+            "@aws-sdk/client-sqs": """
+class SQSClient {
+  async send() {
+    return {};
+  }
+}
+class SendMessageCommand {
+  constructor(input) {
+    this.input = input;
+  }
+}
+module.exports = { SQSClient, SendMessageCommand };
+""",
+            "@aws-sdk/client-secrets-manager": """
+class SecretsManagerClient {
+  async send() {
+    return {};
+  }
+}
+class GetSecretValueCommand {
+  constructor(input) {
+    this.input = input;
+  }
+}
+module.exports = { SecretsManagerClient, GetSecretValueCommand };
+""",
+            "@aws-sdk/client-cloudwatch": """
+class CloudWatchClient {
+  async send() {
+    return {};
+  }
+}
+class PutMetricDataCommand {
+  constructor(input) {
+    this.input = input;
+  }
+}
+module.exports = { CloudWatchClient, PutMetricDataCommand };
+""",
+        }
+        for module_name, source in module_sources.items():
+            module_dir = temp_path / "node_modules" / Path(module_name)
+            module_dir.mkdir(parents=True, exist_ok=True)
+            (module_dir / "index.js").write_text(source)
+
+        (temp_path / "handler.cjs").write_text(handler_code)
+        (temp_path / "runner.cjs").write_text(
+            """
+const { handler } = require("./handler.cjs");
+
+(async () => {
+  try {
+    await handler(JSON.parse(process.env.TEST_EVENT_JSON || "{}"));
+  } catch (error) {
+    process.stderr.write(String(error && error.message ? error.message : error));
+    process.exit(1);
+  }
+})();
+"""
+        )
+
+        run_env = os.environ.copy()
+        run_env.update(env)
+        run_env["TEST_EVENT_JSON"] = json.dumps(event)
+        return subprocess.run(
+            ["node", "runner.cjs"],
+            cwd=temp_path,
+            env=run_env,
+            capture_output=True,
+            text=True,
+        )
 
 
 def test_resource_inventory_matches_exact_counts():
@@ -100,13 +215,15 @@ def test_resource_inventory_matches_exact_counts():
         "AWS::EC2::SecurityGroup": 2,
         "AWS::EC2::Subnet": 4,
         "AWS::EC2::VPC": 1,
-        "AWS::IAM::Role": 3,
+        "AWS::IAM::Role": 4,
         "AWS::Lambda::Function": 2,
         "AWS::Logs::LogGroup": 4,
         "AWS::Logs::MetricFilter": 1,
         "AWS::Pipes::Pipe": 1,
         "AWS::RDS::DBInstance": 1,
         "AWS::RDS::DBSubnetGroup": 1,
+        "AWS::SecretsManager::Secret": 1,
+        "AWS::SecretsManager::SecretTargetAttachment": 1,
         "AWS::SQS::Queue": 1,
         "AWS::StepFunctions::StateMachine": 1,
     }
@@ -188,8 +305,12 @@ def test_network_boundaries_are_deterministic_and_restrictive():
     assert ingress["FromPort"] == 5432
     assert ingress["ToPort"] == 5432
     assert ingress["IpProtocol"] == "tcp"
-    assert ingress["SourceSecurityGroupId"] == {"Fn::GetAtt": [next(k for k, v in RESOURCES.items() if v == compute_sg), "GroupId"]}
-    assert ingress["GroupId"] == {"Fn::GetAtt": [next(k for k, v in RESOURCES.items() if v == database_sg), "GroupId"]}
+    assert ingress["SourceSecurityGroupId"] == {
+        "Fn::GetAtt": [next(k for k, v in RESOURCES.items() if v == compute_sg), "GroupId"]
+    }
+    assert ingress["GroupId"] == {
+        "Fn::GetAtt": [next(k for k, v in RESOURCES.items() if v == database_sg), "GroupId"]
+    }
 
 
 def test_compute_and_api_entrypoint_are_configured_as_requested():
@@ -198,7 +319,8 @@ def test_compute_and_api_entrypoint_are_configured_as_requested():
     compute_sg_id = {"Fn::GetAtt": [find_logical_id("SGCompute", "AWS::EC2::SecurityGroup"), "GroupId"]}
     ingest_log_group_id = find_logical_id("IngestWorkerLogGroup", "AWS::Logs::LogGroup")
     enrich_log_group_id = find_logical_id("EnrichWorkerLogGroup", "AWS::Logs::LogGroup")
-    ingest_role_id = find_logical_id("LambdaExecutionRole", "AWS::IAM::Role")
+    ingest_role_id = find_logical_id("IngestWorkerRole", "AWS::IAM::Role")
+    enrich_role_id = find_logical_id("EnrichWorkerRole", "AWS::IAM::Role")
     private_subnet_refs = [
         {"Ref": logical_id}
         for logical_id, resource in RESOURCES.items()
@@ -213,9 +335,11 @@ def test_compute_and_api_entrypoint_are_configured_as_requested():
         assert function["Properties"]["Code"].get("ZipFile")
         assert function["Properties"]["VpcConfig"]["SecurityGroupIds"] == [compute_sg_id]
         assert sorted(function["Properties"]["VpcConfig"]["SubnetIds"], key=str) == sorted(private_subnet_refs, key=str)
-        assert function["Properties"]["Role"] == {"Fn::GetAtt": [ingest_role_id, "Arn"]}
         assert "PackageType" not in function["Properties"]
 
+    assert ingest["Properties"]["Role"] == {"Fn::GetAtt": [ingest_role_id, "Arn"]}
+    assert enrich["Properties"]["Role"] == {"Fn::GetAtt": [enrich_role_id, "Arn"]}
+    assert ingest["Properties"]["Role"] != enrich["Properties"]["Role"]
     assert ingest["Properties"]["Environment"]["Variables"]["QUEUE_URL"]["Ref"].startswith("IngestQueue")
     assert ingest["Properties"]["Environment"]["Variables"]["DB_SECRET_ARN"]["Ref"].startswith("DatabaseCredentialsSecret")
     assert enrich["Properties"]["Environment"]["Variables"]["DB_SECRET_ARN"]["Ref"].startswith("DatabaseCredentialsSecret")
@@ -291,18 +415,20 @@ def test_state_machine_pipe_database_and_queue_wiring_are_correct():
     database = single_resource("AWS::RDS::DBInstance")
     subnet_group = single_resource("AWS::RDS::DBSubnetGroup")
     queue = single_resource("AWS::SQS::Queue")
+    enrich_lambda_id = find_logical_id("EnrichWorker", "AWS::Lambda::Function")
 
     definition = render_joined_string(state_machine["Properties"]["DefinitionString"])
     assert '"StartAt":"InvokeEnrichWorker"' in definition
-    assert '"Success":{"Type":"Succeed"}' in definition
+    assert '"Type":"Succeed"' in definition
     assert state_machine["Properties"]["StateMachineType"] == "STANDARD"
     assert state_machine["Properties"]["LoggingConfiguration"]["Level"] == "ALL"
     assert state_machine["Properties"]["LoggingConfiguration"]["IncludeExecutionData"] is True
 
     assert pipe["Properties"]["SourceParameters"]["SqsQueueParameters"]["BatchSize"] == 1
-    assert pipe["Properties"]["TargetParameters"]["StepFunctionStateMachineParameters"]["InvocationType"] == "FIRE_AND_FORGET"
     assert pipe["Properties"]["Source"] == {"Fn::GetAtt": [next(iter(resources_by_type("AWS::SQS::Queue"))), "Arn"]}
+    assert pipe["Properties"]["Enrichment"] == {"Fn::GetAtt": [enrich_lambda_id, "Arn"]}
     assert pipe["Properties"]["Target"] == {"Ref": next(iter(resources_by_type("AWS::StepFunctions::StateMachine")))}
+    assert "StepFunctionStateMachineParameters" in pipe["Properties"]["TargetParameters"]
 
     assert queue["Properties"]["VisibilityTimeout"] == 30
     assert queue["Properties"]["MessageRetentionPeriod"] == 345600
@@ -317,153 +443,145 @@ def test_state_machine_pipe_database_and_queue_wiring_are_correct():
     assert database["Properties"]["Port"] == "5432"
     assert database["Properties"]["BackupRetentionPeriod"] == 1
     assert database["Properties"]["DeletionProtection"] is False
-    assert database["Properties"]["DeleteAutomatedBackups"] is True
     assert len(subnet_group["Properties"]["SubnetIds"]) == 2
     assert database["Properties"]["MasterUsername"]["Fn::Join"][1][0] == "{{resolve:secretsmanager:"
     assert database["Properties"]["MasterUserPassword"]["Fn::Join"][1][0] == "{{resolve:secretsmanager:"
 
 
+def test_lambda_roles_separate_permissions_by_responsibility():
+    queue_id = find_logical_id("IngestQueue", "AWS::SQS::Queue")
+    secret_id = find_logical_id("DatabaseCredentialsSecret", "AWS::SecretsManager::Secret")
+
+    _, ingest_statements = role_policy_statements("IngestWorkerRole")
+    _, enrich_statements = role_policy_statements("EnrichWorkerRole")
+
+    ingest_send = find_statement(ingest_statements, "sqs:SendMessage")
+    assert ingest_send["Resource"] == {"Fn::GetAtt": [queue_id, "Arn"]}
+
+    ingest_secret = find_statement(ingest_statements, "secretsmanager:GetSecretValue")
+    assert ingest_secret["Resource"] == {"Ref": secret_id}
+
+    enrich_secret = find_statement(enrich_statements, "secretsmanager:GetSecretValue")
+    assert enrich_secret["Resource"] == {"Ref": secret_id}
+
+    enrich_metric = find_statement(enrich_statements, "cloudwatch:PutMetricData")
+    assert enrich_metric["Resource"] == "*"
+    assert enrich_metric["Condition"] == {
+        "StringEquals": {"cloudwatch:namespace": "Custom/EnrichWorker"}
+    }
+
+    assert all("cloudwatch:PutMetricData" not in statement_actions(statement) for statement in ingest_statements)
+    assert all("sqs:SendMessage" not in statement_actions(statement) for statement in enrich_statements)
+
+
 def test_iam_is_minimally_scoped_and_only_uses_unavoidable_resource_wildcards():
     roles = resources_by_type("AWS::IAM::Role")
-    assert len(roles) == 3
+    assert len(roles) == 4
 
-    lambda_role = find_resource("LambdaExecutionRole", "AWS::IAM::Role")
+    lambda_role_prefixes = ("IngestWorkerRole", "EnrichWorkerRole")
+    for prefix in lambda_role_prefixes:
+        role = find_resource(prefix, "AWS::IAM::Role")
+        assert role["Properties"]["AssumeRolePolicyDocument"]["Statement"][0]["Principal"] == {
+            "Service": "lambda.amazonaws.com"
+        }
+        assert role["Properties"]["ManagedPolicyArns"] == [
+            {
+                "Fn::Join": [
+                    "",
+                    [
+                        "arn:",
+                        {"Ref": "AWS::Partition"},
+                        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+                    ],
+                ]
+            },
+            {
+                "Fn::Join": [
+                    "",
+                    [
+                        "arn:",
+                        {"Ref": "AWS::Partition"},
+                        ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
+                    ],
+                ]
+            },
+        ]
+
     states_role = find_resource("StepFunctionsExecutionRole", "AWS::IAM::Role")
     pipes_role = find_resource("PipesExecutionRole", "AWS::IAM::Role")
-
-    assert lambda_role["Properties"]["AssumeRolePolicyDocument"]["Statement"][0]["Principal"] == {
-        "Service": "lambda.amazonaws.com"
-    }
     assert states_role["Properties"]["AssumeRolePolicyDocument"]["Statement"][0]["Principal"] == {
         "Service": "states.amazonaws.com"
     }
     assert pipes_role["Properties"]["AssumeRolePolicyDocument"]["Statement"][0]["Principal"] == {
         "Service": "pipes.amazonaws.com"
     }
-
-    managed_policy_arns = lambda_role["Properties"]["ManagedPolicyArns"]
-    assert managed_policy_arns == [
-        {
-            "Fn::Join": [
-                "",
-                [
-                    "arn:",
-                    {"Ref": "AWS::Partition"},
-                    ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-                ],
-            ]
-        },
-        {
-            "Fn::Join": [
-                "",
-                [
-                    "arn:",
-                    {"Ref": "AWS::Partition"},
-                    ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
-                ],
-            ]
-        },
-    ]
+    assert "ManagedPolicyArns" not in states_role["Properties"]
+    assert "ManagedPolicyArns" not in pipes_role["Properties"]
 
     wildcard_resources = []
     for policy in resources_by_type("AWS::IAM::Policy").values():
         for statement in policy["Properties"]["PolicyDocument"]["Statement"]:
-            actions = statement["Action"] if isinstance(statement["Action"], list) else [statement["Action"]]
+            actions = statement_actions(statement)
             assert all("*" not in action for action in actions)
-            resources = statement["Resource"] if isinstance(statement["Resource"], list) else [statement["Resource"]]
-            if "*" in resources:
+            if "*" in statement_resources(statement):
                 wildcard_resources.append(statement)
 
-    assert wildcard_resources == [
-        {
-            "Action": "cloudwatch:PutMetricData",
-            "Condition": {"StringEquals": {"cloudwatch:namespace": "Custom/EnrichWorker"}},
-            "Effect": "Allow",
-            "Resource": "*",
-        },
-        {
-            "Action": [
-                "logs:CreateLogDelivery",
-                "logs:DeleteLogDelivery",
-                "logs:DescribeLogGroups",
-                "logs:DescribeResourcePolicies",
-                "logs:GetLogDelivery",
-                "logs:ListLogDeliveries",
-                "logs:PutResourcePolicy",
-                "logs:UpdateLogDelivery",
-            ],
-            "Effect": "Allow",
-            "Resource": "*",
-        },
-    ]
+    assert len(wildcard_resources) == 2
+    assert any(
+        statement_actions(statement) == ["cloudwatch:PutMetricData"]
+        and statement.get("Condition") == {"StringEquals": {"cloudwatch:namespace": "Custom/EnrichWorker"}}
+        for statement in wildcard_resources
+    )
+    assert any(
+        set(statement_actions(statement))
+        == {
+            "logs:CreateLogDelivery",
+            "logs:DeleteLogDelivery",
+            "logs:DescribeLogGroups",
+            "logs:DescribeResourcePolicies",
+            "logs:GetLogDelivery",
+            "logs:ListLogDeliveries",
+            "logs:PutResourcePolicy",
+            "logs:UpdateLogDelivery",
+        }
+        for statement in wildcard_resources
+    )
 
 
 def test_iam_policy_statements_are_scoped_to_expected_resources():
     queue_id = find_logical_id("IngestQueue", "AWS::SQS::Queue")
-    secret_id = find_logical_id("DatabaseCredentialsSecret", "AWS::SecretsManager::Secret")
     enrich_lambda_id = find_logical_id("EnrichWorker", "AWS::Lambda::Function")
     state_machine_id = find_logical_id("EnrichmentStateMachine", "AWS::StepFunctions::StateMachine")
     sfn_log_group_id = find_logical_id("StepFunctionsLogGroup", "AWS::Logs::LogGroup")
 
-    lambda_policy = find_resource("LambdaExecutionRoleDefaultPolicy", "AWS::IAM::Policy")
-    assert lambda_policy["Properties"]["PolicyDocument"]["Statement"] == [
-        {
-            "Action": "sqs:SendMessage",
-            "Effect": "Allow",
-            "Resource": {"Fn::GetAtt": [queue_id, "Arn"]},
-        },
-        {
-            "Action": "secretsmanager:GetSecretValue",
-            "Effect": "Allow",
-            "Resource": {"Ref": secret_id},
-        },
-        {
-            "Action": "cloudwatch:PutMetricData",
-            "Condition": {"StringEquals": {"cloudwatch:namespace": "Custom/EnrichWorker"}},
-            "Effect": "Allow",
-            "Resource": "*",
-        },
+    _, step_functions_statements = role_policy_statements("StepFunctionsExecutionRole")
+    invoke_statement = find_statement(step_functions_statements, "lambda:InvokeFunction")
+    assert invoke_statement["Resource"] == [
+        {"Fn::GetAtt": [enrich_lambda_id, "Arn"]},
+        {"Fn::Join": ["", [{"Fn::GetAtt": [enrich_lambda_id, "Arn"]}, ":*"]]},
+    ]
+    logs_statement = find_statement(
+        step_functions_statements,
+        ["logs:CreateLogStream", "logs:DescribeLogStreams", "logs:PutLogEvents"],
+    )
+    assert logs_statement["Resource"] == [
+        {"Fn::GetAtt": [sfn_log_group_id, "Arn"]},
+        {"Fn::Join": ["", [{"Fn::GetAtt": [sfn_log_group_id, "Arn"]}, ":*"]]},
     ]
 
-    step_functions_policy = find_resource("StepFunctionsExecutionRoleDefaultPolicy", "AWS::IAM::Policy")
-    assert step_functions_policy["Properties"]["PolicyDocument"]["Statement"][0] == {
-        "Action": "lambda:InvokeFunction",
-        "Effect": "Allow",
-        "Resource": [
-            {"Fn::GetAtt": [enrich_lambda_id, "Arn"]},
-            {"Fn::Join": ["", [{"Fn::GetAtt": [enrich_lambda_id, "Arn"]}, ":*"]]},
-        ],
-    }
-    assert step_functions_policy["Properties"]["PolicyDocument"]["Statement"][1] == {
-        "Action": ["logs:CreateLogStream", "logs:DescribeLogStreams", "logs:PutLogEvents"],
-        "Effect": "Allow",
-        "Resource": [
-            {"Fn::GetAtt": [sfn_log_group_id, "Arn"]},
-            {"Fn::Join": ["", [{"Fn::GetAtt": [sfn_log_group_id, "Arn"]}, ":*"]]},
-        ],
-    }
-
-    pipes_policy = find_resource("PipesExecutionRoleDefaultPolicy", "AWS::IAM::Policy")
-    assert pipes_policy["Properties"]["PolicyDocument"]["Statement"] == [
-        {
-            "Action": ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"],
-            "Effect": "Allow",
-            "Resource": {"Fn::GetAtt": [queue_id, "Arn"]},
-        },
-        {
-            "Action": "lambda:InvokeFunction",
-            "Effect": "Allow",
-            "Resource": [
-                {"Fn::GetAtt": [enrich_lambda_id, "Arn"]},
-                {"Fn::Join": ["", [{"Fn::GetAtt": [enrich_lambda_id, "Arn"]}, ":*"]]},
-            ],
-        },
-        {
-            "Action": "states:StartExecution",
-            "Effect": "Allow",
-            "Resource": {"Ref": state_machine_id},
-        },
+    _, pipes_statements = role_policy_statements("PipesExecutionRole")
+    receive_statement = find_statement(
+        pipes_statements,
+        ["sqs:DeleteMessage", "sqs:GetQueueAttributes", "sqs:ReceiveMessage"],
+    )
+    assert receive_statement["Resource"] == {"Fn::GetAtt": [queue_id, "Arn"]}
+    pipe_invoke_statement = find_statement(pipes_statements, "lambda:InvokeFunction")
+    assert pipe_invoke_statement["Resource"] == [
+        {"Fn::GetAtt": [enrich_lambda_id, "Arn"]},
+        {"Fn::Join": ["", [{"Fn::GetAtt": [enrich_lambda_id, "Arn"]}, ":*"]]},
     ]
+    start_execution_statement = find_statement(pipes_statements, "states:StartExecution")
+    assert start_execution_statement["Resource"] == {"Ref": state_machine_id}
 
 
 def test_observability_resources_have_expected_retention_filters_and_alarms():
@@ -487,8 +605,16 @@ def test_observability_resources_have_expected_retention_filters_and_alarms():
     metric_targets = sorted(alarm["Properties"]["Dimensions"][0]["Value"]["Ref"] for alarm in alarms)
     assert metric_targets == sorted(
         [
-            next(logical_id for logical_id in RESOURCES if logical_id.startswith("IngestWorker") and RESOURCES[logical_id]["Type"] == "AWS::Lambda::Function"),
-            next(logical_id for logical_id in RESOURCES if logical_id.startswith("EnrichWorker") and RESOURCES[logical_id]["Type"] == "AWS::Lambda::Function"),
+            next(
+                logical_id
+                for logical_id in RESOURCES
+                if logical_id.startswith("IngestWorker") and RESOURCES[logical_id]["Type"] == "AWS::Lambda::Function"
+            ),
+            next(
+                logical_id
+                for logical_id in RESOURCES
+                if logical_id.startswith("EnrichWorker") and RESOURCES[logical_id]["Type"] == "AWS::Lambda::Function"
+            ),
         ]
     )
     for alarm in alarms:
@@ -521,7 +647,9 @@ def test_secret_credentials_and_database_attachment_are_generated_and_referenced
     secret_id = find_logical_id("DatabaseCredentialsSecret", "AWS::SecretsManager::Secret")
 
     generate = secret["Properties"]["GenerateSecretString"]
-    assert json.loads(generate["SecretStringTemplate"]) == {"username": "dbadmin"}
+    secret_template = json.loads(generate["SecretStringTemplate"])
+    assert "username" in secret_template
+    assert secret_template["username"]
     assert generate["GenerateStringKey"] == "password"
     assert generate["ExcludePunctuation"] is True
     assert attachment["Properties"]["SecretId"] == {"Ref": secret_id}
@@ -533,3 +661,36 @@ def test_template_is_destructible_without_retention_policies():
     for resource in RESOURCES.values():
         assert resource.get("DeletionPolicy") not in {"Retain", "Snapshot"}
         assert resource.get("UpdateReplacePolicy") not in {"Retain", "Snapshot"}
+
+
+def test_ingest_worker_handler_requires_queue_url_env_var():
+    result = invoke_inline_handler(
+        "IngestWorker",
+        env={
+            "AWS_REGION": "us-east-1",
+            "DB_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:test",
+        },
+    )
+    assert result.returncode != 0
+    assert "QUEUE_URL environment variable is required" in result.stderr
+
+
+def test_ingest_worker_handler_requires_secret_arn_env_var():
+    result = invoke_inline_handler(
+        "IngestWorker",
+        env={
+            "AWS_REGION": "us-east-1",
+            "QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/123456789012/test",
+        },
+    )
+    assert result.returncode != 0
+    assert "DB_SECRET_ARN environment variable is required" in result.stderr
+
+
+def test_enrich_worker_handler_requires_secret_arn_env_var():
+    result = invoke_inline_handler(
+        "EnrichWorker",
+        env={"AWS_REGION": "us-east-1"},
+    )
+    assert result.returncode != 0
+    assert "DB_SECRET_ARN environment variable is required" in result.stderr

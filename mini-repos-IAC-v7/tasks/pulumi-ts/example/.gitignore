@@ -1,0 +1,27 @@
+# Pulumi generated files
+.pulumi/
+Pulumi.*.yaml
+
+# Harness-generated files
+preview.json
+state.json
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript build
+bin/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

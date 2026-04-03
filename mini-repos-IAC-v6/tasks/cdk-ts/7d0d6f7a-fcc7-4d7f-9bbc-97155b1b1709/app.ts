@@ -25,6 +25,10 @@ class SecurityPostureStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const deployDatabaseCondition = new cdk.CfnCondition(this, 'DeployDatabaseCondition', {
+      expression: cdk.Fn.conditionEquals(endpointOverride ? 'disabled' : 'enabled', 'enabled'),
+    });
+
     const privateSubnetSelection: ec2.SubnetSelection = {
       subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
     };
@@ -81,26 +85,40 @@ class SecurityPostureStack extends cdk.Stack {
       retentionPeriod: cdk.Duration.days(4),
     });
 
-    const lambdaExecutionRole = new iam.Role(this, 'LambdaExecutionRole', {
+    const ingestWorkerRole = new iam.Role(this, 'IngestWorkerRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole'),
       ],
     });
-    lambdaExecutionRole.addToPolicy(
+    ingestWorkerRole.addToPolicy(
       new iam.PolicyStatement({
         actions: ['sqs:SendMessage'],
         resources: [queue.queueArn],
       }),
     );
-    lambdaExecutionRole.addToPolicy(
+    ingestWorkerRole.addToPolicy(
       new iam.PolicyStatement({
         actions: ['secretsmanager:GetSecretValue'],
         resources: [databaseCredentialsSecret.secretArn],
       }),
     );
-    lambdaExecutionRole.addToPolicy(
+
+    const enrichWorkerRole = new iam.Role(this, 'EnrichWorkerRole', {
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole'),
+      ],
+    });
+    enrichWorkerRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ['secretsmanager:GetSecretValue'],
+        resources: [databaseCredentialsSecret.secretArn],
+      }),
+    );
+    enrichWorkerRole.addToPolicy(
       new iam.PolicyStatement({
         actions: ['cloudwatch:PutMetricData'],
         resources: ['*'],
@@ -135,6 +153,12 @@ function clientConfig() {
 exports.handler = async (event) => {
   const queueUrl = process.env.QUEUE_URL;
   const secretArn = process.env.DB_SECRET_ARN;
+  if (!queueUrl) {
+    throw new Error('QUEUE_URL environment variable is required');
+  }
+  if (!secretArn) {
+    throw new Error('DB_SECRET_ARN environment variable is required');
+  }
   const payload =
     typeof event?.body === 'string'
       ? event.body
@@ -160,7 +184,7 @@ exports.handler = async (event) => {
       memorySize: 256,
       timeout: cdk.Duration.seconds(10),
       reservedConcurrentExecutions: 2,
-      role: lambdaExecutionRole,
+      role: ingestWorkerRole,
       vpc,
       vpcSubnets: privateSubnetSelection,
       securityGroups: [computeSecurityGroup],
@@ -192,8 +216,13 @@ function clientConfig() {
 }
 
 exports.handler = async (event) => {
+  const secretArn = process.env.DB_SECRET_ARN;
+  if (!secretArn) {
+    throw new Error('DB_SECRET_ARN environment variable is required');
+  }
+
   const secretsClient = new SecretsManagerClient(clientConfig());
-  await secretsClient.send(new GetSecretValueCommand({ SecretId: process.env.DB_SECRET_ARN }));
+  await secretsClient.send(new GetSecretValueCommand({ SecretId: secretArn }));
 
   const cloudWatchClient = new CloudWatchClient(clientConfig());
   await cloudWatchClient.send(
@@ -218,7 +247,7 @@ exports.handler = async (event) => {
       memorySize: 256,
       timeout: cdk.Duration.seconds(10),
       reservedConcurrentExecutions: 2,
-      role: lambdaExecutionRole,
+      role: enrichWorkerRole,
       vpc,
       vpcSubnets: privateSubnetSelection,
       securityGroups: [computeSecurityGroup],
@@ -363,7 +392,7 @@ exports.handler = async (event) => {
       vpcSubnets: privateSubnetSelection,
     });
 
-    new rds.DatabaseInstance(this, 'Database', {
+    const database = new rds.DatabaseInstance(this, 'Database', {
       engine: rds.DatabaseInstanceEngine.postgres({
         version: rds.PostgresEngineVersion.VER_15_5,
       }),
@@ -383,6 +412,17 @@ exports.handler = async (event) => {
       vpc,
       vpcSubnets: privateSubnetSelection,
     });
+    (databaseSubnetGroup.node.defaultChild as rds.CfnDBSubnetGroup).cfnOptions.condition = deployDatabaseCondition;
+    (database.node.defaultChild as rds.CfnDBInstance).cfnOptions.condition = deployDatabaseCondition;
+    const secretAttachment = databaseCredentialsSecret.node
+      .findAll()
+      .find((child): child is secretsmanager.CfnSecretTargetAttachment =>
+        child instanceof secretsmanager.CfnSecretTargetAttachment,
+      );
+    if (!secretAttachment) {
+      throw new Error('Expected generated secret target attachment for database credentials secret');
+    }
+    secretAttachment.cfnOptions.condition = deployDatabaseCondition;
 
     new cloudwatch.Alarm(this, 'IngestWorkerErrorsAlarm', {
       metric: ingestWorker.metricErrors({

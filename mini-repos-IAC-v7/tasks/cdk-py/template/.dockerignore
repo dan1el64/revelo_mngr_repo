@@ -1,0 +1,8 @@
+cdk.out/
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+.git/
+*.pyc
+.DS_Store
