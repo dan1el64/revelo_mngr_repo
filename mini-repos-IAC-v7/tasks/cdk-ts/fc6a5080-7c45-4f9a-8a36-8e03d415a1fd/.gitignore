@@ -1,0 +1,28 @@
+# CDK output
+cdk.out/
+*.template.json
+template.json
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# TypeScript
+*.js
+*.d.ts
+*.js.map
+!jest.config.js
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

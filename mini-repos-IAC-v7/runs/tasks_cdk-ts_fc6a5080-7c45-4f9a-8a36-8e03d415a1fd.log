@@ -1,0 +1,289 @@
+Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/tasks/cdk-ts/fc6a5080-7c45-4f9a-8a36-8e03d415a1fd FRAMEWORK=cdk-ts
+
+
+Starting LocalStack (harness environment)...
+ Network iac-harness-network  Creating
+ Network iac-harness-network  Created
+ Container localstack-harness  Creating
+ Container localstack-harness  Created
+ Container localstack-harness  Starting
+ Container localstack-harness  Started
+Waiting for LocalStack health endpoint: http://localhost:4566/_localstack/health
+LocalStack is healthy.
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Setup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Starting worker container: harness-worker-53068
+77c124cccfa47ccad1227add92c50e2ed4ada35ca1c3bfd3481683cb59a7086c
+Installing dependencies (npm install)...
+
+up to date, audited 454 packages in 8s
+
+42 packages are looking for funding
+  run `npm fund` for details
+
+28 vulnerabilities (3 moderate, 24 high, 1 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues, run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.12.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
+npm notice To update run: npm install -g npm@11.12.1
+npm notice
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/d42dd768-5076-4900-aab7-aa5bc6d2d4aa
+[32m✅ Step passed: Setup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Syntax / Synth[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Checking for LocalStack references...
+Running cdklocal synth...
+Generating template.json for unit tests...
+[32m✅ Step passed: Syntax / Synth[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Unit tests (pytest)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest unit tests...
+============================= test session starts ==============================
+platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+collecting ... collected 12 items
+
+tests/unit_tests.py::test_prompt_surface_is_present_in_source PASSED     [  8%]
+tests/unit_tests.py::test_stack_level_destructibility_and_forbidden_resource_types PASSED [ 16%]
+tests/unit_tests.py::test_vpc_topology_is_exact PASSED                   [ 25%]
+tests/unit_tests.py::test_network_security_and_vpc_endpoint_contract PASSED [ 33%]
+tests/unit_tests.py::test_http_api_routes_and_lambda_wiring_are_exact PASSED [ 41%]
+tests/unit_tests.py::test_s3_bucket_contract_matches_prompt PASSED       [ 50%]
+tests/unit_tests.py::test_database_secret_subnet_group_and_instance_are_correct PASSED [ 58%]
+tests/unit_tests.py::test_lambda_functions_logs_and_custom_resource_shape_are_correct PASSED [ 66%]
+tests/unit_tests.py::test_async_components_are_present_and_wired_correctly PASSED [ 75%]
+tests/unit_tests.py::test_iam_scoping_matches_the_prompt_and_runtime_requirements PASSED [ 83%]
+tests/unit_tests.py::test_no_additional_data_stores_are_defined PASSED   [ 91%]
+tests/unit_tests.py::test_resource_references_are_dynamic_and_no_physical_names_are_forced PASSED [100%]
+
+============================= 12 passed in 10.94s ==============================
+[32m✅ Step passed: Unit tests (pytest)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Deploy (LocalStack)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Bootstrapping (if needed)...
+Running cdklocal deploy...
+
+✨  Synthesis time: 10.87s
+
+ThreeTierPocStack: start: Building 852394898b7491005cf00f476cddf4ea1babe31b164b8b4ef1c6b0e957041af9
+ThreeTierPocStack: success: Built 852394898b7491005cf00f476cddf4ea1babe31b164b8b4ef1c6b0e957041af9
+ThreeTierPocStack: start: Building fb3862d73a09c1057152e9485dfd59895c309ed777301cd8b23d8468983b2631
+ThreeTierPocStack: success: Built fb3862d73a09c1057152e9485dfd59895c309ed777301cd8b23d8468983b2631
+ThreeTierPocStack: start: Building 6a9183af3b196f9203c129a82fe8961f0f407626d3e20f0b96f81200e4e42bc8
+ThreeTierPocStack: success: Built 6a9183af3b196f9203c129a82fe8961f0f407626d3e20f0b96f81200e4e42bc8
+ThreeTierPocStack: start: Publishing 852394898b7491005cf00f476cddf4ea1babe31b164b8b4ef1c6b0e957041af9:current_account-us-east-1
+ThreeTierPocStack: start: Building 7c293c38e9e0df246de26a9239b4c945578d46d7d3375e957323c2c93f1f07b4
+ThreeTierPocStack: success: Built 7c293c38e9e0df246de26a9239b4c945578d46d7d3375e957323c2c93f1f07b4
+ThreeTierPocStack: start: Publishing 7c293c38e9e0df246de26a9239b4c945578d46d7d3375e957323c2c93f1f07b4:current_account-us-east-1
+ThreeTierPocStack: start: Publishing fb3862d73a09c1057152e9485dfd59895c309ed777301cd8b23d8468983b2631:current_account-us-east-1
+ThreeTierPocStack: start: Publishing 6a9183af3b196f9203c129a82fe8961f0f407626d3e20f0b96f81200e4e42bc8:current_account-us-east-1
+ThreeTierPocStack: success: Published 7c293c38e9e0df246de26a9239b4c945578d46d7d3375e957323c2c93f1f07b4:current_account-us-east-1
+ThreeTierPocStack: success: Published fb3862d73a09c1057152e9485dfd59895c309ed777301cd8b23d8468983b2631:current_account-us-east-1
+ThreeTierPocStack: success: Published 852394898b7491005cf00f476cddf4ea1babe31b164b8b4ef1c6b0e957041af9:current_account-us-east-1
+ThreeTierPocStack: success: Published 6a9183af3b196f9203c129a82fe8961f0f407626d3e20f0b96f81200e4e42bc8:current_account-us-east-1
+ThreeTierPocStack: deploying... [1/1]
+ThreeTierPocStack: creating CloudFormation changeset...
+ThreeTierPocStack |  0/62 | 12:05:35 AM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack            | ThreeTierPocStack User Initiated
+ThreeTierPocStack |  0/62 | 12:05:35 AM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                       | ArchiveBucket (ArchiveBucket9DECBF5D) 
+ThreeTierPocStack |  0/62 | 12:05:35 AM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack            | ThreeTierPocStack 
+ThreeTierPocStack |  0/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | BackendLogGroup (BackendLogGroupDA10F1B2) 
+ThreeTierPocStack |  1/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::S3::Bucket                       | ArchiveBucket (ArchiveBucket9DECBF5D) 
+ThreeTierPocStack |  2/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | BackendLogGroup (BackendLogGroupDA10F1B2) 
+ThreeTierPocStack |  2/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                         | Vpc (Vpc8378EB38) 
+ThreeTierPocStack |  2/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | BackendSecurityGroup (BackendSecurityGroup96CF32F1) 
+ThreeTierPocStack |  3/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::VPC                         | Vpc (Vpc8378EB38) 
+ThreeTierPocStack |  4/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | BackendSecurityGroup (BackendSecurityGroup96CF32F1) 
+ThreeTierPocStack |  4/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | Vpc/PrivateSubnet1/Subnet (VpcPrivateSubnet1Subnet536B997A) 
+ThreeTierPocStack |  5/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | Vpc/PrivateSubnet1/Subnet (VpcPrivateSubnet1Subnet536B997A) 
+ThreeTierPocStack |  5/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | Vpc/PrivateSubnet2/Subnet (VpcPrivateSubnet2Subnet3788AAA1) 
+ThreeTierPocStack |  5/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret           | DatabaseSecret (DatabaseSecret86DBB7B3) 
+ThreeTierPocStack |  6/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | Vpc/PrivateSubnet2/Subnet (VpcPrivateSubnet2Subnet3788AAA1) 
+ThreeTierPocStack |  6/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                       | IngestionQueue (IngestionQueue9CC91140) 
+ThreeTierPocStack |  7/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::SecretsManager::Secret           | DatabaseSecret (DatabaseSecret86DBB7B3) 
+ThreeTierPocStack |  8/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::SQS::Queue                       | IngestionQueue (IngestionQueue9CC91140) 
+ThreeTierPocStack |  8/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | BackendLambdaRole (BackendLambdaRole563BEADE) 
+ThreeTierPocStack |  8/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | BackendLambdaRole/DefaultPolicy (BackendLambdaRoleDefaultPolicy5F037FC2) 
+ThreeTierPocStack |  9/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | BackendLambdaRole (BackendLambdaRole563BEADE) 
+ThreeTierPocStack |  9/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | Vpc/PrivateSubnet2/RouteTable (VpcPrivateSubnet2RouteTableA678073B) 
+ThreeTierPocStack | 10/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | BackendLambdaRole/DefaultPolicy (BackendLambdaRoleDefaultPolicy5F037FC2) 
+ThreeTierPocStack | 10/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | Vpc/PrivateSubnet2/RouteTableAssociation (VpcPrivateSubnet2RouteTableAssociationA89CAD56) 
+ThreeTierPocStack | 11/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | Vpc/PrivateSubnet2/RouteTable (VpcPrivateSubnet2RouteTableA678073B) 
+ThreeTierPocStack | 11/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway             | Vpc/IGW (VpcIGWD7BA715C) 
+ThreeTierPocStack | 12/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | Vpc/PrivateSubnet2/RouteTableAssociation (VpcPrivateSubnet2RouteTableAssociationA89CAD56) 
+ThreeTierPocStack | 12/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment        | Vpc/VPCGW (VpcVPCGWBF912B6E) 
+ThreeTierPocStack | 13/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::InternetGateway             | Vpc/IGW (VpcIGWD7BA715C) 
+ThreeTierPocStack | 13/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | Vpc/PublicSubnet1/RouteTable (VpcPublicSubnet1RouteTable6C95E38E) 
+ThreeTierPocStack | 14/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment        | Vpc/VPCGW (VpcVPCGWBF912B6E) 
+ThreeTierPocStack | 14/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | Vpc/PublicSubnet1/DefaultRoute (VpcPublicSubnet1DefaultRoute3DA9E72A) 
+ThreeTierPocStack | 15/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | Vpc/PublicSubnet1/RouteTable (VpcPublicSubnet1RouteTable6C95E38E) 
+ThreeTierPocStack | 16/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | Vpc/PublicSubnet1/DefaultRoute (VpcPublicSubnet1DefaultRoute3DA9E72A) 
+ThreeTierPocStack | 16/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | Vpc/PublicSubnet1/Subnet (VpcPublicSubnet1Subnet5C2D37C4) 
+ThreeTierPocStack | 16/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | Vpc/PublicSubnet1/RouteTableAssociation (VpcPublicSubnet1RouteTableAssociation97140677) 
+ThreeTierPocStack | 17/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | Vpc/PublicSubnet1/Subnet (VpcPublicSubnet1Subnet5C2D37C4) 
+ThreeTierPocStack | 17/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                         | Vpc/PublicSubnet1/EIP (VpcPublicSubnet1EIPD7E02669) 
+ThreeTierPocStack | 18/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | Vpc/PublicSubnet1/RouteTableAssociation (VpcPublicSubnet1RouteTableAssociation97140677) 
+ThreeTierPocStack | 18/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                  | Vpc/PublicSubnet1/NATGateway (VpcPublicSubnet1NATGateway4D7517AA) 
+ThreeTierPocStack | 19/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::EIP                         | Vpc/PublicSubnet1/EIP (VpcPublicSubnet1EIPD7E02669) 
+ThreeTierPocStack | 19/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | Vpc/PrivateSubnet1/RouteTable (VpcPrivateSubnet1RouteTableB2C5B500) 
+ThreeTierPocStack | 20/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::NatGateway                  | Vpc/PublicSubnet1/NATGateway (VpcPublicSubnet1NATGateway4D7517AA) 
+ThreeTierPocStack | 20/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | Vpc/PrivateSubnet1/DefaultRoute (VpcPrivateSubnet1DefaultRouteBE02A9ED) 
+ThreeTierPocStack | 21/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | Vpc/PrivateSubnet1/RouteTable (VpcPrivateSubnet1RouteTableB2C5B500) 
+ThreeTierPocStack | 21/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | Vpc/PrivateSubnet2/DefaultRoute (VpcPrivateSubnet2DefaultRoute060D2087) 
+ThreeTierPocStack | 22/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | Vpc/PrivateSubnet1/DefaultRoute (VpcPrivateSubnet1DefaultRouteBE02A9ED) 
+ThreeTierPocStack | 23/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | Vpc/PrivateSubnet2/DefaultRoute (VpcPrivateSubnet2DefaultRoute060D2087) 
+ThreeTierPocStack | 23/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | Vpc/PrivateSubnet1/RouteTableAssociation (VpcPrivateSubnet1RouteTableAssociation70C59FA6) 
+ThreeTierPocStack | 24/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::RDS::DBSubnetGroup               | DatabaseSubnetGroup/Default (DatabaseSubnetGroup) Resource type AWS::RDS::DBSubnetGroup is not supported but was deployed as a fallback
+ThreeTierPocStack | 24/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::RDS::DBSubnetGroup               | DatabaseSubnetGroup/Default (DatabaseSubnetGroup) 
+ThreeTierPocStack | 25/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | Vpc/PrivateSubnet1/RouteTableAssociation (VpcPrivateSubnet1RouteTableAssociation70C59FA6) 
+ThreeTierPocStack | 25/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
+ThreeTierPocStack | 26/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::RDS::DBInstance                  | Database (DatabaseB269D8BB) Resource type AWS::RDS::DBInstance is not supported but was deployed as a fallback
+ThreeTierPocStack | 26/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::RDS::DBInstance                  | Database (DatabaseB269D8BB) 
+ThreeTierPocStack | 27/62 | 12:05:36 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
+ThreeTierPocStack | 27/62 | 12:05:36 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | BackendLambda (BackendLambdaD93C7B96) 
+ThreeTierPocStack | 27/62 | 12:05:37 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupEgress         | BackendSecurityGroup/to ThreeTierPocStackDatabaseSecurityGroup969EF825:5432 (BackendSecurityGrouptoThreeTierPocStackDatabaseSecurityGroup969EF825543278762ECD) 
+ThreeTierPocStack | 28/62 | 12:05:37 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | BackendLambda (BackendLambdaD93C7B96) 
+ThreeTierPocStack | 28/62 | 12:05:37 AM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+ThreeTierPocStack | 29/62 | 12:05:37 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupEgress         | BackendSecurityGroup/to ThreeTierPocStackDatabaseSecurityGroup969EF825:5432 (BackendSecurityGrouptoThreeTierPocStackDatabaseSecurityGroup969EF825543278762ECD) 
+ThreeTierPocStack | 29/62 | 12:05:37 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPCEndpoint                 | Vpc/SecretsManagerEndpoint (VpcSecretsManagerEndpoint93E49F69) 
+ThreeTierPocStack | 30/62 | 12:05:37 AM | CREATE_COMPLETE      | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+ThreeTierPocStack | 30/62 | 12:05:37 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | SchemaLogGroup (SchemaLogGroupA33E50E5) 
+ThreeTierPocStack | 31/62 | 12:05:37 AM | CREATE_COMPLETE      | AWS::EC2::VPCEndpoint                 | Vpc/SecretsManagerEndpoint (VpcSecretsManagerEndpoint93E49F69) 
+ThreeTierPocStack | 31/62 | 12:05:37 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | SchemaLambdaRole (SchemaLambdaRole8A1EC42F) 
+ThreeTierPocStack | 32/62 | 12:05:37 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | SchemaLogGroup (SchemaLogGroupA33E50E5) 
+ThreeTierPocStack | 32/62 | 12:05:37 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | SchemaLambdaRole/DefaultPolicy (SchemaLambdaRoleDefaultPolicyB8C2A9E7) 
+ThreeTierPocStack | 33/62 | 12:05:37 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | SchemaLambdaRole (SchemaLambdaRole8A1EC42F) 
+ThreeTierPocStack | 33/62 | 12:05:37 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | SchemaLambda (SchemaLambda1234453D) 
+ThreeTierPocStack | 34/62 | 12:05:37 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | SchemaLambdaRole/DefaultPolicy (SchemaLambdaRoleDefaultPolicyB8C2A9E7) 
+ThreeTierPocStack | 34/62 | 12:05:37 AM | CREATE_IN_PROGRESS   | AWS::CloudFormation::CustomResource   | DatabaseSchema/Default (DatabaseSchema) 
+ThreeTierPocStack | 35/62 | 12:05:37 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | SchemaLambda (SchemaLambda1234453D) 
+ThreeTierPocStack | 35/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress        | DatabaseSecurityGroup/from ThreeTierPocStackBackendSecurityGroup7EDF5DC0:5432 (DatabaseSecurityGroupfromThreeTierPocStackBackendSecurityGroup7EDF5DC054329D1F819A) 
+ThreeTierPocStack | 36/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::CloudFormation::CustomResource   | DatabaseSchema/Default (DatabaseSchema) 
+ThreeTierPocStack | 37/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress        | DatabaseSecurityGroup/from ThreeTierPocStackBackendSecurityGroup7EDF5DC0:5432 (DatabaseSecurityGroupfromThreeTierPocStackBackendSecurityGroup7EDF5DC054329D1F819A) 
+ThreeTierPocStack | 37/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | FrontendLambdaRole (FrontendLambdaRoleA43FE0F1) 
+ThreeTierPocStack | 37/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | FrontendLogGroup (FrontendLogGroupCE4F14E0) 
+ThreeTierPocStack | 38/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | FrontendLambdaRole (FrontendLambdaRoleA43FE0F1) 
+ThreeTierPocStack | 38/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | FrontendLambdaRole/DefaultPolicy (FrontendLambdaRoleDefaultPolicy08DADCDC) 
+ThreeTierPocStack | 39/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | FrontendLogGroup (FrontendLogGroupCE4F14E0) 
+ThreeTierPocStack | 39/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | FrontendLambda (FrontendLambda8ACF4B3B) 
+ThreeTierPocStack | 40/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | FrontendLambdaRole/DefaultPolicy (FrontendLambdaRoleDefaultPolicy08DADCDC) 
+ThreeTierPocStack | 40/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Integration        | HttpApi/ANY--api--{proxy+}/BackendIntegration (HttpApiANYapiproxyBackendIntegration60EA3C2B) 
+ThreeTierPocStack | 41/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::ApiGatewayV2::Api                | HttpApi (HttpApiF5A9A8A7) Resource type AWS::ApiGatewayV2::Api is not supported but was deployed as a fallback
+ThreeTierPocStack | 41/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Api                | HttpApi (HttpApiF5A9A8A7) 
+ThreeTierPocStack | 42/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | FrontendLambda (FrontendLambda8ACF4B3B) 
+ThreeTierPocStack | 42/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | HttpApi/ANY--api--{proxy+}/BackendIntegration-Permission (HttpApiANYapiproxyBackendIntegrationPermission797D0BA4) 
+ThreeTierPocStack | 43/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::ApiGatewayV2::Route              | HttpApi/ANY--api--{proxy+} (HttpApiANYapiproxy20978A2B) Resource type AWS::ApiGatewayV2::Route is not supported but was deployed as a fallback
+ThreeTierPocStack | 43/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Route              | HttpApi/ANY--api--{proxy+} (HttpApiANYapiproxy20978A2B) 
+ThreeTierPocStack | 44/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::ApiGatewayV2::Integration        | HttpApi/ANY--api--{proxy+}/BackendIntegration (HttpApiANYapiproxyBackendIntegration60EA3C2B) Resource type AWS::ApiGatewayV2::Integration is not supported but was deployed as a fallback
+ThreeTierPocStack | 44/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | HttpApi/GET--/FrontendIntegration-Permission (HttpApiGETFrontendIntegrationPermission442A87B5) 
+ThreeTierPocStack | 45/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::ApiGatewayV2::Route              | HttpApi/GET-- (HttpApiGETF1CE5704) Resource type AWS::ApiGatewayV2::Route is not supported but was deployed as a fallback
+ThreeTierPocStack | 45/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Route              | HttpApi/GET-- (HttpApiGETF1CE5704) 
+ThreeTierPocStack | 46/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::ApiGatewayV2::Integration        | HttpApi/GET--/FrontendIntegration (HttpApiGETFrontendIntegration3BD0DA6F) Resource type AWS::ApiGatewayV2::Integration is not supported but was deployed as a fallback
+ThreeTierPocStack | 46/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Integration        | HttpApi/GET--/FrontendIntegration (HttpApiGETFrontendIntegration3BD0DA6F) 
+ThreeTierPocStack | 47/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::ApiGatewayV2::Stage              | HttpApi/DefaultStage (HttpApiDefaultStage3EEB07D6) Resource type AWS::ApiGatewayV2::Stage is not supported but was deployed as a fallback
+ThreeTierPocStack | 47/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Stage              | HttpApi/DefaultStage (HttpApiDefaultStage3EEB07D6) 
+ThreeTierPocStack | 48/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::Lambda::Permission               | HttpApi/ANY--api--{proxy+}/BackendIntegration-Permission (HttpApiANYapiproxyBackendIntegrationPermission797D0BA4) 
+ThreeTierPocStack | 48/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::Lambda::EventSourceMapping       | IngestionEventSourceMapping (IngestionEventSourceMapping5F2CF4E0) 
+ThreeTierPocStack | 49/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::Lambda::Permission               | HttpApi/GET--/FrontendIntegration-Permission (HttpApiGETFrontendIntegrationPermission442A87B5) 
+ThreeTierPocStack | 49/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
+ThreeTierPocStack | 50/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::Lambda::EventSourceMapping       | IngestionEventSourceMapping (IngestionEventSourceMapping5F2CF4E0) 
+ThreeTierPocStack | 51/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
+ThreeTierPocStack | 51/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | StateMachineRole (StateMachineRole78EC082E) 
+ThreeTierPocStack | 51/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | StateMachineRole/DefaultPolicy (StateMachineRoleDefaultPolicy433448B5) 
+ThreeTierPocStack | 52/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | StateMachineRole (StateMachineRole78EC082E) 
+ThreeTierPocStack | 53/62 | 12:05:44 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | StateMachineRole/DefaultPolicy (StateMachineRoleDefaultPolicy433448B5) 
+ThreeTierPocStack | 53/62 | 12:05:44 AM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine      | ValidationStateMachine (ValidationStateMachine06C840F7) 
+ThreeTierPocStack | 53/62 | 12:05:45 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
+ThreeTierPocStack | 54/62 | 12:05:45 AM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine      | ValidationStateMachine (ValidationStateMachine06C840F7) 
+ThreeTierPocStack | 54/62 | 12:05:45 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress        | SecretsManagerEndpointIngress 
+ThreeTierPocStack | 55/62 | 12:05:45 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
+ThreeTierPocStack | 56/62 | 12:05:45 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress        | SecretsManagerEndpointIngress 
+ThreeTierPocStack | 56/62 | 12:05:45 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | Vpc/PublicSubnet2/RouteTable (VpcPublicSubnet2RouteTable94F7E489) 
+ThreeTierPocStack | 57/62 | 12:05:45 AM | CREATE_COMPLETE      | AWS::Pipes::Pipe                      | ValidationPipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
+ThreeTierPocStack | 57/62 | 12:05:45 AM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                      | ValidationPipe 
+ThreeTierPocStack | 57/62 | 12:05:45 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | Vpc/PublicSubnet2/DefaultRoute (VpcPublicSubnet2DefaultRoute97F91067) 
+ThreeTierPocStack | 58/62 | 12:05:45 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | Vpc/PublicSubnet2/RouteTable (VpcPublicSubnet2RouteTable94F7E489) 
+ThreeTierPocStack | 59/62 | 12:05:45 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | Vpc/PublicSubnet2/DefaultRoute (VpcPublicSubnet2DefaultRoute97F91067) 
+ThreeTierPocStack | 59/62 | 12:05:45 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | Vpc/PublicSubnet2/Subnet (VpcPublicSubnet2Subnet691E08A3) 
+ThreeTierPocStack | 59/62 | 12:05:45 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | Vpc/PublicSubnet2/RouteTableAssociation (VpcPublicSubnet2RouteTableAssociationDD5762D8) 
+ThreeTierPocStack | 60/62 | 12:05:45 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | Vpc/PublicSubnet2/Subnet (VpcPublicSubnet2Subnet691E08A3) 
+ThreeTierPocStack | 61/62 | 12:05:45 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | Vpc/PublicSubnet2/RouteTableAssociation (VpcPublicSubnet2RouteTableAssociationDD5762D8) 
+ThreeTierPocStack | 62/62 | 12:05:45 AM | CREATE_COMPLETE      | AWS::CloudFormation::Stack            | ThreeTierPocStack 
+
+ ✅  ThreeTierPocStack
+
+✨  Deployment time: 10.42s
+
+Outputs:
+ThreeTierPocStack.HttpApiEndpoint = unknown
+Stack ARN:
+arn:aws:cloudformation:us-east-1:000000000000:stack/ThreeTierPocStack/9f2dee37-a37a-4a48-bb32-fd4869d6c62e
+
+✨  Total time: 21.29s
+
+[32m✅ Step passed: Deploy (LocalStack)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Integration tests[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest integration tests...
+============================= test session starts ==============================
+platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+collecting ... collected 3 items
+
+tests/integration_tests.py::test_deployed_http_api_contract_and_runtime PASSED [ 33%]
+tests/integration_tests.py::test_post_items_archives_raw_payload_in_s3 PASSED [ 66%]
+tests/integration_tests.py::test_deployed_async_data_store_and_network_contract PASSED [100%]
+
+============================== 3 passed in 3.03s ===============================
+[32m✅ Step passed: Integration tests[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Destroy / Cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running cdklocal destroy...
+Cleaning up worker container: harness-worker-53068
+[32m✅ Step passed: Destroy / Cleanup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  HARNESS SUMMARY[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ setup[0m
+[32m✅ syntax/plan[0m
+[32m✅ unit tests[0m
+[32m✅ deploy (localstack)[0m
+[32m✅ integration tests[0m
+[32m✅ destroy/cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ All steps passed.[0m
+
+Log saved to: /Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/runs/tasks_cdk-ts_fc6a5080-7c45-4f9a-8a36-8e03d415a1fd.log
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+Stopping LocalStack...
+ Container localstack-harness  Stopping
+ Container localstack-harness  Stopped
+ Container localstack-harness  Removing
+ Container localstack-harness  Removed
+ Network iac-harness-network  Removing
+ Network iac-harness-network  Removed
