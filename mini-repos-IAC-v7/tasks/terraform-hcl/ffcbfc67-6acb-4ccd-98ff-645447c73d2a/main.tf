@@ -229,7 +229,6 @@ resource "aws_db_instance" "storage_layer" {
   db_name                         = "payments"
   db_subnet_group_name            = one(aws_db_subnet_group.storage_layer[*].name)
   delete_automated_backups        = true
-  deletion_protection             = false
   enabled_cloudwatch_logs_exports = ["postgresql"]
   engine                          = "postgres"
   engine_version                  = "15.4"

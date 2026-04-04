@@ -15,8 +15,9 @@ Only these input variables are allowed:
 - `aws_region` with default `us-east-1`
 - `aws_access_key_id`
 - `aws_secret_access_key`
+- `aws_endpoint` for optional AWS-compatible endpoint overrides
 
-The AWS provider must use these variables.
+The AWS provider must use these variables, including wiring `aws_endpoint` into the provider endpoint overrides.
 
 ## Tests
 
@@ -26,7 +27,7 @@ Unit tests validate the Terraform contract directly from the HCL.
 pytest tests/unit_tests.py
 ```
 
-Integration tests validate the deployed resources from `state.json`.
+Integration tests validate deployed resources through `boto3`. They use `state.json` only to discover deployed identifiers after `terraform apply`.
 
 ```bash
 terraform show -json > state.json

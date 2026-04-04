@@ -3,14 +3,23 @@ import os
 import time
 import urllib.error
 import urllib.request
+from contextlib import contextmanager
+from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
 import boto3
 import pytest
+from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError, EndpointConnectionError
 
 
 STACK_NAME = "SecurityPostureStack"
 REGION = os.getenv("AWS_REGION", "us-east-1")
+BOTO_CONFIG = Config(
+    connect_timeout=3,
+    read_timeout=10,
+    retries={"max_attempts": 2, "mode": "standard"},
+)
 
 
 def endpoint_override():
@@ -31,7 +40,12 @@ def client(service_name):
     override = endpoint_override()
     if override:
         kwargs["endpoint_url"] = override
+    kwargs["config"] = BOTO_CONFIG
     return boto3.client(service_name, **kwargs)
+
+
+def is_emulated_environment():
+    return endpoint_override() is not None
 
 
 @pytest.fixture(scope="session")
@@ -105,6 +119,17 @@ def template_statement_actions(statement):
 def template_statement_resources(statement):
     resources = statement["Resource"]
     return resources if isinstance(resources, list) else [resources]
+
+
+def render_joined_string(value):
+    if isinstance(value, str):
+        return value
+    if "Fn::Join" in value:
+        parts = []
+        for item in value["Fn::Join"][1]:
+            parts.append(item if isinstance(item, str) else "<token>")
+        return "".join(parts)
+    raise AssertionError(f"unsupported render type: {value}")
 
 
 def template_find_statement(statements, required_actions):
@@ -216,7 +241,7 @@ def assert_https_only_like_rule(rule):
         assert rule["IpProtocol"] == "-1"
 
 
-def wait_for_execution(state_machine_arn, previous_execution_arns, timeout_seconds=90):
+def wait_for_execution(state_machine_arn, previous_execution_arns, timeout_seconds=45):
     sfn_client = client("stepfunctions")
     execution = wait_until(
         lambda: next(
@@ -238,6 +263,140 @@ def wait_for_execution(state_machine_arn, previous_execution_arns, timeout_secon
         ),
         timeout_seconds=timeout_seconds,
     )
+
+
+def wait_for_execution_arn(state_machine_arn, previous_execution_arns, timeout_seconds=30):
+    sfn_client = client("stepfunctions")
+    execution = wait_until(
+        lambda: next(
+            (
+                item
+                for item in sfn_client.list_executions(stateMachineArn=state_machine_arn, maxResults=100)["executions"]
+                if item["executionArn"] not in previous_execution_arns
+            ),
+            None,
+        ),
+        timeout_seconds=timeout_seconds,
+    )
+    return execution["executionArn"]
+
+
+def wait_for_function_configuration(function_name, timeout_seconds=60):
+    lambda_client = client("lambda")
+
+    def configuration_ready():
+        config = lambda_client.get_function_configuration(FunctionName=function_name)
+        if config.get("LastUpdateStatus") == "Failed":
+            raise AssertionError(
+                f"lambda configuration update failed for {function_name}: {config.get('LastUpdateStatusReason')}"
+            )
+        if config.get("State") != "Active":
+            return None
+        if config.get("LastUpdateStatus") not in {None, "Successful"}:
+            return None
+        return config
+
+    return wait_until(configuration_ready, timeout_seconds=timeout_seconds, interval_seconds=3)
+
+
+@contextmanager
+def temporary_lambda_environment(function_name, overrides):
+    lambda_client = client("lambda")
+    original_config = wait_for_function_configuration(function_name)
+    original_variables = original_config.get("Environment", {}).get("Variables", {})
+
+    updated_variables = dict(original_variables)
+    updated_variables.update(overrides)
+    lambda_client.update_function_configuration(
+        FunctionName=function_name,
+        Environment={"Variables": updated_variables},
+    )
+    wait_for_function_configuration(function_name)
+    try:
+        yield
+    finally:
+        lambda_client.update_function_configuration(
+            FunctionName=function_name,
+            Environment={"Variables": original_variables},
+        )
+        wait_for_function_configuration(function_name)
+
+
+def wait_for_log_message(log_group, substring, start_time_ms, timeout_seconds=30):
+    logs_client = client("logs")
+
+    def find_message():
+        paginator = logs_client.get_paginator("filter_log_events")
+        for page in paginator.paginate(logGroupName=log_group, startTime=start_time_ms):
+            for event in page.get("events", []):
+                if substring in event["message"]:
+                    return event
+        return None
+
+    return wait_until(find_message, timeout_seconds=timeout_seconds, interval_seconds=5)
+
+
+def wait_for_alarm_state(alarm_name, expected_state, timeout_seconds=60):
+    cloudwatch_client = client("cloudwatch")
+
+    def alarm_in_state():
+        alarms = cloudwatch_client.describe_alarms(AlarmNames=[alarm_name])["MetricAlarms"]
+        if not alarms:
+            return None
+        alarm = alarms[0]
+        return alarm if alarm["StateValue"] == expected_state else None
+
+    return wait_until(alarm_in_state, timeout_seconds=timeout_seconds, interval_seconds=10)
+
+
+def wait_for_metric_sum(namespace, metric_name, start_time, minimum_sum, timeout_seconds=60):
+    cloudwatch_client = client("cloudwatch")
+
+    def metric_ready():
+        response = cloudwatch_client.get_metric_statistics(
+            Namespace=namespace,
+            MetricName=metric_name,
+            StartTime=start_time,
+            EndTime=datetime.now(timezone.utc) + timedelta(minutes=1),
+            Period=60,
+            Statistics=["Sum"],
+        )
+        datapoints = sorted(response["Datapoints"], key=lambda item: item["Timestamp"])
+        if not datapoints:
+            return None
+        latest = datapoints[-1]
+        return latest if latest.get("Sum", 0) >= minimum_sum else None
+
+    return wait_until(metric_ready, timeout_seconds=timeout_seconds, interval_seconds=10)
+
+
+@contextmanager
+def temporary_secret(secret_value):
+    secrets_client = client("secretsmanager")
+    secret_name = f"security-posture-test-{uuid4()}"
+    response = secrets_client.create_secret(
+        Name=secret_name,
+        SecretString=json.dumps(secret_value),
+    )
+    try:
+        yield response["ARN"]
+    finally:
+        secrets_client.delete_secret(
+            SecretId=response["ARN"],
+            ForceDeleteWithoutRecovery=True,
+        )
+
+
+def invoke_lambda_json(function_name, payload):
+    lambda_client = client("lambda")
+    response = lambda_client.invoke(
+        FunctionName=function_name,
+        InvocationType="RequestResponse",
+        Payload=json.dumps(payload).encode("utf-8"),
+    )
+    raw_payload = response["Payload"].read().decode("utf-8")
+    parsed_payload = json.loads(raw_payload) if raw_payload else None
+    return response, parsed_payload
 
 
 def test_deployed_template_preserves_exact_resource_contract(deployed_template):
@@ -364,7 +523,10 @@ def test_deployed_runtime_network_and_data_boundaries(stack_resources):
     assert database_group["IpPermissions"][0]["ToPort"] == 5432
     assert database_group["IpPermissions"][0]["UserIdGroupPairs"][0]["GroupId"] == compute_sg_id
 
-    if database_resource is not None:
+    if endpoint_override():
+        assert database_resource is None
+    else:
+        assert database_resource is not None
         database = rds_client.describe_db_instances(
             DBInstanceIdentifier=database_resource["PhysicalResourceId"]
         )["DBInstances"][0]
@@ -610,3 +772,269 @@ def test_deployed_template_iam_scoping_matches_prompt(deployed_template):
         }
         for statement in wildcard_resources
     )
+
+
+def test_live_iam_least_privilege_denies_cross_service_actions(stack_resources):
+    iam_client = client("iam")
+    lambda_client = client("lambda")
+    sqs_client = client("sqs")
+
+    ingest_role_name = find_resource(stack_resources, "IngestWorkerRole", "AWS::IAM::Role")["PhysicalResourceId"]
+    enrich_role_name = find_resource(stack_resources, "EnrichWorkerRole", "AWS::IAM::Role")["PhysicalResourceId"]
+    enrich_function_name = find_resource(stack_resources, "EnrichWorker", "AWS::Lambda::Function")["PhysicalResourceId"]
+    queue_url = queue_url_from_resource(stack_resources)
+
+    ingest_role_arn = iam_client.get_role(RoleName=ingest_role_name)["Role"]["Arn"]
+    enrich_role_arn = iam_client.get_role(RoleName=enrich_role_name)["Role"]["Arn"]
+    enrich_function_arn = lambda_client.get_function(FunctionName=enrich_function_name)["Configuration"]["FunctionArn"]
+    queue_arn = sqs_client.get_queue_attributes(QueueUrl=queue_url, AttributeNames=["QueueArn"])["Attributes"]["QueueArn"]
+
+    ingest_simulation = iam_client.simulate_principal_policy(
+        PolicySourceArn=ingest_role_arn,
+        ActionNames=["lambda:InvokeFunction"],
+        ResourceArns=[enrich_function_arn],
+    )["EvaluationResults"][0]
+    assert ingest_simulation["EvalDecision"] in {"implicitDeny", "explicitDeny"}
+
+    enrich_simulation = iam_client.simulate_principal_policy(
+        PolicySourceArn=enrich_role_arn,
+        ActionNames=["sqs:SendMessage"],
+        ResourceArns=[queue_arn],
+    )["EvaluationResults"][0]
+    assert enrich_simulation["EvalDecision"] in {"implicitDeny", "explicitDeny"}
+
+
+def test_runtime_iam_least_privilege_denies_unauthorized_secret_access(stack_resources):
+    ingest_name = find_resource(stack_resources, "IngestWorker", "AWS::Lambda::Function")["PhysicalResourceId"]
+    enrich_name = find_resource(stack_resources, "EnrichWorker", "AWS::Lambda::Function")["PhysicalResourceId"]
+    iam_client = client("iam")
+    ingest_role_name = find_resource(stack_resources, "IngestWorkerRole", "AWS::IAM::Role")["PhysicalResourceId"]
+    enrich_role_name = find_resource(stack_resources, "EnrichWorkerRole", "AWS::IAM::Role")["PhysicalResourceId"]
+    ingest_role_arn = iam_client.get_role(RoleName=ingest_role_name)["Role"]["Arn"]
+    enrich_role_arn = iam_client.get_role(RoleName=enrich_role_name)["Role"]["Arn"]
+
+    with temporary_secret({"username": "unauthorized", "password": "secret-value"}) as secret_arn:
+        for role_arn in (ingest_role_arn, enrich_role_arn):
+            evaluation = iam_client.simulate_principal_policy(
+                PolicySourceArn=role_arn,
+                ActionNames=["secretsmanager:GetSecretValue"],
+                ResourceArns=[secret_arn],
+            )["EvaluationResults"][0]
+            assert evaluation["EvalDecision"] in {"implicitDeny", "explicitDeny"}
+
+        if is_emulated_environment():
+            return
+
+        for function_name in (ingest_name, enrich_name):
+            with temporary_lambda_environment(function_name, {"DB_SECRET_ARN_TEST_OVERRIDE": secret_arn}):
+                response, payload = invoke_lambda_json(
+                    function_name,
+                    {"testMode": "readSecret"},
+                )
+                assert response.get("FunctionError") == "Unhandled"
+                payload_text = json.dumps(payload)
+                assert any(
+                    token in payload_text
+                    for token in ("AccessDenied", "not authorized", "AccessDeniedException")
+                )
+
+
+def test_api_gateway_5xx_path_emits_logs_and_triggers_ingest_alarm(stack_resources):
+    ingest_name = find_resource(stack_resources, "IngestWorker", "AWS::Lambda::Function")["PhysicalResourceId"]
+    ingest_alarm_name = find_resource(
+        stack_resources,
+        "IngestWorkerErrorsAlarm",
+        "AWS::CloudWatch::Alarm",
+    )["PhysicalResourceId"]
+    api_log_group = log_group_name(stack_resources, "ApiStageLogGroup")
+    ingest_log_group = log_group_name(stack_resources, "IngestWorkerLogGroup")
+    start_time_ms = int(time.time() * 1000)
+    metric_start_time = datetime.now(timezone.utc) - timedelta(minutes=2)
+
+    with temporary_lambda_environment(ingest_name, {"DB_SECRET_ARN": "malformed-secret-arn"}):
+        status_code, response_body = http_call(
+            "POST",
+            api_url(stack_resources, "/ingest"),
+            {"recordId": "force-ingest-failure"},
+        )
+        assert status_code >= 500, response_body
+
+        if not is_emulated_environment():
+            api_event = wait_for_log_message(api_log_group, '"status":"5', start_time_ms)
+            assert "/ingest" in api_event["message"]
+
+            lambda_event = wait_for_log_message(
+                ingest_log_group,
+                "DB_SECRET_ARN environment variable must be a Secrets Manager secret ARN",
+                start_time_ms,
+            )
+            assert "Secrets Manager secret ARN" in lambda_event["message"]
+
+            datapoint = wait_for_metric_sum(
+                "Custom/ApiGateway",
+                "ServerErrors5xx",
+                metric_start_time,
+                minimum_sum=1,
+            )
+            assert datapoint["Sum"] >= 1
+
+            alarm = wait_for_alarm_state(ingest_alarm_name, "ALARM")
+            assert alarm["StateValue"] == "ALARM"
+
+
+def test_step_functions_failure_path_logs_errors_and_triggers_enrich_alarm(stack_resources):
+    enrich_name = find_resource(stack_resources, "EnrichWorker", "AWS::Lambda::Function")["PhysicalResourceId"]
+    enrich_alarm_name = find_resource(
+        stack_resources,
+        "EnrichWorkerErrorsAlarm",
+        "AWS::CloudWatch::Alarm",
+    )["PhysicalResourceId"]
+    state_machine_arn = find_resource(
+        stack_resources,
+        "EnrichmentStateMachine",
+        "AWS::StepFunctions::StateMachine",
+    )["PhysicalResourceId"]
+    sfn_client = client("stepfunctions")
+    existing_execution_arns = {
+        item["executionArn"]
+        for item in sfn_client.list_executions(stateMachineArn=state_machine_arn, maxResults=100)["executions"]
+    }
+    start_time_ms = int(time.time() * 1000)
+
+    with temporary_lambda_environment(enrich_name, {"DB_SECRET_ARN": "malformed-secret-arn"}):
+        sfn_client.start_execution(
+            stateMachineArn=state_machine_arn,
+            input=json.dumps({"recordId": "force-step-functions-failure"}),
+        )
+        execution = wait_for_execution(state_machine_arn, existing_execution_arns, timeout_seconds=180)
+        assert execution["status"] == "FAILED"
+
+        if not is_emulated_environment():
+            lambda_event = wait_for_log_message(
+                log_group_name(stack_resources, "EnrichWorkerLogGroup"),
+                "DB_SECRET_ARN environment variable must be a Secrets Manager secret ARN",
+                start_time_ms,
+            )
+            assert "Secrets Manager secret ARN" in lambda_event["message"]
+
+            alarm = wait_for_alarm_state(enrich_alarm_name, "ALARM")
+            assert alarm["StateValue"] == "ALARM"
+
+
+def test_step_functions_retries_when_enrich_lambda_times_out(stack_resources, deployed_template):
+    if is_emulated_environment():
+        state_machine = next(
+            resource
+            for resource in deployed_template["Resources"].values()
+            if resource["Type"] == "AWS::StepFunctions::StateMachine"
+        )
+        definition = json.loads(render_joined_string(state_machine["Properties"]["DefinitionString"]))
+        retry = definition["States"]["InvokeEnrichWorker"]["Retry"]
+        assert retry == [
+            {
+                "ErrorEquals": [
+                    "Lambda.ClientExecutionTimeoutException",
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                ],
+                "IntervalSeconds": 2,
+                "MaxAttempts": 6,
+                "BackoffRate": 2,
+            }
+        ]
+        return
+
+    state_machine_arn = find_resource(
+        stack_resources,
+        "EnrichmentStateMachine",
+        "AWS::StepFunctions::StateMachine",
+    )["PhysicalResourceId"]
+    sfn_client = client("stepfunctions")
+    previous_execution_arns = {
+        item["executionArn"]
+        for item in sfn_client.list_executions(stateMachineArn=state_machine_arn, maxResults=100)["executions"]
+    }
+
+    sfn_client.start_execution(
+        stateMachineArn=state_machine_arn,
+        input=json.dumps({"testMode": "sleep", "sleepMs": 15000}),
+    )
+    execution_arn = wait_for_execution_arn(state_machine_arn, previous_execution_arns, timeout_seconds=30)
+
+    def retry_history():
+        events = sfn_client.get_execution_history(executionArn=execution_arn, maxResults=1000)["events"]
+        return events if len([event for event in events if event["type"] == "LambdaFunctionScheduled"]) >= 2 else None
+
+    history = wait_until(retry_history, timeout_seconds=30, interval_seconds=3)
+    assert len([event for event in history if event["type"] == "LambdaFunctionScheduled"]) >= 2
+    assert any(event["type"] == "LambdaFunctionTimedOut" for event in history)
+
+    sfn_client.stop_execution(
+        executionArn=execution_arn,
+        error="TestComplete",
+        cause="Validated timeout retry behavior",
+    )
+
+
+def test_pipe_failure_requeues_messages_when_enrichment_lambda_fails(stack_resources):
+    sqs_client = client("sqs")
+    sfn_client = client("stepfunctions")
+
+    enrich_name = find_resource(stack_resources, "EnrichWorker", "AWS::Lambda::Function")["PhysicalResourceId"]
+    queue_url = queue_url_from_resource(stack_resources)
+    state_machine_arn = find_resource(
+        stack_resources,
+        "EnrichmentStateMachine",
+        "AWS::StepFunctions::StateMachine",
+    )["PhysicalResourceId"]
+    baseline_execution_arns = {
+        item["executionArn"]
+        for item in sfn_client.list_executions(stateMachineArn=state_machine_arn, maxResults=100)["executions"]
+    }
+    payload = {"recordId": "pipe-failure", "source": "integration-test"}
+    start_time_ms = int(time.time() * 1000)
+
+    drain_queue(queue_url)
+
+    with temporary_lambda_environment(enrich_name, {"DB_SECRET_ARN": "malformed-secret-arn"}):
+        sqs_client.send_message(
+            QueueUrl=queue_url,
+            MessageBody=json.dumps(payload),
+        )
+
+        message = wait_for_queue_message(
+            queue_url,
+            lambda item: json.loads(item["Body"]) == payload,
+            timeout_seconds=30,
+        )
+        assert json.loads(message["Body"]) == payload
+        sqs_client.delete_message(QueueUrl=queue_url, ReceiptHandle=message["ReceiptHandle"])
+
+        recent_executions = sfn_client.list_executions(stateMachineArn=state_machine_arn, maxResults=100)["executions"]
+        assert all(item["executionArn"] in baseline_execution_arns for item in recent_executions)
+
+        if not is_emulated_environment():
+            lambda_event = wait_for_log_message(
+                log_group_name(stack_resources, "EnrichWorkerLogGroup"),
+                "DB_SECRET_ARN environment variable must be a Secrets Manager secret ARN",
+                start_time_ms,
+            )
+            assert "Secrets Manager secret ARN" in lambda_event["message"]
+
+
+def test_lambda_network_isolation_blocks_non_https_egress(stack_resources):
+    enrich_name = find_resource(stack_resources, "EnrichWorker", "AWS::Lambda::Function")["PhysicalResourceId"]
+
+    response, payload = invoke_lambda_json(
+        enrich_name,
+        {
+            "testMode": "probeTcp",
+            "host": "1.1.1.1",
+            "port": 5432,
+            "timeoutMs": 3000,
+        },
+    )
+    payload_text = json.dumps(payload).lower()
+    assert response.get("FunctionError") == "Unhandled" or '"connected": true' not in payload_text
+    assert '"connected": true' not in payload_text

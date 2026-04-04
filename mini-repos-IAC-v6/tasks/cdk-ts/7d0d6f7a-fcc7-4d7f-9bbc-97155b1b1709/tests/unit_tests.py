@@ -5,6 +5,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 STACK_NAME = "SecurityPostureStack"
@@ -34,6 +36,27 @@ def synth_template():
         )
         template_path = Path(outdir) / f"{STACK_NAME}.template.json"
         return json.loads(template_path.read_text())
+
+
+def synth_failure(source):
+    with tempfile.NamedTemporaryFile("w", suffix=".ts", dir=ROOT, delete=False) as temp_app:
+        temp_path = Path(temp_app.name)
+        temp_app.write(source)
+
+    try:
+        with tempfile.TemporaryDirectory() as outdir:
+            env = os.environ.copy()
+            env.setdefault("AWS_REGION", "us-east-1")
+            env["CDK_OUTDIR"] = outdir
+            return subprocess.run(
+                ["npx", "ts-node", temp_path.name],
+                cwd=ROOT,
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+    finally:
+        temp_path.unlink()
 
 
 TEMPLATE = load_template()
@@ -85,6 +108,16 @@ def render_joined_string(value):
     raise AssertionError(f"unsupported render type: {value}")
 
 
+def replace_once(source, old, new):
+    replaced = source.replace(old, new, 1)
+    assert replaced != source, f"expected to replace {old!r}"
+    return replaced
+
+
+def parse_state_machine_definition(state_machine):
+    return json.loads(render_joined_string(state_machine["Properties"]["DefinitionString"]))
+
+
 def statement_actions(statement):
     actions = statement["Action"]
     return actions if isinstance(actions, list) else [actions]
@@ -114,6 +147,46 @@ def role_policy_statements(role_prefix):
             else:
                 statements.extend(policy_statements)
     return role_logical_id, statements
+
+
+def assert_iam_template_valid(resources):
+    role_ids = {
+        logical_id
+        for logical_id, resource in resources.items()
+        if resource["Type"] == "AWS::IAM::Role"
+    }
+    policy_ids = {
+        logical_id
+        for logical_id, resource in resources.items()
+        if resource["Type"] == "AWS::IAM::Policy"
+    }
+
+    for logical_id, policy in resources.items():
+        if policy["Type"] != "AWS::IAM::Policy":
+            continue
+
+        rendered_document = json.dumps(policy["Properties"]["PolicyDocument"], separators=(",", ":"))
+        assert len(rendered_document) <= 6144, f"{logical_id} exceeds the IAM inline policy size limit"
+
+        for statement in policy["Properties"]["PolicyDocument"]["Statement"]:
+            for action in statement_actions(statement):
+                assert re.fullmatch(r"[a-z0-9-]+:[A-Za-z*]+", action), (
+                    f"{logical_id} contains an invalid IAM action format: {action}"
+                )
+
+        attached_roles = policy["Properties"].get("Roles", [])
+        assert attached_roles, f"{logical_id} should attach to at least one IAM role"
+        for role_ref in attached_roles:
+            assert set(role_ref) == {"Ref"}
+            assert role_ref["Ref"] in role_ids, f"{logical_id} attaches to an unknown IAM role"
+
+    for logical_id, role in resources.items():
+        if role["Type"] != "AWS::IAM::Role":
+            continue
+        depends_on = role.get("DependsOn", [])
+        if isinstance(depends_on, str):
+            depends_on = [depends_on]
+        assert not (set(depends_on) & policy_ids), f"{logical_id} should not depend on IAM policies"
 
 
 def pre_stack_source():
@@ -256,6 +329,45 @@ def test_stack_input_contract_is_limited_to_allowed_configuration_variables():
     assert "process.env.CDK_DEFAULT_ACCOUNT" not in APP_SOURCE
     assert "process.env.AWS_ACCESS_KEY_ID" not in header
     assert "process.env.AWS_SECRET_ACCESS_KEY" not in header
+
+
+def test_stack_synthesis_fails_for_invalid_network_configuration():
+    result = synth_failure(
+        replace_once(
+            APP_SOURCE,
+            "ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),",
+            "ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/33'),",
+        )
+    )
+
+    assert result.returncode != 0
+    assert "is not a valid VPC CIDR range" in (result.stderr + result.stdout)
+
+
+def test_stack_synthesis_fails_when_required_pipe_properties_are_missing():
+    result = synth_failure(
+        replace_once(
+            APP_SOURCE,
+            "roleArn: pipesExecutionRole.roleArn,",
+            "roleArn: undefined as any,",
+        )
+    )
+
+    assert result.returncode != 0
+    assert "should be a string" in (result.stderr + result.stdout)
+
+
+def test_stack_synthesis_fails_for_conflicting_construct_ids():
+    result = synth_failure(
+        replace_once(
+            APP_SOURCE,
+            "new lambda.Function(this, 'EnrichWorker'",
+            "new lambda.Function(this, 'IngestWorker'",
+        )
+    )
+
+    assert result.returncode != 0
+    assert "There is already a Construct with name 'IngestWorker'" in (result.stderr + result.stdout)
 
 
 def test_aws_endpoint_is_forwarded_to_sdk_endpoint_resolution():
@@ -417,9 +529,28 @@ def test_state_machine_pipe_database_and_queue_wiring_are_correct():
     queue = single_resource("AWS::SQS::Queue")
     enrich_lambda_id = find_logical_id("EnrichWorker", "AWS::Lambda::Function")
 
-    definition = render_joined_string(state_machine["Properties"]["DefinitionString"])
-    assert '"StartAt":"InvokeEnrichWorker"' in definition
-    assert '"Type":"Succeed"' in definition
+    definition = parse_state_machine_definition(state_machine)
+    invoke_state = definition["States"]["InvokeEnrichWorker"]
+
+    assert definition["StartAt"] == "InvokeEnrichWorker"
+    assert set(definition["States"]) == {"InvokeEnrichWorker", "Success"}
+    assert invoke_state["Type"] == "Task"
+    assert invoke_state["Next"] == "Success"
+    assert invoke_state["Resource"] == "<token>"
+    assert invoke_state["Retry"] == [
+        {
+            "BackoffRate": 2,
+            "ErrorEquals": [
+                "Lambda.ClientExecutionTimeoutException",
+                "Lambda.ServiceException",
+                "Lambda.AWSLambdaException",
+                "Lambda.SdkClientException",
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+        }
+    ]
+    assert definition["States"]["Success"] == {"Type": "Succeed"}
     assert state_machine["Properties"]["StateMachineType"] == "STANDARD"
     assert state_machine["Properties"]["LoggingConfiguration"]["Level"] == "ALL"
     assert state_machine["Properties"]["LoggingConfiguration"]["IncludeExecutionData"] is True
@@ -428,7 +559,9 @@ def test_state_machine_pipe_database_and_queue_wiring_are_correct():
     assert pipe["Properties"]["Source"] == {"Fn::GetAtt": [next(iter(resources_by_type("AWS::SQS::Queue"))), "Arn"]}
     assert pipe["Properties"]["Enrichment"] == {"Fn::GetAtt": [enrich_lambda_id, "Arn"]}
     assert pipe["Properties"]["Target"] == {"Ref": next(iter(resources_by_type("AWS::StepFunctions::StateMachine")))}
-    assert "StepFunctionStateMachineParameters" in pipe["Properties"]["TargetParameters"]
+    assert pipe["Properties"]["TargetParameters"]["StepFunctionStateMachineParameters"] == {
+        "InvocationType": "FIRE_AND_FORGET"
+    }
 
     assert queue["Properties"]["VisibilityTimeout"] == 30
     assert queue["Properties"]["MessageRetentionPeriod"] == 345600
@@ -546,6 +679,38 @@ def test_iam_is_minimally_scoped_and_only_uses_unavoidable_resource_wildcards():
         }
         for statement in wildcard_resources
     )
+
+
+def test_iam_policies_remain_valid_for_size_action_format_and_dependencies():
+    assert_iam_template_valid(RESOURCES)
+
+
+def test_iam_policy_validation_fails_when_inline_policy_exceeds_size_limit():
+    invalid_resources = json.loads(json.dumps(RESOURCES))
+    policy_id = next(iter(resources_by_type("AWS::IAM::Policy")))
+    invalid_resources[policy_id]["Properties"]["PolicyDocument"]["Statement"][0]["Sid"] = "A" * 7000
+
+    with pytest.raises(AssertionError, match="exceeds the IAM inline policy size limit"):
+        assert_iam_template_valid(invalid_resources)
+
+
+def test_iam_policy_validation_fails_for_invalid_action_names():
+    invalid_resources = json.loads(json.dumps(RESOURCES))
+    policy_id = next(iter(resources_by_type("AWS::IAM::Policy")))
+    invalid_resources[policy_id]["Properties"]["PolicyDocument"]["Statement"][0]["Action"] = "lambdaInvokeFunction"
+
+    with pytest.raises(AssertionError, match="contains an invalid IAM action format"):
+        assert_iam_template_valid(invalid_resources)
+
+
+def test_iam_policy_validation_fails_for_role_policy_circular_dependencies():
+    invalid_resources = json.loads(json.dumps(RESOURCES))
+    role_id = next(iter(resources_by_type("AWS::IAM::Role")))
+    policy_id = next(iter(resources_by_type("AWS::IAM::Policy")))
+    invalid_resources[role_id]["DependsOn"] = [policy_id]
+
+    with pytest.raises(AssertionError, match="should not depend on IAM policies"):
+        assert_iam_template_valid(invalid_resources)
 
 
 def test_iam_policy_statements_are_scoped_to_expected_resources():
@@ -687,6 +852,45 @@ def test_ingest_worker_handler_requires_secret_arn_env_var():
     assert "DB_SECRET_ARN environment variable is required" in result.stderr
 
 
+def test_ingest_worker_handler_rejects_malformed_queue_url_env_var():
+    result = invoke_inline_handler(
+        "IngestWorker",
+        env={
+            "AWS_REGION": "us-east-1",
+            "QUEUE_URL": "not-a-queue-url",
+            "DB_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:test",
+        },
+    )
+    assert result.returncode != 0
+    assert "QUEUE_URL environment variable must be a valid SQS queue URL" in result.stderr
+
+
+def test_ingest_worker_handler_rejects_blank_queue_url_env_var():
+    result = invoke_inline_handler(
+        "IngestWorker",
+        env={
+            "AWS_REGION": "us-east-1",
+            "QUEUE_URL": "   ",
+            "DB_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:test",
+        },
+    )
+    assert result.returncode != 0
+    assert "QUEUE_URL environment variable is required" in result.stderr
+
+
+def test_ingest_worker_handler_rejects_malformed_secret_arn_env_var():
+    result = invoke_inline_handler(
+        "IngestWorker",
+        env={
+            "AWS_REGION": "us-east-1",
+            "QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/123456789012/test",
+            "DB_SECRET_ARN": "arn:aws:sqs:us-east-1:123456789012:test",
+        },
+    )
+    assert result.returncode != 0
+    assert "DB_SECRET_ARN environment variable must be a Secrets Manager secret ARN" in result.stderr
+
+
 def test_enrich_worker_handler_requires_secret_arn_env_var():
     result = invoke_inline_handler(
         "EnrichWorker",
@@ -694,3 +898,27 @@ def test_enrich_worker_handler_requires_secret_arn_env_var():
     )
     assert result.returncode != 0
     assert "DB_SECRET_ARN environment variable is required" in result.stderr
+
+
+def test_enrich_worker_handler_rejects_blank_secret_arn_env_var():
+    result = invoke_inline_handler(
+        "EnrichWorker",
+        env={
+            "AWS_REGION": "us-east-1",
+            "DB_SECRET_ARN": "   ",
+        },
+    )
+    assert result.returncode != 0
+    assert "DB_SECRET_ARN environment variable is required" in result.stderr
+
+
+def test_enrich_worker_handler_rejects_malformed_secret_arn_env_var():
+    result = invoke_inline_handler(
+        "EnrichWorker",
+        env={
+            "AWS_REGION": "us-east-1",
+            "DB_SECRET_ARN": "malformed-secret-arn",
+        },
+    )
+    assert result.returncode != 0
+    assert "DB_SECRET_ARN environment variable must be a Secrets Manager secret ARN" in result.stderr

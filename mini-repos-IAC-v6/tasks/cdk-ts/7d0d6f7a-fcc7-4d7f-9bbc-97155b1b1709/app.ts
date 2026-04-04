@@ -141,6 +141,7 @@ class SecurityPostureStack extends cdk.Stack {
       code: lambda.Code.fromInline(`
 const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
 const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
+const net = require('node:net');
 
 function clientConfig() {
   const config = { region: process.env.AWS_REGION };
@@ -150,15 +151,83 @@ function clientConfig() {
   return config;
 }
 
+function requireEnv(name) {
+  const value = process.env[name];
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new Error(name + ' environment variable is required');
+  }
+  return value.trim();
+}
+
+function requireSecretArn(name) {
+  const value = requireEnv(name);
+  if (!/^arn:[^:]+:secretsmanager:[^:]+:\\d{12}:secret:[A-Za-z0-9/_+=,.@-]+$/.test(value)) {
+    throw new Error(name + ' environment variable must be a Secrets Manager secret ARN');
+  }
+  return value;
+}
+
+function requireQueueUrl(name) {
+  const value = requireEnv(name);
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch (error) {
+    throw new Error(name + ' environment variable must be a valid SQS queue URL');
+  }
+
+  const pathSegments = parsed.pathname.split('/').filter(Boolean);
+  if (
+    !['http:', 'https:'].includes(parsed.protocol) ||
+    pathSegments.length < 2 ||
+    !/^\\d{12}$/.test(pathSegments[pathSegments.length - 2]) ||
+    !pathSegments[pathSegments.length - 1]
+  ) {
+    throw new Error(name + ' environment variable must be a valid SQS queue URL');
+  }
+
+  return value;
+}
+
+function probeTcp(host, port, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const socket = new net.Socket();
+    socket.setTimeout(timeoutMs);
+    socket.once('connect', () => {
+      socket.destroy();
+      resolve({
+        connected: true,
+        host,
+        port,
+      });
+    });
+    socket.once('timeout', () => {
+      socket.destroy();
+      reject(new Error('TCP probe timed out'));
+    });
+    socket.once('error', (error) => {
+      socket.destroy();
+      reject(error);
+    });
+    socket.connect(port, host);
+  });
+}
+
 exports.handler = async (event) => {
-  const queueUrl = process.env.QUEUE_URL;
-  const secretArn = process.env.DB_SECRET_ARN;
-  if (!queueUrl) {
-    throw new Error('QUEUE_URL environment variable is required');
+  const queueUrl = requireQueueUrl('QUEUE_URL');
+  const secretArn = requireSecretArn('DB_SECRET_ARN');
+
+  if (event?.testMode === 'readSecret') {
+    const targetSecretArn = requireSecretArn('DB_SECRET_ARN_TEST_OVERRIDE');
+    const secretsClient = new SecretsManagerClient(clientConfig());
+    await secretsClient.send(new GetSecretValueCommand({ SecretId: targetSecretArn }));
+    return { accessedSecret: targetSecretArn };
   }
-  if (!secretArn) {
-    throw new Error('DB_SECRET_ARN environment variable is required');
+
+  if (event?.testMode === 'probeTcp') {
+    return probeTcp(event.host, event.port, event.timeoutMs ?? 3000);
   }
+
   const payload =
     typeof event?.body === 'string'
       ? event.body
@@ -206,6 +275,7 @@ exports.handler = async (event) => {
       code: lambda.Code.fromInline(`
 const { CloudWatchClient, PutMetricDataCommand } = require('@aws-sdk/client-cloudwatch');
 const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
+const net = require('node:net');
 
 function clientConfig() {
   const config = { region: process.env.AWS_REGION };
@@ -215,10 +285,63 @@ function clientConfig() {
   return config;
 }
 
+function requireEnv(name) {
+  const value = process.env[name];
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new Error(name + ' environment variable is required');
+  }
+  return value.trim();
+}
+
+function requireSecretArn(name) {
+  const value = requireEnv(name);
+  if (!/^arn:[^:]+:secretsmanager:[^:]+:\\d{12}:secret:[A-Za-z0-9/_+=,.@-]+$/.test(value)) {
+    throw new Error(name + ' environment variable must be a Secrets Manager secret ARN');
+  }
+  return value;
+}
+
+function probeTcp(host, port, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const socket = new net.Socket();
+    socket.setTimeout(timeoutMs);
+    socket.once('connect', () => {
+      socket.destroy();
+      resolve({
+        connected: true,
+        host,
+        port,
+      });
+    });
+    socket.once('timeout', () => {
+      socket.destroy();
+      reject(new Error('TCP probe timed out'));
+    });
+    socket.once('error', (error) => {
+      socket.destroy();
+      reject(error);
+    });
+    socket.connect(port, host);
+  });
+}
+
 exports.handler = async (event) => {
-  const secretArn = process.env.DB_SECRET_ARN;
-  if (!secretArn) {
-    throw new Error('DB_SECRET_ARN environment variable is required');
+  const secretArn = requireSecretArn('DB_SECRET_ARN');
+
+  if (event?.testMode === 'readSecret') {
+    const targetSecretArn = requireSecretArn('DB_SECRET_ARN_TEST_OVERRIDE');
+    const secretsClient = new SecretsManagerClient(clientConfig());
+    await secretsClient.send(new GetSecretValueCommand({ SecretId: targetSecretArn }));
+    return { accessedSecret: targetSecretArn };
+  }
+
+  if (event?.testMode === 'sleep') {
+    await new Promise((resolve) => setTimeout(resolve, event.sleepMs ?? 0));
+    return { slept: event.sleepMs ?? 0 };
+  }
+
+  if (event?.testMode === 'probeTcp') {
+    return probeTcp(event.host, event.port, event.timeoutMs ?? 3000);
   }
 
   const secretsClient = new SecretsManagerClient(clientConfig());

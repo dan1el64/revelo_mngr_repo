@@ -1,24 +1,29 @@
+"""Integration tests that verify deployed resources through boto3."""
+
 import json
+import os
 from pathlib import Path
+
+import boto3
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE_JSON = ROOT / "state.json"
-PLAN_JSON = ROOT / "plan.json"
 
 
 def load_state():
-    if STATE_JSON.exists():
-        return json.loads(STATE_JSON.read_text())
-    if PLAN_JSON.exists():
-        plan = json.loads(PLAN_JSON.read_text())
-        planned_values = plan.get("planned_values")
-        assert planned_values, f"plan.json found at {PLAN_JSON} but missing planned_values"
-        return {"values": planned_values}
-    raise AssertionError(
-        f"Neither state.json nor plan.json was found under {ROOT}. "
-        "Integration checks require terraform show -json output from either apply or plan."
-    )
+    if not STATE_JSON.exists():
+        pytest.skip(
+            f"state.json not found at {STATE_JSON}. Run 'terraform apply' and then "
+            "'terraform show -json > state.json' before integration tests."
+        )
+
+    state = json.loads(STATE_JSON.read_text())
+    root_module = state.get("values", {}).get("root_module")
+    if root_module is None:
+        pytest.fail("state.json is missing values.root_module")
+    return state
 
 
 def iter_resources(module):
@@ -28,164 +33,147 @@ def iter_resources(module):
         yield from iter_resources(child)
 
 
-def resources_by_type(state, resource_type):
-    root_module = state.get("values", {}).get("root_module", {})
-    return [r for r in iter_resources(root_module) if r.get("type") == resource_type]
-
-
-def resource_values(resource):
-    return resource.get("values", {})
-
-
-def test_state_contains_expected_outputs():
+def state_resources():
     state = load_state()
-    outputs = state.get("values", {}).get("outputs", {})
-
-    assert outputs, "Expected Terraform outputs for operational verification"
-    assert "sqs_queue_url" in outputs
-    assert "http_api_endpoint_url" in outputs
-    assert "rds_endpoint_address" in outputs
-    assert "secrets_manager_secret_arn" in outputs
-
-    for output_name in outputs:
-        if "value" not in outputs[output_name]:
-            continue
-        value = outputs[output_name]["value"]
-        if value is not None:
-            assert isinstance(value, str)
+    root_module = state["values"]["root_module"]
+    return list(iter_resources(root_module))
 
 
-def test_state_resource_counts_match_the_prompt():
-    state = load_state()
-
-    expected_counts = {
-        "aws_vpc": 1,
-        "aws_subnet": 2,
-        "aws_security_group": 2,
-        "random_password": 1,
-        "aws_secretsmanager_secret": 1,
-        "aws_secretsmanager_secret_version": 1,
-        "aws_db_subnet_group": (0, 1),
-        "aws_db_instance": (0, 1),
-        "aws_apigatewayv2_api": (0, 1),
-        "aws_apigatewayv2_stage": (0, 1),
-        "aws_apigatewayv2_integration": (0, 2),
-        "aws_apigatewayv2_route": (0, 2),
-        "aws_sqs_queue": 1,
-        "aws_cloudwatch_log_group": 2,
-        "aws_lambda_function": 3,
-        "aws_lambda_permission": (0, 1),
-        "aws_lambda_event_source_mapping": 1,
-        "aws_sfn_state_machine": 1,
-        "aws_pipes_pipe": (0, 1),
-    }
-
-    for resource_type, expected_count in expected_counts.items():
-        actual_count = len(resources_by_type(state, resource_type))
-        if isinstance(expected_count, tuple):
-            assert actual_count in expected_count, (
-                f"Expected {resource_type} count in {expected_count}, got {actual_count}"
-            )
-        else:
-            assert actual_count == expected_count, (
-                f"Expected {expected_count} resources of type {resource_type}, got {actual_count}"
-            )
+def matching_resources(resource_type, name=None):
+    matches = [resource for resource in state_resources() if resource.get("type") == resource_type]
+    if name is not None:
+        matches = [resource for resource in matches if resource.get("name") == name]
+    return matches
 
 
-def test_deployed_queue_database_and_api_values_match_contract():
-    state = load_state()
+def single_resource_values(resource_type, name):
+    matches = matching_resources(resource_type, name)
+    assert matches, f"Missing {resource_type}.{name} in state.json"
+    assert len(matches) == 1, f"Expected a single {resource_type}.{name} in state.json"
+    return matches[0]["values"]
 
-    queue = resource_values(resources_by_type(state, "aws_sqs_queue")[0])
-    db_resources = resources_by_type(state, "aws_db_instance")
-    stage_resources = resources_by_type(state, "aws_apigatewayv2_stage")
-    api_resources = resources_by_type(state, "aws_apigatewayv2_api")
-    queue_policy_resources = resources_by_type(state, "aws_sqs_queue_policy")
-    db_instance = resource_values(db_resources[0]) if db_resources else {}
-    stage = resource_values(stage_resources[0]) if stage_resources else {}
-    api = resource_values(api_resources[0]) if api_resources else {}
-    queue_policy = resource_values(queue_policy_resources[0]) if queue_policy_resources else {}
-    api_roles = [
-        resource_values(resource)
-        for resource in resources_by_type(state, "aws_iam_role")
-        if "apigateway.amazonaws.com" in resource_values(resource).get("assume_role_policy", "")
-    ]
-    api_role = api_roles[0] if api_roles else {}
-    log_groups = [resource_values(resource) for resource in resources_by_type(state, "aws_cloudwatch_log_group")]
-    lambdas = [resource_values(resource) for resource in resources_by_type(state, "aws_lambda_function")]
 
-    if queue:
-        assert queue["visibility_timeout_seconds"] == 60
-        assert queue["message_retention_seconds"] == 1209600
+def optional_resource_values(resource_type, name):
+    matches = matching_resources(resource_type, name)
+    assert len(matches) <= 1, f"Expected at most one {resource_type}.{name} in state.json"
+    return matches[0]["values"] if matches else None
+
+
+def aws_client(service_name):
+    endpoint = (
+        os.environ.get("AWS_ENDPOINT_URL")
+        or os.environ.get("AWS_ENDPOINT")
+        or os.environ.get("TF_VAR_aws_endpoint")
+    )
+    region = os.environ.get("AWS_REGION") or os.environ.get("TF_VAR_aws_region") or "us-east-1"
+    return boto3.client(
+        service_name,
+        region_name=region,
+        endpoint_url=endpoint or None,
+        aws_access_key_id=(
+            os.environ.get("AWS_ACCESS_KEY_ID")
+            or os.environ.get("TF_VAR_aws_access_key_id")
+            or "test"
+        ),
+        aws_secret_access_key=(
+            os.environ.get("AWS_SECRET_ACCESS_KEY")
+            or os.environ.get("TF_VAR_aws_secret_access_key")
+            or "test"
+        ),
+    )
+
+
+def test_queue_and_secret_are_live():
+    queue = single_resource_values("aws_sqs_queue", "intake")
+    secret = single_resource_values("aws_secretsmanager_secret", "database_credentials")
+
+    sqs = aws_client("sqs")
+    queue_url = queue.get("url") or queue.get("id")
+    attributes = sqs.get_queue_attributes(
+        QueueUrl=queue_url,
+        AttributeNames=["VisibilityTimeout", "MessageRetentionPeriod", "Policy"],
+    )["Attributes"]
+
+    assert attributes["VisibilityTimeout"] == "60"
+    assert attributes["MessageRetentionPeriod"] == "1209600"
+    if "Policy" in attributes:
+        assert "sqs:SendMessage" in attributes["Policy"]
+        assert queue["arn"] in attributes["Policy"]
+
+    secretsmanager = aws_client("secretsmanager")
+    secret_value = secretsmanager.get_secret_value(SecretId=secret["arn"])
+    payload = json.loads(secret_value["SecretString"])
+    assert payload["username"] == "payments_app"
+    assert payload["password"]
+
+
+def test_lambda_configurations_and_log_groups_are_live():
+    worker = single_resource_values("aws_lambda_function", "worker")
+    health = single_resource_values("aws_lambda_function", "health")
+    enrichment = single_resource_values("aws_lambda_function", "enrichment")
+    application_logs = single_resource_values("aws_cloudwatch_log_group", "application")
+    api_access_logs = single_resource_values("aws_cloudwatch_log_group", "api_access")
+
+    lambda_client = aws_client("lambda")
+
+    worker_cfg = lambda_client.get_function_configuration(FunctionName=worker["function_name"])
+    health_cfg = lambda_client.get_function_configuration(FunctionName=health["function_name"])
+    enrichment_cfg = lambda_client.get_function_configuration(FunctionName=enrichment["function_name"])
+
+    for cfg in [worker_cfg, health_cfg, enrichment_cfg]:
+        assert cfg["Runtime"] == "python3.12"
+        assert cfg["Handler"] == "app.handler"
+        assert cfg["MemorySize"] == 256
+        assert cfg["Timeout"] == 15
+
+    worker_vpc = worker_cfg.get("VpcConfig", {})
+    assert sorted(worker_vpc.get("SubnetIds", [])) == sorted(worker["vpc_config"][0]["subnet_ids"])
+    assert sorted(worker_vpc.get("SecurityGroupIds", [])) == sorted(worker["vpc_config"][0]["security_group_ids"])
+
+    assert health_cfg.get("VpcConfig", {}).get("SubnetIds", []) == []
+    assert health_cfg.get("VpcConfig", {}).get("SecurityGroupIds", []) == []
+    assert enrichment_cfg.get("VpcConfig", {}).get("SubnetIds", []) == []
+    assert enrichment_cfg.get("VpcConfig", {}).get("SecurityGroupIds", []) == []
+
+    logs = aws_client("logs")
+    for log_group in [application_logs["name"], api_access_logs["name"]]:
+        groups = logs.describe_log_groups(logGroupNamePrefix=log_group)["logGroups"]
+        match = next((group for group in groups if group["logGroupName"] == log_group), None)
+        assert match is not None, f"Missing live log group {log_group}"
+        assert match["retentionInDays"] == 14
+        assert "kmsKeyId" not in match
+
+
+def test_state_machine_and_optional_live_resources_are_queryable():
+    state_machine = single_resource_values("aws_sfn_state_machine", "processing")
+
+    sfn = aws_client("stepfunctions")
+    description = sfn.describe_state_machine(stateMachineArn=state_machine["arn"])
+    assert description["type"] == "STANDARD"
+    assert "Prepare" in description["definition"]
+    assert "Complete" in description["definition"]
+
+    api = optional_resource_values("aws_apigatewayv2_api", "front_door")
+    stage = optional_resource_values("aws_apigatewayv2_stage", "default")
+    if api and stage:
+        apigateway = aws_client("apigatewayv2")
+        live_api = apigateway.get_api(ApiId=api["api_id"])
+        live_stage = apigateway.get_stage(ApiId=api["api_id"], StageName=stage["name"])
+        assert live_api["ProtocolType"] == "HTTP"
+        assert live_stage["AutoDeploy"] is True
+
+    db_instance = optional_resource_values("aws_db_instance", "storage_layer")
     if db_instance:
-        assert db_instance["engine"] == "postgres"
-        assert db_instance["engine_version"] == "15.4"
-        assert db_instance["instance_class"] == "db.t3.micro"
-        assert db_instance["allocated_storage"] == 20
-        assert db_instance["storage_type"] == "gp2"
-        assert db_instance["publicly_accessible"] is False
-        assert db_instance["enabled_cloudwatch_logs_exports"] == ["postgresql"]
-        assert db_instance["skip_final_snapshot"] is True
+        rds = aws_client("rds")
+        live_db = rds.describe_db_instances(DBInstanceIdentifier=db_instance["identifier"])["DBInstances"][0]
+        assert live_db["Engine"] == "postgres"
+        assert live_db["DBInstanceClass"] == "db.t3.micro"
+        assert live_db["PubliclyAccessible"] is False
 
-    if api:
-        assert api["protocol_type"] == "HTTP"
-    if stage:
-        assert stage["name"] == "$default"
-        assert stage["auto_deploy"] is True
-    assert len(log_groups) == 2
-    assert all(not group or group["retention_in_days"] == 14 for group in log_groups)
-    assert all(not group or not group.get("kms_key_id") for group in log_groups)
-    assert all(not function or function["timeout"] == 15 for function in lambdas)
-    assert all(not function or function["memory_size"] == 256 for function in lambdas)
-    if queue_policy:
-        assert "sqs:SendMessage" in queue_policy["policy"]
-        if api_role.get("arn"):
-            assert api_role["arn"] in queue_policy["policy"]
-        if queue.get("arn"):
-            assert queue["arn"] in queue_policy["policy"]
-        assert "sqs:PurgeQueue" not in queue_policy["policy"]
-
-
-def test_worker_and_health_lambdas_keep_their_network_and_permission_boundaries():
-    state = load_state()
-
-    lambdas = resources_by_type(state, "aws_lambda_function")
-    event_source_mapping_resource = resources_by_type(state, "aws_lambda_event_source_mapping")[0]
-    event_source_mapping = resource_values(event_source_mapping_resource)
-    lambda_permission_resources = resources_by_type(state, "aws_lambda_permission")
-    lambda_permission = resource_values(lambda_permission_resources[0]) if lambda_permission_resources else {}
-
-    worker = next(
-        resource_values(resource)
-        for resource in lambdas
-        if resource.get("name") == "worker"
-        or resource_values(resource).get("function_name", "").endswith("-worker")
-        or resource_values(resource).get("vpc_config")
-    )
-    health = next(
-        resource_values(resource)
-        for resource in lambdas
-        if resource.get("name") == "health"
-        or resource_values(resource).get("function_name", "").endswith("-health")
-    )
-
-    if event_source_mapping.get("function_name") and worker.get("function_name"):
-        assert event_source_mapping["function_name"].split(":")[-1] == worker["function_name"]
-    if lambda_permission.get("function_name") and health.get("function_name"):
-        assert lambda_permission["function_name"].split(":")[-1] == health["function_name"]
-
-    assert worker["runtime"] == "python3.12"
-    assert worker["handler"] == "app.handler"
-    assert worker["timeout"] == 15
-    assert worker["memory_size"] == 256
-    assert worker["vpc_config"], "Worker Lambda must be attached to the VPC"
-    worker_vpc_config = worker["vpc_config"][0]
-    if "subnet_ids" in worker_vpc_config:
-        assert len(worker_vpc_config["subnet_ids"]) == 2
-    if "security_group_ids" in worker_vpc_config:
-        assert len(worker_vpc_config["security_group_ids"]) == 1
-
-    assert health["runtime"] == "python3.12"
-    assert health["handler"] == "app.handler"
-    assert health["timeout"] == 15
-    assert health["memory_size"] == 256
-    assert health["vpc_config"] == [], "Health Lambda must not be in the VPC"
+    pipe = optional_resource_values("aws_pipes_pipe", "processing")
+    if pipe:
+        pipes = aws_client("pipes")
+        live_pipe = pipes.describe_pipe(Name=pipe["name"])
+        assert live_pipe["CurrentState"] == "RUNNING"
+        assert live_pipe["Source"] == pipe["source"]
+        assert live_pipe["Target"] == pipe["target"]

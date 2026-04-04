@@ -14,32 +14,18 @@ LocalStack is healthy.
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  Step: Setup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
-Starting worker container: harness-worker-77037
-6a9215191d22f3b7b2f08c4385459ac51da0a6b4e5979e24165047d5cd08223f
+Starting worker container: harness-worker-10664
+da7959bc0d89b04bd009d88e42fc63a854ceb7b06362c46f9c5ea5c8d87eaa97
 Installing dependencies (npm install)...
-npm warn reify invalid or damaged lockfile detected
-npm warn reify please re-try this operation once it completes
-npm warn reify so that the damage can be corrected, or perform
-npm warn reify a fresh install with no lockfile if the problem persists.
-npm warn reify invalid or damaged lockfile detected
-npm warn reify please re-try this operation once it completes
-npm warn reify so that the damage can be corrected, or perform
-npm warn reify a fresh install with no lockfile if the problem persists.
-npm warn reify invalid or damaged lockfile detected
-npm warn reify please re-try this operation once it completes
-npm warn reify so that the damage can be corrected, or perform
-npm warn reify a fresh install with no lockfile if the problem persists.
-npm warn reify invalid or damaged lockfile detected
-npm warn reify please re-try this operation once it completes
-npm warn reify so that the damage can be corrected, or perform
-npm warn reify a fresh install with no lockfile if the problem persists.
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
-removed 289 packages, changed 4 packages, and audited 823 packages in 6s
+added 404 packages, and audited 441 packages in 24s
 
-39 packages are looking for funding
+41 packages are looking for funding
   run `npm fund` for details
 
-26 vulnerabilities (3 moderate, 22 high, 1 critical)
+5 vulnerabilities (3 moderate, 2 high)
 
 To address issues that do not require attention, run:
   npm audit fix
@@ -53,7 +39,7 @@ npm notice New major version of npm available! 10.8.2 -> 11.12.1
 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
 npm notice To update run: npm install -g npm@11.12.1
 npm notice
-Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/181fe95a-6c6f-488b-8041-5b2684be69b2
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/9b3e38d0-3a57-4d8b-b276-1c2e9b6fd1bc
 [32m✅ Step passed: Setup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -73,30 +59,42 @@ platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
 cachedir: .pytest_cache
 rootdir: /work
 configfile: pytest.ini
-collecting ... collected 20 items
+collecting ... collected 32 items
 
-tests/unit_tests.py::test_resource_inventory_matches_exact_counts PASSED [  5%]
-tests/unit_tests.py::test_solution_is_implemented_in_single_root_app_ts_file PASSED [ 10%]
-tests/unit_tests.py::test_stack_input_contract_is_limited_to_allowed_configuration_variables PASSED [ 15%]
-tests/unit_tests.py::test_aws_endpoint_is_forwarded_to_sdk_endpoint_resolution PASSED [ 20%]
+tests/unit_tests.py::test_resource_inventory_matches_exact_counts PASSED [  3%]
+tests/unit_tests.py::test_solution_is_implemented_in_single_root_app_ts_file PASSED [  6%]
+tests/unit_tests.py::test_stack_input_contract_is_limited_to_allowed_configuration_variables PASSED [  9%]
+tests/unit_tests.py::test_stack_synthesis_fails_for_invalid_network_configuration PASSED [ 12%]
+tests/unit_tests.py::test_stack_synthesis_fails_when_required_pipe_properties_are_missing PASSED [ 15%]
+tests/unit_tests.py::test_stack_synthesis_fails_for_conflicting_construct_ids PASSED [ 18%]
+tests/unit_tests.py::test_aws_endpoint_is_forwarded_to_sdk_endpoint_resolution PASSED [ 21%]
 tests/unit_tests.py::test_network_boundaries_are_deterministic_and_restrictive PASSED [ 25%]
-tests/unit_tests.py::test_compute_and_api_entrypoint_are_configured_as_requested PASSED [ 30%]
-tests/unit_tests.py::test_lambda_code_is_zip_compatible_and_not_image_based PASSED [ 35%]
-tests/unit_tests.py::test_lambda_environment_values_use_resource_references_where_needed PASSED [ 40%]
-tests/unit_tests.py::test_physical_name_properties_are_not_hardcoded_strings PASSED [ 45%]
-tests/unit_tests.py::test_state_machine_pipe_database_and_queue_wiring_are_correct PASSED [ 50%]
-tests/unit_tests.py::test_lambda_roles_separate_permissions_by_responsibility PASSED [ 55%]
-tests/unit_tests.py::test_iam_is_minimally_scoped_and_only_uses_unavoidable_resource_wildcards PASSED [ 60%]
-tests/unit_tests.py::test_iam_policy_statements_are_scoped_to_expected_resources PASSED [ 65%]
-tests/unit_tests.py::test_observability_resources_have_expected_retention_filters_and_alarms PASSED [ 70%]
-tests/unit_tests.py::test_api_logging_and_metric_filter_use_dedicated_stage_log_group PASSED [ 75%]
-tests/unit_tests.py::test_secret_credentials_and_database_attachment_are_generated_and_referenced PASSED [ 80%]
-tests/unit_tests.py::test_template_is_destructible_without_retention_policies PASSED [ 85%]
-tests/unit_tests.py::test_ingest_worker_handler_requires_queue_url_env_var PASSED [ 90%]
-tests/unit_tests.py::test_ingest_worker_handler_requires_secret_arn_env_var PASSED [ 95%]
-tests/unit_tests.py::test_enrich_worker_handler_requires_secret_arn_env_var PASSED [100%]
+tests/unit_tests.py::test_compute_and_api_entrypoint_are_configured_as_requested PASSED [ 28%]
+tests/unit_tests.py::test_lambda_code_is_zip_compatible_and_not_image_based PASSED [ 31%]
+tests/unit_tests.py::test_lambda_environment_values_use_resource_references_where_needed PASSED [ 34%]
+tests/unit_tests.py::test_physical_name_properties_are_not_hardcoded_strings PASSED [ 37%]
+tests/unit_tests.py::test_state_machine_pipe_database_and_queue_wiring_are_correct PASSED [ 40%]
+tests/unit_tests.py::test_lambda_roles_separate_permissions_by_responsibility PASSED [ 43%]
+tests/unit_tests.py::test_iam_is_minimally_scoped_and_only_uses_unavoidable_resource_wildcards PASSED [ 46%]
+tests/unit_tests.py::test_iam_policies_remain_valid_for_size_action_format_and_dependencies PASSED [ 50%]
+tests/unit_tests.py::test_iam_policy_validation_fails_when_inline_policy_exceeds_size_limit PASSED [ 53%]
+tests/unit_tests.py::test_iam_policy_validation_fails_for_invalid_action_names PASSED [ 56%]
+tests/unit_tests.py::test_iam_policy_validation_fails_for_role_policy_circular_dependencies PASSED [ 59%]
+tests/unit_tests.py::test_iam_policy_statements_are_scoped_to_expected_resources PASSED [ 62%]
+tests/unit_tests.py::test_observability_resources_have_expected_retention_filters_and_alarms PASSED [ 65%]
+tests/unit_tests.py::test_api_logging_and_metric_filter_use_dedicated_stage_log_group PASSED [ 68%]
+tests/unit_tests.py::test_secret_credentials_and_database_attachment_are_generated_and_referenced PASSED [ 71%]
+tests/unit_tests.py::test_template_is_destructible_without_retention_policies PASSED [ 75%]
+tests/unit_tests.py::test_ingest_worker_handler_requires_queue_url_env_var PASSED [ 78%]
+tests/unit_tests.py::test_ingest_worker_handler_requires_secret_arn_env_var PASSED [ 81%]
+tests/unit_tests.py::test_ingest_worker_handler_rejects_malformed_queue_url_env_var PASSED [ 84%]
+tests/unit_tests.py::test_ingest_worker_handler_rejects_blank_queue_url_env_var PASSED [ 87%]
+tests/unit_tests.py::test_ingest_worker_handler_rejects_malformed_secret_arn_env_var PASSED [ 90%]
+tests/unit_tests.py::test_enrich_worker_handler_requires_secret_arn_env_var PASSED [ 93%]
+tests/unit_tests.py::test_enrich_worker_handler_rejects_blank_secret_arn_env_var PASSED [ 96%]
+tests/unit_tests.py::test_enrich_worker_handler_rejects_malformed_secret_arn_env_var PASSED [100%]
 
-============================== 20 passed in 0.76s ==============================
+============================= 32 passed in 34.42s ==============================
 [32m✅ Step passed: Unit tests (pytest)[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -105,135 +103,135 @@ tests/unit_tests.py::test_enrich_worker_handler_requires_secret_arn_env_var PASS
 Bootstrapping (if needed)...
 Running cdklocal deploy...
 
-✨  Synthesis time: 11.39s
+✨  Synthesis time: 11.21s
 
-SecurityPostureStack: start: Building cf4d8c70a3225c15c0acaa282f4b46f5db8207ccd0bd83ac2a5b93163e267d77
-SecurityPostureStack: success: Built cf4d8c70a3225c15c0acaa282f4b46f5db8207ccd0bd83ac2a5b93163e267d77
-SecurityPostureStack: start: Publishing cf4d8c70a3225c15c0acaa282f4b46f5db8207ccd0bd83ac2a5b93163e267d77:current_account-us-east-1
-SecurityPostureStack: success: Published cf4d8c70a3225c15c0acaa282f4b46f5db8207ccd0bd83ac2a5b93163e267d77:current_account-us-east-1
+SecurityPostureStack: start: Building 07db70a9ef9391dc146fa7bbf607046c9aed20532f69d5d02410a1ea465d35ad
+SecurityPostureStack: success: Built 07db70a9ef9391dc146fa7bbf607046c9aed20532f69d5d02410a1ea465d35ad
+SecurityPostureStack: start: Publishing 07db70a9ef9391dc146fa7bbf607046c9aed20532f69d5d02410a1ea465d35ad:current_account-us-east-1
+SecurityPostureStack: success: Published 07db70a9ef9391dc146fa7bbf607046c9aed20532f69d5d02410a1ea465d35ad:current_account-us-east-1
 SecurityPostureStack: deploying... [1/1]
 SecurityPostureStack: creating CloudFormation changeset...
-SecurityPostureStack |  0/54 | 10:46:17 PM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack                  | SecurityPostureStack User Initiated
-SecurityPostureStack |  0/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack                  | SecurityPostureStack 
-SecurityPostureStack |  0/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                         | ApiStageLogGroup (ApiStageLogGroup8A7F40C1) 
-SecurityPostureStack |  0/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret                 | DatabaseCredentialsSecret (DatabaseCredentialsSecret7483BC14) 
-SecurityPostureStack |  1/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::CDK::Metadata                          | CDKMetadata/Default (CDKMetadata) 
-SecurityPostureStack |  1/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                          | CDKMetadata/Default (CDKMetadata) 
-SecurityPostureStack |  2/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::Logs::MetricFilter                     | ApiGateway5xxMetricFilter (ApiGateway5xxMetricFilter75FA0153) Resource type AWS::Logs::MetricFilter is not supported but was deployed as a fallback
-SecurityPostureStack |  2/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::Logs::MetricFilter                     | ApiGateway5xxMetricFilter (ApiGateway5xxMetricFilter75FA0153) 
-SecurityPostureStack |  3/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                         | ApiStageLogGroup (ApiStageLogGroup8A7F40C1) 
-SecurityPostureStack |  3/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                               | Vpc (Vpc8378EB38) 
-SecurityPostureStack |  4/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::SecretsManager::Secret                 | DatabaseCredentialsSecret (DatabaseCredentialsSecret7483BC14) 
-SecurityPostureStack |  4/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | Vpc/PrivateSubnet1/RouteTable (VpcPrivateSubnet1RouteTableB2C5B500) 
-SecurityPostureStack |  5/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::VPC                               | Vpc (Vpc8378EB38) 
-SecurityPostureStack |  6/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | Vpc/PrivateSubnet1/RouteTable (VpcPrivateSubnet1RouteTableB2C5B500) 
-SecurityPostureStack |  6/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | Vpc/PrivateSubnet1/Subnet (VpcPrivateSubnet1Subnet536B997A) 
-SecurityPostureStack |  6/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PrivateSubnet1/RouteTableAssociation (VpcPrivateSubnet1RouteTableAssociation70C59FA6) 
-SecurityPostureStack |  7/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | Vpc/PrivateSubnet1/Subnet (VpcPrivateSubnet1Subnet536B997A) 
-SecurityPostureStack |  7/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway                   | Vpc/IGW (VpcIGWD7BA715C) 
-SecurityPostureStack |  8/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PrivateSubnet1/RouteTableAssociation (VpcPrivateSubnet1RouteTableAssociation70C59FA6) 
-SecurityPostureStack |  8/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment              | Vpc/VPCGW (VpcVPCGWBF912B6E) 
-SecurityPostureStack |  9/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::InternetGateway                   | Vpc/IGW (VpcIGWD7BA715C) 
-SecurityPostureStack |  9/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | Vpc/PublicSubnet1/RouteTable (VpcPublicSubnet1RouteTable6C95E38E) 
-SecurityPostureStack | 10/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment              | Vpc/VPCGW (VpcVPCGWBF912B6E) 
-SecurityPostureStack | 10/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | Vpc/PublicSubnet1/DefaultRoute (VpcPublicSubnet1DefaultRoute3DA9E72A) 
-SecurityPostureStack | 11/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | Vpc/PublicSubnet1/RouteTable (VpcPublicSubnet1RouteTable6C95E38E) 
-SecurityPostureStack | 12/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | Vpc/PublicSubnet1/DefaultRoute (VpcPublicSubnet1DefaultRoute3DA9E72A) 
-SecurityPostureStack | 12/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | Vpc/PublicSubnet1/Subnet (VpcPublicSubnet1Subnet5C2D37C4) 
-SecurityPostureStack | 12/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PublicSubnet1/RouteTableAssociation (VpcPublicSubnet1RouteTableAssociation97140677) 
-SecurityPostureStack | 13/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | Vpc/PublicSubnet1/Subnet (VpcPublicSubnet1Subnet5C2D37C4) 
-SecurityPostureStack | 13/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                               | Vpc/PublicSubnet1/EIP (VpcPublicSubnet1EIPD7E02669) 
-SecurityPostureStack | 14/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PublicSubnet1/RouteTableAssociation (VpcPublicSubnet1RouteTableAssociation97140677) 
-SecurityPostureStack | 15/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::EIP                               | Vpc/PublicSubnet1/EIP (VpcPublicSubnet1EIPD7E02669) 
-SecurityPostureStack | 15/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                        | Vpc/PublicSubnet1/NATGateway (VpcPublicSubnet1NATGateway4D7517AA) 
-SecurityPostureStack | 15/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | Vpc/PrivateSubnet1/DefaultRoute (VpcPrivateSubnet1DefaultRouteBE02A9ED) 
-SecurityPostureStack | 16/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::NatGateway                        | Vpc/PublicSubnet1/NATGateway (VpcPublicSubnet1NATGateway4D7517AA) 
-SecurityPostureStack | 16/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | EnrichWorkerRole (EnrichWorkerRoleC0875C7E) 
-SecurityPostureStack | 17/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | Vpc/PrivateSubnet1/DefaultRoute (VpcPrivateSubnet1DefaultRouteBE02A9ED) 
-SecurityPostureStack | 17/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | EnrichWorkerRole/DefaultPolicy (EnrichWorkerRoleDefaultPolicyE2388795) 
-SecurityPostureStack | 18/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | EnrichWorkerRole (EnrichWorkerRoleC0875C7E) 
-SecurityPostureStack | 18/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | Vpc/PrivateSubnet2/RouteTable (VpcPrivateSubnet2RouteTableA678073B) 
-SecurityPostureStack | 19/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | EnrichWorkerRole/DefaultPolicy (EnrichWorkerRoleDefaultPolicyE2388795) 
-SecurityPostureStack | 20/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | Vpc/PrivateSubnet2/RouteTable (VpcPrivateSubnet2RouteTableA678073B) 
-SecurityPostureStack | 20/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | Vpc/PrivateSubnet2/Subnet (VpcPrivateSubnet2Subnet3788AAA1) 
-SecurityPostureStack | 20/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PrivateSubnet2/RouteTableAssociation (VpcPrivateSubnet2RouteTableAssociationA89CAD56) 
-SecurityPostureStack | 21/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | Vpc/PrivateSubnet2/Subnet (VpcPrivateSubnet2Subnet3788AAA1) 
-SecurityPostureStack | 21/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | Vpc/PrivateSubnet2/DefaultRoute (VpcPrivateSubnet2DefaultRoute060D2087) 
-SecurityPostureStack | 22/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PrivateSubnet2/RouteTableAssociation (VpcPrivateSubnet2RouteTableAssociationA89CAD56) 
-SecurityPostureStack | 22/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                         | EnrichWorkerLogGroup (EnrichWorkerLogGroupFE279E21) 
-SecurityPostureStack | 23/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | Vpc/PrivateSubnet2/DefaultRoute (VpcPrivateSubnet2DefaultRoute060D2087) 
-SecurityPostureStack | 23/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                     | SGCompute (SGCompute36503013) 
-SecurityPostureStack | 24/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                         | EnrichWorkerLogGroup (EnrichWorkerLogGroupFE279E21) 
-SecurityPostureStack | 24/54 | 10:46:17 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                       | EnrichWorker (EnrichWorker4B8E0E4E) 
-SecurityPostureStack | 25/54 | 10:46:17 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                     | SGCompute (SGCompute36503013) 
-SecurityPostureStack | 26/54 | 10:46:19 PM | CREATE_COMPLETE      | AWS::Lambda::Function                       | EnrichWorker (EnrichWorker4B8E0E4E) 
-SecurityPostureStack | 26/54 | 10:46:19 PM | CREATE_IN_PROGRESS   | AWS::CloudWatch::Alarm                      | EnrichWorkerErrorsAlarm (EnrichWorkerErrorsAlarm1A27C740) 
-SecurityPostureStack | 26/54 | 10:46:19 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | PipesExecutionRole (PipesExecutionRole722B522E) 
-SecurityPostureStack | 27/54 | 10:46:19 PM | CREATE_COMPLETE      | AWS::CloudWatch::Alarm                      | EnrichWorkerErrorsAlarm (EnrichWorkerErrorsAlarm1A27C740) 
-SecurityPostureStack | 27/54 | 10:46:19 PM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                             | IngestQueue (IngestQueue2280FF4E) 
-SecurityPostureStack | 28/54 | 10:46:19 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | PipesExecutionRole (PipesExecutionRole722B522E) 
-SecurityPostureStack | 28/54 | 10:46:19 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                         | StepFunctionsLogGroup (StepFunctionsLogGroup8EBFF7CF) 
-SecurityPostureStack | 29/54 | 10:46:19 PM | CREATE_COMPLETE      | AWS::SQS::Queue                             | IngestQueue (IngestQueue2280FF4E) 
-SecurityPostureStack | 30/54 | 10:46:19 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                         | StepFunctionsLogGroup (StepFunctionsLogGroup8EBFF7CF) 
-SecurityPostureStack | 30/54 | 10:46:19 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | StepFunctionsExecutionRole (StepFunctionsExecutionRole5B21F5A6) 
-SecurityPostureStack | 30/54 | 10:46:19 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | StepFunctionsExecutionRole/DefaultPolicy (StepFunctionsExecutionRoleDefaultPolicyD10BF6E3) 
-SecurityPostureStack | 31/54 | 10:46:19 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | StepFunctionsExecutionRole (StepFunctionsExecutionRole5B21F5A6) 
-SecurityPostureStack | 31/54 | 10:46:19 PM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine            | EnrichmentStateMachine (EnrichmentStateMachine8BED6C4E) 
-SecurityPostureStack | 32/54 | 10:46:19 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | StepFunctionsExecutionRole/DefaultPolicy (StepFunctionsExecutionRoleDefaultPolicyD10BF6E3) 
-SecurityPostureStack | 33/54 | 10:46:19 PM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine            | EnrichmentStateMachine (EnrichmentStateMachine8BED6C4E) 
-SecurityPostureStack | 33/54 | 10:46:19 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi                    | IngestApi (IngestApi90DC3F9D) 
-SecurityPostureStack | 34/54 | 10:46:19 PM | CREATE_COMPLETE      | AWS::Pipes::Pipe                            | EnrichmentPipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
-SecurityPostureStack | 34/54 | 10:46:19 PM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                            | EnrichmentPipe 
-SecurityPostureStack | 34/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource                   | IngestApi/Default/ingest (IngestApiingestB7396D42) 
-SecurityPostureStack | 35/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi                    | IngestApi (IngestApi90DC3F9D) 
-SecurityPostureStack | 35/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | IngestWorkerRole (IngestWorkerRoleD973B483) 
-SecurityPostureStack | 36/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::ApiGateway::Resource                   | IngestApi/Default/ingest (IngestApiingestB7396D42) 
-SecurityPostureStack | 36/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | IngestWorkerRole/DefaultPolicy (IngestWorkerRoleDefaultPolicyB7AB1D67) 
-SecurityPostureStack | 37/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | IngestWorkerRole (IngestWorkerRoleD973B483) 
-SecurityPostureStack | 37/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                         | IngestWorkerLogGroup (IngestWorkerLogGroupEEED6091) 
-SecurityPostureStack | 38/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | IngestWorkerRole/DefaultPolicy (IngestWorkerRoleDefaultPolicyB7AB1D67) 
-SecurityPostureStack | 38/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                       | IngestWorker (IngestWorker9AAE44DD) 
-SecurityPostureStack | 39/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                         | IngestWorkerLogGroup (IngestWorkerLogGroupEEED6091) 
-SecurityPostureStack | 39/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method                     | IngestApi/Default/ingest/POST (IngestApiingestPOSTCB748AF6) 
-SecurityPostureStack | 40/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::Lambda::Function                       | IngestWorker (IngestWorker9AAE44DD) 
-SecurityPostureStack | 40/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment                 | IngestApi/Deployment (IngestApiDeploymentE07E772680c10b68bc0a9f853410951bccf7b8a5) 
-SecurityPostureStack | 41/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method                     | IngestApi/Default/ingest/POST (IngestApiingestPOSTCB748AF6) 
-SecurityPostureStack | 41/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage                      | IngestApi/DeploymentStage.prod (IngestApiDeploymentStageprod8BCE3B40) 
-SecurityPostureStack | 42/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment                 | IngestApi/Deployment (IngestApiDeploymentE07E772680c10b68bc0a9f853410951bccf7b8a5) 
-SecurityPostureStack | 42/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission                     | IngestApi/Default/ingest/POST/ApiPermission.SecurityPostureStackIngestApi297EFB4B.POST..ingest (IngestApiingestPOSTApiPermissionSecurityPostureStackIngestApi297EFB4BPOSTingest61895EBB) 
-SecurityPostureStack | 43/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::ApiGateway::Stage                      | IngestApi/DeploymentStage.prod (IngestApiDeploymentStageprod8BCE3B40) 
-SecurityPostureStack | 44/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::Lambda::Permission                     | IngestApi/Default/ingest/POST/ApiPermission.SecurityPostureStackIngestApi297EFB4B.POST..ingest (IngestApiingestPOSTApiPermissionSecurityPostureStackIngestApi297EFB4BPOSTingest61895EBB) 
-SecurityPostureStack | 44/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission                     | IngestApi/Default/ingest/POST/ApiPermission.Test.SecurityPostureStackIngestApi297EFB4B.POST..ingest (IngestApiingestPOSTApiPermissionTestSecurityPostureStackIngestApi297EFB4BPOSTingest30463CB2) 
-SecurityPostureStack | 44/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::CloudWatch::Alarm                      | IngestWorkerErrorsAlarm (IngestWorkerErrorsAlarmC1269E2D) 
-SecurityPostureStack | 45/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::Lambda::Permission                     | IngestApi/Default/ingest/POST/ApiPermission.Test.SecurityPostureStackIngestApi297EFB4B.POST..ingest (IngestApiingestPOSTApiPermissionTestSecurityPostureStackIngestApi297EFB4BPOSTingest30463CB2) 
-SecurityPostureStack | 46/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::CloudWatch::Alarm                      | IngestWorkerErrorsAlarm (IngestWorkerErrorsAlarmC1269E2D) 
-SecurityPostureStack | 46/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | PipesExecutionRole/DefaultPolicy (PipesExecutionRoleDefaultPolicy9728DFE2) 
-SecurityPostureStack | 47/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | PipesExecutionRole/DefaultPolicy (PipesExecutionRoleDefaultPolicy9728DFE2) 
-SecurityPostureStack | 47/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                     | SGDatabase (SGDatabaseD8EC9609) 
-SecurityPostureStack | 47/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress              | SGDatabase/from SecurityPostureStackSGCompute59DB18D1:5432 (SGDatabasefromSecurityPostureStackSGCompute59DB18D154321D8BE281) 
-SecurityPostureStack | 48/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                     | SGDatabase (SGDatabaseD8EC9609) 
-SecurityPostureStack | 48/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | Vpc/PublicSubnet2/RouteTable (VpcPublicSubnet2RouteTable94F7E489) 
-SecurityPostureStack | 49/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress              | SGDatabase/from SecurityPostureStackSGCompute59DB18D1:5432 (SGDatabasefromSecurityPostureStackSGCompute59DB18D154321D8BE281) 
-SecurityPostureStack | 49/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | Vpc/PublicSubnet2/DefaultRoute (VpcPublicSubnet2DefaultRoute97F91067) 
-SecurityPostureStack | 50/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | Vpc/PublicSubnet2/RouteTable (VpcPublicSubnet2RouteTable94F7E489) 
-SecurityPostureStack | 51/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | Vpc/PublicSubnet2/DefaultRoute (VpcPublicSubnet2DefaultRoute97F91067) 
-SecurityPostureStack | 51/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | Vpc/PublicSubnet2/Subnet (VpcPublicSubnet2Subnet691E08A3) 
-SecurityPostureStack | 51/54 | 10:46:22 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PublicSubnet2/RouteTableAssociation (VpcPublicSubnet2RouteTableAssociationDD5762D8) 
-SecurityPostureStack | 52/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | Vpc/PublicSubnet2/Subnet (VpcPublicSubnet2Subnet691E08A3) 
-SecurityPostureStack | 53/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PublicSubnet2/RouteTableAssociation (VpcPublicSubnet2RouteTableAssociationDD5762D8) 
-SecurityPostureStack | 54/54 | 10:46:22 PM | CREATE_COMPLETE      | AWS::CloudFormation::Stack                  | SecurityPostureStack 
+SecurityPostureStack |  0/54 | 10:00:16 PM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack                  | SecurityPostureStack User Initiated
+SecurityPostureStack |  0/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack                  | SecurityPostureStack 
+SecurityPostureStack |  0/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                         | ApiStageLogGroup (ApiStageLogGroup8A7F40C1) 
+SecurityPostureStack |  0/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                          | CDKMetadata/Default (CDKMetadata) 
+SecurityPostureStack |  1/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::Logs::MetricFilter                     | ApiGateway5xxMetricFilter (ApiGateway5xxMetricFilter75FA0153) Resource type AWS::Logs::MetricFilter is not supported but was deployed as a fallback
+SecurityPostureStack |  1/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::Logs::MetricFilter                     | ApiGateway5xxMetricFilter (ApiGateway5xxMetricFilter75FA0153) 
+SecurityPostureStack |  2/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                         | ApiStageLogGroup (ApiStageLogGroup8A7F40C1) 
+SecurityPostureStack |  2/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret                 | DatabaseCredentialsSecret (DatabaseCredentialsSecret7483BC14) 
+SecurityPostureStack |  3/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::CDK::Metadata                          | CDKMetadata/Default (CDKMetadata) 
+SecurityPostureStack |  3/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway                   | Vpc/IGW (VpcIGWD7BA715C) 
+SecurityPostureStack |  4/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::SecretsManager::Secret                 | DatabaseCredentialsSecret (DatabaseCredentialsSecret7483BC14) 
+SecurityPostureStack |  4/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                               | Vpc (Vpc8378EB38) 
+SecurityPostureStack |  5/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::InternetGateway                   | Vpc/IGW (VpcIGWD7BA715C) 
+SecurityPostureStack |  5/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment              | Vpc/VPCGW (VpcVPCGWBF912B6E) 
+SecurityPostureStack |  6/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::VPC                               | Vpc (Vpc8378EB38) 
+SecurityPostureStack |  6/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | Vpc/PublicSubnet1/RouteTable (VpcPublicSubnet1RouteTable6C95E38E) 
+SecurityPostureStack |  7/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment              | Vpc/VPCGW (VpcVPCGWBF912B6E) 
+SecurityPostureStack |  7/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | Vpc/PublicSubnet1/DefaultRoute (VpcPublicSubnet1DefaultRoute3DA9E72A) 
+SecurityPostureStack |  8/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | Vpc/PublicSubnet1/RouteTable (VpcPublicSubnet1RouteTable6C95E38E) 
+SecurityPostureStack |  9/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | Vpc/PublicSubnet1/DefaultRoute (VpcPublicSubnet1DefaultRoute3DA9E72A) 
+SecurityPostureStack |  9/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | Vpc/PublicSubnet1/Subnet (VpcPublicSubnet1Subnet5C2D37C4) 
+SecurityPostureStack |  9/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PublicSubnet1/RouteTableAssociation (VpcPublicSubnet1RouteTableAssociation97140677) 
+SecurityPostureStack | 10/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | Vpc/PublicSubnet1/Subnet (VpcPublicSubnet1Subnet5C2D37C4) 
+SecurityPostureStack | 11/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PublicSubnet1/RouteTableAssociation (VpcPublicSubnet1RouteTableAssociation97140677) 
+SecurityPostureStack | 11/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                               | Vpc/PublicSubnet1/EIP (VpcPublicSubnet1EIPD7E02669) 
+SecurityPostureStack | 11/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                        | Vpc/PublicSubnet1/NATGateway (VpcPublicSubnet1NATGateway4D7517AA) 
+SecurityPostureStack | 12/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::EIP                               | Vpc/PublicSubnet1/EIP (VpcPublicSubnet1EIPD7E02669) 
+SecurityPostureStack | 12/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | Vpc/PrivateSubnet1/RouteTable (VpcPrivateSubnet1RouteTableB2C5B500) 
+SecurityPostureStack | 13/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::NatGateway                        | Vpc/PublicSubnet1/NATGateway (VpcPublicSubnet1NATGateway4D7517AA) 
+SecurityPostureStack | 13/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | Vpc/PrivateSubnet1/DefaultRoute (VpcPrivateSubnet1DefaultRouteBE02A9ED) 
+SecurityPostureStack | 14/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | Vpc/PrivateSubnet1/RouteTable (VpcPrivateSubnet1RouteTableB2C5B500) 
+SecurityPostureStack | 15/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | Vpc/PrivateSubnet1/DefaultRoute (VpcPrivateSubnet1DefaultRouteBE02A9ED) 
+SecurityPostureStack | 15/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | EnrichWorkerRole (EnrichWorkerRoleC0875C7E) 
+SecurityPostureStack | 15/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | EnrichWorkerRole/DefaultPolicy (EnrichWorkerRoleDefaultPolicyE2388795) 
+SecurityPostureStack | 16/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | EnrichWorkerRole (EnrichWorkerRoleC0875C7E) 
+SecurityPostureStack | 16/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | Vpc/PrivateSubnet2/RouteTable (VpcPrivateSubnet2RouteTableA678073B) 
+SecurityPostureStack | 17/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | EnrichWorkerRole/DefaultPolicy (EnrichWorkerRoleDefaultPolicyE2388795) 
+SecurityPostureStack | 17/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | Vpc/PrivateSubnet2/DefaultRoute (VpcPrivateSubnet2DefaultRoute060D2087) 
+SecurityPostureStack | 18/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | Vpc/PrivateSubnet2/RouteTable (VpcPrivateSubnet2RouteTableA678073B) 
+SecurityPostureStack | 19/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | Vpc/PrivateSubnet2/DefaultRoute (VpcPrivateSubnet2DefaultRoute060D2087) 
+SecurityPostureStack | 19/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | Vpc/PrivateSubnet1/Subnet (VpcPrivateSubnet1Subnet536B997A) 
+SecurityPostureStack | 19/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PrivateSubnet1/RouteTableAssociation (VpcPrivateSubnet1RouteTableAssociation70C59FA6) 
+SecurityPostureStack | 20/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | Vpc/PrivateSubnet1/Subnet (VpcPrivateSubnet1Subnet536B997A) 
+SecurityPostureStack | 21/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PrivateSubnet1/RouteTableAssociation (VpcPrivateSubnet1RouteTableAssociation70C59FA6) 
+SecurityPostureStack | 21/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | Vpc/PrivateSubnet2/Subnet (VpcPrivateSubnet2Subnet3788AAA1) 
+SecurityPostureStack | 21/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PrivateSubnet2/RouteTableAssociation (VpcPrivateSubnet2RouteTableAssociationA89CAD56) 
+SecurityPostureStack | 22/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | Vpc/PrivateSubnet2/Subnet (VpcPrivateSubnet2Subnet3788AAA1) 
+SecurityPostureStack | 22/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                         | EnrichWorkerLogGroup (EnrichWorkerLogGroupFE279E21) 
+SecurityPostureStack | 23/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PrivateSubnet2/RouteTableAssociation (VpcPrivateSubnet2RouteTableAssociationA89CAD56) 
+SecurityPostureStack | 23/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                     | SGCompute (SGCompute36503013) 
+SecurityPostureStack | 24/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                         | EnrichWorkerLogGroup (EnrichWorkerLogGroupFE279E21) 
+SecurityPostureStack | 24/54 | 10:00:16 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                       | EnrichWorker (EnrichWorker4B8E0E4E) 
+SecurityPostureStack | 25/54 | 10:00:16 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                     | SGCompute (SGCompute36503013) 
+SecurityPostureStack | 25/54 | 10:00:17 PM | CREATE_IN_PROGRESS   | AWS::CloudWatch::Alarm                      | EnrichWorkerErrorsAlarm (EnrichWorkerErrorsAlarm1A27C740) 
+SecurityPostureStack | 26/54 | 10:00:17 PM | CREATE_COMPLETE      | AWS::Lambda::Function                       | EnrichWorker (EnrichWorker4B8E0E4E) 
+SecurityPostureStack | 26/54 | 10:00:18 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | PipesExecutionRole (PipesExecutionRole722B522E) 
+SecurityPostureStack | 27/54 | 10:00:18 PM | CREATE_COMPLETE      | AWS::CloudWatch::Alarm                      | EnrichWorkerErrorsAlarm (EnrichWorkerErrorsAlarm1A27C740) 
+SecurityPostureStack | 27/54 | 10:00:18 PM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                             | IngestQueue (IngestQueue2280FF4E) 
+SecurityPostureStack | 28/54 | 10:00:18 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | PipesExecutionRole (PipesExecutionRole722B522E) 
+SecurityPostureStack | 29/54 | 10:00:18 PM | CREATE_COMPLETE      | AWS::SQS::Queue                             | IngestQueue (IngestQueue2280FF4E) 
+SecurityPostureStack | 29/54 | 10:00:18 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                         | StepFunctionsLogGroup (StepFunctionsLogGroup8EBFF7CF) 
+SecurityPostureStack | 29/54 | 10:00:18 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | StepFunctionsExecutionRole (StepFunctionsExecutionRole5B21F5A6) 
+SecurityPostureStack | 30/54 | 10:00:18 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                         | StepFunctionsLogGroup (StepFunctionsLogGroup8EBFF7CF) 
+SecurityPostureStack | 30/54 | 10:00:18 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | StepFunctionsExecutionRole/DefaultPolicy (StepFunctionsExecutionRoleDefaultPolicyD10BF6E3) 
+SecurityPostureStack | 31/54 | 10:00:18 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | StepFunctionsExecutionRole (StepFunctionsExecutionRole5B21F5A6) 
+SecurityPostureStack | 31/54 | 10:00:18 PM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine            | EnrichmentStateMachine (EnrichmentStateMachine8BED6C4E) 
+SecurityPostureStack | 32/54 | 10:00:18 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | StepFunctionsExecutionRole/DefaultPolicy (StepFunctionsExecutionRoleDefaultPolicyD10BF6E3) 
+SecurityPostureStack | 32/54 | 10:00:18 PM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                            | EnrichmentPipe 
+SecurityPostureStack | 33/54 | 10:00:18 PM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine            | EnrichmentStateMachine (EnrichmentStateMachine8BED6C4E) 
+SecurityPostureStack | 33/54 | 10:00:18 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi                    | IngestApi (IngestApi90DC3F9D) 
+SecurityPostureStack | 34/54 | 10:00:18 PM | CREATE_COMPLETE      | AWS::Pipes::Pipe                            | EnrichmentPipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
+SecurityPostureStack | 34/54 | 10:00:20 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource                   | IngestApi/Default/ingest (IngestApiingestB7396D42) 
+SecurityPostureStack | 35/54 | 10:00:20 PM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi                    | IngestApi (IngestApi90DC3F9D) 
+SecurityPostureStack | 35/54 | 10:00:20 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | IngestWorkerRole (IngestWorkerRoleD973B483) 
+SecurityPostureStack | 36/54 | 10:00:20 PM | CREATE_COMPLETE      | AWS::ApiGateway::Resource                   | IngestApi/Default/ingest (IngestApiingestB7396D42) 
+SecurityPostureStack | 36/54 | 10:00:20 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | IngestWorkerRole/DefaultPolicy (IngestWorkerRoleDefaultPolicyB7AB1D67) 
+SecurityPostureStack | 37/54 | 10:00:20 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | IngestWorkerRole (IngestWorkerRoleD973B483) 
+SecurityPostureStack | 37/54 | 10:00:20 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                         | IngestWorkerLogGroup (IngestWorkerLogGroupEEED6091) 
+SecurityPostureStack | 38/54 | 10:00:20 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | IngestWorkerRole/DefaultPolicy (IngestWorkerRoleDefaultPolicyB7AB1D67) 
+SecurityPostureStack | 38/54 | 10:00:20 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                       | IngestWorker (IngestWorker9AAE44DD) 
+SecurityPostureStack | 39/54 | 10:00:20 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                         | IngestWorkerLogGroup (IngestWorkerLogGroupEEED6091) 
+SecurityPostureStack | 39/54 | 10:00:20 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method                     | IngestApi/Default/ingest/POST (IngestApiingestPOSTCB748AF6) 
+SecurityPostureStack | 40/54 | 10:00:20 PM | CREATE_COMPLETE      | AWS::Lambda::Function                       | IngestWorker (IngestWorker9AAE44DD) 
+SecurityPostureStack | 40/54 | 10:00:21 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment                 | IngestApi/Deployment (IngestApiDeploymentE07E772680c10b68bc0a9f853410951bccf7b8a5) 
+SecurityPostureStack | 41/54 | 10:00:21 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method                     | IngestApi/Default/ingest/POST (IngestApiingestPOSTCB748AF6) 
+SecurityPostureStack | 41/54 | 10:00:21 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage                      | IngestApi/DeploymentStage.prod (IngestApiDeploymentStageprod8BCE3B40) 
+SecurityPostureStack | 42/54 | 10:00:21 PM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment                 | IngestApi/Deployment (IngestApiDeploymentE07E772680c10b68bc0a9f853410951bccf7b8a5) 
+SecurityPostureStack | 42/54 | 10:00:21 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission                     | IngestApi/Default/ingest/POST/ApiPermission.SecurityPostureStackIngestApi297EFB4B.POST..ingest (IngestApiingestPOSTApiPermissionSecurityPostureStackIngestApi297EFB4BPOSTingest61895EBB) 
+SecurityPostureStack | 43/54 | 10:00:21 PM | CREATE_COMPLETE      | AWS::ApiGateway::Stage                      | IngestApi/DeploymentStage.prod (IngestApiDeploymentStageprod8BCE3B40) 
+SecurityPostureStack | 43/54 | 10:00:21 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission                     | IngestApi/Default/ingest/POST/ApiPermission.Test.SecurityPostureStackIngestApi297EFB4B.POST..ingest (IngestApiingestPOSTApiPermissionTestSecurityPostureStackIngestApi297EFB4BPOSTingest30463CB2) 
+SecurityPostureStack | 44/54 | 10:00:21 PM | CREATE_COMPLETE      | AWS::Lambda::Permission                     | IngestApi/Default/ingest/POST/ApiPermission.SecurityPostureStackIngestApi297EFB4B.POST..ingest (IngestApiingestPOSTApiPermissionSecurityPostureStackIngestApi297EFB4BPOSTingest61895EBB) 
+SecurityPostureStack | 44/54 | 10:00:21 PM | CREATE_IN_PROGRESS   | AWS::CloudWatch::Alarm                      | IngestWorkerErrorsAlarm (IngestWorkerErrorsAlarmC1269E2D) 
+SecurityPostureStack | 45/54 | 10:00:21 PM | CREATE_COMPLETE      | AWS::Lambda::Permission                     | IngestApi/Default/ingest/POST/ApiPermission.Test.SecurityPostureStackIngestApi297EFB4B.POST..ingest (IngestApiingestPOSTApiPermissionTestSecurityPostureStackIngestApi297EFB4BPOSTingest30463CB2) 
+SecurityPostureStack | 45/54 | 10:00:21 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | PipesExecutionRole/DefaultPolicy (PipesExecutionRoleDefaultPolicy9728DFE2) 
+SecurityPostureStack | 46/54 | 10:00:21 PM | CREATE_COMPLETE      | AWS::CloudWatch::Alarm                      | IngestWorkerErrorsAlarm (IngestWorkerErrorsAlarmC1269E2D) 
+SecurityPostureStack | 46/54 | 10:00:21 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                     | SGDatabase (SGDatabaseD8EC9609) 
+SecurityPostureStack | 47/54 | 10:00:21 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | PipesExecutionRole/DefaultPolicy (PipesExecutionRoleDefaultPolicy9728DFE2) 
+SecurityPostureStack | 47/54 | 10:00:21 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress              | SGDatabase/from SecurityPostureStackSGCompute59DB18D1:5432 (SGDatabasefromSecurityPostureStackSGCompute59DB18D154321D8BE281) 
+SecurityPostureStack | 48/54 | 10:00:21 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                     | SGDatabase (SGDatabaseD8EC9609) 
+SecurityPostureStack | 48/54 | 10:00:21 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | Vpc/PublicSubnet2/RouteTable (VpcPublicSubnet2RouteTable94F7E489) 
+SecurityPostureStack | 49/54 | 10:00:21 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress              | SGDatabase/from SecurityPostureStackSGCompute59DB18D1:5432 (SGDatabasefromSecurityPostureStackSGCompute59DB18D154321D8BE281) 
+SecurityPostureStack | 49/54 | 10:00:21 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | Vpc/PublicSubnet2/DefaultRoute (VpcPublicSubnet2DefaultRoute97F91067) 
+SecurityPostureStack | 50/54 | 10:00:21 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | Vpc/PublicSubnet2/RouteTable (VpcPublicSubnet2RouteTable94F7E489) 
+SecurityPostureStack | 51/54 | 10:00:21 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | Vpc/PublicSubnet2/DefaultRoute (VpcPublicSubnet2DefaultRoute97F91067) 
+SecurityPostureStack | 51/54 | 10:00:21 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | Vpc/PublicSubnet2/Subnet (VpcPublicSubnet2Subnet691E08A3) 
+SecurityPostureStack | 51/54 | 10:00:21 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PublicSubnet2/RouteTableAssociation (VpcPublicSubnet2RouteTableAssociationDD5762D8) 
+SecurityPostureStack | 52/54 | 10:00:21 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | Vpc/PublicSubnet2/Subnet (VpcPublicSubnet2Subnet691E08A3) 
+SecurityPostureStack | 53/54 | 10:00:21 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | Vpc/PublicSubnet2/RouteTableAssociation (VpcPublicSubnet2RouteTableAssociationDD5762D8) 
+SecurityPostureStack | 54/54 | 10:00:21 PM | CREATE_COMPLETE      | AWS::CloudFormation::Stack                  | SecurityPostureStack 
 
  ✅  SecurityPostureStack
 
-✨  Deployment time: 5.47s
+✨  Deployment time: 5.41s
 
 Outputs:
-SecurityPostureStack.IngestApiEndpoint5A41F05F = https://19ssypbyxb.execute-api.localhost.localstack.cloud:4566/prod/
+SecurityPostureStack.IngestApiEndpoint5A41F05F = https://hiwluyxtpe.execute-api.localhost.localstack.cloud:4566/prod/
 Stack ARN:
-arn:aws:cloudformation:us-east-1:000000000000:stack/SecurityPostureStack/3d9c8aa8-41e3-4cab-9a07-c858e002e462
 
-✨  Total time: 16.86s
+✨  Total time: 16.61s
 
+arn:aws:cloudformation:us-east-1:000000000000:stack/SecurityPostureStack/391ae4e6-f9b5-48bc-8889-241b10b866fb
 [32m✅ Step passed: Deploy (LocalStack)[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -245,27 +243,34 @@ platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
 cachedir: .pytest_cache
 rootdir: /work
 configfile: pytest.ini
-collecting ... collected 10 items
+collecting ... collected 17 items
 
-tests/integration_tests.py::test_deployed_template_preserves_exact_resource_contract PASSED [ 10%]
-tests/integration_tests.py::test_deployed_template_observability_and_database_contract PASSED [ 20%]
-tests/integration_tests.py::test_deployed_runtime_network_and_data_boundaries PASSED [ 30%]
-tests/integration_tests.py::test_api_gateway_deployed_route_targets_lambda_proxy PASSED [ 40%]
-tests/integration_tests.py::test_direct_queue_message_is_accepted_by_deployed_queue PASSED [ 50%]
-tests/integration_tests.py::test_api_ingest_happy_path_enqueues_message PASSED [ 60%]
-tests/integration_tests.py::test_api_rejects_wrong_method_and_unknown_route PASSED [ 70%]
-tests/integration_tests.py::test_observability_and_runtime_resources_exist_deployed PASSED [ 80%]
-tests/integration_tests.py::test_generated_secret_contains_username_and_password PASSED [ 90%]
-tests/integration_tests.py::test_deployed_template_iam_scoping_matches_prompt PASSED [100%]
+tests/integration_tests.py::test_deployed_template_preserves_exact_resource_contract PASSED [  5%]
+tests/integration_tests.py::test_deployed_template_observability_and_database_contract PASSED [ 11%]
+tests/integration_tests.py::test_deployed_runtime_network_and_data_boundaries PASSED [ 17%]
+tests/integration_tests.py::test_api_gateway_deployed_route_targets_lambda_proxy PASSED [ 23%]
+tests/integration_tests.py::test_direct_queue_message_is_accepted_by_deployed_queue PASSED [ 29%]
+tests/integration_tests.py::test_api_ingest_happy_path_enqueues_message PASSED [ 35%]
+tests/integration_tests.py::test_api_rejects_wrong_method_and_unknown_route PASSED [ 41%]
+tests/integration_tests.py::test_observability_and_runtime_resources_exist_deployed PASSED [ 47%]
+tests/integration_tests.py::test_generated_secret_contains_username_and_password PASSED [ 52%]
+tests/integration_tests.py::test_deployed_template_iam_scoping_matches_prompt PASSED [ 58%]
+tests/integration_tests.py::test_live_iam_least_privilege_denies_cross_service_actions PASSED [ 64%]
+tests/integration_tests.py::test_runtime_iam_least_privilege_denies_unauthorized_secret_access PASSED [ 70%]
+tests/integration_tests.py::test_api_gateway_5xx_path_emits_logs_and_triggers_ingest_alarm PASSED [ 76%]
+tests/integration_tests.py::test_step_functions_failure_path_logs_errors_and_triggers_enrich_alarm PASSED [ 82%]
+tests/integration_tests.py::test_step_functions_retries_when_enrich_lambda_times_out PASSED [ 88%]
+tests/integration_tests.py::test_pipe_failure_requeues_messages_when_enrichment_lambda_fails PASSED [ 94%]
+tests/integration_tests.py::test_lambda_network_isolation_blocks_non_https_egress PASSED [100%]
 
-============================== 10 passed in 4.08s ==============================
+============================= 17 passed in 13.13s ==============================
 [32m✅ Step passed: Integration tests[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  Step: Destroy / Cleanup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 Running cdklocal destroy...
-Cleaning up worker container: harness-worker-77037
+Cleaning up worker container: harness-worker-10664
 [32m✅ Step passed: Destroy / Cleanup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
