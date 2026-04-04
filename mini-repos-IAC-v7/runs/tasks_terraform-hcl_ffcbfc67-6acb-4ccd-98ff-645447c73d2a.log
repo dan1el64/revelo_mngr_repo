@@ -1,0 +1,2641 @@
+Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/tasks/terraform-hcl/ffcbfc67-6acb-4ccd-98ff-645447c73d2a FRAMEWORK=terraform-hcl
+
+
+Starting LocalStack (harness environment)...
+ Network iac-harness-network  Creating
+ Network iac-harness-network  Created
+ Container localstack-harness  Creating
+ Container localstack-harness  Created
+ Container localstack-harness  Starting
+ Container localstack-harness  Started
+Waiting for LocalStack health endpoint: http://localhost:4566/_localstack/health
+LocalStack is healthy.
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Setup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Starting worker container: harness-worker-98016
+007ae581ef84d1a0a3eec2a45b85665221eaa85e98e2aff9c94be11df66bff62
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/fd576381-5b2b-407b-b0c2-3996091d00ae
+[32m✅ Step passed: Setup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Syntax / Plan[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Checking for LocalStack references...
+Running terraform fmt -check...
+Running terraform init...
+[0m[1mInitializing provider plugins...[0m
+- Finding hashicorp/archive versions matching "~> 2.5"...
+- Finding hashicorp/aws versions matching "~> 5.0"...
+- Finding hashicorp/random versions matching "~> 3.6"...
+- Installing hashicorp/archive v2.7.1...
+- Installed hashicorp/archive v2.7.1 (signed by HashiCorp)
+- Installing hashicorp/aws v5.100.0...
+- Installed hashicorp/aws v5.100.0 (signed by HashiCorp)
+- Installing hashicorp/random v3.8.1...
+- Installed hashicorp/random v3.8.1 (signed by HashiCorp)
+Terraform has created a lock file [1m.terraform.lock.hcl[0m to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run "terraform init" in the future.[0m
+
+[0m[1m[32mTerraform has been successfully initialized![0m[32m[0m
+[0m[32m
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.[0m
+Running terraform validate...
+[32m[1mSuccess![0m The configuration is valid.
+[0m
+Running terraform plan (no apply)...
+[0m[1mdata.archive_file.worker: Reading...[0m[0m
+[0m[1mdata.archive_file.health: Reading...[0m[0m
+[0m[1mdata.archive_file.enrichment: Reading...[0m[0m
+[0m[1mdata.archive_file.enrichment: Read complete after 0s [id=094ef9f3c43d779a9c48a8cdc9afae7c655cc3a7][0m
+[0m[1mdata.archive_file.health: Read complete after 0s [id=2bec290251969639338a371afcabf5265798b7eb][0m
+[0m[1mdata.archive_file.worker: Read complete after 0s [id=bf2ed61524be23a87e865d1562f0ae15e94e021a][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [32m+[0m create[0m
+
+Terraform will perform the following actions:
+
+[1m  # aws_cloudwatch_log_group.api_access[0m will be created
+[0m  [32m+[0m[0m resource "aws_cloudwatch_log_group" "api_access" {
+      [32m+[0m[0m arn               = (known after apply)
+      [32m+[0m[0m id                = (known after apply)
+      [32m+[0m[0m log_group_class   = (known after apply)
+      [32m+[0m[0m name              = (known after apply)
+      [32m+[0m[0m name_prefix       = (known after apply)
+      [32m+[0m[0m retention_in_days = 14
+      [32m+[0m[0m skip_destroy      = false
+      [32m+[0m[0m tags_all          = (known after apply)
+    }
+
+[1m  # aws_cloudwatch_log_group.application[0m will be created
+[0m  [32m+[0m[0m resource "aws_cloudwatch_log_group" "application" {
+      [32m+[0m[0m arn               = (known after apply)
+      [32m+[0m[0m id                = (known after apply)
+      [32m+[0m[0m log_group_class   = (known after apply)
+      [32m+[0m[0m name              = (known after apply)
+      [32m+[0m[0m name_prefix       = (known after apply)
+      [32m+[0m[0m retention_in_days = 14
+      [32m+[0m[0m skip_destroy      = false
+      [32m+[0m[0m tags_all          = (known after apply)
+    }
+
+[1m  # aws_iam_role.api_gateway_sqs[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "api_gateway_sqs" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "sts:AssumeRole"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "apigateway.amazonaws.com"
+                        }
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = (known after apply)
+      [32m+[0m[0m name_prefix           = "payments-api-gateway-sqs-role-"
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags_all              = (known after apply)
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role.health[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "health" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "sts:AssumeRole"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "lambda.amazonaws.com"
+                        }
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = (known after apply)
+      [32m+[0m[0m name_prefix           = "payments-health-role-"
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags_all              = (known after apply)
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role.pipe[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "pipe" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "sts:AssumeRole"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "pipes.amazonaws.com"
+                        }
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = (known after apply)
+      [32m+[0m[0m name_prefix           = "payments-pipe-role-"
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags_all              = (known after apply)
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role.state_machine[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "state_machine" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "sts:AssumeRole"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "states.amazonaws.com"
+                        }
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = (known after apply)
+      [32m+[0m[0m name_prefix           = "payments-state-machine-role-"
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags_all              = (known after apply)
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role.worker[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "worker" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "sts:AssumeRole"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "lambda.amazonaws.com"
+                        }
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = (known after apply)
+      [32m+[0m[0m name_prefix           = "payments-worker-role-"
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags_all              = (known after apply)
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role_policy.api_gateway_sqs[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy" "api_gateway_sqs" {
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m name        = "payments-api-gateway-sqs-inline"
+      [32m+[0m[0m name_prefix = (known after apply)
+      [32m+[0m[0m policy      = (known after apply)
+      [32m+[0m[0m role        = (known after apply)
+    }
+
+[1m  # aws_iam_role_policy.health[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy" "health" {
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m name        = "payments-health-inline"
+      [32m+[0m[0m name_prefix = (known after apply)
+      [32m+[0m[0m policy      = (known after apply)
+      [32m+[0m[0m role        = (known after apply)
+    }
+
+[1m  # aws_iam_role_policy.pipe[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy" "pipe" {
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m name        = "payments-pipe-inline"
+      [32m+[0m[0m name_prefix = (known after apply)
+      [32m+[0m[0m policy      = (known after apply)
+      [32m+[0m[0m role        = (known after apply)
+    }
+
+[1m  # aws_iam_role_policy.worker[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy" "worker" {
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m name        = "payments-worker-inline"
+      [32m+[0m[0m name_prefix = (known after apply)
+      [32m+[0m[0m policy      = (known after apply)
+      [32m+[0m[0m role        = (known after apply)
+    }
+
+[1m  # aws_iam_role_policy_attachment.health_basic[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy_attachment" "health_basic" {
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      [32m+[0m[0m role       = (known after apply)
+    }
+
+[1m  # aws_iam_role_policy_attachment.worker_basic[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy_attachment" "worker_basic" {
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      [32m+[0m[0m role       = (known after apply)
+    }
+
+[1m  # aws_lambda_event_source_mapping.worker[0m will be created
+[0m  [32m+[0m[0m resource "aws_lambda_event_source_mapping" "worker" {
+      [32m+[0m[0m arn                                = (known after apply)
+      [32m+[0m[0m batch_size                         = 5
+      [32m+[0m[0m enabled                            = true
+      [32m+[0m[0m event_source_arn                   = (known after apply)
+      [32m+[0m[0m function_arn                       = (known after apply)
+      [32m+[0m[0m function_name                      = (known after apply)
+      [32m+[0m[0m id                                 = (known after apply)
+      [32m+[0m[0m last_modified                      = (known after apply)
+      [32m+[0m[0m last_processing_result             = (known after apply)
+      [32m+[0m[0m maximum_batching_window_in_seconds = 5
+      [32m+[0m[0m maximum_record_age_in_seconds      = (known after apply)
+      [32m+[0m[0m maximum_retry_attempts             = (known after apply)
+      [32m+[0m[0m parallelization_factor             = (known after apply)
+      [32m+[0m[0m state                              = (known after apply)
+      [32m+[0m[0m state_transition_reason            = (known after apply)
+      [32m+[0m[0m tags_all                           = (known after apply)
+      [32m+[0m[0m uuid                               = (known after apply)
+
+      [32m+[0m[0m amazon_managed_kafka_event_source_config (known after apply)
+
+      [32m+[0m[0m self_managed_kafka_event_source_config (known after apply)
+    }
+
+[1m  # aws_lambda_function.enrichment[0m will be created
+[0m  [32m+[0m[0m resource "aws_lambda_function" "enrichment" {
+      [32m+[0m[0m architectures                  = (known after apply)
+      [32m+[0m[0m arn                            = (known after apply)
+      [32m+[0m[0m code_sha256                    = (known after apply)
+      [32m+[0m[0m filename                       = "./enrichment.zip"
+      [32m+[0m[0m function_name                  = (known after apply)
+      [32m+[0m[0m handler                        = "app.handler"
+      [32m+[0m[0m id                             = (known after apply)
+      [32m+[0m[0m invoke_arn                     = (known after apply)
+      [32m+[0m[0m last_modified                  = (known after apply)
+      [32m+[0m[0m memory_size                    = 256
+      [32m+[0m[0m package_type                   = "Zip"
+      [32m+[0m[0m publish                        = false
+      [32m+[0m[0m qualified_arn                  = (known after apply)
+      [32m+[0m[0m qualified_invoke_arn           = (known after apply)
+      [32m+[0m[0m reserved_concurrent_executions = -1
+      [32m+[0m[0m role                           = (known after apply)
+      [32m+[0m[0m runtime                        = "python3.12"
+      [32m+[0m[0m signing_job_arn                = (known after apply)
+      [32m+[0m[0m signing_profile_version_arn    = (known after apply)
+      [32m+[0m[0m skip_destroy                   = false
+      [32m+[0m[0m source_code_hash               = "9Bc9h9ib/JhUzMKLo4j7Kp4ftR0h1NCt0bEdtEZI+dY="
+      [32m+[0m[0m source_code_size               = (known after apply)
+      [32m+[0m[0m tags_all                       = (known after apply)
+      [32m+[0m[0m timeout                        = 15
+      [32m+[0m[0m version                        = (known after apply)
+
+      [32m+[0m[0m ephemeral_storage (known after apply)
+
+      [32m+[0m[0m logging_config (known after apply)
+
+      [32m+[0m[0m tracing_config (known after apply)
+    }
+
+[1m  # aws_lambda_function.health[0m will be created
+[0m  [32m+[0m[0m resource "aws_lambda_function" "health" {
+      [32m+[0m[0m architectures                  = (known after apply)
+      [32m+[0m[0m arn                            = (known after apply)
+      [32m+[0m[0m code_sha256                    = (known after apply)
+      [32m+[0m[0m filename                       = "./health.zip"
+      [32m+[0m[0m function_name                  = (known after apply)
+      [32m+[0m[0m handler                        = "app.handler"
+      [32m+[0m[0m id                             = (known after apply)
+      [32m+[0m[0m invoke_arn                     = (known after apply)
+      [32m+[0m[0m last_modified                  = (known after apply)
+      [32m+[0m[0m memory_size                    = 256
+      [32m+[0m[0m package_type                   = "Zip"
+      [32m+[0m[0m publish                        = false
+      [32m+[0m[0m qualified_arn                  = (known after apply)
+      [32m+[0m[0m qualified_invoke_arn           = (known after apply)
+      [32m+[0m[0m reserved_concurrent_executions = -1
+      [32m+[0m[0m role                           = (known after apply)
+      [32m+[0m[0m runtime                        = "python3.12"
+      [32m+[0m[0m signing_job_arn                = (known after apply)
+      [32m+[0m[0m signing_profile_version_arn    = (known after apply)
+      [32m+[0m[0m skip_destroy                   = false
+      [32m+[0m[0m source_code_hash               = "1M0LcOOjtNJ3/dhK0LS660fyKpjE4L76XsiTz+O/Znc="
+      [32m+[0m[0m source_code_size               = (known after apply)
+      [32m+[0m[0m tags_all                       = (known after apply)
+      [32m+[0m[0m timeout                        = 15
+      [32m+[0m[0m version                        = (known after apply)
+
+      [32m+[0m[0m ephemeral_storage (known after apply)
+
+      [32m+[0m[0m logging_config (known after apply)
+
+      [32m+[0m[0m tracing_config (known after apply)
+    }
+
+[1m  # aws_lambda_function.worker[0m will be created
+[0m  [32m+[0m[0m resource "aws_lambda_function" "worker" {
+      [32m+[0m[0m architectures                  = (known after apply)
+      [32m+[0m[0m arn                            = (known after apply)
+      [32m+[0m[0m code_sha256                    = (known after apply)
+      [32m+[0m[0m filename                       = "./worker.zip"
+      [32m+[0m[0m function_name                  = (known after apply)
+      [32m+[0m[0m handler                        = "app.handler"
+      [32m+[0m[0m id                             = (known after apply)
+      [32m+[0m[0m invoke_arn                     = (known after apply)
+      [32m+[0m[0m last_modified                  = (known after apply)
+      [32m+[0m[0m memory_size                    = 256
+      [32m+[0m[0m package_type                   = "Zip"
+      [32m+[0m[0m publish                        = false
+      [32m+[0m[0m qualified_arn                  = (known after apply)
+      [32m+[0m[0m qualified_invoke_arn           = (known after apply)
+      [32m+[0m[0m reserved_concurrent_executions = -1
+      [32m+[0m[0m role                           = (known after apply)
+      [32m+[0m[0m runtime                        = "python3.12"
+      [32m+[0m[0m signing_job_arn                = (known after apply)
+      [32m+[0m[0m signing_profile_version_arn    = (known after apply)
+      [32m+[0m[0m skip_destroy                   = false
+      [32m+[0m[0m source_code_hash               = "KjDlRxTVdDGDiM31nejux2gAEir3pW39SZg3CGsXeDQ="
+      [32m+[0m[0m source_code_size               = (known after apply)
+      [32m+[0m[0m tags_all                       = (known after apply)
+      [32m+[0m[0m timeout                        = 15
+      [32m+[0m[0m version                        = (known after apply)
+
+      [32m+[0m[0m environment {
+          [32m+[0m[0m variables = (known after apply)
+        }
+
+      [32m+[0m[0m ephemeral_storage (known after apply)
+
+      [32m+[0m[0m logging_config (known after apply)
+
+      [32m+[0m[0m tracing_config (known after apply)
+
+      [32m+[0m[0m vpc_config {
+          [32m+[0m[0m ipv6_allowed_for_dual_stack = false
+          [32m+[0m[0m security_group_ids          = (known after apply)
+          [32m+[0m[0m subnet_ids                  = (known after apply)
+          [32m+[0m[0m vpc_id                      = (known after apply)
+        }
+    }
+
+[1m  # aws_secretsmanager_secret.database_credentials[0m will be created
+[0m  [32m+[0m[0m resource "aws_secretsmanager_secret" "database_credentials" {
+      [32m+[0m[0m arn                            = (known after apply)
+      [32m+[0m[0m force_overwrite_replica_secret = false
+      [32m+[0m[0m id                             = (known after apply)
+      [32m+[0m[0m name                           = (known after apply)
+      [32m+[0m[0m name_prefix                    = "database-credentials-"
+      [32m+[0m[0m policy                         = (known after apply)
+      [32m+[0m[0m recovery_window_in_days        = 0
+      [32m+[0m[0m tags_all                       = (known after apply)
+
+      [32m+[0m[0m replica (known after apply)
+    }
+
+[1m  # aws_secretsmanager_secret_version.database_credentials[0m will be created
+[0m  [32m+[0m[0m resource "aws_secretsmanager_secret_version" "database_credentials" {
+      [32m+[0m[0m arn                  = (known after apply)
+      [32m+[0m[0m has_secret_string_wo = (known after apply)
+      [32m+[0m[0m id                   = (known after apply)
+      [32m+[0m[0m secret_id            = (known after apply)
+      [32m+[0m[0m secret_string        = (sensitive value)
+      [32m+[0m[0m version_id           = (known after apply)
+      [32m+[0m[0m version_stages       = (known after apply)
+    }
+
+[1m  # aws_security_group.processing_units[0m will be created
+[0m  [32m+[0m[0m resource "aws_security_group" "processing_units" {
+      [32m+[0m[0m arn                    = (known after apply)
+      [32m+[0m[0m description            = "Processing Units security boundary"
+      [32m+[0m[0m egress                 = []
+      [32m+[0m[0m id                     = (known after apply)
+      [32m+[0m[0m ingress                = []
+      [32m+[0m[0m name                   = "processing-units"
+      [32m+[0m[0m name_prefix            = (known after apply)
+      [32m+[0m[0m owner_id               = (known after apply)
+      [32m+[0m[0m revoke_rules_on_delete = false
+      [32m+[0m[0m tags_all               = (known after apply)
+      [32m+[0m[0m vpc_id                 = (known after apply)
+    }
+
+[1m  # aws_security_group.storage_layer[0m will be created
+[0m  [32m+[0m[0m resource "aws_security_group" "storage_layer" {
+      [32m+[0m[0m arn                    = (known after apply)
+      [32m+[0m[0m description            = "Storage Layer security boundary"
+      [32m+[0m[0m egress                 = []
+      [32m+[0m[0m id                     = (known after apply)
+      [32m+[0m[0m ingress                = []
+      [32m+[0m[0m name                   = "storage-layer"
+      [32m+[0m[0m name_prefix            = (known after apply)
+      [32m+[0m[0m owner_id               = (known after apply)
+      [32m+[0m[0m revoke_rules_on_delete = false
+      [32m+[0m[0m tags_all               = (known after apply)
+      [32m+[0m[0m vpc_id                 = (known after apply)
+    }
+
+[1m  # aws_sfn_state_machine.processing[0m will be created
+[0m  [32m+[0m[0m resource "aws_sfn_state_machine" "processing" {
+      [32m+[0m[0m arn                       = (known after apply)
+      [32m+[0m[0m creation_date             = (known after apply)
+      [32m+[0m[0m definition                = jsonencode(
+            {
+              [32m+[0m[0m StartAt = "Prepare"
+              [32m+[0m[0m States  = {
+                  [32m+[0m[0m Complete = {
+                      [32m+[0m[0m Type = "Succeed"
+                    }
+                  [32m+[0m[0m Prepare  = {
+                      [32m+[0m[0m Next = "Complete"
+                      [32m+[0m[0m Type = "Pass"
+                    }
+                }
+            }
+        )
+      [32m+[0m[0m description               = (known after apply)
+      [32m+[0m[0m id                        = (known after apply)
+      [32m+[0m[0m name                      = (known after apply)
+      [32m+[0m[0m name_prefix               = (known after apply)
+      [32m+[0m[0m publish                   = false
+      [32m+[0m[0m revision_id               = (known after apply)
+      [32m+[0m[0m role_arn                  = (known after apply)
+      [32m+[0m[0m state_machine_version_arn = (known after apply)
+      [32m+[0m[0m status                    = (known after apply)
+      [32m+[0m[0m tags_all                  = (known after apply)
+      [32m+[0m[0m type                      = "STANDARD"
+      [32m+[0m[0m version_description       = (known after apply)
+
+      [32m+[0m[0m encryption_configuration (known after apply)
+
+      [32m+[0m[0m logging_configuration (known after apply)
+
+      [32m+[0m[0m tracing_configuration (known after apply)
+    }
+
+[1m  # aws_sqs_queue.intake[0m will be created
+[0m  [32m+[0m[0m resource "aws_sqs_queue" "intake" {
+      [32m+[0m[0m arn                               = (known after apply)
+      [32m+[0m[0m content_based_deduplication       = false
+      [32m+[0m[0m deduplication_scope               = (known after apply)
+      [32m+[0m[0m delay_seconds                     = 0
+      [32m+[0m[0m fifo_queue                        = false
+      [32m+[0m[0m fifo_throughput_limit             = (known after apply)
+      [32m+[0m[0m id                                = (known after apply)
+      [32m+[0m[0m kms_data_key_reuse_period_seconds = (known after apply)
+      [32m+[0m[0m max_message_size                  = 262144
+      [32m+[0m[0m message_retention_seconds         = 1209600
+      [32m+[0m[0m name                              = (known after apply)
+      [32m+[0m[0m name_prefix                       = (known after apply)
+      [32m+[0m[0m policy                            = (known after apply)
+      [32m+[0m[0m receive_wait_time_seconds         = 0
+      [32m+[0m[0m redrive_allow_policy              = (known after apply)
+      [32m+[0m[0m redrive_policy                    = (known after apply)
+      [32m+[0m[0m sqs_managed_sse_enabled           = (known after apply)
+      [32m+[0m[0m tags_all                          = (known after apply)
+      [32m+[0m[0m url                               = (known after apply)
+      [32m+[0m[0m visibility_timeout_seconds        = 60
+    }
+
+[1m  # aws_sqs_queue_policy.intake[0m will be created
+[0m  [32m+[0m[0m resource "aws_sqs_queue_policy" "intake" {
+      [32m+[0m[0m id        = (known after apply)
+      [32m+[0m[0m policy    = (known after apply)
+      [32m+[0m[0m queue_url = (known after apply)
+    }
+
+[1m  # aws_subnet.private_a[0m will be created
+[0m  [32m+[0m[0m resource "aws_subnet" "private_a" {
+      [32m+[0m[0m arn                                            = (known after apply)
+      [32m+[0m[0m assign_ipv6_address_on_creation                = false
+      [32m+[0m[0m availability_zone                              = "us-east-1a"
+      [32m+[0m[0m availability_zone_id                           = (known after apply)
+      [32m+[0m[0m cidr_block                                     = "10.20.1.0/24"
+      [32m+[0m[0m enable_dns64                                   = false
+      [32m+[0m[0m enable_resource_name_dns_a_record_on_launch    = false
+      [32m+[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false
+      [32m+[0m[0m id                                             = (known after apply)
+      [32m+[0m[0m ipv6_cidr_block_association_id                 = (known after apply)
+      [32m+[0m[0m ipv6_native                                    = false
+      [32m+[0m[0m map_public_ip_on_launch                        = false
+      [32m+[0m[0m owner_id                                       = (known after apply)
+      [32m+[0m[0m private_dns_hostname_type_on_launch            = (known after apply)
+      [32m+[0m[0m tags_all                                       = (known after apply)
+      [32m+[0m[0m vpc_id                                         = (known after apply)
+    }
+
+[1m  # aws_subnet.private_b[0m will be created
+[0m  [32m+[0m[0m resource "aws_subnet" "private_b" {
+      [32m+[0m[0m arn                                            = (known after apply)
+      [32m+[0m[0m assign_ipv6_address_on_creation                = false
+      [32m+[0m[0m availability_zone                              = "us-east-1b"
+      [32m+[0m[0m availability_zone_id                           = (known after apply)
+      [32m+[0m[0m cidr_block                                     = "10.20.2.0/24"
+      [32m+[0m[0m enable_dns64                                   = false
+      [32m+[0m[0m enable_resource_name_dns_a_record_on_launch    = false
+      [32m+[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false
+      [32m+[0m[0m id                                             = (known after apply)
+      [32m+[0m[0m ipv6_cidr_block_association_id                 = (known after apply)
+      [32m+[0m[0m ipv6_native                                    = false
+      [32m+[0m[0m map_public_ip_on_launch                        = false
+      [32m+[0m[0m owner_id                                       = (known after apply)
+      [32m+[0m[0m private_dns_hostname_type_on_launch            = (known after apply)
+      [32m+[0m[0m tags_all                                       = (known after apply)
+      [32m+[0m[0m vpc_id                                         = (known after apply)
+    }
+
+[1m  # aws_vpc.cloud_boundaries[0m will be created
+[0m  [32m+[0m[0m resource "aws_vpc" "cloud_boundaries" {
+      [32m+[0m[0m arn                                  = (known after apply)
+      [32m+[0m[0m cidr_block                           = "10.20.0.0/16"
+      [32m+[0m[0m default_network_acl_id               = (known after apply)
+      [32m+[0m[0m default_route_table_id               = (known after apply)
+      [32m+[0m[0m default_security_group_id            = (known after apply)
+      [32m+[0m[0m dhcp_options_id                      = (known after apply)
+      [32m+[0m[0m enable_dns_hostnames                 = true
+      [32m+[0m[0m enable_dns_support                   = true
+      [32m+[0m[0m enable_network_address_usage_metrics = (known after apply)
+      [32m+[0m[0m id                                   = (known after apply)
+      [32m+[0m[0m instance_tenancy                     = "default"
+      [32m+[0m[0m ipv6_association_id                  = (known after apply)
+      [32m+[0m[0m ipv6_cidr_block                      = (known after apply)
+      [32m+[0m[0m ipv6_cidr_block_network_border_group = (known after apply)
+      [32m+[0m[0m main_route_table_id                  = (known after apply)
+      [32m+[0m[0m owner_id                             = (known after apply)
+      [32m+[0m[0m tags_all                             = (known after apply)
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.processing_https[0m will be created
+[0m  [32m+[0m[0m resource "aws_vpc_security_group_egress_rule" "processing_https" {
+      [32m+[0m[0m arn                    = (known after apply)
+      [32m+[0m[0m cidr_ipv4              = "0.0.0.0/0"
+      [32m+[0m[0m from_port              = 443
+      [32m+[0m[0m id                     = (known after apply)
+      [32m+[0m[0m ip_protocol            = "tcp"
+      [32m+[0m[0m security_group_id      = (known after apply)
+      [32m+[0m[0m security_group_rule_id = (known after apply)
+      [32m+[0m[0m tags_all               = {}
+      [32m+[0m[0m to_port                = 443
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.processing_postgres[0m will be created
+[0m  [32m+[0m[0m resource "aws_vpc_security_group_egress_rule" "processing_postgres" {
+      [32m+[0m[0m arn                          = (known after apply)
+      [32m+[0m[0m from_port                    = 5432
+      [32m+[0m[0m id                           = (known after apply)
+      [32m+[0m[0m ip_protocol                  = "tcp"
+      [32m+[0m[0m referenced_security_group_id = (known after apply)
+      [32m+[0m[0m security_group_id            = (known after apply)
+      [32m+[0m[0m security_group_rule_id       = (known after apply)
+      [32m+[0m[0m tags_all                     = {}
+      [32m+[0m[0m to_port                      = 5432
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.storage_https[0m will be created
+[0m  [32m+[0m[0m resource "aws_vpc_security_group_egress_rule" "storage_https" {
+      [32m+[0m[0m arn                    = (known after apply)
+      [32m+[0m[0m cidr_ipv4              = "0.0.0.0/0"
+      [32m+[0m[0m from_port              = 443
+      [32m+[0m[0m id                     = (known after apply)
+      [32m+[0m[0m ip_protocol            = "tcp"
+      [32m+[0m[0m security_group_id      = (known after apply)
+      [32m+[0m[0m security_group_rule_id = (known after apply)
+      [32m+[0m[0m tags_all               = {}
+      [32m+[0m[0m to_port                = 443
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.storage_postgres[0m will be created
+[0m  [32m+[0m[0m resource "aws_vpc_security_group_ingress_rule" "storage_postgres" {
+      [32m+[0m[0m arn                          = (known after apply)
+      [32m+[0m[0m from_port                    = 5432
+      [32m+[0m[0m id                           = (known after apply)
+      [32m+[0m[0m ip_protocol                  = "tcp"
+      [32m+[0m[0m referenced_security_group_id = (known after apply)
+      [32m+[0m[0m security_group_id            = (known after apply)
+      [32m+[0m[0m security_group_rule_id       = (known after apply)
+      [32m+[0m[0m tags_all                     = {}
+      [32m+[0m[0m to_port                      = 5432
+    }
+
+[1m  # random_id.suffix[0m will be created
+[0m  [32m+[0m[0m resource "random_id" "suffix" {
+      [32m+[0m[0m b64_std     = (known after apply)
+      [32m+[0m[0m b64_url     = (known after apply)
+      [32m+[0m[0m byte_length = 4
+      [32m+[0m[0m dec         = (known after apply)
+      [32m+[0m[0m hex         = (known after apply)
+      [32m+[0m[0m id          = (known after apply)
+    }
+
+[1m  # random_password.database[0m will be created
+[0m  [32m+[0m[0m resource "random_password" "database" {
+      [32m+[0m[0m bcrypt_hash = (sensitive value)
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m length      = 24
+      [32m+[0m[0m lower       = true
+      [32m+[0m[0m min_lower   = 0
+      [32m+[0m[0m min_numeric = 0
+      [32m+[0m[0m min_special = 0
+      [32m+[0m[0m min_upper   = 0
+      [32m+[0m[0m number      = true
+      [32m+[0m[0m numeric     = true
+      [32m+[0m[0m result      = (sensitive value)
+      [32m+[0m[0m special     = true
+      [32m+[0m[0m upper       = true
+    }
+
+[1mPlan:[0m 33 to add, 0 to change, 0 to destroy.
+[0m
+Changes to Outputs:
+  [32m+[0m[0m http_api_endpoint_url      = "http-api-disabled"
+  [32m+[0m[0m rds_endpoint_address       = "storage-layer-disabled"
+  [32m+[0m[0m secrets_manager_secret_arn = (known after apply)
+  [32m+[0m[0m sqs_queue_url              = (known after apply)
+[90m
+─────────────────────────────────────────────────────────────────────────────[0m
+
+Saved the plan to: .tfplan
+
+To perform exactly these actions, run the following command to apply:
+    terraform apply ".tfplan"
+Generating plan.json for unit tests...
+[32m✅ Step passed: Syntax / Plan[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Unit tests (pytest)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest unit tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+collecting ... collected 11 items
+
+tests/unit_tests.py::test_input_contract_and_single_main_tf_alignment PASSED [  9%]
+tests/unit_tests.py::test_provider_uses_the_required_variables PASSED    [ 18%]
+tests/unit_tests.py::test_network_foundation_and_security_group_scope_are_declared PASSED [ 27%]
+tests/unit_tests.py::test_storage_layer_uses_generated_secret_material_and_private_rds PASSED [ 36%]
+tests/unit_tests.py::test_log_groups_have_required_retention_without_kms PASSED [ 45%]
+tests/unit_tests.py::test_api_gateway_queue_and_routes_are_explicit PASSED [ 54%]
+tests/unit_tests.py::test_api_gateway_to_sqs_iam_scope_is_least_privilege PASSED [ 63%]
+tests/unit_tests.py::test_lambda_packaging_worker_vpc_and_health_invocation_contract PASSED [ 72%]
+tests/unit_tests.py::test_lambda_stub_logic_matches_the_prompt PASSED    [ 81%]
+tests/unit_tests.py::test_step_functions_and_pipe_permissions_are_scoped PASSED [ 90%]
+tests/unit_tests.py::test_outputs_and_security_guardrails_are_present PASSED [100%]
+
+============================== 11 passed in 0.12s ==============================
+[32m✅ Step passed: Unit tests (pytest)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Deploy (LocalStack)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running terraform apply...
+[0m[1mdata.archive_file.enrichment: Reading...[0m[0m
+[0m[1mdata.archive_file.worker: Reading...[0m[0m
+[0m[1mdata.archive_file.health: Reading...[0m[0m
+[0m[1mdata.archive_file.enrichment: Read complete after 0s [id=094ef9f3c43d779a9c48a8cdc9afae7c655cc3a7][0m
+[0m[1mdata.archive_file.worker: Read complete after 0s [id=bf2ed61524be23a87e865d1562f0ae15e94e021a][0m
+[0m[1mdata.archive_file.health: Read complete after 0s [id=2bec290251969639338a371afcabf5265798b7eb][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [32m+[0m create[0m
+
+Terraform will perform the following actions:
+
+[1m  # aws_cloudwatch_log_group.api_access[0m will be created
+[0m  [32m+[0m[0m resource "aws_cloudwatch_log_group" "api_access" {
+      [32m+[0m[0m arn               = (known after apply)
+      [32m+[0m[0m id                = (known after apply)
+      [32m+[0m[0m log_group_class   = (known after apply)
+      [32m+[0m[0m name              = (known after apply)
+      [32m+[0m[0m name_prefix       = (known after apply)
+      [32m+[0m[0m retention_in_days = 14
+      [32m+[0m[0m skip_destroy      = false
+      [32m+[0m[0m tags_all          = (known after apply)
+    }
+
+[1m  # aws_cloudwatch_log_group.application[0m will be created
+[0m  [32m+[0m[0m resource "aws_cloudwatch_log_group" "application" {
+      [32m+[0m[0m arn               = (known after apply)
+      [32m+[0m[0m id                = (known after apply)
+      [32m+[0m[0m log_group_class   = (known after apply)
+      [32m+[0m[0m name              = (known after apply)
+      [32m+[0m[0m name_prefix       = (known after apply)
+      [32m+[0m[0m retention_in_days = 14
+      [32m+[0m[0m skip_destroy      = false
+      [32m+[0m[0m tags_all          = (known after apply)
+    }
+
+[1m  # aws_iam_role.api_gateway_sqs[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "api_gateway_sqs" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "sts:AssumeRole"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "apigateway.amazonaws.com"
+                        }
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = (known after apply)
+      [32m+[0m[0m name_prefix           = "payments-api-gateway-sqs-role-"
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags_all              = (known after apply)
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role.health[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "health" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "sts:AssumeRole"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "lambda.amazonaws.com"
+                        }
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = (known after apply)
+      [32m+[0m[0m name_prefix           = "payments-health-role-"
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags_all              = (known after apply)
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role.pipe[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "pipe" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "sts:AssumeRole"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "pipes.amazonaws.com"
+                        }
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = (known after apply)
+      [32m+[0m[0m name_prefix           = "payments-pipe-role-"
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags_all              = (known after apply)
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role.state_machine[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "state_machine" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "sts:AssumeRole"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "states.amazonaws.com"
+                        }
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = (known after apply)
+      [32m+[0m[0m name_prefix           = "payments-state-machine-role-"
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags_all              = (known after apply)
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role.worker[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "worker" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "sts:AssumeRole"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "lambda.amazonaws.com"
+                        }
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = (known after apply)
+      [32m+[0m[0m name_prefix           = "payments-worker-role-"
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags_all              = (known after apply)
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role_policy.api_gateway_sqs[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy" "api_gateway_sqs" {
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m name        = "payments-api-gateway-sqs-inline"
+      [32m+[0m[0m name_prefix = (known after apply)
+      [32m+[0m[0m policy      = (known after apply)
+      [32m+[0m[0m role        = (known after apply)
+    }
+
+[1m  # aws_iam_role_policy.health[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy" "health" {
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m name        = "payments-health-inline"
+      [32m+[0m[0m name_prefix = (known after apply)
+      [32m+[0m[0m policy      = (known after apply)
+      [32m+[0m[0m role        = (known after apply)
+    }
+
+[1m  # aws_iam_role_policy.pipe[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy" "pipe" {
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m name        = "payments-pipe-inline"
+      [32m+[0m[0m name_prefix = (known after apply)
+      [32m+[0m[0m policy      = (known after apply)
+      [32m+[0m[0m role        = (known after apply)
+    }
+
+[1m  # aws_iam_role_policy.worker[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy" "worker" {
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m name        = "payments-worker-inline"
+      [32m+[0m[0m name_prefix = (known after apply)
+      [32m+[0m[0m policy      = (known after apply)
+      [32m+[0m[0m role        = (known after apply)
+    }
+
+[1m  # aws_iam_role_policy_attachment.health_basic[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy_attachment" "health_basic" {
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      [32m+[0m[0m role       = (known after apply)
+    }
+
+[1m  # aws_iam_role_policy_attachment.worker_basic[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy_attachment" "worker_basic" {
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      [32m+[0m[0m role       = (known after apply)
+    }
+
+[1m  # aws_lambda_event_source_mapping.worker[0m will be created
+[0m  [32m+[0m[0m resource "aws_lambda_event_source_mapping" "worker" {
+      [32m+[0m[0m arn                                = (known after apply)
+      [32m+[0m[0m batch_size                         = 5
+      [32m+[0m[0m enabled                            = true
+      [32m+[0m[0m event_source_arn                   = (known after apply)
+      [32m+[0m[0m function_arn                       = (known after apply)
+      [32m+[0m[0m function_name                      = (known after apply)
+      [32m+[0m[0m id                                 = (known after apply)
+      [32m+[0m[0m last_modified                      = (known after apply)
+      [32m+[0m[0m last_processing_result             = (known after apply)
+      [32m+[0m[0m maximum_batching_window_in_seconds = 5
+      [32m+[0m[0m maximum_record_age_in_seconds      = (known after apply)
+      [32m+[0m[0m maximum_retry_attempts             = (known after apply)
+      [32m+[0m[0m parallelization_factor             = (known after apply)
+      [32m+[0m[0m state                              = (known after apply)
+      [32m+[0m[0m state_transition_reason            = (known after apply)
+      [32m+[0m[0m tags_all                           = (known after apply)
+      [32m+[0m[0m uuid                               = (known after apply)
+
+      [32m+[0m[0m amazon_managed_kafka_event_source_config (known after apply)
+
+      [32m+[0m[0m self_managed_kafka_event_source_config (known after apply)
+    }
+
+[1m  # aws_lambda_function.enrichment[0m will be created
+[0m  [32m+[0m[0m resource "aws_lambda_function" "enrichment" {
+      [32m+[0m[0m architectures                  = (known after apply)
+      [32m+[0m[0m arn                            = (known after apply)
+      [32m+[0m[0m code_sha256                    = (known after apply)
+      [32m+[0m[0m filename                       = "./enrichment.zip"
+      [32m+[0m[0m function_name                  = (known after apply)
+      [32m+[0m[0m handler                        = "app.handler"
+      [32m+[0m[0m id                             = (known after apply)
+      [32m+[0m[0m invoke_arn                     = (known after apply)
+      [32m+[0m[0m last_modified                  = (known after apply)
+      [32m+[0m[0m memory_size                    = 256
+      [32m+[0m[0m package_type                   = "Zip"
+      [32m+[0m[0m publish                        = false
+      [32m+[0m[0m qualified_arn                  = (known after apply)
+      [32m+[0m[0m qualified_invoke_arn           = (known after apply)
+      [32m+[0m[0m reserved_concurrent_executions = -1
+      [32m+[0m[0m role                           = (known after apply)
+      [32m+[0m[0m runtime                        = "python3.12"
+      [32m+[0m[0m signing_job_arn                = (known after apply)
+      [32m+[0m[0m signing_profile_version_arn    = (known after apply)
+      [32m+[0m[0m skip_destroy                   = false
+      [32m+[0m[0m source_code_hash               = "9Bc9h9ib/JhUzMKLo4j7Kp4ftR0h1NCt0bEdtEZI+dY="
+      [32m+[0m[0m source_code_size               = (known after apply)
+      [32m+[0m[0m tags_all                       = (known after apply)
+      [32m+[0m[0m timeout                        = 15
+      [32m+[0m[0m version                        = (known after apply)
+
+      [32m+[0m[0m ephemeral_storage (known after apply)
+
+      [32m+[0m[0m logging_config (known after apply)
+
+      [32m+[0m[0m tracing_config (known after apply)
+    }
+
+[1m  # aws_lambda_function.health[0m will be created
+[0m  [32m+[0m[0m resource "aws_lambda_function" "health" {
+      [32m+[0m[0m architectures                  = (known after apply)
+      [32m+[0m[0m arn                            = (known after apply)
+      [32m+[0m[0m code_sha256                    = (known after apply)
+      [32m+[0m[0m filename                       = "./health.zip"
+      [32m+[0m[0m function_name                  = (known after apply)
+      [32m+[0m[0m handler                        = "app.handler"
+      [32m+[0m[0m id                             = (known after apply)
+      [32m+[0m[0m invoke_arn                     = (known after apply)
+      [32m+[0m[0m last_modified                  = (known after apply)
+      [32m+[0m[0m memory_size                    = 256
+      [32m+[0m[0m package_type                   = "Zip"
+      [32m+[0m[0m publish                        = false
+      [32m+[0m[0m qualified_arn                  = (known after apply)
+      [32m+[0m[0m qualified_invoke_arn           = (known after apply)
+      [32m+[0m[0m reserved_concurrent_executions = -1
+      [32m+[0m[0m role                           = (known after apply)
+      [32m+[0m[0m runtime                        = "python3.12"
+      [32m+[0m[0m signing_job_arn                = (known after apply)
+      [32m+[0m[0m signing_profile_version_arn    = (known after apply)
+      [32m+[0m[0m skip_destroy                   = false
+      [32m+[0m[0m source_code_hash               = "1M0LcOOjtNJ3/dhK0LS660fyKpjE4L76XsiTz+O/Znc="
+      [32m+[0m[0m source_code_size               = (known after apply)
+      [32m+[0m[0m tags_all                       = (known after apply)
+      [32m+[0m[0m timeout                        = 15
+      [32m+[0m[0m version                        = (known after apply)
+
+      [32m+[0m[0m ephemeral_storage (known after apply)
+
+      [32m+[0m[0m logging_config (known after apply)
+
+      [32m+[0m[0m tracing_config (known after apply)
+    }
+
+[1m  # aws_lambda_function.worker[0m will be created
+[0m  [32m+[0m[0m resource "aws_lambda_function" "worker" {
+      [32m+[0m[0m architectures                  = (known after apply)
+      [32m+[0m[0m arn                            = (known after apply)
+      [32m+[0m[0m code_sha256                    = (known after apply)
+      [32m+[0m[0m filename                       = "./worker.zip"
+      [32m+[0m[0m function_name                  = (known after apply)
+      [32m+[0m[0m handler                        = "app.handler"
+      [32m+[0m[0m id                             = (known after apply)
+      [32m+[0m[0m invoke_arn                     = (known after apply)
+      [32m+[0m[0m last_modified                  = (known after apply)
+      [32m+[0m[0m memory_size                    = 256
+      [32m+[0m[0m package_type                   = "Zip"
+      [32m+[0m[0m publish                        = false
+      [32m+[0m[0m qualified_arn                  = (known after apply)
+      [32m+[0m[0m qualified_invoke_arn           = (known after apply)
+      [32m+[0m[0m reserved_concurrent_executions = -1
+      [32m+[0m[0m role                           = (known after apply)
+      [32m+[0m[0m runtime                        = "python3.12"
+      [32m+[0m[0m signing_job_arn                = (known after apply)
+      [32m+[0m[0m signing_profile_version_arn    = (known after apply)
+      [32m+[0m[0m skip_destroy                   = false
+      [32m+[0m[0m source_code_hash               = "KjDlRxTVdDGDiM31nejux2gAEir3pW39SZg3CGsXeDQ="
+      [32m+[0m[0m source_code_size               = (known after apply)
+      [32m+[0m[0m tags_all                       = (known after apply)
+      [32m+[0m[0m timeout                        = 15
+      [32m+[0m[0m version                        = (known after apply)
+
+      [32m+[0m[0m environment {
+          [32m+[0m[0m variables = (known after apply)
+        }
+
+      [32m+[0m[0m ephemeral_storage (known after apply)
+
+      [32m+[0m[0m logging_config (known after apply)
+
+      [32m+[0m[0m tracing_config (known after apply)
+
+      [32m+[0m[0m vpc_config {
+          [32m+[0m[0m ipv6_allowed_for_dual_stack = false
+          [32m+[0m[0m security_group_ids          = (known after apply)
+          [32m+[0m[0m subnet_ids                  = (known after apply)
+          [32m+[0m[0m vpc_id                      = (known after apply)
+        }
+    }
+
+[1m  # aws_secretsmanager_secret.database_credentials[0m will be created
+[0m  [32m+[0m[0m resource "aws_secretsmanager_secret" "database_credentials" {
+      [32m+[0m[0m arn                            = (known after apply)
+      [32m+[0m[0m force_overwrite_replica_secret = false
+      [32m+[0m[0m id                             = (known after apply)
+      [32m+[0m[0m name                           = (known after apply)
+      [32m+[0m[0m name_prefix                    = "database-credentials-"
+      [32m+[0m[0m policy                         = (known after apply)
+      [32m+[0m[0m recovery_window_in_days        = 0
+      [32m+[0m[0m tags_all                       = (known after apply)
+
+      [32m+[0m[0m replica (known after apply)
+    }
+
+[1m  # aws_secretsmanager_secret_version.database_credentials[0m will be created
+[0m  [32m+[0m[0m resource "aws_secretsmanager_secret_version" "database_credentials" {
+      [32m+[0m[0m arn                  = (known after apply)
+      [32m+[0m[0m has_secret_string_wo = (known after apply)
+      [32m+[0m[0m id                   = (known after apply)
+      [32m+[0m[0m secret_id            = (known after apply)
+      [32m+[0m[0m secret_string        = (sensitive value)
+      [32m+[0m[0m version_id           = (known after apply)
+      [32m+[0m[0m version_stages       = (known after apply)
+    }
+
+[1m  # aws_security_group.processing_units[0m will be created
+[0m  [32m+[0m[0m resource "aws_security_group" "processing_units" {
+      [32m+[0m[0m arn                    = (known after apply)
+      [32m+[0m[0m description            = "Processing Units security boundary"
+      [32m+[0m[0m egress                 = []
+      [32m+[0m[0m id                     = (known after apply)
+      [32m+[0m[0m ingress                = []
+      [32m+[0m[0m name                   = "processing-units"
+      [32m+[0m[0m name_prefix            = (known after apply)
+      [32m+[0m[0m owner_id               = (known after apply)
+      [32m+[0m[0m revoke_rules_on_delete = false
+      [32m+[0m[0m tags_all               = (known after apply)
+      [32m+[0m[0m vpc_id                 = (known after apply)
+    }
+
+[1m  # aws_security_group.storage_layer[0m will be created
+[0m  [32m+[0m[0m resource "aws_security_group" "storage_layer" {
+      [32m+[0m[0m arn                    = (known after apply)
+      [32m+[0m[0m description            = "Storage Layer security boundary"
+      [32m+[0m[0m egress                 = []
+      [32m+[0m[0m id                     = (known after apply)
+      [32m+[0m[0m ingress                = []
+      [32m+[0m[0m name                   = "storage-layer"
+      [32m+[0m[0m name_prefix            = (known after apply)
+      [32m+[0m[0m owner_id               = (known after apply)
+      [32m+[0m[0m revoke_rules_on_delete = false
+      [32m+[0m[0m tags_all               = (known after apply)
+      [32m+[0m[0m vpc_id                 = (known after apply)
+    }
+
+[1m  # aws_sfn_state_machine.processing[0m will be created
+[0m  [32m+[0m[0m resource "aws_sfn_state_machine" "processing" {
+      [32m+[0m[0m arn                       = (known after apply)
+      [32m+[0m[0m creation_date             = (known after apply)
+      [32m+[0m[0m definition                = jsonencode(
+            {
+              [32m+[0m[0m StartAt = "Prepare"
+              [32m+[0m[0m States  = {
+                  [32m+[0m[0m Complete = {
+                      [32m+[0m[0m Type = "Succeed"
+                    }
+                  [32m+[0m[0m Prepare  = {
+                      [32m+[0m[0m Next = "Complete"
+                      [32m+[0m[0m Type = "Pass"
+                    }
+                }
+            }
+        )
+      [32m+[0m[0m description               = (known after apply)
+      [32m+[0m[0m id                        = (known after apply)
+      [32m+[0m[0m name                      = (known after apply)
+      [32m+[0m[0m name_prefix               = (known after apply)
+      [32m+[0m[0m publish                   = false
+      [32m+[0m[0m revision_id               = (known after apply)
+      [32m+[0m[0m role_arn                  = (known after apply)
+      [32m+[0m[0m state_machine_version_arn = (known after apply)
+      [32m+[0m[0m status                    = (known after apply)
+      [32m+[0m[0m tags_all                  = (known after apply)
+      [32m+[0m[0m type                      = "STANDARD"
+      [32m+[0m[0m version_description       = (known after apply)
+
+      [32m+[0m[0m encryption_configuration (known after apply)
+
+      [32m+[0m[0m logging_configuration (known after apply)
+
+      [32m+[0m[0m tracing_configuration (known after apply)
+    }
+
+[1m  # aws_sqs_queue.intake[0m will be created
+[0m  [32m+[0m[0m resource "aws_sqs_queue" "intake" {
+      [32m+[0m[0m arn                               = (known after apply)
+      [32m+[0m[0m content_based_deduplication       = false
+      [32m+[0m[0m deduplication_scope               = (known after apply)
+      [32m+[0m[0m delay_seconds                     = 0
+      [32m+[0m[0m fifo_queue                        = false
+      [32m+[0m[0m fifo_throughput_limit             = (known after apply)
+      [32m+[0m[0m id                                = (known after apply)
+      [32m+[0m[0m kms_data_key_reuse_period_seconds = (known after apply)
+      [32m+[0m[0m max_message_size                  = 262144
+      [32m+[0m[0m message_retention_seconds         = 1209600
+      [32m+[0m[0m name                              = (known after apply)
+      [32m+[0m[0m name_prefix                       = (known after apply)
+      [32m+[0m[0m policy                            = (known after apply)
+      [32m+[0m[0m receive_wait_time_seconds         = 0
+      [32m+[0m[0m redrive_allow_policy              = (known after apply)
+      [32m+[0m[0m redrive_policy                    = (known after apply)
+      [32m+[0m[0m sqs_managed_sse_enabled           = (known after apply)
+      [32m+[0m[0m tags_all                          = (known after apply)
+      [32m+[0m[0m url                               = (known after apply)
+      [32m+[0m[0m visibility_timeout_seconds        = 60
+    }
+
+[1m  # aws_sqs_queue_policy.intake[0m will be created
+[0m  [32m+[0m[0m resource "aws_sqs_queue_policy" "intake" {
+      [32m+[0m[0m id        = (known after apply)
+      [32m+[0m[0m policy    = (known after apply)
+      [32m+[0m[0m queue_url = (known after apply)
+    }
+
+[1m  # aws_subnet.private_a[0m will be created
+[0m  [32m+[0m[0m resource "aws_subnet" "private_a" {
+      [32m+[0m[0m arn                                            = (known after apply)
+      [32m+[0m[0m assign_ipv6_address_on_creation                = false
+      [32m+[0m[0m availability_zone                              = "us-east-1a"
+      [32m+[0m[0m availability_zone_id                           = (known after apply)
+      [32m+[0m[0m cidr_block                                     = "10.20.1.0/24"
+      [32m+[0m[0m enable_dns64                                   = false
+      [32m+[0m[0m enable_resource_name_dns_a_record_on_launch    = false
+      [32m+[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false
+      [32m+[0m[0m id                                             = (known after apply)
+      [32m+[0m[0m ipv6_cidr_block_association_id                 = (known after apply)
+      [32m+[0m[0m ipv6_native                                    = false
+      [32m+[0m[0m map_public_ip_on_launch                        = false
+      [32m+[0m[0m owner_id                                       = (known after apply)
+      [32m+[0m[0m private_dns_hostname_type_on_launch            = (known after apply)
+      [32m+[0m[0m tags_all                                       = (known after apply)
+      [32m+[0m[0m vpc_id                                         = (known after apply)
+    }
+
+[1m  # aws_subnet.private_b[0m will be created
+[0m  [32m+[0m[0m resource "aws_subnet" "private_b" {
+      [32m+[0m[0m arn                                            = (known after apply)
+      [32m+[0m[0m assign_ipv6_address_on_creation                = false
+      [32m+[0m[0m availability_zone                              = "us-east-1b"
+      [32m+[0m[0m availability_zone_id                           = (known after apply)
+      [32m+[0m[0m cidr_block                                     = "10.20.2.0/24"
+      [32m+[0m[0m enable_dns64                                   = false
+      [32m+[0m[0m enable_resource_name_dns_a_record_on_launch    = false
+      [32m+[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false
+      [32m+[0m[0m id                                             = (known after apply)
+      [32m+[0m[0m ipv6_cidr_block_association_id                 = (known after apply)
+      [32m+[0m[0m ipv6_native                                    = false
+      [32m+[0m[0m map_public_ip_on_launch                        = false
+      [32m+[0m[0m owner_id                                       = (known after apply)
+      [32m+[0m[0m private_dns_hostname_type_on_launch            = (known after apply)
+      [32m+[0m[0m tags_all                                       = (known after apply)
+      [32m+[0m[0m vpc_id                                         = (known after apply)
+    }
+
+[1m  # aws_vpc.cloud_boundaries[0m will be created
+[0m  [32m+[0m[0m resource "aws_vpc" "cloud_boundaries" {
+      [32m+[0m[0m arn                                  = (known after apply)
+      [32m+[0m[0m cidr_block                           = "10.20.0.0/16"
+      [32m+[0m[0m default_network_acl_id               = (known after apply)
+      [32m+[0m[0m default_route_table_id               = (known after apply)
+      [32m+[0m[0m default_security_group_id            = (known after apply)
+      [32m+[0m[0m dhcp_options_id                      = (known after apply)
+      [32m+[0m[0m enable_dns_hostnames                 = true
+      [32m+[0m[0m enable_dns_support                   = true
+      [32m+[0m[0m enable_network_address_usage_metrics = (known after apply)
+      [32m+[0m[0m id                                   = (known after apply)
+      [32m+[0m[0m instance_tenancy                     = "default"
+      [32m+[0m[0m ipv6_association_id                  = (known after apply)
+      [32m+[0m[0m ipv6_cidr_block                      = (known after apply)
+      [32m+[0m[0m ipv6_cidr_block_network_border_group = (known after apply)
+      [32m+[0m[0m main_route_table_id                  = (known after apply)
+      [32m+[0m[0m owner_id                             = (known after apply)
+      [32m+[0m[0m tags_all                             = (known after apply)
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.processing_https[0m will be created
+[0m  [32m+[0m[0m resource "aws_vpc_security_group_egress_rule" "processing_https" {
+      [32m+[0m[0m arn                    = (known after apply)
+      [32m+[0m[0m cidr_ipv4              = "0.0.0.0/0"
+      [32m+[0m[0m from_port              = 443
+      [32m+[0m[0m id                     = (known after apply)
+      [32m+[0m[0m ip_protocol            = "tcp"
+      [32m+[0m[0m security_group_id      = (known after apply)
+      [32m+[0m[0m security_group_rule_id = (known after apply)
+      [32m+[0m[0m tags_all               = {}
+      [32m+[0m[0m to_port                = 443
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.processing_postgres[0m will be created
+[0m  [32m+[0m[0m resource "aws_vpc_security_group_egress_rule" "processing_postgres" {
+      [32m+[0m[0m arn                          = (known after apply)
+      [32m+[0m[0m from_port                    = 5432
+      [32m+[0m[0m id                           = (known after apply)
+      [32m+[0m[0m ip_protocol                  = "tcp"
+      [32m+[0m[0m referenced_security_group_id = (known after apply)
+      [32m+[0m[0m security_group_id            = (known after apply)
+      [32m+[0m[0m security_group_rule_id       = (known after apply)
+      [32m+[0m[0m tags_all                     = {}
+      [32m+[0m[0m to_port                      = 5432
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.storage_https[0m will be created
+[0m  [32m+[0m[0m resource "aws_vpc_security_group_egress_rule" "storage_https" {
+      [32m+[0m[0m arn                    = (known after apply)
+      [32m+[0m[0m cidr_ipv4              = "0.0.0.0/0"
+      [32m+[0m[0m from_port              = 443
+      [32m+[0m[0m id                     = (known after apply)
+      [32m+[0m[0m ip_protocol            = "tcp"
+      [32m+[0m[0m security_group_id      = (known after apply)
+      [32m+[0m[0m security_group_rule_id = (known after apply)
+      [32m+[0m[0m tags_all               = {}
+      [32m+[0m[0m to_port                = 443
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.storage_postgres[0m will be created
+[0m  [32m+[0m[0m resource "aws_vpc_security_group_ingress_rule" "storage_postgres" {
+      [32m+[0m[0m arn                          = (known after apply)
+      [32m+[0m[0m from_port                    = 5432
+      [32m+[0m[0m id                           = (known after apply)
+      [32m+[0m[0m ip_protocol                  = "tcp"
+      [32m+[0m[0m referenced_security_group_id = (known after apply)
+      [32m+[0m[0m security_group_id            = (known after apply)
+      [32m+[0m[0m security_group_rule_id       = (known after apply)
+      [32m+[0m[0m tags_all                     = {}
+      [32m+[0m[0m to_port                      = 5432
+    }
+
+[1m  # random_id.suffix[0m will be created
+[0m  [32m+[0m[0m resource "random_id" "suffix" {
+      [32m+[0m[0m b64_std     = (known after apply)
+      [32m+[0m[0m b64_url     = (known after apply)
+      [32m+[0m[0m byte_length = 4
+      [32m+[0m[0m dec         = (known after apply)
+      [32m+[0m[0m hex         = (known after apply)
+      [32m+[0m[0m id          = (known after apply)
+    }
+
+[1m  # random_password.database[0m will be created
+[0m  [32m+[0m[0m resource "random_password" "database" {
+      [32m+[0m[0m bcrypt_hash = (sensitive value)
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m length      = 24
+      [32m+[0m[0m lower       = true
+      [32m+[0m[0m min_lower   = 0
+      [32m+[0m[0m min_numeric = 0
+      [32m+[0m[0m min_special = 0
+      [32m+[0m[0m min_upper   = 0
+      [32m+[0m[0m number      = true
+      [32m+[0m[0m numeric     = true
+      [32m+[0m[0m result      = (sensitive value)
+      [32m+[0m[0m special     = true
+      [32m+[0m[0m upper       = true
+    }
+
+[1mPlan:[0m 33 to add, 0 to change, 0 to destroy.
+[0m
+Changes to Outputs:
+  [32m+[0m[0m http_api_endpoint_url      = "http-api-disabled"
+  [32m+[0m[0m rds_endpoint_address       = "storage-layer-disabled"
+  [32m+[0m[0m secrets_manager_secret_arn = (known after apply)
+  [32m+[0m[0m sqs_queue_url              = (known after apply)
+[0m[1mrandom_id.suffix: Creating...[0m[0m
+[0m[1mrandom_password.database: Creating...[0m[0m
+[0m[1mrandom_id.suffix: Creation complete after 0s [id=tiRLiw][0m
+[0m[1mrandom_password.database: Creation complete after 0s [id=none][0m
+[0m[1maws_cloudwatch_log_group.api_access: Creating...[0m[0m
+[0m[1maws_vpc.cloud_boundaries: Creating...[0m[0m
+[0m[1maws_cloudwatch_log_group.application: Creating...[0m[0m
+[0m[1maws_secretsmanager_secret.database_credentials: Creating...[0m[0m
+[0m[1maws_iam_role.state_machine: Creating...[0m[0m
+[0m[1maws_iam_role.worker: Creating...[0m[0m
+[0m[1maws_iam_role.api_gateway_sqs: Creating...[0m[0m
+[0m[1maws_sqs_queue.intake: Creating...[0m[0m
+[0m[1maws_iam_role.health: Creating...[0m[0m
+[0m[1maws_iam_role.pipe: Creating...[0m[0m
+[0m[1maws_secretsmanager_secret.database_credentials: Creation complete after 1s [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:database-credentials-20260404180550173200000008-PFRgNb][0m
+[0m[1maws_secretsmanager_secret_version.database_credentials: Creating...[0m[0m
+[0m[1maws_secretsmanager_secret_version.database_credentials: Creation complete after 0s [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:database-credentials-20260404180550173200000008-PFRgNb|terraform-2026040418055085360000000a][0m
+[0m[1maws_iam_role.worker: Creation complete after 1s [id=payments-worker-role-20260404180550148100000004][0m
+[0m[1maws_iam_role.health: Creation complete after 1s [id=payments-health-role-20260404180550146000000002][0m
+[0m[1maws_iam_role.state_machine: Creation complete after 1s [id=payments-state-machine-role-20260404180550164900000007][0m
+[0m[1maws_iam_role_policy_attachment.worker_basic: Creating...[0m[0m
+[0m[1maws_iam_role.api_gateway_sqs: Creation complete after 1s [id=payments-api-gateway-sqs-role-20260404180550148200000005][0m
+[0m[1maws_iam_role.pipe: Creation complete after 1s [id=payments-pipe-role-20260404180550146700000003][0m
+[0m[1maws_iam_role_policy_attachment.health_basic: Creating...[0m[0m
+[0m[1maws_iam_role_policy_attachment.worker_basic: Creation complete after 0s [id=payments-worker-role-20260404180550148100000004-2026040418055097720000000b][0m
+[0m[1maws_lambda_function.health: Creating...[0m[0m
+[0m[1maws_lambda_function.enrichment: Creating...[0m[0m
+[0m[1maws_iam_role_policy_attachment.health_basic: Creation complete after 0s [id=payments-health-role-20260404180550146000000002-2026040418055097910000000c][0m
+[0m[1maws_sfn_state_machine.processing: Creating...[0m[0m
+[0m[1maws_cloudwatch_log_group.application: Creation complete after 1s [id=/application/payments-b6244b8b][0m
+[0m[1maws_cloudwatch_log_group.api_access: Creation complete after 1s [id=/apigateway/payments-access-b6244b8b][0m
+[0m[1maws_iam_role_policy.health: Creating...[0m[0m
+[0m[1maws_iam_role_policy.health: Creation complete after 0s [id=payments-health-role-20260404180550146000000002:payments-health-inline][0m
+[0m[1maws_sfn_state_machine.processing: Creation complete after 0s [id=arn:aws:states:us-east-1:000000000000:stateMachine:payments-processing-b6244b8b][0m
+[0m[1maws_lambda_function.enrichment: Creation complete after 6s [id=payments-enrichment-b6244b8b][0m
+[0m[1maws_sqs_queue.intake: Still creating... [10s elapsed][0m[0m
+[0m[1maws_vpc.cloud_boundaries: Still creating... [10s elapsed][0m[0m
+[0m[1maws_lambda_function.health: Still creating... [10s elapsed][0m[0m
+[0m[1maws_vpc.cloud_boundaries: Creation complete after 11s [id=vpc-6a4fea21dedb2a054][0m
+[0m[1maws_subnet.private_b: Creating...[0m[0m
+[0m[1maws_security_group.storage_layer: Creating...[0m[0m
+[0m[1maws_subnet.private_a: Creating...[0m[0m
+[0m[1maws_security_group.processing_units: Creating...[0m[0m
+[0m[1maws_subnet.private_b: Creation complete after 0s [id=subnet-80fdd2fc31f423ad4][0m
+[0m[1maws_subnet.private_a: Creation complete after 0s [id=subnet-8226165b904babf06][0m
+[0m[1maws_security_group.processing_units: Creation complete after 1s [id=sg-4c04cb7ca6b625579][0m
+[0m[1maws_security_group.storage_layer: Creation complete after 1s [id=sg-5e4c575cb167a093f][0m
+[0m[1maws_lambda_function.worker: Creating...[0m[0m
+[0m[1maws_vpc_security_group_egress_rule.processing_postgres: Creating...[0m[0m
+[0m[1maws_vpc_security_group_ingress_rule.storage_postgres: Creating...[0m[0m
+[0m[1maws_vpc_security_group_egress_rule.processing_https: Creating...[0m[0m
+[0m[1maws_vpc_security_group_egress_rule.storage_https: Creating...[0m[0m
+[0m[1maws_vpc_security_group_egress_rule.processing_postgres: Creation complete after 0s [id=sgr-b0bd1738a82225fbd][0m
+[0m[1maws_vpc_security_group_egress_rule.storage_https: Creation complete after 0s [id=sgr-5f9db38a1145e150e][0m
+[0m[1maws_vpc_security_group_ingress_rule.storage_postgres: Creation complete after 0s [id=sgr-a206109b1a9afc784][0m
+[0m[1maws_vpc_security_group_egress_rule.processing_https: Creation complete after 0s [id=sgr-f1e6623e202df9d7c][0m
+[0m[1maws_lambda_function.health: Creation complete after 11s [id=payments-health-b6244b8b][0m
+[0m[1maws_lambda_function.worker: Creation complete after 5s [id=payments-worker-b6244b8b][0m
+[0m[1maws_sqs_queue.intake: Still creating... [20s elapsed][0m[0m
+[0m[1maws_sqs_queue.intake: Creation complete after 26s [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/terraform-20260404180550164500000006][0m
+[0m[1maws_iam_role_policy.api_gateway_sqs: Creating...[0m[0m
+[0m[1maws_iam_role_policy.worker: Creating...[0m[0m
+[0m[1maws_iam_role_policy.pipe: Creating...[0m[0m
+[0m[1maws_sqs_queue_policy.intake: Creating...[0m[0m
+[0m[1maws_lambda_event_source_mapping.worker: Creating...[0m[0m
+[0m[1maws_iam_role_policy.worker: Creation complete after 0s [id=payments-worker-role-20260404180550148100000004:payments-worker-inline][0m
+[0m[1maws_iam_role_policy.pipe: Creation complete after 0s [id=payments-pipe-role-20260404180550146700000003:payments-pipe-inline][0m
+[0m[1maws_lambda_event_source_mapping.worker: Creation complete after 0s [id=a9153f75-3cfb-4649-b790-5dbfff3e2701][0m
+[0m[1maws_iam_role_policy.api_gateway_sqs: Creation complete after 0s [id=payments-api-gateway-sqs-role-20260404180550148200000005:payments-api-gateway-sqs-inline][0m
+[0m[1maws_sqs_queue_policy.intake: Still creating... [10s elapsed][0m[0m
+[0m[1maws_sqs_queue_policy.intake: Still creating... [20s elapsed][0m[0m
+[0m[1maws_sqs_queue_policy.intake: Creation complete after 25s [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/terraform-20260404180550164500000006][0m
+[0m[1m[32m
+Apply complete! Resources: 33 added, 0 changed, 0 destroyed.
+[0m[0m[1m[32m
+Outputs:
+
+[0mhttp_api_endpoint_url = "http-api-disabled"
+rds_endpoint_address = "storage-layer-disabled"
+secrets_manager_secret_arn = "arn:aws:secretsmanager:us-east-1:000000000000:secret:database-credentials-20260404180550173200000008-PFRgNb"
+sqs_queue_url = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/terraform-20260404180550164500000006"
+Generating state.json for integration tests...
+[32m✅ Step passed: Deploy (LocalStack)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Integration tests[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest integration tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+collecting ... collected 4 items
+
+tests/integration_tests.py::test_state_contains_expected_outputs PASSED  [ 25%]
+tests/integration_tests.py::test_state_resource_counts_match_the_prompt PASSED [ 50%]
+tests/integration_tests.py::test_deployed_queue_database_and_api_values_match_contract PASSED [ 75%]
+tests/integration_tests.py::test_worker_and_health_lambdas_keep_their_network_and_permission_boundaries PASSED [100%]
+
+============================== 4 passed in 0.03s ===============================
+[32m✅ Step passed: Integration tests[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Destroy / Cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running terraform destroy...
+[0m[1mrandom_id.suffix: Refreshing state... [id=tiRLiw][0m
+[0m[1mrandom_password.database: Refreshing state... [id=none][0m
+[0m[1mdata.archive_file.enrichment: Reading...[0m[0m
+[0m[1mdata.archive_file.health: Reading...[0m[0m
+[0m[1mdata.archive_file.worker: Reading...[0m[0m
+[0m[1mdata.archive_file.health: Read complete after 0s [id=2bec290251969639338a371afcabf5265798b7eb][0m
+[0m[1mdata.archive_file.worker: Read complete after 0s [id=bf2ed61524be23a87e865d1562f0ae15e94e021a][0m
+[0m[1mdata.archive_file.enrichment: Read complete after 0s [id=094ef9f3c43d779a9c48a8cdc9afae7c655cc3a7][0m
+[0m[1maws_cloudwatch_log_group.api_access: Refreshing state... [id=/apigateway/payments-access-b6244b8b][0m
+[0m[1maws_cloudwatch_log_group.application: Refreshing state... [id=/application/payments-b6244b8b][0m
+[0m[1maws_sqs_queue.intake: Refreshing state... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/terraform-20260404180550164500000006][0m
+[0m[1maws_vpc.cloud_boundaries: Refreshing state... [id=vpc-6a4fea21dedb2a054][0m
+[0m[1maws_iam_role.pipe: Refreshing state... [id=payments-pipe-role-20260404180550146700000003][0m
+[0m[1maws_iam_role.state_machine: Refreshing state... [id=payments-state-machine-role-20260404180550164900000007][0m
+[0m[1maws_iam_role.worker: Refreshing state... [id=payments-worker-role-20260404180550148100000004][0m
+[0m[1maws_iam_role.health: Refreshing state... [id=payments-health-role-20260404180550146000000002][0m
+[0m[1maws_iam_role.api_gateway_sqs: Refreshing state... [id=payments-api-gateway-sqs-role-20260404180550148200000005][0m
+[0m[1maws_secretsmanager_secret.database_credentials: Refreshing state... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:database-credentials-20260404180550173200000008-PFRgNb][0m
+[0m[1maws_secretsmanager_secret_version.database_credentials: Refreshing state... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:database-credentials-20260404180550173200000008-PFRgNb|terraform-2026040418055085360000000a][0m
+[0m[1maws_sfn_state_machine.processing: Refreshing state... [id=arn:aws:states:us-east-1:000000000000:stateMachine:payments-processing-b6244b8b][0m
+[0m[1maws_iam_role_policy_attachment.health_basic: Refreshing state... [id=payments-health-role-20260404180550146000000002-2026040418055097910000000c][0m
+[0m[1maws_iam_role_policy.worker: Refreshing state... [id=payments-worker-role-20260404180550148100000004:payments-worker-inline][0m
+[0m[1maws_iam_role_policy_attachment.worker_basic: Refreshing state... [id=payments-worker-role-20260404180550148100000004-2026040418055097720000000b][0m
+[0m[1maws_lambda_function.health: Refreshing state... [id=payments-health-b6244b8b][0m
+[0m[1maws_sqs_queue_policy.intake: Refreshing state... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/terraform-20260404180550164500000006][0m
+[0m[1maws_lambda_function.enrichment: Refreshing state... [id=payments-enrichment-b6244b8b][0m
+[0m[1maws_iam_role_policy.health: Refreshing state... [id=payments-health-role-20260404180550146000000002:payments-health-inline][0m
+[0m[1maws_iam_role_policy.api_gateway_sqs: Refreshing state... [id=payments-api-gateway-sqs-role-20260404180550148200000005:payments-api-gateway-sqs-inline][0m
+[0m[1maws_security_group.processing_units: Refreshing state... [id=sg-4c04cb7ca6b625579][0m
+[0m[1maws_security_group.storage_layer: Refreshing state... [id=sg-5e4c575cb167a093f][0m
+[0m[1maws_subnet.private_b: Refreshing state... [id=subnet-80fdd2fc31f423ad4][0m
+[0m[1maws_subnet.private_a: Refreshing state... [id=subnet-8226165b904babf06][0m
+[0m[1maws_lambda_function.worker: Refreshing state... [id=payments-worker-b6244b8b][0m
+[0m[1maws_vpc_security_group_egress_rule.storage_https: Refreshing state... [id=sgr-5f9db38a1145e150e][0m
+[0m[1maws_vpc_security_group_egress_rule.processing_postgres: Refreshing state... [id=sgr-b0bd1738a82225fbd][0m
+[0m[1maws_vpc_security_group_ingress_rule.storage_postgres: Refreshing state... [id=sgr-a206109b1a9afc784][0m
+[0m[1maws_vpc_security_group_egress_rule.processing_https: Refreshing state... [id=sgr-f1e6623e202df9d7c][0m
+[0m[1maws_iam_role_policy.pipe: Refreshing state... [id=payments-pipe-role-20260404180550146700000003:payments-pipe-inline][0m
+[0m[1maws_lambda_event_source_mapping.worker: Refreshing state... [id=a9153f75-3cfb-4649-b790-5dbfff3e2701][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [31m-[0m destroy[0m
+
+Terraform will perform the following actions:
+
+[1m  # aws_cloudwatch_log_group.api_access[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_cloudwatch_log_group" "api_access" {
+      [31m-[0m[0m arn               = "arn:aws:logs:us-east-1:000000000000:log-group:/apigateway/payments-access-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m id                = "/apigateway/payments-access-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m log_group_class   = "STANDARD" [90m-> null[0m[0m
+      [31m-[0m[0m name              = "/apigateway/payments-access-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m retention_in_days = 14 [90m-> null[0m[0m
+      [31m-[0m[0m skip_destroy      = false [90m-> null[0m[0m
+      [31m-[0m[0m tags              = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all          = {} [90m-> null[0m[0m
+        [90m# (2 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # aws_cloudwatch_log_group.application[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_cloudwatch_log_group" "application" {
+      [31m-[0m[0m arn               = "arn:aws:logs:us-east-1:000000000000:log-group:/application/payments-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m id                = "/application/payments-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m log_group_class   = "STANDARD" [90m-> null[0m[0m
+      [31m-[0m[0m name              = "/application/payments-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m retention_in_days = 14 [90m-> null[0m[0m
+      [31m-[0m[0m skip_destroy      = false [90m-> null[0m[0m
+      [31m-[0m[0m tags              = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all          = {} [90m-> null[0m[0m
+        [90m# (2 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # aws_iam_role.api_gateway_sqs[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_iam_role" "api_gateway_sqs" {
+      [31m-[0m[0m arn                   = "arn:aws:iam::000000000000:role/payments-api-gateway-sqs-role-20260404180550148200000005" [90m-> null[0m[0m
+      [31m-[0m[0m assume_role_policy    = jsonencode(
+            {
+              [31m-[0m[0m Statement = [
+                  [31m-[0m[0m {
+                      [31m-[0m[0m Action    = "sts:AssumeRole"
+                      [31m-[0m[0m Effect    = "Allow"
+                      [31m-[0m[0m Principal = {
+                          [31m-[0m[0m Service = "apigateway.amazonaws.com"
+                        }
+                    },
+                ]
+              [31m-[0m[0m Version   = "2012-10-17"
+            }
+        ) [90m-> null[0m[0m
+      [31m-[0m[0m create_date           = "2026-04-04T18:05:50Z" [90m-> null[0m[0m
+      [31m-[0m[0m force_detach_policies = false [90m-> null[0m[0m
+      [31m-[0m[0m id                    = "payments-api-gateway-sqs-role-20260404180550148200000005" [90m-> null[0m[0m
+      [31m-[0m[0m managed_policy_arns   = [] [90m-> null[0m[0m
+      [31m-[0m[0m max_session_duration  = 3600 [90m-> null[0m[0m
+      [31m-[0m[0m name                  = "payments-api-gateway-sqs-role-20260404180550148200000005" [90m-> null[0m[0m
+      [31m-[0m[0m name_prefix           = "payments-api-gateway-sqs-role-" [90m-> null[0m[0m
+      [31m-[0m[0m path                  = "/" [90m-> null[0m[0m
+      [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all              = {} [90m-> null[0m[0m
+      [31m-[0m[0m unique_id             = "AROAQAAAAAAANYZH76IDM" [90m-> null[0m[0m
+        [90m# (2 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m inline_policy {
+          [31m-[0m[0m name   = "payments-api-gateway-sqs-inline" [90m-> null[0m[0m
+          [31m-[0m[0m policy = jsonencode(
+                {
+                  [31m-[0m[0m Statement = [
+                      [31m-[0m[0m {
+                          [31m-[0m[0m Action   = [
+                              [31m-[0m[0m "sqs:SendMessage",
+                            ]
+                          [31m-[0m[0m Effect   = "Allow"
+                          [31m-[0m[0m Resource = "arn:aws:sqs:us-east-1:000000000000:terraform-20260404180550164500000006"
+                        },
+                    ]
+                  [31m-[0m[0m Version   = "2012-10-17"
+                }
+            ) [90m-> null[0m[0m
+        }
+    }
+
+[1m  # aws_iam_role.health[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_iam_role" "health" {
+      [31m-[0m[0m arn                   = "arn:aws:iam::000000000000:role/payments-health-role-20260404180550146000000002" [90m-> null[0m[0m
+      [31m-[0m[0m assume_role_policy    = jsonencode(
+            {
+              [31m-[0m[0m Statement = [
+                  [31m-[0m[0m {
+                      [31m-[0m[0m Action    = "sts:AssumeRole"
+                      [31m-[0m[0m Effect    = "Allow"
+                      [31m-[0m[0m Principal = {
+                          [31m-[0m[0m Service = "lambda.amazonaws.com"
+                        }
+                    },
+                ]
+              [31m-[0m[0m Version   = "2012-10-17"
+            }
+        ) [90m-> null[0m[0m
+      [31m-[0m[0m create_date           = "2026-04-04T18:05:50Z" [90m-> null[0m[0m
+      [31m-[0m[0m force_detach_policies = false [90m-> null[0m[0m
+      [31m-[0m[0m id                    = "payments-health-role-20260404180550146000000002" [90m-> null[0m[0m
+      [31m-[0m[0m managed_policy_arns   = [
+          [31m-[0m[0m "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m max_session_duration  = 3600 [90m-> null[0m[0m
+      [31m-[0m[0m name                  = "payments-health-role-20260404180550146000000002" [90m-> null[0m[0m
+      [31m-[0m[0m name_prefix           = "payments-health-role-" [90m-> null[0m[0m
+      [31m-[0m[0m path                  = "/" [90m-> null[0m[0m
+      [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all              = {} [90m-> null[0m[0m
+      [31m-[0m[0m unique_id             = "AROAQAAAAAAALMAC5DEPP" [90m-> null[0m[0m
+        [90m# (2 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m inline_policy {
+          [31m-[0m[0m name   = "payments-health-inline" [90m-> null[0m[0m
+          [31m-[0m[0m policy = jsonencode(
+                {
+                  [31m-[0m[0m Statement = [
+                      [31m-[0m[0m {
+                          [31m-[0m[0m Action   = [
+                              [31m-[0m[0m "logs:PutLogEvents",
+                            ]
+                          [31m-[0m[0m Effect   = "Allow"
+                          [31m-[0m[0m Resource = "arn:aws:logs:us-east-1:000000000000:log-group:/application/payments-b6244b8b:*"
+                          [31m-[0m[0m Sid      = "WriteApplicationLogs"
+                        },
+                    ]
+                  [31m-[0m[0m Version   = "2012-10-17"
+                }
+            ) [90m-> null[0m[0m
+        }
+    }
+
+[1m  # aws_iam_role.pipe[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_iam_role" "pipe" {
+      [31m-[0m[0m arn                   = "arn:aws:iam::000000000000:role/payments-pipe-role-20260404180550146700000003" [90m-> null[0m[0m
+      [31m-[0m[0m assume_role_policy    = jsonencode(
+            {
+              [31m-[0m[0m Statement = [
+                  [31m-[0m[0m {
+                      [31m-[0m[0m Action    = "sts:AssumeRole"
+                      [31m-[0m[0m Effect    = "Allow"
+                      [31m-[0m[0m Principal = {
+                          [31m-[0m[0m Service = "pipes.amazonaws.com"
+                        }
+                    },
+                ]
+              [31m-[0m[0m Version   = "2012-10-17"
+            }
+        ) [90m-> null[0m[0m
+      [31m-[0m[0m create_date           = "2026-04-04T18:05:50Z" [90m-> null[0m[0m
+      [31m-[0m[0m force_detach_policies = false [90m-> null[0m[0m
+      [31m-[0m[0m id                    = "payments-pipe-role-20260404180550146700000003" [90m-> null[0m[0m
+      [31m-[0m[0m managed_policy_arns   = [] [90m-> null[0m[0m
+      [31m-[0m[0m max_session_duration  = 3600 [90m-> null[0m[0m
+      [31m-[0m[0m name                  = "payments-pipe-role-20260404180550146700000003" [90m-> null[0m[0m
+      [31m-[0m[0m name_prefix           = "payments-pipe-role-" [90m-> null[0m[0m
+      [31m-[0m[0m path                  = "/" [90m-> null[0m[0m
+      [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all              = {} [90m-> null[0m[0m
+      [31m-[0m[0m unique_id             = "AROAQAAAAAAAAI6V4PJEZ" [90m-> null[0m[0m
+        [90m# (2 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m inline_policy {
+          [31m-[0m[0m name   = "payments-pipe-inline" [90m-> null[0m[0m
+          [31m-[0m[0m policy = jsonencode(
+                {
+                  [31m-[0m[0m Statement = [
+                      [31m-[0m[0m {
+                          [31m-[0m[0m Action   = [
+                              [31m-[0m[0m "sqs:DeleteMessage",
+                              [31m-[0m[0m "sqs:GetQueueAttributes",
+                              [31m-[0m[0m "sqs:ReceiveMessage",
+                            ]
+                          [31m-[0m[0m Effect   = "Allow"
+                          [31m-[0m[0m Resource = "arn:aws:sqs:us-east-1:000000000000:terraform-20260404180550164500000006"
+                        },
+                      [31m-[0m[0m {
+                          [31m-[0m[0m Action   = [
+                              [31m-[0m[0m "lambda:InvokeFunction",
+                            ]
+                          [31m-[0m[0m Effect   = "Allow"
+                          [31m-[0m[0m Resource = [
+                              [31m-[0m[0m "arn:aws:lambda:us-east-1:000000000000:function:payments-enrichment-b6244b8b",
+                              [31m-[0m[0m "arn:aws:lambda:us-east-1:000000000000:function:payments-enrichment-b6244b8b:*",
+                            ]
+                        },
+                      [31m-[0m[0m {
+                          [31m-[0m[0m Action   = [
+                              [31m-[0m[0m "states:StartExecution",
+                            ]
+                          [31m-[0m[0m Effect   = "Allow"
+                          [31m-[0m[0m Resource = "arn:aws:states:us-east-1:000000000000:stateMachine:payments-processing-b6244b8b"
+                        },
+                    ]
+                  [31m-[0m[0m Version   = "2012-10-17"
+                }
+            ) [90m-> null[0m[0m
+        }
+    }
+
+[1m  # aws_iam_role.state_machine[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_iam_role" "state_machine" {
+      [31m-[0m[0m arn                   = "arn:aws:iam::000000000000:role/payments-state-machine-role-20260404180550164900000007" [90m-> null[0m[0m
+      [31m-[0m[0m assume_role_policy    = jsonencode(
+            {
+              [31m-[0m[0m Statement = [
+                  [31m-[0m[0m {
+                      [31m-[0m[0m Action    = "sts:AssumeRole"
+                      [31m-[0m[0m Effect    = "Allow"
+                      [31m-[0m[0m Principal = {
+                          [31m-[0m[0m Service = "states.amazonaws.com"
+                        }
+                    },
+                ]
+              [31m-[0m[0m Version   = "2012-10-17"
+            }
+        ) [90m-> null[0m[0m
+      [31m-[0m[0m create_date           = "2026-04-04T18:05:50Z" [90m-> null[0m[0m
+      [31m-[0m[0m force_detach_policies = false [90m-> null[0m[0m
+      [31m-[0m[0m id                    = "payments-state-machine-role-20260404180550164900000007" [90m-> null[0m[0m
+      [31m-[0m[0m managed_policy_arns   = [] [90m-> null[0m[0m
+      [31m-[0m[0m max_session_duration  = 3600 [90m-> null[0m[0m
+      [31m-[0m[0m name                  = "payments-state-machine-role-20260404180550164900000007" [90m-> null[0m[0m
+      [31m-[0m[0m name_prefix           = "payments-state-machine-role-" [90m-> null[0m[0m
+      [31m-[0m[0m path                  = "/" [90m-> null[0m[0m
+      [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all              = {} [90m-> null[0m[0m
+      [31m-[0m[0m unique_id             = "AROAQAAAAAAALCW27HU6F" [90m-> null[0m[0m
+        [90m# (2 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # aws_iam_role.worker[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_iam_role" "worker" {
+      [31m-[0m[0m arn                   = "arn:aws:iam::000000000000:role/payments-worker-role-20260404180550148100000004" [90m-> null[0m[0m
+      [31m-[0m[0m assume_role_policy    = jsonencode(
+            {
+              [31m-[0m[0m Statement = [
+                  [31m-[0m[0m {
+                      [31m-[0m[0m Action    = "sts:AssumeRole"
+                      [31m-[0m[0m Effect    = "Allow"
+                      [31m-[0m[0m Principal = {
+                          [31m-[0m[0m Service = "lambda.amazonaws.com"
+                        }
+                    },
+                ]
+              [31m-[0m[0m Version   = "2012-10-17"
+            }
+        ) [90m-> null[0m[0m
+      [31m-[0m[0m create_date           = "2026-04-04T18:05:50Z" [90m-> null[0m[0m
+      [31m-[0m[0m force_detach_policies = false [90m-> null[0m[0m
+      [31m-[0m[0m id                    = "payments-worker-role-20260404180550148100000004" [90m-> null[0m[0m
+      [31m-[0m[0m managed_policy_arns   = [
+          [31m-[0m[0m "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m max_session_duration  = 3600 [90m-> null[0m[0m
+      [31m-[0m[0m name                  = "payments-worker-role-20260404180550148100000004" [90m-> null[0m[0m
+      [31m-[0m[0m name_prefix           = "payments-worker-role-" [90m-> null[0m[0m
+      [31m-[0m[0m path                  = "/" [90m-> null[0m[0m
+      [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all              = {} [90m-> null[0m[0m
+      [31m-[0m[0m unique_id             = "AROAQAAAAAAADUNURTTHG" [90m-> null[0m[0m
+        [90m# (2 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m inline_policy {
+          [31m-[0m[0m name   = "payments-worker-inline" [90m-> null[0m[0m
+          [31m-[0m[0m policy = jsonencode(
+                {
+                  [31m-[0m[0m Statement = [
+                      [31m-[0m[0m {
+                          [31m-[0m[0m Action   = [
+                              [31m-[0m[0m "sqs:DeleteMessage",
+                              [31m-[0m[0m "sqs:GetQueueAttributes",
+                              [31m-[0m[0m "sqs:ReceiveMessage",
+                            ]
+                          [31m-[0m[0m Effect   = "Allow"
+                          [31m-[0m[0m Resource = "arn:aws:sqs:us-east-1:000000000000:terraform-20260404180550164500000006"
+                          [31m-[0m[0m Sid      = "QueueRead"
+                        },
+                      [31m-[0m[0m {
+                          [31m-[0m[0m Action   = [
+                              [31m-[0m[0m "secretsmanager:GetSecretValue",
+                            ]
+                          [31m-[0m[0m Effect   = "Allow"
+                          [31m-[0m[0m Resource = "arn:aws:secretsmanager:us-east-1:000000000000:secret:database-credentials-20260404180550173200000008-PFRgNb"
+                          [31m-[0m[0m Sid      = "ReadDatabaseSecret"
+                        },
+                      [31m-[0m[0m {
+                          [31m-[0m[0m Action   = [
+                              [31m-[0m[0m "ec2:AssignPrivateIpAddresses",
+                              [31m-[0m[0m "ec2:CreateNetworkInterface",
+                              [31m-[0m[0m "ec2:DeleteNetworkInterface",
+                              [31m-[0m[0m "ec2:DescribeNetworkInterfaces",
+                              [31m-[0m[0m "ec2:UnassignPrivateIpAddresses",
+                            ]
+                          [31m-[0m[0m Effect   = "Allow"
+                          [31m-[0m[0m Resource = "*"
+                          [31m-[0m[0m Sid      = "ManageVpcEnis"
+                        },
+                    ]
+                  [31m-[0m[0m Version   = "2012-10-17"
+                }
+            ) [90m-> null[0m[0m
+        }
+    }
+
+[1m  # aws_iam_role_policy.api_gateway_sqs[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_iam_role_policy" "api_gateway_sqs" {
+      [31m-[0m[0m id          = "payments-api-gateway-sqs-role-20260404180550148200000005:payments-api-gateway-sqs-inline" [90m-> null[0m[0m
+      [31m-[0m[0m name        = "payments-api-gateway-sqs-inline" [90m-> null[0m[0m
+      [31m-[0m[0m policy      = jsonencode(
+            {
+              [31m-[0m[0m Statement = [
+                  [31m-[0m[0m {
+                      [31m-[0m[0m Action   = [
+                          [31m-[0m[0m "sqs:SendMessage",
+                        ]
+                      [31m-[0m[0m Effect   = "Allow"
+                      [31m-[0m[0m Resource = "arn:aws:sqs:us-east-1:000000000000:terraform-20260404180550164500000006"
+                    },
+                ]
+              [31m-[0m[0m Version   = "2012-10-17"
+            }
+        ) [90m-> null[0m[0m
+      [31m-[0m[0m role        = "payments-api-gateway-sqs-role-20260404180550148200000005" [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_iam_role_policy.health[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_iam_role_policy" "health" {
+      [31m-[0m[0m id          = "payments-health-role-20260404180550146000000002:payments-health-inline" [90m-> null[0m[0m
+      [31m-[0m[0m name        = "payments-health-inline" [90m-> null[0m[0m
+      [31m-[0m[0m policy      = jsonencode(
+            {
+              [31m-[0m[0m Statement = [
+                  [31m-[0m[0m {
+                      [31m-[0m[0m Action   = [
+                          [31m-[0m[0m "logs:PutLogEvents",
+                        ]
+                      [31m-[0m[0m Effect   = "Allow"
+                      [31m-[0m[0m Resource = "arn:aws:logs:us-east-1:000000000000:log-group:/application/payments-b6244b8b:*"
+                      [31m-[0m[0m Sid      = "WriteApplicationLogs"
+                    },
+                ]
+              [31m-[0m[0m Version   = "2012-10-17"
+            }
+        ) [90m-> null[0m[0m
+      [31m-[0m[0m role        = "payments-health-role-20260404180550146000000002" [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_iam_role_policy.pipe[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_iam_role_policy" "pipe" {
+      [31m-[0m[0m id          = "payments-pipe-role-20260404180550146700000003:payments-pipe-inline" [90m-> null[0m[0m
+      [31m-[0m[0m name        = "payments-pipe-inline" [90m-> null[0m[0m
+      [31m-[0m[0m policy      = jsonencode(
+            {
+              [31m-[0m[0m Statement = [
+                  [31m-[0m[0m {
+                      [31m-[0m[0m Action   = [
+                          [31m-[0m[0m "sqs:DeleteMessage",
+                          [31m-[0m[0m "sqs:GetQueueAttributes",
+                          [31m-[0m[0m "sqs:ReceiveMessage",
+                        ]
+                      [31m-[0m[0m Effect   = "Allow"
+                      [31m-[0m[0m Resource = "arn:aws:sqs:us-east-1:000000000000:terraform-20260404180550164500000006"
+                    },
+                  [31m-[0m[0m {
+                      [31m-[0m[0m Action   = [
+                          [31m-[0m[0m "lambda:InvokeFunction",
+                        ]
+                      [31m-[0m[0m Effect   = "Allow"
+                      [31m-[0m[0m Resource = [
+                          [31m-[0m[0m "arn:aws:lambda:us-east-1:000000000000:function:payments-enrichment-b6244b8b",
+                          [31m-[0m[0m "arn:aws:lambda:us-east-1:000000000000:function:payments-enrichment-b6244b8b:*",
+                        ]
+                    },
+                  [31m-[0m[0m {
+                      [31m-[0m[0m Action   = [
+                          [31m-[0m[0m "states:StartExecution",
+                        ]
+                      [31m-[0m[0m Effect   = "Allow"
+                      [31m-[0m[0m Resource = "arn:aws:states:us-east-1:000000000000:stateMachine:payments-processing-b6244b8b"
+                    },
+                ]
+              [31m-[0m[0m Version   = "2012-10-17"
+            }
+        ) [90m-> null[0m[0m
+      [31m-[0m[0m role        = "payments-pipe-role-20260404180550146700000003" [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_iam_role_policy.worker[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_iam_role_policy" "worker" {
+      [31m-[0m[0m id          = "payments-worker-role-20260404180550148100000004:payments-worker-inline" [90m-> null[0m[0m
+      [31m-[0m[0m name        = "payments-worker-inline" [90m-> null[0m[0m
+      [31m-[0m[0m policy      = jsonencode(
+            {
+              [31m-[0m[0m Statement = [
+                  [31m-[0m[0m {
+                      [31m-[0m[0m Action   = [
+                          [31m-[0m[0m "sqs:DeleteMessage",
+                          [31m-[0m[0m "sqs:GetQueueAttributes",
+                          [31m-[0m[0m "sqs:ReceiveMessage",
+                        ]
+                      [31m-[0m[0m Effect   = "Allow"
+                      [31m-[0m[0m Resource = "arn:aws:sqs:us-east-1:000000000000:terraform-20260404180550164500000006"
+                      [31m-[0m[0m Sid      = "QueueRead"
+                    },
+                  [31m-[0m[0m {
+                      [31m-[0m[0m Action   = [
+                          [31m-[0m[0m "secretsmanager:GetSecretValue",
+                        ]
+                      [31m-[0m[0m Effect   = "Allow"
+                      [31m-[0m[0m Resource = "arn:aws:secretsmanager:us-east-1:000000000000:secret:database-credentials-20260404180550173200000008-PFRgNb"
+                      [31m-[0m[0m Sid      = "ReadDatabaseSecret"
+                    },
+                  [31m-[0m[0m {
+                      [31m-[0m[0m Action   = [
+                          [31m-[0m[0m "ec2:AssignPrivateIpAddresses",
+                          [31m-[0m[0m "ec2:CreateNetworkInterface",
+                          [31m-[0m[0m "ec2:DeleteNetworkInterface",
+                          [31m-[0m[0m "ec2:DescribeNetworkInterfaces",
+                          [31m-[0m[0m "ec2:UnassignPrivateIpAddresses",
+                        ]
+                      [31m-[0m[0m Effect   = "Allow"
+                      [31m-[0m[0m Resource = "*"
+                      [31m-[0m[0m Sid      = "ManageVpcEnis"
+                    },
+                ]
+              [31m-[0m[0m Version   = "2012-10-17"
+            }
+        ) [90m-> null[0m[0m
+      [31m-[0m[0m role        = "payments-worker-role-20260404180550148100000004" [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_iam_role_policy_attachment.health_basic[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_iam_role_policy_attachment" "health_basic" {
+      [31m-[0m[0m id         = "payments-health-role-20260404180550146000000002-2026040418055097910000000c" [90m-> null[0m[0m
+      [31m-[0m[0m policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole" [90m-> null[0m[0m
+      [31m-[0m[0m role       = "payments-health-role-20260404180550146000000002" [90m-> null[0m[0m
+    }
+
+[1m  # aws_iam_role_policy_attachment.worker_basic[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_iam_role_policy_attachment" "worker_basic" {
+      [31m-[0m[0m id         = "payments-worker-role-20260404180550148100000004-2026040418055097720000000b" [90m-> null[0m[0m
+      [31m-[0m[0m policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole" [90m-> null[0m[0m
+      [31m-[0m[0m role       = "payments-worker-role-20260404180550148100000004" [90m-> null[0m[0m
+    }
+
+[1m  # aws_lambda_event_source_mapping.worker[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_lambda_event_source_mapping" "worker" {
+      [31m-[0m[0m arn                                = "arn:aws:lambda:us-east-1:000000000000:event-source-mapping:a9153f75-3cfb-4649-b790-5dbfff3e2701" [90m-> null[0m[0m
+      [31m-[0m[0m batch_size                         = 5 [90m-> null[0m[0m
+      [31m-[0m[0m bisect_batch_on_function_error     = false [90m-> null[0m[0m
+      [31m-[0m[0m enabled                            = true [90m-> null[0m[0m
+      [31m-[0m[0m event_source_arn                   = "arn:aws:sqs:us-east-1:000000000000:terraform-20260404180550164500000006" [90m-> null[0m[0m
+      [31m-[0m[0m function_arn                       = "arn:aws:lambda:us-east-1:000000000000:function:payments-worker-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m function_name                      = "arn:aws:lambda:us-east-1:000000000000:function:payments-worker-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m function_response_types            = [] [90m-> null[0m[0m
+      [31m-[0m[0m id                                 = "a9153f75-3cfb-4649-b790-5dbfff3e2701" [90m-> null[0m[0m
+      [31m-[0m[0m last_modified                      = "2026-04-04T18:06:16Z" [90m-> null[0m[0m
+      [31m-[0m[0m maximum_batching_window_in_seconds = 5 [90m-> null[0m[0m
+      [31m-[0m[0m maximum_record_age_in_seconds      = 0 [90m-> null[0m[0m
+      [31m-[0m[0m maximum_retry_attempts             = 0 [90m-> null[0m[0m
+      [31m-[0m[0m parallelization_factor             = 0 [90m-> null[0m[0m
+      [31m-[0m[0m queues                             = [] [90m-> null[0m[0m
+      [31m-[0m[0m state                              = "Enabled" [90m-> null[0m[0m
+      [31m-[0m[0m state_transition_reason            = "USER_INITIATED" [90m-> null[0m[0m
+      [31m-[0m[0m tags                               = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                           = {} [90m-> null[0m[0m
+      [31m-[0m[0m topics                             = [] [90m-> null[0m[0m
+      [31m-[0m[0m tumbling_window_in_seconds         = 0 [90m-> null[0m[0m
+      [31m-[0m[0m uuid                               = "a9153f75-3cfb-4649-b790-5dbfff3e2701" [90m-> null[0m[0m
+        [90m# (4 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # aws_lambda_function.enrichment[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_lambda_function" "enrichment" {
+      [31m-[0m[0m architectures                  = [
+          [31m-[0m[0m "x86_64",
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m arn                            = "arn:aws:lambda:us-east-1:000000000000:function:payments-enrichment-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m code_sha256                    = "9Bc9h9ib/JhUzMKLo4j7Kp4ftR0h1NCt0bEdtEZI+dY=" [90m-> null[0m[0m
+      [31m-[0m[0m filename                       = "./enrichment.zip" [90m-> null[0m[0m
+      [31m-[0m[0m function_name                  = "payments-enrichment-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m handler                        = "app.handler" [90m-> null[0m[0m
+      [31m-[0m[0m id                             = "payments-enrichment-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m invoke_arn                     = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:payments-enrichment-b6244b8b/invocations" [90m-> null[0m[0m
+      [31m-[0m[0m last_modified                  = "2026-04-04T18:05:51.636627+0000" [90m-> null[0m[0m
+      [31m-[0m[0m layers                         = [] [90m-> null[0m[0m
+      [31m-[0m[0m memory_size                    = 256 [90m-> null[0m[0m
+      [31m-[0m[0m package_type                   = "Zip" [90m-> null[0m[0m
+      [31m-[0m[0m publish                        = false [90m-> null[0m[0m
+      [31m-[0m[0m qualified_arn                  = "arn:aws:lambda:us-east-1:000000000000:function:payments-enrichment-b6244b8b:$LATEST" [90m-> null[0m[0m
+      [31m-[0m[0m qualified_invoke_arn           = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:payments-enrichment-b6244b8b:$LATEST/invocations" [90m-> null[0m[0m
+      [31m-[0m[0m reserved_concurrent_executions = -1 [90m-> null[0m[0m
+      [31m-[0m[0m role                           = "arn:aws:iam::000000000000:role/payments-health-role-20260404180550146000000002" [90m-> null[0m[0m
+      [31m-[0m[0m runtime                        = "python3.12" [90m-> null[0m[0m
+      [31m-[0m[0m skip_destroy                   = false [90m-> null[0m[0m
+      [31m-[0m[0m source_code_hash               = "9Bc9h9ib/JhUzMKLo4j7Kp4ftR0h1NCt0bEdtEZI+dY=" [90m-> null[0m[0m
+      [31m-[0m[0m source_code_size               = 265 [90m-> null[0m[0m
+      [31m-[0m[0m tags                           = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                       = {} [90m-> null[0m[0m
+      [31m-[0m[0m timeout                        = 15 [90m-> null[0m[0m
+      [31m-[0m[0m version                        = "$LATEST" [90m-> null[0m[0m
+        [90m# (6 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m ephemeral_storage {
+          [31m-[0m[0m size = 512 [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m logging_config {
+          [31m-[0m[0m log_format            = "Text" [90m-> null[0m[0m
+          [31m-[0m[0m log_group             = "/aws/lambda/payments-enrichment-b6244b8b" [90m-> null[0m[0m
+            [90m# (2 unchanged attributes hidden)[0m[0m
+        }
+
+      [31m-[0m[0m tracing_config {
+          [31m-[0m[0m mode = "PassThrough" [90m-> null[0m[0m
+        }
+    }
+
+[1m  # aws_lambda_function.health[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_lambda_function" "health" {
+      [31m-[0m[0m architectures                  = [
+          [31m-[0m[0m "x86_64",
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m arn                            = "arn:aws:lambda:us-east-1:000000000000:function:payments-health-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m code_sha256                    = "1M0LcOOjtNJ3/dhK0LS660fyKpjE4L76XsiTz+O/Znc=" [90m-> null[0m[0m
+      [31m-[0m[0m filename                       = "./health.zip" [90m-> null[0m[0m
+      [31m-[0m[0m function_name                  = "payments-health-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m handler                        = "app.handler" [90m-> null[0m[0m
+      [31m-[0m[0m id                             = "payments-health-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m invoke_arn                     = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:payments-health-b6244b8b/invocations" [90m-> null[0m[0m
+      [31m-[0m[0m last_modified                  = "2026-04-04T18:05:56.729088+0000" [90m-> null[0m[0m
+      [31m-[0m[0m layers                         = [] [90m-> null[0m[0m
+      [31m-[0m[0m memory_size                    = 256 [90m-> null[0m[0m
+      [31m-[0m[0m package_type                   = "Zip" [90m-> null[0m[0m
+      [31m-[0m[0m publish                        = false [90m-> null[0m[0m
+      [31m-[0m[0m qualified_arn                  = "arn:aws:lambda:us-east-1:000000000000:function:payments-health-b6244b8b:$LATEST" [90m-> null[0m[0m
+      [31m-[0m[0m qualified_invoke_arn           = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:payments-health-b6244b8b:$LATEST/invocations" [90m-> null[0m[0m
+      [31m-[0m[0m reserved_concurrent_executions = -1 [90m-> null[0m[0m
+      [31m-[0m[0m role                           = "arn:aws:iam::000000000000:role/payments-health-role-20260404180550146000000002" [90m-> null[0m[0m
+      [31m-[0m[0m runtime                        = "python3.12" [90m-> null[0m[0m
+      [31m-[0m[0m skip_destroy                   = false [90m-> null[0m[0m
+      [31m-[0m[0m source_code_hash               = "1M0LcOOjtNJ3/dhK0LS660fyKpjE4L76XsiTz+O/Znc=" [90m-> null[0m[0m
+      [31m-[0m[0m source_code_size               = 327 [90m-> null[0m[0m
+      [31m-[0m[0m tags                           = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                       = {} [90m-> null[0m[0m
+      [31m-[0m[0m timeout                        = 15 [90m-> null[0m[0m
+      [31m-[0m[0m version                        = "$LATEST" [90m-> null[0m[0m
+        [90m# (6 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m ephemeral_storage {
+          [31m-[0m[0m size = 512 [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m logging_config {
+          [31m-[0m[0m log_format            = "Text" [90m-> null[0m[0m
+          [31m-[0m[0m log_group             = "/aws/lambda/payments-health-b6244b8b" [90m-> null[0m[0m
+            [90m# (2 unchanged attributes hidden)[0m[0m
+        }
+
+      [31m-[0m[0m tracing_config {
+          [31m-[0m[0m mode = "PassThrough" [90m-> null[0m[0m
+        }
+    }
+
+[1m  # aws_lambda_function.worker[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_lambda_function" "worker" {
+      [31m-[0m[0m architectures                  = [
+          [31m-[0m[0m "x86_64",
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m arn                            = "arn:aws:lambda:us-east-1:000000000000:function:payments-worker-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m code_sha256                    = "KjDlRxTVdDGDiM31nejux2gAEir3pW39SZg3CGsXeDQ=" [90m-> null[0m[0m
+      [31m-[0m[0m filename                       = "./worker.zip" [90m-> null[0m[0m
+      [31m-[0m[0m function_name                  = "payments-worker-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m handler                        = "app.handler" [90m-> null[0m[0m
+      [31m-[0m[0m id                             = "payments-worker-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m invoke_arn                     = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:payments-worker-b6244b8b/invocations" [90m-> null[0m[0m
+      [31m-[0m[0m last_modified                  = "2026-04-04T18:06:01.766276+0000" [90m-> null[0m[0m
+      [31m-[0m[0m layers                         = [] [90m-> null[0m[0m
+      [31m-[0m[0m memory_size                    = 256 [90m-> null[0m[0m
+      [31m-[0m[0m package_type                   = "Zip" [90m-> null[0m[0m
+      [31m-[0m[0m publish                        = false [90m-> null[0m[0m
+      [31m-[0m[0m qualified_arn                  = "arn:aws:lambda:us-east-1:000000000000:function:payments-worker-b6244b8b:$LATEST" [90m-> null[0m[0m
+      [31m-[0m[0m qualified_invoke_arn           = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:payments-worker-b6244b8b:$LATEST/invocations" [90m-> null[0m[0m
+      [31m-[0m[0m reserved_concurrent_executions = -1 [90m-> null[0m[0m
+      [31m-[0m[0m role                           = "arn:aws:iam::000000000000:role/payments-worker-role-20260404180550148100000004" [90m-> null[0m[0m
+      [31m-[0m[0m runtime                        = "python3.12" [90m-> null[0m[0m
+      [31m-[0m[0m skip_destroy                   = false [90m-> null[0m[0m
+      [31m-[0m[0m source_code_hash               = "KjDlRxTVdDGDiM31nejux2gAEir3pW39SZg3CGsXeDQ=" [90m-> null[0m[0m
+      [31m-[0m[0m source_code_size               = 481 [90m-> null[0m[0m
+      [31m-[0m[0m tags                           = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                       = {} [90m-> null[0m[0m
+      [31m-[0m[0m timeout                        = 15 [90m-> null[0m[0m
+      [31m-[0m[0m version                        = "$LATEST" [90m-> null[0m[0m
+        [90m# (6 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m environment {
+          [31m-[0m[0m variables = {
+              [31m-[0m[0m "DB_HOST"    = "storage-layer-disabled"
+              [31m-[0m[0m "SECRET_ARN" = "arn:aws:secretsmanager:us-east-1:000000000000:secret:database-credentials-20260404180550173200000008-PFRgNb"
+            } [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m ephemeral_storage {
+          [31m-[0m[0m size = 512 [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m logging_config {
+          [31m-[0m[0m log_format            = "Text" [90m-> null[0m[0m
+          [31m-[0m[0m log_group             = "/aws/lambda/payments-worker-b6244b8b" [90m-> null[0m[0m
+            [90m# (2 unchanged attributes hidden)[0m[0m
+        }
+
+      [31m-[0m[0m tracing_config {
+          [31m-[0m[0m mode = "PassThrough" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m vpc_config {
+          [31m-[0m[0m ipv6_allowed_for_dual_stack = false [90m-> null[0m[0m
+          [31m-[0m[0m security_group_ids          = [
+              [31m-[0m[0m "sg-4c04cb7ca6b625579",
+            ] [90m-> null[0m[0m
+          [31m-[0m[0m subnet_ids                  = [
+              [31m-[0m[0m "subnet-80fdd2fc31f423ad4",
+              [31m-[0m[0m "subnet-8226165b904babf06",
+            ] [90m-> null[0m[0m
+          [31m-[0m[0m vpc_id                      = "vpc-6a4fea21dedb2a054" [90m-> null[0m[0m
+        }
+    }
+
+[1m  # aws_secretsmanager_secret.database_credentials[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_secretsmanager_secret" "database_credentials" {
+      [31m-[0m[0m arn                            = "arn:aws:secretsmanager:us-east-1:000000000000:secret:database-credentials-20260404180550173200000008-PFRgNb" [90m-> null[0m[0m
+      [31m-[0m[0m force_overwrite_replica_secret = false [90m-> null[0m[0m
+      [31m-[0m[0m id                             = "arn:aws:secretsmanager:us-east-1:000000000000:secret:database-credentials-20260404180550173200000008-PFRgNb" [90m-> null[0m[0m
+      [31m-[0m[0m name                           = "database-credentials-20260404180550173200000008" [90m-> null[0m[0m
+      [31m-[0m[0m name_prefix                    = "database-credentials-" [90m-> null[0m[0m
+      [31m-[0m[0m recovery_window_in_days        = 0 [90m-> null[0m[0m
+      [31m-[0m[0m tags                           = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                       = {} [90m-> null[0m[0m
+        [90m# (3 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # aws_secretsmanager_secret_version.database_credentials[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_secretsmanager_secret_version" "database_credentials" {
+      [31m-[0m[0m arn            = "arn:aws:secretsmanager:us-east-1:000000000000:secret:database-credentials-20260404180550173200000008-PFRgNb" [90m-> null[0m[0m
+      [31m-[0m[0m id             = "arn:aws:secretsmanager:us-east-1:000000000000:secret:database-credentials-20260404180550173200000008-PFRgNb|terraform-2026040418055085360000000a" [90m-> null[0m[0m
+      [31m-[0m[0m secret_id      = "arn:aws:secretsmanager:us-east-1:000000000000:secret:database-credentials-20260404180550173200000008-PFRgNb" [90m-> null[0m[0m
+      [31m-[0m[0m secret_string  = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m version_id     = "terraform-2026040418055085360000000a" [90m-> null[0m[0m
+      [31m-[0m[0m version_stages = [
+          [31m-[0m[0m "AWSCURRENT",
+        ] [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_security_group.processing_units[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_security_group" "processing_units" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-1:000000000000:security-group/sg-4c04cb7ca6b625579" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Processing Units security boundary" [90m-> null[0m[0m
+      [31m-[0m[0m egress                 = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "0.0.0.0/0",
+                ]
+              [31m-[0m[0m from_port        = 443
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 443
+                [90m# (1 unchanged attribute hidden)[0m[0m
+            },
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = []
+              [31m-[0m[0m from_port        = 5432
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = [
+                  [31m-[0m[0m "sg-5e4c575cb167a093f",
+                ]
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 5432
+                [90m# (1 unchanged attribute hidden)[0m[0m
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sg-4c04cb7ca6b625579" [90m-> null[0m[0m
+      [31m-[0m[0m ingress                = [] [90m-> null[0m[0m
+      [31m-[0m[0m name                   = "processing-units" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id               = "000000000000" [90m-> null[0m[0m
+      [31m-[0m[0m revoke_rules_on_delete = false [90m-> null[0m[0m
+      [31m-[0m[0m tags                   = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {} [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                 = "vpc-6a4fea21dedb2a054" [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_security_group.storage_layer[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_security_group" "storage_layer" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-1:000000000000:security-group/sg-5e4c575cb167a093f" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Storage Layer security boundary" [90m-> null[0m[0m
+      [31m-[0m[0m egress                 = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "0.0.0.0/0",
+                ]
+              [31m-[0m[0m from_port        = 443
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 443
+                [90m# (1 unchanged attribute hidden)[0m[0m
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sg-5e4c575cb167a093f" [90m-> null[0m[0m
+      [31m-[0m[0m ingress                = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = []
+              [31m-[0m[0m from_port        = 5432
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = [
+                  [31m-[0m[0m "sg-4c04cb7ca6b625579",
+                ]
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 5432
+                [90m# (1 unchanged attribute hidden)[0m[0m
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m name                   = "storage-layer" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id               = "000000000000" [90m-> null[0m[0m
+      [31m-[0m[0m revoke_rules_on_delete = false [90m-> null[0m[0m
+      [31m-[0m[0m tags                   = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {} [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                 = "vpc-6a4fea21dedb2a054" [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_sfn_state_machine.processing[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_sfn_state_machine" "processing" {
+      [31m-[0m[0m arn                       = "arn:aws:states:us-east-1:000000000000:stateMachine:payments-processing-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m creation_date             = "2026-04-04T18:05:51Z" [90m-> null[0m[0m
+      [31m-[0m[0m definition                = jsonencode(
+            {
+              [31m-[0m[0m StartAt = "Prepare"
+              [31m-[0m[0m States  = {
+                  [31m-[0m[0m Complete = {
+                      [31m-[0m[0m Type = "Succeed"
+                    }
+                  [31m-[0m[0m Prepare  = {
+                      [31m-[0m[0m Next = "Complete"
+                      [31m-[0m[0m Type = "Pass"
+                    }
+                }
+            }
+        ) [90m-> null[0m[0m
+      [31m-[0m[0m id                        = "arn:aws:states:us-east-1:000000000000:stateMachine:payments-processing-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m name                      = "payments-processing-b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m publish                   = false [90m-> null[0m[0m
+      [31m-[0m[0m role_arn                  = "arn:aws:iam::000000000000:role/payments-state-machine-role-20260404180550164900000007" [90m-> null[0m[0m
+      [31m-[0m[0m status                    = "ACTIVE" [90m-> null[0m[0m
+      [31m-[0m[0m tags                      = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                  = {} [90m-> null[0m[0m
+      [31m-[0m[0m type                      = "STANDARD" [90m-> null[0m[0m
+        [90m# (4 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m logging_configuration {
+          [31m-[0m[0m include_execution_data = false [90m-> null[0m[0m
+          [31m-[0m[0m level                  = "OFF" [90m-> null[0m[0m
+            [90m# (1 unchanged attribute hidden)[0m[0m
+        }
+    }
+
+[1m  # aws_sqs_queue.intake[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_sqs_queue" "intake" {
+      [31m-[0m[0m arn                               = "arn:aws:sqs:us-east-1:000000000000:terraform-20260404180550164500000006" [90m-> null[0m[0m
+      [31m-[0m[0m content_based_deduplication       = false [90m-> null[0m[0m
+      [31m-[0m[0m delay_seconds                     = 0 [90m-> null[0m[0m
+      [31m-[0m[0m fifo_queue                        = false [90m-> null[0m[0m
+      [31m-[0m[0m id                                = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/terraform-20260404180550164500000006" [90m-> null[0m[0m
+      [31m-[0m[0m kms_data_key_reuse_period_seconds = 300 [90m-> null[0m[0m
+      [31m-[0m[0m max_message_size                  = 262144 [90m-> null[0m[0m
+      [31m-[0m[0m message_retention_seconds         = 1209600 [90m-> null[0m[0m
+      [31m-[0m[0m name                              = "terraform-20260404180550164500000006" [90m-> null[0m[0m
+      [31m-[0m[0m name_prefix                       = "terraform-" [90m-> null[0m[0m
+      [31m-[0m[0m policy                            = jsonencode(
+            {
+              [31m-[0m[0m Statement = [
+                  [31m-[0m[0m {
+                      [31m-[0m[0m Action    = "sqs:SendMessage"
+                      [31m-[0m[0m Effect    = "Allow"
+                      [31m-[0m[0m Principal = {
+                          [31m-[0m[0m AWS = "arn:aws:iam::000000000000:role/payments-api-gateway-sqs-role-20260404180550148200000005"
+                        }
+                      [31m-[0m[0m Resource  = "arn:aws:sqs:us-east-1:000000000000:terraform-20260404180550164500000006"
+                      [31m-[0m[0m Sid       = "AllowApiGatewayRoleOnly"
+                    },
+                ]
+              [31m-[0m[0m Version   = "2012-10-17"
+            }
+        ) [90m-> null[0m[0m
+      [31m-[0m[0m receive_wait_time_seconds         = 0 [90m-> null[0m[0m
+      [31m-[0m[0m sqs_managed_sse_enabled           = true [90m-> null[0m[0m
+      [31m-[0m[0m tags                              = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                          = {} [90m-> null[0m[0m
+      [31m-[0m[0m url                               = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/terraform-20260404180550164500000006" [90m-> null[0m[0m
+      [31m-[0m[0m visibility_timeout_seconds        = 60 [90m-> null[0m[0m
+        [90m# (5 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # aws_sqs_queue_policy.intake[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_sqs_queue_policy" "intake" {
+      [31m-[0m[0m id        = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/terraform-20260404180550164500000006" [90m-> null[0m[0m
+      [31m-[0m[0m policy    = jsonencode(
+            {
+              [31m-[0m[0m Statement = [
+                  [31m-[0m[0m {
+                      [31m-[0m[0m Action    = "sqs:SendMessage"
+                      [31m-[0m[0m Effect    = "Allow"
+                      [31m-[0m[0m Principal = {
+                          [31m-[0m[0m AWS = "arn:aws:iam::000000000000:role/payments-api-gateway-sqs-role-20260404180550148200000005"
+                        }
+                      [31m-[0m[0m Resource  = "arn:aws:sqs:us-east-1:000000000000:terraform-20260404180550164500000006"
+                      [31m-[0m[0m Sid       = "AllowApiGatewayRoleOnly"
+                    },
+                ]
+              [31m-[0m[0m Version   = "2012-10-17"
+            }
+        ) [90m-> null[0m[0m
+      [31m-[0m[0m queue_url = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/terraform-20260404180550164500000006" [90m-> null[0m[0m
+    }
+
+[1m  # aws_subnet.private_a[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_subnet" "private_a" {
+      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-8226165b904babf06" [90m-> null[0m[0m
+      [31m-[0m[0m assign_ipv6_address_on_creation                = false [90m-> null[0m[0m
+      [31m-[0m[0m availability_zone                              = "us-east-1a" [90m-> null[0m[0m
+      [31m-[0m[0m availability_zone_id                           = "use1-az6" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_block                                     = "10.20.1.0/24" [90m-> null[0m[0m
+      [31m-[0m[0m enable_dns64                                   = false [90m-> null[0m[0m
+      [31m-[0m[0m enable_lni_at_device_index                     = 0 [90m-> null[0m[0m
+      [31m-[0m[0m enable_resource_name_dns_a_record_on_launch    = false [90m-> null[0m[0m
+      [31m-[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false [90m-> null[0m[0m
+      [31m-[0m[0m id                                             = "subnet-8226165b904babf06" [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_native                                    = false [90m-> null[0m[0m
+      [31m-[0m[0m map_customer_owned_ip_on_launch                = false [90m-> null[0m[0m
+      [31m-[0m[0m map_public_ip_on_launch                        = false [90m-> null[0m[0m
+      [31m-[0m[0m owner_id                                       = "000000000000" [90m-> null[0m[0m
+      [31m-[0m[0m private_dns_hostname_type_on_launch            = "ip-name" [90m-> null[0m[0m
+      [31m-[0m[0m tags                                           = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                                       = {} [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                                         = "vpc-6a4fea21dedb2a054" [90m-> null[0m[0m
+        [90m# (4 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # aws_subnet.private_b[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_subnet" "private_b" {
+      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-80fdd2fc31f423ad4" [90m-> null[0m[0m
+      [31m-[0m[0m assign_ipv6_address_on_creation                = false [90m-> null[0m[0m
+      [31m-[0m[0m availability_zone                              = "us-east-1b" [90m-> null[0m[0m
+      [31m-[0m[0m availability_zone_id                           = "use1-az1" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_block                                     = "10.20.2.0/24" [90m-> null[0m[0m
+      [31m-[0m[0m enable_dns64                                   = false [90m-> null[0m[0m
+      [31m-[0m[0m enable_lni_at_device_index                     = 0 [90m-> null[0m[0m
+      [31m-[0m[0m enable_resource_name_dns_a_record_on_launch    = false [90m-> null[0m[0m
+      [31m-[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false [90m-> null[0m[0m
+      [31m-[0m[0m id                                             = "subnet-80fdd2fc31f423ad4" [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_native                                    = false [90m-> null[0m[0m
+      [31m-[0m[0m map_customer_owned_ip_on_launch                = false [90m-> null[0m[0m
+      [31m-[0m[0m map_public_ip_on_launch                        = false [90m-> null[0m[0m
+      [31m-[0m[0m owner_id                                       = "000000000000" [90m-> null[0m[0m
+      [31m-[0m[0m private_dns_hostname_type_on_launch            = "ip-name" [90m-> null[0m[0m
+      [31m-[0m[0m tags                                           = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                                       = {} [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                                         = "vpc-6a4fea21dedb2a054" [90m-> null[0m[0m
+        [90m# (4 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # aws_vpc.cloud_boundaries[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc" "cloud_boundaries" {
+      [31m-[0m[0m arn                                  = "arn:aws:ec2:us-east-1:000000000000:vpc/vpc-6a4fea21dedb2a054" [90m-> null[0m[0m
+      [31m-[0m[0m assign_generated_ipv6_cidr_block     = false [90m-> null[0m[0m
+      [31m-[0m[0m cidr_block                           = "10.20.0.0/16" [90m-> null[0m[0m
+      [31m-[0m[0m default_network_acl_id               = "acl-68ab171e7f6bd4439" [90m-> null[0m[0m
+      [31m-[0m[0m default_route_table_id               = "rtb-e3309ffb62aa0443a" [90m-> null[0m[0m
+      [31m-[0m[0m default_security_group_id            = "sg-862aa678ec58fca37" [90m-> null[0m[0m
+      [31m-[0m[0m dhcp_options_id                      = "default" [90m-> null[0m[0m
+      [31m-[0m[0m enable_dns_hostnames                 = true [90m-> null[0m[0m
+      [31m-[0m[0m enable_dns_support                   = true [90m-> null[0m[0m
+      [31m-[0m[0m enable_network_address_usage_metrics = false [90m-> null[0m[0m
+      [31m-[0m[0m id                                   = "vpc-6a4fea21dedb2a054" [90m-> null[0m[0m
+      [31m-[0m[0m instance_tenancy                     = "default" [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_netmask_length                  = 0 [90m-> null[0m[0m
+      [31m-[0m[0m main_route_table_id                  = "rtb-e3309ffb62aa0443a" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id                             = "000000000000" [90m-> null[0m[0m
+      [31m-[0m[0m tags                                 = {} [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                             = {} [90m-> null[0m[0m
+        [90m# (4 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.processing_https[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_egress_rule" "processing_https" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-1::security-group-rule/sgr-f1e6623e202df9d7c" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "0.0.0.0/0" [90m-> null[0m[0m
+      [31m-[0m[0m from_port              = 443 [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-f1e6623e202df9d7c" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-4c04cb7ca6b625579" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-f1e6623e202df9d7c" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {} [90m-> null[0m[0m
+      [31m-[0m[0m to_port                = 443 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.processing_postgres[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_egress_rule" "processing_postgres" {
+      [31m-[0m[0m arn                          = "arn:aws:ec2:us-east-1::security-group-rule/sgr-b0bd1738a82225fbd" [90m-> null[0m[0m
+      [31m-[0m[0m from_port                    = 5432 [90m-> null[0m[0m
+      [31m-[0m[0m id                           = "sgr-b0bd1738a82225fbd" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol                  = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m referenced_security_group_id = "000000000000/sg-5e4c575cb167a093f" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id            = "sg-4c04cb7ca6b625579" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id       = "sgr-b0bd1738a82225fbd" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                     = {} [90m-> null[0m[0m
+      [31m-[0m[0m to_port                      = 5432 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.storage_https[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_egress_rule" "storage_https" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-1::security-group-rule/sgr-5f9db38a1145e150e" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "0.0.0.0/0" [90m-> null[0m[0m
+      [31m-[0m[0m from_port              = 443 [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-5f9db38a1145e150e" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-5e4c575cb167a093f" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-5f9db38a1145e150e" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {} [90m-> null[0m[0m
+      [31m-[0m[0m to_port                = 443 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.storage_postgres[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "storage_postgres" {
+      [31m-[0m[0m arn                          = "arn:aws:ec2:us-east-1::security-group-rule/sgr-a206109b1a9afc784" [90m-> null[0m[0m
+      [31m-[0m[0m from_port                    = 5432 [90m-> null[0m[0m
+      [31m-[0m[0m id                           = "sgr-a206109b1a9afc784" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol                  = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m referenced_security_group_id = "000000000000/sg-4c04cb7ca6b625579" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id            = "sg-5e4c575cb167a093f" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id       = "sgr-a206109b1a9afc784" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                     = {} [90m-> null[0m[0m
+      [31m-[0m[0m to_port                      = 5432 [90m-> null[0m[0m
+    }
+
+[1m  # random_id.suffix[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "random_id" "suffix" {
+      [31m-[0m[0m b64_std     = "tiRLiw==" [90m-> null[0m[0m
+      [31m-[0m[0m b64_url     = "tiRLiw" [90m-> null[0m[0m
+      [31m-[0m[0m byte_length = 4 [90m-> null[0m[0m
+      [31m-[0m[0m dec         = "3055831947" [90m-> null[0m[0m
+      [31m-[0m[0m hex         = "b6244b8b" [90m-> null[0m[0m
+      [31m-[0m[0m id          = "tiRLiw" [90m-> null[0m[0m
+    }
+
+[1m  # random_password.database[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "random_password" "database" {
+      [31m-[0m[0m bcrypt_hash = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m id          = "none" [90m-> null[0m[0m
+      [31m-[0m[0m length      = 24 [90m-> null[0m[0m
+      [31m-[0m[0m lower       = true [90m-> null[0m[0m
+      [31m-[0m[0m min_lower   = 0 [90m-> null[0m[0m
+      [31m-[0m[0m min_numeric = 0 [90m-> null[0m[0m
+      [31m-[0m[0m min_special = 0 [90m-> null[0m[0m
+      [31m-[0m[0m min_upper   = 0 [90m-> null[0m[0m
+      [31m-[0m[0m number      = true [90m-> null[0m[0m
+      [31m-[0m[0m numeric     = true [90m-> null[0m[0m
+      [31m-[0m[0m result      = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m special     = true [90m-> null[0m[0m
+      [31m-[0m[0m upper       = true [90m-> null[0m[0m
+    }
+
+[1mPlan:[0m 0 to add, 0 to change, 33 to destroy.
+[0m
+Changes to Outputs:
+  [31m-[0m[0m http_api_endpoint_url      = "http-api-disabled" [90m-> null[0m[0m
+  [31m-[0m[0m rds_endpoint_address       = "storage-layer-disabled" [90m-> null[0m[0m
+  [31m-[0m[0m secrets_manager_secret_arn = "arn:aws:secretsmanager:us-east-1:000000000000:secret:database-credentials-20260404180550173200000008-PFRgNb" [90m-> null[0m[0m
+  [31m-[0m[0m sqs_queue_url              = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/terraform-20260404180550164500000006" [90m-> null[0m[0m
+[0m[1maws_iam_role_policy_attachment.worker_basic: Destroying... [id=payments-worker-role-20260404180550148100000004-2026040418055097720000000b][0m[0m
+[0m[1maws_iam_role_policy.pipe: Destroying... [id=payments-pipe-role-20260404180550146700000003:payments-pipe-inline][0m[0m
+[0m[1maws_iam_role_policy_attachment.health_basic: Destroying... [id=payments-health-role-20260404180550146000000002-2026040418055097910000000c][0m[0m
+[0m[1maws_iam_role_policy.health: Destroying... [id=payments-health-role-20260404180550146000000002:payments-health-inline][0m[0m
+[0m[1maws_iam_role_policy.worker: Destroying... [id=payments-worker-role-20260404180550148100000004:payments-worker-inline][0m[0m
+[0m[1maws_iam_role_policy.api_gateway_sqs: Destroying... [id=payments-api-gateway-sqs-role-20260404180550148200000005:payments-api-gateway-sqs-inline][0m[0m
+[0m[1maws_vpc_security_group_egress_rule.processing_postgres: Destroying... [id=sgr-b0bd1738a82225fbd][0m[0m
+[0m[1maws_vpc_security_group_egress_rule.processing_https: Destroying... [id=sgr-f1e6623e202df9d7c][0m[0m
+[0m[1maws_vpc_security_group_ingress_rule.storage_postgres: Destroying... [id=sgr-a206109b1a9afc784][0m[0m
+[0m[1maws_lambda_event_source_mapping.worker: Destroying... [id=a9153f75-3cfb-4649-b790-5dbfff3e2701][0m[0m
+[0m[1maws_iam_role_policy.pipe: Destruction complete after 0s[0m
+[0m[1maws_iam_role_policy_attachment.worker_basic: Destruction complete after 0s[0m
+[0m[1maws_iam_role_policy.health: Destruction complete after 0s[0m
+[0m[1maws_iam_role_policy_attachment.health_basic: Destruction complete after 0s[0m
+[0m[1maws_cloudwatch_log_group.api_access: Destroying... [id=/apigateway/payments-access-b6244b8b][0m[0m
+[0m[1maws_iam_role_policy.api_gateway_sqs: Destruction complete after 0s[0m
+[0m[1maws_iam_role_policy.worker: Destruction complete after 0s[0m
+[0m[1maws_vpc_security_group_egress_rule.processing_postgres: Destruction complete after 0s[0m
+[0m[1maws_vpc_security_group_ingress_rule.storage_postgres: Destruction complete after 0s[0m
+[0m[1maws_vpc_security_group_egress_rule.processing_https: Destruction complete after 0s[0m
+[0m[1maws_sqs_queue_policy.intake: Destroying... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/terraform-20260404180550164500000006][0m[0m
+[0m[1maws_lambda_event_source_mapping.worker: Destruction complete after 0s[0m
+[0m[1maws_lambda_function.health: Destroying... [id=payments-health-b6244b8b][0m[0m
+[0m[1maws_vpc_security_group_egress_rule.storage_https: Destroying... [id=sgr-5f9db38a1145e150e][0m[0m
+[0m[1maws_sfn_state_machine.processing: Destroying... [id=arn:aws:states:us-east-1:000000000000:stateMachine:payments-processing-b6244b8b][0m[0m
+[0m[1maws_iam_role.pipe: Destroying... [id=payments-pipe-role-20260404180550146700000003][0m[0m
+[0m[1maws_lambda_function.enrichment: Destroying... [id=payments-enrichment-b6244b8b][0m[0m
+[0m[1maws_cloudwatch_log_group.application: Destroying... [id=/application/payments-b6244b8b][0m[0m
+[0m[1maws_vpc_security_group_egress_rule.storage_https: Destruction complete after 0s[0m
+[0m[1maws_cloudwatch_log_group.api_access: Destruction complete after 0s[0m
+[0m[1maws_cloudwatch_log_group.application: Destruction complete after 0s[0m
+[0m[1maws_lambda_function.health: Destruction complete after 0s[0m
+[0m[1maws_lambda_function.worker: Destroying... [id=payments-worker-b6244b8b][0m[0m
+[0m[1maws_sfn_state_machine.processing: Destruction complete after 0s[0m
+[0m[1maws_lambda_function.enrichment: Destruction complete after 0s[0m
+[0m[1maws_iam_role.pipe: Destruction complete after 0s[0m
+[0m[1maws_iam_role.state_machine: Destroying... [id=payments-state-machine-role-20260404180550164900000007][0m[0m
+[0m[1maws_iam_role.health: Destroying... [id=payments-health-role-20260404180550146000000002][0m[0m
+[0m[1maws_lambda_function.worker: Destruction complete after 0s[0m
+[0m[1maws_iam_role.state_machine: Destruction complete after 0s[0m
+[0m[1maws_subnet.private_a: Destroying... [id=subnet-8226165b904babf06][0m[0m
+[0m[1maws_iam_role.worker: Destroying... [id=payments-worker-role-20260404180550148100000004][0m[0m
+[0m[1maws_subnet.private_b: Destroying... [id=subnet-80fdd2fc31f423ad4][0m[0m
+[0m[1maws_secretsmanager_secret_version.database_credentials: Destroying... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:database-credentials-20260404180550173200000008-PFRgNb|terraform-2026040418055085360000000a][0m[0m
+[0m[1maws_security_group.storage_layer: Destroying... [id=sg-5e4c575cb167a093f][0m[0m
+[0m[1maws_security_group.processing_units: Destroying... [id=sg-4c04cb7ca6b625579][0m[0m
+[0m[1maws_iam_role.health: Destruction complete after 0s[0m
+[0m[1mrandom_id.suffix: Destroying... [id=tiRLiw][0m[0m
+[0m[1mrandom_id.suffix: Destruction complete after 0s[0m
+[0m[1maws_secretsmanager_secret_version.database_credentials: Destruction complete after 0s[0m
+[0m[1maws_subnet.private_b: Destruction complete after 0s[0m
+[0m[1maws_subnet.private_a: Destruction complete after 0s[0m
+[0m[1maws_secretsmanager_secret.database_credentials: Destroying... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:database-credentials-20260404180550173200000008-PFRgNb][0m[0m
+[0m[1mrandom_password.database: Destroying... [id=none][0m[0m
+[0m[1mrandom_password.database: Destruction complete after 0s[0m
+[0m[1maws_security_group.storage_layer: Destruction complete after 0s[0m
+[0m[1maws_iam_role.worker: Destruction complete after 0s[0m
+[0m[1maws_security_group.processing_units: Destruction complete after 0s[0m
+[0m[1maws_secretsmanager_secret.database_credentials: Destruction complete after 0s[0m
+[0m[1maws_vpc.cloud_boundaries: Destroying... [id=vpc-6a4fea21dedb2a054][0m[0m
+[0m[1maws_vpc.cloud_boundaries: Destruction complete after 0s[0m
+[0m[1maws_sqs_queue_policy.intake: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/terraform-20260404180550164500000006, 10s elapsed][0m[0m
+[0m[1maws_sqs_queue_policy.intake: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/terraform-20260404180550164500000006, 20s elapsed][0m[0m
+[0m[1maws_sqs_queue_policy.intake: Destruction complete after 25s[0m
+[0m[1maws_iam_role.api_gateway_sqs: Destroying... [id=payments-api-gateway-sqs-role-20260404180550148200000005][0m[0m
+[0m[1maws_sqs_queue.intake: Destroying... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/terraform-20260404180550164500000006][0m[0m
+[0m[1maws_iam_role.api_gateway_sqs: Destruction complete after 0s[0m
+[0m[1maws_sqs_queue.intake: Destruction complete after 2s[0m
+[0m[1m[32m
+Destroy complete! Resources: 33 destroyed.
+[0mCleaning up worker container: harness-worker-98016
+[32m✅ Step passed: Destroy / Cleanup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  HARNESS SUMMARY[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ setup[0m
+[32m✅ syntax/plan[0m
+[32m✅ unit tests[0m
+[32m✅ deploy (localstack)[0m
+[32m✅ integration tests[0m
+[32m✅ destroy/cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ All steps passed.[0m
+
+Log saved to: /Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/runs/tasks_terraform-hcl_ffcbfc67-6acb-4ccd-98ff-645447c73d2a.log
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+Stopping LocalStack...
+ Container localstack-harness  Stopping
+ Container localstack-harness  Stopped
+ Container localstack-harness  Removing
+ Container localstack-harness  Removed
+ Network iac-harness-network  Removing
+ Network iac-harness-network  Removed
