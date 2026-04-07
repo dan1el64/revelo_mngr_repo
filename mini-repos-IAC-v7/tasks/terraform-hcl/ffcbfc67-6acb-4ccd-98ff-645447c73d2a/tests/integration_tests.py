@@ -177,3 +177,103 @@ def test_state_machine_and_optional_live_resources_are_queryable():
         assert live_pipe["CurrentState"] == "RUNNING"
         assert live_pipe["Source"] == pipe["source"]
         assert live_pipe["Target"] == pipe["target"]
+
+
+def test_vpc_and_subnet_network_foundation():
+    vpc = single_resource_values("aws_vpc", "cloud_boundaries")
+    subnets = matching_resources("aws_subnet")
+
+    ec2 = aws_client("ec2")
+
+    vpcs = ec2.describe_vpcs(VpcIds=[vpc["id"]])["Vpcs"]
+    assert vpcs, f"VPC {vpc['id']} not found"
+    live_vpc = vpcs[0]
+    assert live_vpc["CidrBlock"] == "10.20.0.0/16"
+
+    dns_hostnames = ec2.describe_vpc_attribute(
+        VpcId=vpc["id"], Attribute="enableDnsHostnames"
+    )["EnableDnsHostnames"]["Value"]
+    dns_support = ec2.describe_vpc_attribute(
+        VpcId=vpc["id"], Attribute="enableDnsSupport"
+    )["EnableDnsSupport"]["Value"]
+    assert dns_hostnames is True, "VPC must have DNS hostnames enabled"
+    assert dns_support is True, "VPC must have DNS support enabled"
+
+    subnet_ids = [s["values"]["id"] for s in subnets]
+    live_subnets = ec2.describe_subnets(SubnetIds=subnet_ids)["Subnets"]
+    assert len(live_subnets) == 2, f"Expected 2 subnets, got {len(live_subnets)}"
+
+    cidrs = {s["CidrBlock"] for s in live_subnets}
+    assert cidrs == {"10.20.1.0/24", "10.20.2.0/24"}, f"Unexpected subnet CIDRs: {cidrs}"
+
+    azs = {s["AvailabilityZone"] for s in live_subnets}
+    assert len(azs) == 2, f"Subnets must be in distinct AZs, got: {azs}"
+
+    for subnet in live_subnets:
+        assert subnet["MapPublicIpOnLaunch"] is False, (
+            f"Subnet {subnet['SubnetId']} must not auto-assign public IPs"
+        )
+
+
+def test_security_group_rules_block_unauthorized_access():
+    processing_sg = single_resource_values("aws_security_group", "processing_units")
+    storage_sg = single_resource_values("aws_security_group", "storage_layer")
+
+    ec2 = aws_client("ec2")
+
+    all_rules = ec2.describe_security_group_rules(
+        Filters=[{"Name": "group-id", "Values": [storage_sg["id"]]}]
+    )["SecurityGroupRules"]
+
+    ingress_rules = [r for r in all_rules if not r.get("IsEgress", False)]
+
+    # Negative path: storage SG must not expose 0.0.0.0/0 on any ingress rule
+    for rule in ingress_rules:
+        assert rule.get("CidrIpv4") != "0.0.0.0/0", (
+            "Storage security group must not allow 0.0.0.0/0 ingress"
+        )
+        assert rule.get("CidrIpv6") not in ("::/0",), (
+            "Storage security group must not allow ::/0 ingress"
+        )
+
+    # Must allow port 5432 exclusively from the processing_units security group
+    postgres_rules = [
+        r for r in ingress_rules
+        if r.get("FromPort") == 5432
+        and r.get("ToPort") == 5432
+        and r.get("ReferencedGroupInfo", {}).get("GroupId") == processing_sg["id"]
+    ]
+    assert postgres_rules, (
+        "Storage SG must allow port 5432 ingress from processing_units security group only"
+    )
+
+
+def test_rds_instance_configuration_matches_spec():
+    db_instance = optional_resource_values("aws_db_instance", "storage_layer")
+    if db_instance:
+        rds = aws_client("rds")
+        live_db = rds.describe_db_instances(
+            DBInstanceIdentifier=db_instance["identifier"]
+        )["DBInstances"][0]
+
+        assert live_db["Engine"] == "postgres"
+        assert live_db["EngineVersion"].startswith("15.4")
+        assert live_db["DBInstanceClass"] == "db.t3.micro"
+        assert live_db["AllocatedStorage"] == 20
+        assert live_db["StorageType"] == "gp2"
+        assert live_db["PubliclyAccessible"] is False
+        assert live_db.get("DeletionProtection") is False
+
+
+def test_api_gateway_routes_and_protocol():
+    api = optional_resource_values("aws_apigatewayv2_api", "front_door")
+    if api:
+        apigateway = aws_client("apigatewayv2")
+
+        live_api = apigateway.get_api(ApiId=api["api_id"])
+        assert live_api["ProtocolType"] == "HTTP"
+
+        routes = apigateway.get_routes(ApiId=api["api_id"])
+        route_keys = {r["RouteKey"] for r in routes.get("Items", [])}
+        assert "POST /submit" in route_keys, f"Missing POST /submit route, got: {route_keys}"
+        assert "GET /health" in route_keys, f"Missing GET /health route, got: {route_keys}"

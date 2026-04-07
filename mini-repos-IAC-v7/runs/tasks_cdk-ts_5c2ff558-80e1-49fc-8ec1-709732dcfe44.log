@@ -2,20 +2,25 @@ Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/m
 
 
 Starting LocalStack (harness environment)...
- Container localstack-harness  Running
+ Network iac-harness-network  Creating
+ Network iac-harness-network  Created
+ Container localstack-harness  Creating
+ Container localstack-harness  Created
+ Container localstack-harness  Starting
+ Container localstack-harness  Started
 Waiting for LocalStack health endpoint: http://localhost:4566/_localstack/health
 LocalStack is healthy.
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  Step: Setup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
-Starting worker container: harness-worker-59081
-a1e818d40978992b2f9aeffda07df02b904b814b35249cb25f9c3a7a231af144
+Starting worker container: harness-worker-22932
+a5389b4f3d827fc4a920c529a6d19a1b85769624a7d84b5689bc6c2babd08723
 Installing dependencies (npm install)...
 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
-added 404 packages, and audited 441 packages in 3m
+added 404 packages, and audited 441 packages in 25s
 
 41 packages are looking for funding
   run `npm fund` for details
@@ -34,7 +39,7 @@ npm notice New major version of npm available! 10.8.2 -> 11.12.1
 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
 npm notice To update run: npm install -g npm@11.12.1
 npm notice
-Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/7865e33b-6ab0-486c-bb18-1608fb9ff8fe
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/44b1f2c5-c27a-4fcf-a481-cc21cc309341
 [32m✅ Step passed: Setup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -75,36 +80,49 @@ platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
 cachedir: .pytest_cache
 rootdir: /work
 configfile: pytest.ini
-collecting ... collected 26 items
+collecting ... collected 39 items
 
-tests/unit_tests.py::test_cdk_app_initialization PASSED                  [  3%]
-tests/unit_tests.py::test_environment_variables_handling PASSED          [  7%]
-tests/unit_tests.py::test_aws_credentials_accepted PASSED                [ 11%]
-tests/unit_tests.py::test_no_extra_config_variables PASSED               [ 15%]
-tests/unit_tests.py::test_vpc_subnet_configuration PASSED                [ 19%]
-tests/unit_tests.py::test_s3_bucket_properties PASSED                    [ 23%]
-tests/unit_tests.py::test_lambda_function_configuration PASSED           [ 26%]
-tests/unit_tests.py::test_eventbridge_rule_pattern PASSED                [ 30%]
-tests/unit_tests.py::test_enrichment_lambda_output PASSED                [ 34%]
-tests/unit_tests.py::test_sns_topic_subscription PASSED                  [ 38%]
-tests/unit_tests.py::test_component_labels_in_app_ts PASSED              [ 42%]
-tests/unit_tests.py::test_no_deletion_protection_config PASSED           [ 46%]
-tests/unit_tests.py::test_stack_outputs_are_limited PASSED               [ 50%]
-tests/unit_tests.py::test_lambda_runtime_zip_based PASSED                [ 53%]
-tests/unit_tests.py::test_no_wildcard_resources_require_justification PASSED [ 57%]
-tests/unit_tests.py::test_single_file_constraint PASSED                  [ 61%]
-tests/unit_tests.py::test_service_mix_mandate PASSED                     [ 65%]
-tests/unit_tests.py::test_aws_endpoint_forwarding PASSED                 [ 69%]
-tests/unit_tests.py::test_sfn_native_s3_integration PASSED               [ 73%]
-tests/unit_tests.py::test_worker_postgresql_schema PASSED                [ 76%]
-tests/unit_tests.py::test_tls_in_transit PASSED                          [ 80%]
-tests/unit_tests.py::test_cdk_resource_references PASSED                 [ 84%]
-tests/unit_tests.py::test_worker_no_eventbridge_emission PASSED          [ 88%]
-tests/unit_tests.py::test_exactly_one_vpc PASSED                         [ 92%]
-tests/unit_tests.py::test_exactly_one_sns_topic PASSED                   [ 96%]
+tests/unit_tests.py::test_cdk_app_initialization PASSED                  [  2%]
+tests/unit_tests.py::test_environment_variables_handling PASSED          [  5%]
+tests/unit_tests.py::test_aws_credentials_accepted PASSED                [  7%]
+tests/unit_tests.py::test_no_extra_config_variables PASSED               [ 10%]
+tests/unit_tests.py::test_vpc_configuration PASSED                       [ 12%]
+tests/unit_tests.py::test_rds_configuration PASSED                       [ 15%]
+tests/unit_tests.py::test_rds_private_subnet_placement PASSED            [ 17%]
+tests/unit_tests.py::test_s3_configuration PASSED                        [ 20%]
+tests/unit_tests.py::test_s3_no_object_lock_or_retention PASSED          [ 23%]
+tests/unit_tests.py::test_sqs_queue_configuration PASSED                 [ 25%]
+tests/unit_tests.py::test_athena_workgroup_config PASSED                 [ 28%]
+tests/unit_tests.py::test_glue_crawler_schedule_config PASSED            [ 30%]
+tests/unit_tests.py::test_glue_crawler_iam_role_scoping PASSED           [ 33%]
+tests/unit_tests.py::test_worker_sqs_event_source_config PASSED          [ 35%]
+tests/unit_tests.py::test_worker_iam_role_scoping PASSED                 [ 38%]
+tests/unit_tests.py::test_request_handler_validation PASSED              [ 41%]
+tests/unit_tests.py::test_eventbridge_pipe_construct_present PASSED      [ 43%]
+tests/unit_tests.py::test_eventbridge_rule_targets_sfn PASSED            [ 46%]
+tests/unit_tests.py::test_eventbridge_rule_in_app PASSED                 [ 48%]
+tests/unit_tests.py::test_sfn_definition_has_s3_and_sns_tasks PASSED     [ 51%]
+tests/unit_tests.py::test_enrichment_lambda_config PASSED                [ 53%]
+tests/unit_tests.py::test_sns_email_subscription PASSED                  [ 56%]
+tests/unit_tests.py::test_wildcard_detector_catches_unjustified PASSED   [ 58%]
+tests/unit_tests.py::test_component_labels_in_app_ts PASSED              [ 61%]
+tests/unit_tests.py::test_no_deletion_protection_config PASSED           [ 64%]
+tests/unit_tests.py::test_stack_outputs_are_limited PASSED               [ 66%]
+tests/unit_tests.py::test_lambda_runtime_zip_based PASSED                [ 69%]
+tests/unit_tests.py::test_no_wildcard_resources_require_justification PASSED [ 71%]
+tests/unit_tests.py::test_single_file_constraint PASSED                  [ 74%]
+tests/unit_tests.py::test_service_mix_mandate PASSED                     [ 76%]
+tests/unit_tests.py::test_aws_endpoint_forwarding PASSED                 [ 79%]
+tests/unit_tests.py::test_sfn_native_s3_integration PASSED               [ 82%]
+tests/unit_tests.py::test_worker_postgresql_schema PASSED                [ 84%]
+tests/unit_tests.py::test_tls_in_transit PASSED                          [ 87%]
+tests/unit_tests.py::test_cdk_resource_references PASSED                 [ 89%]
+tests/unit_tests.py::test_worker_no_eventbridge_emission PASSED          [ 92%]
+tests/unit_tests.py::test_exactly_one_vpc PASSED                         [ 94%]
+tests/unit_tests.py::test_exactly_one_sns_topic PASSED                   [ 97%]
 tests/unit_tests.py::test_pipe_batch_configuration PASSED                [100%]
 
-============================== 26 passed in 0.25s ==============================
+============================== 39 passed in 0.08s ==============================
 [32m✅ Step passed: Unit tests (pytest)[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -113,194 +131,206 @@ tests/unit_tests.py::test_pipe_batch_configuration PASSED                [100%]
 Bootstrapping (if needed)...
 Running cdklocal deploy...
 
-✨  Synthesis time: 14.98s
+✨  Synthesis time: 8.95s
 
+OrderIntakeServiceStack: start: Building faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6
+OrderIntakeServiceStack: success: Built faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6
+OrderIntakeServiceStack: start: Building 2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d
+OrderIntakeServiceStack: success: Built 2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d
+OrderIntakeServiceStack: start: Building 3830f17484ed75065246656e1ff2471748afac833e506415a472518fa4f27cae
+OrderIntakeServiceStack: success: Built 3830f17484ed75065246656e1ff2471748afac833e506415a472518fa4f27cae
+OrderIntakeServiceStack: start: Publishing faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6:current_account-us-east-1
+OrderIntakeServiceStack: start: Publishing 2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d:current_account-us-east-1
+OrderIntakeServiceStack: start: Publishing 3830f17484ed75065246656e1ff2471748afac833e506415a472518fa4f27cae:current_account-us-east-1
+OrderIntakeServiceStack: success: Published 3830f17484ed75065246656e1ff2471748afac833e506415a472518fa4f27cae:current_account-us-east-1
+OrderIntakeServiceStack: success: Published faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6:current_account-us-east-1
+OrderIntakeServiceStack: success: Published 2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d:current_account-us-east-1
 OrderIntakeServiceStack: deploying... [1/1]
 OrderIntakeServiceStack: creating CloudFormation changeset...
-OrderIntakeServiceStack |  0/82 | 1:08:25 AM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack            | OrderIntakeServiceStack User Initiated
-OrderIntakeServiceStack |  0/82 | 1:08:25 AM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack            | OrderIntakeServiceStack 
-OrderIntakeServiceStack |  0/82 | 1:08:25 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                         | OrderIntakeVpc (OrderIntakeVpcAF870571) 
-OrderIntakeServiceStack |  1/82 | 1:08:25 AM | CREATE_COMPLETE      | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
-OrderIntakeServiceStack |  1/82 | 1:08:25 AM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
-OrderIntakeServiceStack |  1/82 | 1:08:25 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | ComputeSg (ComputeSg63149A20) 
-OrderIntakeServiceStack |  2/82 | 1:08:25 AM | CREATE_COMPLETE      | AWS::EC2::VPC                         | OrderIntakeVpc (OrderIntakeVpcAF870571) 
-OrderIntakeServiceStack |  2/82 | 1:08:25 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | Custom::S3AutoDeleteObjectsCustomResourceProvider/Role (CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092) 
-OrderIntakeServiceStack |  3/82 | 1:08:25 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | ComputeSg (ComputeSg63149A20) 
-OrderIntakeServiceStack |  4/82 | 1:08:25 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | Custom::S3AutoDeleteObjectsCustomResourceProvider/Role (CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092) 
-OrderIntakeServiceStack |  4/82 | 1:08:25 AM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                       | OrderAnalyticsBucket (OrderAnalyticsBucket962DFE77) 
-OrderIntakeServiceStack |  4/82 | 1:08:25 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler (CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F) 
-OrderIntakeServiceStack |  5/82 | 1:08:25 AM | CREATE_COMPLETE      | AWS::S3::Bucket                       | OrderAnalyticsBucket (OrderAnalyticsBucket962DFE77) 
-OrderIntakeServiceStack |  6/82 | 1:08:26 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler (CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F) 
-OrderIntakeServiceStack |  6/82 | 1:08:26 AM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret           | DbCredentialsSecret (DbCredentialsSecret4110FA1D) 
-OrderIntakeServiceStack |  6/82 | 1:08:26 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | DbSg (DbSg495F8305) 
-OrderIntakeServiceStack |  7/82 | 1:08:26 AM | CREATE_COMPLETE      | AWS::SecretsManager::Secret           | DbCredentialsSecret (DbCredentialsSecret4110FA1D) 
-OrderIntakeServiceStack |  7/82 | 1:08:26 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | EnrichmentRole (EnrichmentRoleDC3E4361) 
-OrderIntakeServiceStack |  8/82 | 1:08:26 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | DbSg (DbSg495F8305) 
-OrderIntakeServiceStack |  9/82 | 1:08:26 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | EnrichmentRole (EnrichmentRoleDC3E4361) 
-OrderIntakeServiceStack |  9/82 | 1:08:26 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | EnrichmentFn (EnrichmentFnB72ACB5D) 
-OrderIntakeServiceStack |  9/82 | 1:08:26 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole (LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB) 
-OrderIntakeServiceStack | 10/82 | 1:08:26 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | EnrichmentFn (EnrichmentFnB72ACB5D) 
-OrderIntakeServiceStack | 10/82 | 1:08:26 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy (LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB) 
-OrderIntakeServiceStack | 11/82 | 1:08:26 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole (LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB) 
-OrderIntakeServiceStack | 11/82 | 1:08:26 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a (LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A) 
-OrderIntakeServiceStack | 12/82 | 1:08:26 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy (LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB) 
-OrderIntakeServiceStack | 12/82 | 1:08:26 AM | CREATE_IN_PROGRESS   | Custom::LogRetention                  | EnrichmentFn/LogRetention (EnrichmentFnLogRetention91093CB8) 
-OrderIntakeServiceStack | 13/82 | 1:08:26 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a (LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A) 
-OrderIntakeServiceStack | 13/82 | 1:08:35 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | EnrichmentRole/DefaultPolicy (EnrichmentRoleDefaultPolicyF1A6E726) 
-OrderIntakeServiceStack | 14/82 | 1:08:35 AM | CREATE_COMPLETE      | Custom::LogRetention                  | EnrichmentFn/LogRetention (EnrichmentFnLogRetention91093CB8) 
-OrderIntakeServiceStack | 15/82 | 1:08:35 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | EnrichmentRole/DefaultPolicy (EnrichmentRoleDefaultPolicyF1A6E726) 
-OrderIntakeServiceStack | 15/82 | 1:08:35 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | EnrichmentFn (EnrichmentFnB72ACB5D) 
-OrderIntakeServiceStack | 15/82 | 1:08:35 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | EventBridgeRuleRole (EventBridgeRuleRole1332BFB5) 
-OrderIntakeServiceStack | 14/82 | 1:08:35 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | EnrichmentFn (EnrichmentFnB72ACB5D) 
-OrderIntakeServiceStack | 14/82 | 1:08:35 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | SfnExecutionRole (SfnExecutionRoleD75F2701) 
-OrderIntakeServiceStack | 15/82 | 1:08:35 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | EventBridgeRuleRole (EventBridgeRuleRole1332BFB5) 
-OrderIntakeServiceStack | 15/82 | 1:08:35 AM | CREATE_IN_PROGRESS   | AWS::SNS::Topic                       | OrderNotificationTopic (OrderNotificationTopicC07D7EFC) 
-OrderIntakeServiceStack | 16/82 | 1:08:35 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | SfnExecutionRole (SfnExecutionRoleD75F2701) 
-OrderIntakeServiceStack | 17/82 | 1:08:35 AM | CREATE_COMPLETE      | AWS::SNS::Topic                       | OrderNotificationTopic (OrderNotificationTopicC07D7EFC) 
-OrderIntakeServiceStack | 17/82 | 1:08:35 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | SfnExecutionRole/DefaultPolicy (SfnExecutionRoleDefaultPolicy969E4817) 
-OrderIntakeServiceStack | 17/82 | 1:08:35 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | SfnLogGroup (SfnLogGroup4E29B71B) 
-OrderIntakeServiceStack | 18/82 | 1:08:35 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | SfnExecutionRole/DefaultPolicy (SfnExecutionRoleDefaultPolicy969E4817) 
-OrderIntakeServiceStack | 18/82 | 1:08:35 AM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine      | OrderStateMachine (OrderStateMachineC078F95C) 
-OrderIntakeServiceStack | 19/82 | 1:08:35 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | SfnLogGroup (SfnLogGroup4E29B71B) 
-OrderIntakeServiceStack | 19/82 | 1:08:35 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | EventBridgeRuleRole/DefaultPolicy (EventBridgeRuleRoleDefaultPolicy1FEC61B6) 
-OrderIntakeServiceStack | 20/82 | 1:08:35 AM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine      | OrderStateMachine (OrderStateMachineC078F95C) 
-OrderIntakeServiceStack | 20/82 | 1:08:35 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
-OrderIntakeServiceStack | 21/82 | 1:08:35 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | EventBridgeRuleRole/DefaultPolicy (EventBridgeRuleRoleDefaultPolicy1FEC61B6) 
-OrderIntakeServiceStack | 21/82 | 1:08:35 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
-OrderIntakeServiceStack | 22/82 | 1:08:35 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
-OrderIntakeServiceStack | 22/82 | 1:08:35 AM | CREATE_IN_PROGRESS   | AWS::Events::EventBus                 | OrderEventBus (OrderEventBus8DA2948A) 
-OrderIntakeServiceStack | 23/82 | 1:08:35 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
-OrderIntakeServiceStack | 23/82 | 1:08:35 AM | CREATE_IN_PROGRESS   | AWS::Events::Rule                     | OrderAcceptedRule (OrderAcceptedRule8C998966) 
-OrderIntakeServiceStack | 24/82 | 1:08:35 AM | CREATE_COMPLETE      | AWS::Events::EventBus                 | OrderEventBus (OrderEventBus8DA2948A) 
-OrderIntakeServiceStack | 24/82 | 1:08:35 AM | CREATE_IN_PROGRESS   | AWS::S3::BucketPolicy                 | OrderAnalyticsBucket/Policy (OrderAnalyticsBucketPolicy3D2210DE) 
-OrderIntakeServiceStack | 25/82 | 1:08:35 AM | CREATE_COMPLETE      | AWS::Events::Rule                     | OrderAcceptedRule (OrderAcceptedRule8C998966) 
-OrderIntakeServiceStack | 25/82 | 1:08:35 AM | CREATE_IN_PROGRESS   | Custom::S3AutoDeleteObjects           | OrderAnalyticsBucket/AutoDeleteObjectsCustomResource/Default (OrderAnalyticsBucketAutoDeleteObjectsCustomResource3C534CD4) 
-OrderIntakeServiceStack | 26/82 | 1:08:35 AM | CREATE_COMPLETE      | AWS::S3::BucketPolicy                 | OrderAnalyticsBucket/Policy (OrderAnalyticsBucketPolicy3D2210DE) 
-OrderIntakeServiceStack | 27/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::Glue::Crawler                    | OrderAnalyticsCrawler Resource type AWS::Glue::Crawler is not supported but was deployed as a fallback
-OrderIntakeServiceStack | 27/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::Glue::Crawler                    | OrderAnalyticsCrawler 
-OrderIntakeServiceStack | 28/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::Glue::Database                   | OrderAnalyticsGlueDb Resource type AWS::Glue::Database is not supported but was deployed as a fallback
-OrderIntakeServiceStack | 28/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::Glue::Database                   | OrderAnalyticsGlueDb 
-OrderIntakeServiceStack | 29/82 | 1:08:42 AM | CREATE_COMPLETE      | Custom::S3AutoDeleteObjects           | OrderAnalyticsBucket/AutoDeleteObjectsCustomResource/Default (OrderAnalyticsBucketAutoDeleteObjectsCustomResource3C534CD4) 
-OrderIntakeServiceStack | 30/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::Athena::WorkGroup                | OrderAnalyticsWorkGroup Resource type AWS::Athena::WorkGroup is not supported but was deployed as a fallback
-OrderIntakeServiceStack | 30/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::Athena::WorkGroup                | OrderAnalyticsWorkGroup 
-OrderIntakeServiceStack | 30/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderIntakeVpc/PrivateSubnet1/Subnet (OrderIntakeVpcPrivateSubnet1Subnet0DDE6F8C) 
-OrderIntakeServiceStack | 31/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderIntakeVpc/PrivateSubnet1/Subnet (OrderIntakeVpcPrivateSubnet1Subnet0DDE6F8C) 
-OrderIntakeServiceStack | 31/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderIntakeVpc/PrivateSubnet2/Subnet (OrderIntakeVpcPrivateSubnet2SubnetE0EFD5BC) 
-OrderIntakeServiceStack | 32/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::RDS::DBSubnetGroup               | OrderDatabase/SubnetGroup/Default (OrderDatabaseSubnetGroupC3611254) Resource type AWS::RDS::DBSubnetGroup is not supported but was deployed as a fallback
-OrderIntakeServiceStack | 32/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::RDS::DBSubnetGroup               | OrderDatabase/SubnetGroup/Default (OrderDatabaseSubnetGroupC3611254) 
-OrderIntakeServiceStack | 33/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderIntakeVpc/PrivateSubnet2/Subnet (OrderIntakeVpcPrivateSubnet2SubnetE0EFD5BC) 
-OrderIntakeServiceStack | 33/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi              | OrderIntakeApi (OrderIntakeApi34F0E9AC) 
-OrderIntakeServiceStack | 34/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::RDS::DBInstance                  | OrderDatabase (OrderDatabaseEB7183D8) Resource type AWS::RDS::DBInstance is not supported but was deployed as a fallback
-OrderIntakeServiceStack | 34/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::RDS::DBInstance                  | OrderDatabase (OrderDatabaseEB7183D8) 
-OrderIntakeServiceStack | 34/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | OrderIntakeApi/CloudWatchRole (OrderIntakeApiCloudWatchRoleDB381DB8) 
-OrderIntakeServiceStack | 35/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi              | OrderIntakeApi (OrderIntakeApi34F0E9AC) 
-OrderIntakeServiceStack | 35/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Account              | OrderIntakeApi/Account (OrderIntakeApiAccountBDD38C77) 
-OrderIntakeServiceStack | 36/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | OrderIntakeApi/CloudWatchRole (OrderIntakeApiCloudWatchRoleDB381DB8) 
-OrderIntakeServiceStack | 36/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource             | OrderIntakeApi/Default/orders (OrderIntakeApiorders44FC470E) 
-OrderIntakeServiceStack | 37/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::ApiGateway::Account              | OrderIntakeApi/Account (OrderIntakeApiAccountBDD38C77) 
-OrderIntakeServiceStack | 37/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderIntakeVpc/PrivateSubnet2/RouteTable (OrderIntakeVpcPrivateSubnet2RouteTable479233F1) 
-OrderIntakeServiceStack | 38/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::ApiGateway::Resource             | OrderIntakeApi/Default/orders (OrderIntakeApiorders44FC470E) 
-OrderIntakeServiceStack | 38/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderIntakeVpc/PrivateSubnet2/RouteTableAssociation (OrderIntakeVpcPrivateSubnet2RouteTableAssociation241F0923) 
-OrderIntakeServiceStack | 39/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderIntakeVpc/PrivateSubnet2/RouteTable (OrderIntakeVpcPrivateSubnet2RouteTable479233F1) 
-OrderIntakeServiceStack | 39/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                       | OrderQueue (OrderQueue39B99167) 
-OrderIntakeServiceStack | 40/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderIntakeVpc/PrivateSubnet2/RouteTableAssociation (OrderIntakeVpcPrivateSubnet2RouteTableAssociation241F0923) 
-OrderIntakeServiceStack | 41/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::SQS::Queue                       | OrderQueue (OrderQueue39B99167) 
-OrderIntakeServiceStack | 41/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderIntakeVpc/PrivateSubnet1/RouteTable (OrderIntakeVpcPrivateSubnet1RouteTableFD81414D) 
-OrderIntakeServiceStack | 41/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderIntakeVpc/PrivateSubnet1/RouteTableAssociation (OrderIntakeVpcPrivateSubnet1RouteTableAssociation951BD754) 
-OrderIntakeServiceStack | 42/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderIntakeVpc/PrivateSubnet1/RouteTable (OrderIntakeVpcPrivateSubnet1RouteTableFD81414D) 
-OrderIntakeServiceStack | 42/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderIntakeVpc/PublicSubnet1/RouteTable (OrderIntakeVpcPublicSubnet1RouteTableA11E5D4F) 
-OrderIntakeServiceStack | 43/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderIntakeVpc/PrivateSubnet1/RouteTableAssociation (OrderIntakeVpcPrivateSubnet1RouteTableAssociation951BD754) 
-OrderIntakeServiceStack | 44/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderIntakeVpc/PublicSubnet1/RouteTable (OrderIntakeVpcPublicSubnet1RouteTableA11E5D4F) 
-OrderIntakeServiceStack | 44/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderIntakeVpc/PublicSubnet1/Subnet (OrderIntakeVpcPublicSubnet1Subnet0600C230) 
-OrderIntakeServiceStack | 44/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderIntakeVpc/PublicSubnet1/RouteTableAssociation (OrderIntakeVpcPublicSubnet1RouteTableAssociationF4000B84) 
-OrderIntakeServiceStack | 45/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderIntakeVpc/PublicSubnet1/Subnet (OrderIntakeVpcPublicSubnet1Subnet0600C230) 
-OrderIntakeServiceStack | 45/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway             | OrderIntakeVpc/IGW (OrderIntakeVpcIGWB4072B77) 
-OrderIntakeServiceStack | 46/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderIntakeVpc/PublicSubnet1/RouteTableAssociation (OrderIntakeVpcPublicSubnet1RouteTableAssociationF4000B84) 
-OrderIntakeServiceStack | 47/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::EC2::InternetGateway             | OrderIntakeVpc/IGW (OrderIntakeVpcIGWB4072B77) 
-OrderIntakeServiceStack | 47/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment        | OrderIntakeVpc/VPCGW (OrderIntakeVpcVPCGWA945CAC2) 
-OrderIntakeServiceStack | 47/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | OrderIntakeVpc/PublicSubnet1/DefaultRoute (OrderIntakeVpcPublicSubnet1DefaultRoute79C53583) 
-OrderIntakeServiceStack | 48/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment        | OrderIntakeVpc/VPCGW (OrderIntakeVpcVPCGWA945CAC2) 
-OrderIntakeServiceStack | 48/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                         | OrderIntakeVpc/PublicSubnet1/EIP (OrderIntakeVpcPublicSubnet1EIPFEEBD27B) 
-OrderIntakeServiceStack | 49/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | OrderIntakeVpc/PublicSubnet1/DefaultRoute (OrderIntakeVpcPublicSubnet1DefaultRoute79C53583) 
-OrderIntakeServiceStack | 49/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                  | OrderIntakeVpc/PublicSubnet1/NATGateway (OrderIntakeVpcPublicSubnet1NATGateway17A75ECF) 
-OrderIntakeServiceStack | 50/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::EC2::EIP                         | OrderIntakeVpc/PublicSubnet1/EIP (OrderIntakeVpcPublicSubnet1EIPFEEBD27B) 
-OrderIntakeServiceStack | 50/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | OrderIntakeVpc/PrivateSubnet2/DefaultRoute (OrderIntakeVpcPrivateSubnet2DefaultRouteB5C250D4) 
-OrderIntakeServiceStack | 51/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::EC2::NatGateway                  | OrderIntakeVpc/PublicSubnet1/NATGateway (OrderIntakeVpcPublicSubnet1NATGateway17A75ECF) 
-OrderIntakeServiceStack | 51/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | OrderIntakeVpc/PrivateSubnet1/DefaultRoute (OrderIntakeVpcPrivateSubnet1DefaultRouteEEEF52ED) 
-OrderIntakeServiceStack | 52/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | OrderIntakeVpc/PrivateSubnet2/DefaultRoute (OrderIntakeVpcPrivateSubnet2DefaultRouteB5C250D4) 
-OrderIntakeServiceStack | 52/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | RequestHandlerRole (RequestHandlerRole0F80AF6C) 
-OrderIntakeServiceStack | 53/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | OrderIntakeVpc/PrivateSubnet1/DefaultRoute (OrderIntakeVpcPrivateSubnet1DefaultRouteEEEF52ED) 
-OrderIntakeServiceStack | 53/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | RequestHandlerFn (RequestHandlerFnAA99B048) 
-OrderIntakeServiceStack | 54/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | RequestHandlerRole (RequestHandlerRole0F80AF6C) 
-OrderIntakeServiceStack | 55/82 | 1:08:42 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | RequestHandlerFn (RequestHandlerFnAA99B048) 
-OrderIntakeServiceStack | 55/82 | 1:08:42 AM | CREATE_IN_PROGRESS   | Custom::LogRetention                  | RequestHandlerFn/LogRetention (RequestHandlerFnLogRetentionF348B7D6) 
-OrderIntakeServiceStack | 55/82 | 1:08:49 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | RequestHandlerRole/DefaultPolicy (RequestHandlerRoleDefaultPolicy2BFC8FB0) 
-OrderIntakeServiceStack | 56/82 | 1:08:49 AM | CREATE_COMPLETE      | Custom::LogRetention                  | RequestHandlerFn/LogRetention (RequestHandlerFnLogRetentionF348B7D6) 
-OrderIntakeServiceStack | 56/82 | 1:08:49 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | RequestHandlerFn (RequestHandlerFnAA99B048) 
-OrderIntakeServiceStack | 57/82 | 1:08:49 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | RequestHandlerRole/DefaultPolicy (RequestHandlerRoleDefaultPolicy2BFC8FB0) 
-OrderIntakeServiceStack | 56/82 | 1:08:49 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | RequestHandlerFn (RequestHandlerFnAA99B048) 
-OrderIntakeServiceStack | 56/82 | 1:08:49 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method               | OrderIntakeApi/Default/orders/POST (OrderIntakeApiordersPOSTEE8AAECE) 
-OrderIntakeServiceStack | 56/82 | 1:08:49 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment           | OrderIntakeApi/Deployment (OrderIntakeApiDeployment0FF57C779f0812e77495c5e3b1c6b2615518dbad) 
-OrderIntakeServiceStack | 57/82 | 1:08:49 AM | CREATE_COMPLETE      | AWS::ApiGateway::Method               | OrderIntakeApi/Default/orders/POST (OrderIntakeApiordersPOSTEE8AAECE) 
-OrderIntakeServiceStack | 58/82 | 1:08:49 AM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment           | OrderIntakeApi/Deployment (OrderIntakeApiDeployment0FF57C779f0812e77495c5e3b1c6b2615518dbad) 
-OrderIntakeServiceStack | 58/82 | 1:08:49 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage                | OrderIntakeApi/DeploymentStage.prod (OrderIntakeApiDeploymentStageprodF3062439) 
-OrderIntakeServiceStack | 59/82 | 1:08:49 AM | CREATE_COMPLETE      | AWS::ApiGateway::Stage                | OrderIntakeApi/DeploymentStage.prod (OrderIntakeApiDeploymentStageprodF3062439) 
-OrderIntakeServiceStack | 59/82 | 1:08:49 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | OrderIntakeApi/Default/orders/POST/ApiPermission.OrderIntakeServiceStackOrderIntakeApiEA12F0A9.POST..orders (OrderIntakeApiordersPOSTApiPermissionOrderIntakeServiceStackOrderIntakeApiEA12F0A9POSTordersC925DA6D) 
-OrderIntakeServiceStack | 59/82 | 1:08:49 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | OrderIntakeApi/Default/orders/POST/ApiPermission.Test.OrderIntakeServiceStackOrderIntakeApiEA12F0A9.POST..orders (OrderIntakeApiordersPOSTApiPermissionTestOrderIntakeServiceStackOrderIntakeApiEA12F0A9POSTordersC4E0CC95) 
-OrderIntakeServiceStack | 60/82 | 1:08:49 AM | CREATE_COMPLETE      | AWS::Lambda::Permission               | OrderIntakeApi/Default/orders/POST/ApiPermission.OrderIntakeServiceStackOrderIntakeApiEA12F0A9.POST..orders (OrderIntakeApiordersPOSTApiPermissionOrderIntakeServiceStackOrderIntakeApiEA12F0A9POSTordersC925DA6D) 
-OrderIntakeServiceStack | 60/82 | 1:08:49 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderIntakeVpc/PublicSubnet2/RouteTable (OrderIntakeVpcPublicSubnet2RouteTable5F1D56B5) 
-OrderIntakeServiceStack | 61/82 | 1:08:49 AM | CREATE_COMPLETE      | AWS::Lambda::Permission               | OrderIntakeApi/Default/orders/POST/ApiPermission.Test.OrderIntakeServiceStackOrderIntakeApiEA12F0A9.POST..orders (OrderIntakeApiordersPOSTApiPermissionTestOrderIntakeServiceStackOrderIntakeApiEA12F0A9POSTordersC4E0CC95) 
-OrderIntakeServiceStack | 61/82 | 1:08:49 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | OrderIntakeVpc/PublicSubnet2/DefaultRoute (OrderIntakeVpcPublicSubnet2DefaultRouteE6EAACF6) 
-OrderIntakeServiceStack | 62/82 | 1:08:49 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderIntakeVpc/PublicSubnet2/RouteTable (OrderIntakeVpcPublicSubnet2RouteTable5F1D56B5) 
-OrderIntakeServiceStack | 63/82 | 1:08:49 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | OrderIntakeVpc/PublicSubnet2/DefaultRoute (OrderIntakeVpcPublicSubnet2DefaultRouteE6EAACF6) 
-OrderIntakeServiceStack | 63/82 | 1:08:49 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderIntakeVpc/PublicSubnet2/Subnet (OrderIntakeVpcPublicSubnet2Subnet0794D9A7) 
-OrderIntakeServiceStack | 63/82 | 1:08:49 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderIntakeVpc/PublicSubnet2/RouteTableAssociation (OrderIntakeVpcPublicSubnet2RouteTableAssociationC824AE84) 
-OrderIntakeServiceStack | 64/82 | 1:08:49 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderIntakeVpc/PublicSubnet2/Subnet (OrderIntakeVpcPublicSubnet2Subnet0794D9A7) 
-OrderIntakeServiceStack | 64/82 | 1:08:49 AM | CREATE_IN_PROGRESS   | AWS::SNS::Subscription                | OrderNotificationTopic/placeholder@example.com (OrderNotificationTopicplaceholderexamplecomC73751C3) 
-OrderIntakeServiceStack | 65/82 | 1:08:49 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderIntakeVpc/PublicSubnet2/RouteTableAssociation (OrderIntakeVpcPublicSubnet2RouteTableAssociationC824AE84) 
-OrderIntakeServiceStack | 65/82 | 1:08:49 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
-OrderIntakeServiceStack | 66/82 | 1:08:49 AM | CREATE_COMPLETE      | AWS::SNS::Subscription                | OrderNotificationTopic/placeholder@example.com (OrderNotificationTopicplaceholderexamplecomC73751C3) 
-OrderIntakeServiceStack | 66/82 | 1:08:49 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
-OrderIntakeServiceStack | 67/82 | 1:08:49 AM | CREATE_COMPLETE      | AWS::Pipes::Pipe                      | OrderPipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
-OrderIntakeServiceStack | 67/82 | 1:08:49 AM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                      | OrderPipe 
-OrderIntakeServiceStack | 68/82 | 1:08:49 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
-OrderIntakeServiceStack | 69/82 | 1:08:50 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
-OrderIntakeServiceStack | 69/82 | 1:08:50 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPCEndpoint                 | S3GatewayEndpoint (S3GatewayEndpointE8BAF1BC) 
-OrderIntakeServiceStack | 70/82 | 1:08:50 AM | CREATE_COMPLETE      | AWS::EC2::VPCEndpoint                 | S3GatewayEndpoint (S3GatewayEndpointE8BAF1BC) 
-OrderIntakeServiceStack | 70/82 | 1:08:50 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | SmEndpointSg (SmEndpointSg1B9B4B31) 
-OrderIntakeServiceStack | 70/82 | 1:08:50 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPCEndpoint                 | SecretsManagerInterfaceEndpoint (SecretsManagerInterfaceEndpointE27DCE69) 
-OrderIntakeServiceStack | 71/82 | 1:08:50 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | SmEndpointSg (SmEndpointSg1B9B4B31) 
-OrderIntakeServiceStack | 72/82 | 1:08:50 AM | CREATE_COMPLETE      | AWS::EC2::VPCEndpoint                 | SecretsManagerInterfaceEndpoint (SecretsManagerInterfaceEndpointE27DCE69) 
-OrderIntakeServiceStack | 72/82 | 1:08:50 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | SqsEndpointSg (SqsEndpointSg00A55260) 
-OrderIntakeServiceStack | 72/82 | 1:08:50 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPCEndpoint                 | SqsInterfaceEndpoint (SqsInterfaceEndpointC5BB4F3C) 
-OrderIntakeServiceStack | 73/82 | 1:08:50 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | SqsEndpointSg (SqsEndpointSg00A55260) 
-OrderIntakeServiceStack | 73/82 | 1:08:50 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | WorkerRole (WorkerRole8DD27D41) 
-OrderIntakeServiceStack | 74/82 | 1:08:50 AM | CREATE_COMPLETE      | AWS::EC2::VPCEndpoint                 | SqsInterfaceEndpoint (SqsInterfaceEndpointC5BB4F3C) 
-OrderIntakeServiceStack | 74/82 | 1:08:50 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | WorkerFn (WorkerFn847949AF) 
-OrderIntakeServiceStack | 75/82 | 1:08:50 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | WorkerRole (WorkerRole8DD27D41) 
-OrderIntakeServiceStack | 75/82 | 1:08:50 AM | CREATE_IN_PROGRESS   | Custom::LogRetention                  | WorkerFn/LogRetention (WorkerFnLogRetention92FA3A22) 
-OrderIntakeServiceStack | 76/82 | 1:08:50 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | WorkerFn (WorkerFn847949AF) 
-OrderIntakeServiceStack | 76/82 | 1:08:57 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | WorkerRole/DefaultPolicy (WorkerRoleDefaultPolicy1750E153) 
-OrderIntakeServiceStack | 77/82 | 1:08:57 AM | CREATE_COMPLETE      | Custom::LogRetention                  | WorkerFn/LogRetention (WorkerFnLogRetention92FA3A22) 
-OrderIntakeServiceStack | 77/82 | 1:08:57 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | WorkerFn (WorkerFn847949AF) 
-OrderIntakeServiceStack | 78/82 | 1:08:57 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | WorkerRole/DefaultPolicy (WorkerRoleDefaultPolicy1750E153) 
-OrderIntakeServiceStack | 78/82 | 1:08:57 AM | CREATE_IN_PROGRESS   | AWS::Lambda::EventSourceMapping       | WorkerFn/SqsEventSource:OrderIntakeServiceStackOrderQueue046D0D6F (WorkerFnSqsEventSourceOrderIntakeServiceStackOrderQueue046D0D6FE691D3B3) 
-OrderIntakeServiceStack | 77/82 | 1:08:57 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | WorkerFn (WorkerFn847949AF) 
-OrderIntakeServiceStack | 78/82 | 1:08:57 AM | CREATE_COMPLETE      | AWS::Lambda::EventSourceMapping       | WorkerFn/SqsEventSource:OrderIntakeServiceStackOrderQueue046D0D6F (WorkerFnSqsEventSourceOrderIntakeServiceStackOrderQueue046D0D6FE691D3B3) 
-OrderIntakeServiceStack | 79/82 | 1:08:57 AM | CREATE_COMPLETE      | AWS::CloudFormation::Stack            | OrderIntakeServiceStack 
+OrderIntakeServiceStack |  0/82 | 9:24:30 PM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack            | OrderIntakeServiceStack User Initiated
+OrderIntakeServiceStack |  0/82 | 9:24:30 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                         | OrderIntakeVpc (OrderIntakeVpcAF870571) 
+OrderIntakeServiceStack |  1/82 | 9:24:30 PM | CREATE_COMPLETE      | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+OrderIntakeServiceStack |  1/82 | 9:24:30 PM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+OrderIntakeServiceStack |  1/82 | 9:24:30 PM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack            | OrderIntakeServiceStack 
+OrderIntakeServiceStack |  1/82 | 9:24:30 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | ComputeSg (ComputeSg63149A20) 
+OrderIntakeServiceStack |  2/82 | 9:24:30 PM | CREATE_COMPLETE      | AWS::EC2::VPC                         | OrderIntakeVpc (OrderIntakeVpcAF870571) 
+OrderIntakeServiceStack |  2/82 | 9:24:30 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | Custom::S3AutoDeleteObjectsCustomResourceProvider/Role (CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092) 
+OrderIntakeServiceStack |  3/82 | 9:24:30 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | ComputeSg (ComputeSg63149A20) 
+OrderIntakeServiceStack |  3/82 | 9:24:30 PM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                       | OrderAnalyticsBucket (OrderAnalyticsBucket962DFE77) 
+OrderIntakeServiceStack |  4/82 | 9:24:30 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | Custom::S3AutoDeleteObjectsCustomResourceProvider/Role (CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092) 
+OrderIntakeServiceStack |  4/82 | 9:24:30 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler (CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F) 
+OrderIntakeServiceStack |  5/82 | 9:24:30 PM | CREATE_COMPLETE      | AWS::S3::Bucket                       | OrderAnalyticsBucket (OrderAnalyticsBucket962DFE77) 
+OrderIntakeServiceStack |  5/82 | 9:24:33 PM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret           | DbCredentialsSecret (DbCredentialsSecret4110FA1D) 
+OrderIntakeServiceStack |  6/82 | 9:24:33 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler (CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F) 
+OrderIntakeServiceStack |  6/82 | 9:24:33 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | DbSg (DbSg495F8305) 
+OrderIntakeServiceStack |  7/82 | 9:24:33 PM | CREATE_COMPLETE      | AWS::SecretsManager::Secret           | DbCredentialsSecret (DbCredentialsSecret4110FA1D) 
+OrderIntakeServiceStack |  7/82 | 9:24:33 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | EnrichmentRole (EnrichmentRoleDC3E4361) 
+OrderIntakeServiceStack |  8/82 | 9:24:33 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | DbSg (DbSg495F8305) 
+OrderIntakeServiceStack |  8/82 | 9:24:33 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | EnrichmentFn (EnrichmentFnB72ACB5D) 
+OrderIntakeServiceStack |  9/82 | 9:24:33 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | EnrichmentRole (EnrichmentRoleDC3E4361) 
+OrderIntakeServiceStack |  9/82 | 9:24:34 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole (LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB) 
+OrderIntakeServiceStack | 10/82 | 9:24:34 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | EnrichmentFn (EnrichmentFnB72ACB5D) 
+OrderIntakeServiceStack | 10/82 | 9:24:34 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy (LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB) 
+OrderIntakeServiceStack | 11/82 | 9:24:34 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole (LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB) 
+OrderIntakeServiceStack | 11/82 | 9:24:34 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a (LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A) 
+OrderIntakeServiceStack | 12/82 | 9:24:34 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy (LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB) 
+OrderIntakeServiceStack | 12/82 | 9:24:34 PM | CREATE_IN_PROGRESS   | Custom::LogRetention                  | EnrichmentFn/LogRetention (EnrichmentFnLogRetention91093CB8) 
+OrderIntakeServiceStack | 13/82 | 9:24:34 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a (LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A) 
+OrderIntakeServiceStack | 14/82 | 9:24:43 PM | CREATE_COMPLETE      | Custom::LogRetention                  | EnrichmentFn/LogRetention (EnrichmentFnLogRetention91093CB8) 
+OrderIntakeServiceStack | 14/82 | 9:24:43 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | EnrichmentRole/DefaultPolicy (EnrichmentRoleDefaultPolicyF1A6E726) 
+OrderIntakeServiceStack | 14/82 | 9:24:43 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | EnrichmentFn (EnrichmentFnB72ACB5D) 
+OrderIntakeServiceStack | 15/82 | 9:24:43 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | EnrichmentRole/DefaultPolicy (EnrichmentRoleDefaultPolicyF1A6E726) 
+OrderIntakeServiceStack | 14/82 | 9:24:43 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | EnrichmentFn (EnrichmentFnB72ACB5D) 
+OrderIntakeServiceStack | 14/82 | 9:24:43 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | EventBridgeRuleRole (EventBridgeRuleRole1332BFB5) 
+OrderIntakeServiceStack | 14/82 | 9:24:43 PM | CREATE_IN_PROGRESS   | AWS::SNS::Topic                       | OrderNotificationTopic (OrderNotificationTopicC07D7EFC) 
+OrderIntakeServiceStack | 15/82 | 9:24:43 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | EventBridgeRuleRole (EventBridgeRuleRole1332BFB5) 
+OrderIntakeServiceStack | 15/82 | 9:24:43 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | SfnExecutionRole (SfnExecutionRoleD75F2701) 
+OrderIntakeServiceStack | 16/82 | 9:24:43 PM | CREATE_COMPLETE      | AWS::SNS::Topic                       | OrderNotificationTopic (OrderNotificationTopicC07D7EFC) 
+OrderIntakeServiceStack | 16/82 | 9:24:43 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | SfnExecutionRole/DefaultPolicy (SfnExecutionRoleDefaultPolicy969E4817) 
+OrderIntakeServiceStack | 17/82 | 9:24:43 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | SfnExecutionRole (SfnExecutionRoleD75F2701) 
+OrderIntakeServiceStack | 18/82 | 9:24:43 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | SfnExecutionRole/DefaultPolicy (SfnExecutionRoleDefaultPolicy969E4817) 
+OrderIntakeServiceStack | 18/82 | 9:24:43 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | SfnLogGroup (SfnLogGroup4E29B71B) 
+OrderIntakeServiceStack | 18/82 | 9:24:43 PM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine      | OrderStateMachine (OrderStateMachineC078F95C) 
+OrderIntakeServiceStack | 19/82 | 9:24:43 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | SfnLogGroup (SfnLogGroup4E29B71B) 
+OrderIntakeServiceStack | 19/82 | 9:24:43 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | EventBridgeRuleRole/DefaultPolicy (EventBridgeRuleRoleDefaultPolicy1FEC61B6) 
+OrderIntakeServiceStack | 20/82 | 9:24:43 PM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine      | OrderStateMachine (OrderStateMachineC078F95C) 
+OrderIntakeServiceStack | 21/82 | 9:24:43 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | EventBridgeRuleRole/DefaultPolicy (EventBridgeRuleRoleDefaultPolicy1FEC61B6) 
+OrderIntakeServiceStack | 21/82 | 9:24:43 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+OrderIntakeServiceStack | 21/82 | 9:24:43 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
+OrderIntakeServiceStack | 22/82 | 9:24:43 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+OrderIntakeServiceStack | 22/82 | 9:24:43 PM | CREATE_IN_PROGRESS   | AWS::Events::EventBus                 | OrderEventBus (OrderEventBus8DA2948A) 
+OrderIntakeServiceStack | 23/82 | 9:24:43 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
+OrderIntakeServiceStack | 23/82 | 9:24:44 PM | CREATE_IN_PROGRESS   | AWS::Events::Rule                     | OrderAcceptedRule (OrderAcceptedRule8C998966) 
+OrderIntakeServiceStack | 24/82 | 9:24:44 PM | CREATE_COMPLETE      | AWS::Events::EventBus                 | OrderEventBus (OrderEventBus8DA2948A) 
+OrderIntakeServiceStack | 24/82 | 9:24:44 PM | CREATE_IN_PROGRESS   | AWS::S3::BucketPolicy                 | OrderAnalyticsBucket/Policy (OrderAnalyticsBucketPolicy3D2210DE) 
+OrderIntakeServiceStack | 25/82 | 9:24:44 PM | CREATE_COMPLETE      | AWS::Events::Rule                     | OrderAcceptedRule (OrderAcceptedRule8C998966) 
+OrderIntakeServiceStack | 25/82 | 9:24:44 PM | CREATE_IN_PROGRESS   | Custom::S3AutoDeleteObjects           | OrderAnalyticsBucket/AutoDeleteObjectsCustomResource/Default (OrderAnalyticsBucketAutoDeleteObjectsCustomResource3C534CD4) 
+OrderIntakeServiceStack | 26/82 | 9:24:44 PM | CREATE_COMPLETE      | AWS::S3::BucketPolicy                 | OrderAnalyticsBucket/Policy (OrderAnalyticsBucketPolicy3D2210DE) 
+OrderIntakeServiceStack | 26/82 | 9:24:51 PM | CREATE_IN_PROGRESS   | AWS::Glue::Database                   | OrderAnalyticsGlueDb 
+OrderIntakeServiceStack | 27/82 | 9:24:51 PM | CREATE_COMPLETE      | Custom::S3AutoDeleteObjects           | OrderAnalyticsBucket/AutoDeleteObjectsCustomResource/Default (OrderAnalyticsBucketAutoDeleteObjectsCustomResource3C534CD4) 
+OrderIntakeServiceStack | 28/82 | 9:24:51 PM | CREATE_COMPLETE      | AWS::Glue::Database                   | OrderAnalyticsGlueDb Resource type AWS::Glue::Database is not supported but was deployed as a fallback
+OrderIntakeServiceStack | 29/82 | 9:24:51 PM | CREATE_COMPLETE      | AWS::Athena::WorkGroup                | OrderAnalyticsWorkGroup Resource type AWS::Athena::WorkGroup is not supported but was deployed as a fallback
+OrderIntakeServiceStack | 29/82 | 9:24:51 PM | CREATE_IN_PROGRESS   | AWS::Athena::WorkGroup                | OrderAnalyticsWorkGroup 
+OrderIntakeServiceStack | 30/82 | 9:24:51 PM | CREATE_COMPLETE      | AWS::Glue::Crawler                    | OrderAnalyticsCrawler Resource type AWS::Glue::Crawler is not supported but was deployed as a fallback
+OrderIntakeServiceStack | 30/82 | 9:24:51 PM | CREATE_IN_PROGRESS   | AWS::Glue::Crawler                    | OrderAnalyticsCrawler 
+OrderIntakeServiceStack | 30/82 | 9:24:51 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderIntakeVpc/PrivateSubnet1/Subnet (OrderIntakeVpcPrivateSubnet1Subnet0DDE6F8C) 
+OrderIntakeServiceStack | 31/82 | 9:24:51 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderIntakeVpc/PrivateSubnet1/Subnet (OrderIntakeVpcPrivateSubnet1Subnet0DDE6F8C) 
+OrderIntakeServiceStack | 31/82 | 9:24:51 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderIntakeVpc/PrivateSubnet2/Subnet (OrderIntakeVpcPrivateSubnet2SubnetE0EFD5BC) 
+OrderIntakeServiceStack | 32/82 | 9:24:51 PM | CREATE_COMPLETE      | AWS::RDS::DBSubnetGroup               | OrderDatabase/SubnetGroup/Default (OrderDatabaseSubnetGroupC3611254) Resource type AWS::RDS::DBSubnetGroup is not supported but was deployed as a fallback
+OrderIntakeServiceStack | 32/82 | 9:24:51 PM | CREATE_IN_PROGRESS   | AWS::RDS::DBSubnetGroup               | OrderDatabase/SubnetGroup/Default (OrderDatabaseSubnetGroupC3611254) 
+OrderIntakeServiceStack | 33/82 | 9:24:51 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderIntakeVpc/PrivateSubnet2/Subnet (OrderIntakeVpcPrivateSubnet2SubnetE0EFD5BC) 
+OrderIntakeServiceStack | 33/82 | 9:24:51 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi              | OrderIntakeApi (OrderIntakeApi34F0E9AC) 
+OrderIntakeServiceStack | 34/82 | 9:24:51 PM | CREATE_COMPLETE      | AWS::RDS::DBInstance                  | OrderDatabase (OrderDatabaseEB7183D8) Resource type AWS::RDS::DBInstance is not supported but was deployed as a fallback
+OrderIntakeServiceStack | 34/82 | 9:24:51 PM | CREATE_IN_PROGRESS   | AWS::RDS::DBInstance                  | OrderDatabase (OrderDatabaseEB7183D8) 
+OrderIntakeServiceStack | 35/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi              | OrderIntakeApi (OrderIntakeApi34F0E9AC) 
+OrderIntakeServiceStack | 35/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | OrderIntakeApi/CloudWatchRole (OrderIntakeApiCloudWatchRoleDB381DB8) 
+OrderIntakeServiceStack | 35/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Account              | OrderIntakeApi/Account (OrderIntakeApiAccountBDD38C77) 
+OrderIntakeServiceStack | 36/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | OrderIntakeApi/CloudWatchRole (OrderIntakeApiCloudWatchRoleDB381DB8) 
+OrderIntakeServiceStack | 37/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::ApiGateway::Account              | OrderIntakeApi/Account (OrderIntakeApiAccountBDD38C77) 
+OrderIntakeServiceStack | 37/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource             | OrderIntakeApi/Default/orders (OrderIntakeApiorders44FC470E) 
+OrderIntakeServiceStack | 38/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::ApiGateway::Resource             | OrderIntakeApi/Default/orders (OrderIntakeApiorders44FC470E) 
+OrderIntakeServiceStack | 38/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                       | OrderQueue (OrderQueue39B99167) 
+OrderIntakeServiceStack | 38/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway             | OrderIntakeVpc/IGW (OrderIntakeVpcIGWB4072B77) 
+OrderIntakeServiceStack | 39/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::SQS::Queue                       | OrderQueue (OrderQueue39B99167) 
+OrderIntakeServiceStack | 39/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment        | OrderIntakeVpc/VPCGW (OrderIntakeVpcVPCGWA945CAC2) 
+OrderIntakeServiceStack | 40/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::EC2::InternetGateway             | OrderIntakeVpc/IGW (OrderIntakeVpcIGWB4072B77) 
+OrderIntakeServiceStack | 40/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderIntakeVpc/PublicSubnet1/RouteTable (OrderIntakeVpcPublicSubnet1RouteTableA11E5D4F) 
+OrderIntakeServiceStack | 41/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment        | OrderIntakeVpc/VPCGW (OrderIntakeVpcVPCGWA945CAC2) 
+OrderIntakeServiceStack | 41/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | OrderIntakeVpc/PublicSubnet1/DefaultRoute (OrderIntakeVpcPublicSubnet1DefaultRoute79C53583) 
+OrderIntakeServiceStack | 42/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderIntakeVpc/PublicSubnet1/RouteTable (OrderIntakeVpcPublicSubnet1RouteTableA11E5D4F) 
+OrderIntakeServiceStack | 43/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | OrderIntakeVpc/PublicSubnet1/DefaultRoute (OrderIntakeVpcPublicSubnet1DefaultRoute79C53583) 
+OrderIntakeServiceStack | 43/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderIntakeVpc/PublicSubnet1/Subnet (OrderIntakeVpcPublicSubnet1Subnet0600C230) 
+OrderIntakeServiceStack | 43/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderIntakeVpc/PublicSubnet1/RouteTableAssociation (OrderIntakeVpcPublicSubnet1RouteTableAssociationF4000B84) 
+OrderIntakeServiceStack | 44/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderIntakeVpc/PublicSubnet1/Subnet (OrderIntakeVpcPublicSubnet1Subnet0600C230) 
+OrderIntakeServiceStack | 44/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                         | OrderIntakeVpc/PublicSubnet1/EIP (OrderIntakeVpcPublicSubnet1EIPFEEBD27B) 
+OrderIntakeServiceStack | 45/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderIntakeVpc/PublicSubnet1/RouteTableAssociation (OrderIntakeVpcPublicSubnet1RouteTableAssociationF4000B84) 
+OrderIntakeServiceStack | 45/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                  | OrderIntakeVpc/PublicSubnet1/NATGateway (OrderIntakeVpcPublicSubnet1NATGateway17A75ECF) 
+OrderIntakeServiceStack | 46/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::EC2::EIP                         | OrderIntakeVpc/PublicSubnet1/EIP (OrderIntakeVpcPublicSubnet1EIPFEEBD27B) 
+OrderIntakeServiceStack | 46/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderIntakeVpc/PrivateSubnet2/RouteTable (OrderIntakeVpcPrivateSubnet2RouteTable479233F1) 
+OrderIntakeServiceStack | 47/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::EC2::NatGateway                  | OrderIntakeVpc/PublicSubnet1/NATGateway (OrderIntakeVpcPublicSubnet1NATGateway17A75ECF) 
+OrderIntakeServiceStack | 47/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | OrderIntakeVpc/PrivateSubnet2/DefaultRoute (OrderIntakeVpcPrivateSubnet2DefaultRouteB5C250D4) 
+OrderIntakeServiceStack | 48/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderIntakeVpc/PrivateSubnet2/RouteTable (OrderIntakeVpcPrivateSubnet2RouteTable479233F1) 
+OrderIntakeServiceStack | 48/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderIntakeVpc/PrivateSubnet1/RouteTable (OrderIntakeVpcPrivateSubnet1RouteTableFD81414D) 
+OrderIntakeServiceStack | 49/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | OrderIntakeVpc/PrivateSubnet2/DefaultRoute (OrderIntakeVpcPrivateSubnet2DefaultRouteB5C250D4) 
+OrderIntakeServiceStack | 49/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | OrderIntakeVpc/PrivateSubnet1/DefaultRoute (OrderIntakeVpcPrivateSubnet1DefaultRouteEEEF52ED) 
+OrderIntakeServiceStack | 50/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderIntakeVpc/PrivateSubnet1/RouteTable (OrderIntakeVpcPrivateSubnet1RouteTableFD81414D) 
+OrderIntakeServiceStack | 50/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderIntakeVpc/PrivateSubnet2/RouteTableAssociation (OrderIntakeVpcPrivateSubnet2RouteTableAssociation241F0923) 
+OrderIntakeServiceStack | 51/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | OrderIntakeVpc/PrivateSubnet1/DefaultRoute (OrderIntakeVpcPrivateSubnet1DefaultRouteEEEF52ED) 
+OrderIntakeServiceStack | 51/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderIntakeVpc/PrivateSubnet1/RouteTableAssociation (OrderIntakeVpcPrivateSubnet1RouteTableAssociation951BD754) 
+OrderIntakeServiceStack | 52/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderIntakeVpc/PrivateSubnet2/RouteTableAssociation (OrderIntakeVpcPrivateSubnet2RouteTableAssociation241F0923) 
+OrderIntakeServiceStack | 52/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | RequestHandlerRole (RequestHandlerRole0F80AF6C) 
+OrderIntakeServiceStack | 53/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderIntakeVpc/PrivateSubnet1/RouteTableAssociation (OrderIntakeVpcPrivateSubnet1RouteTableAssociation951BD754) 
+OrderIntakeServiceStack | 54/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | RequestHandlerRole (RequestHandlerRole0F80AF6C) 
+OrderIntakeServiceStack | 54/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | RequestHandlerFn (RequestHandlerFnAA99B048) 
+OrderIntakeServiceStack | 54/82 | 9:24:53 PM | CREATE_IN_PROGRESS   | Custom::LogRetention                  | RequestHandlerFn/LogRetention (RequestHandlerFnLogRetentionF348B7D6) 
+OrderIntakeServiceStack | 55/82 | 9:24:53 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | RequestHandlerFn (RequestHandlerFnAA99B048) 
+OrderIntakeServiceStack | 56/82 | 9:25:00 PM | CREATE_COMPLETE      | Custom::LogRetention                  | RequestHandlerFn/LogRetention (RequestHandlerFnLogRetentionF348B7D6) 
+OrderIntakeServiceStack | 56/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | RequestHandlerRole/DefaultPolicy (RequestHandlerRoleDefaultPolicy2BFC8FB0) 
+OrderIntakeServiceStack | 56/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | RequestHandlerFn (RequestHandlerFnAA99B048) 
+OrderIntakeServiceStack | 57/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | RequestHandlerRole/DefaultPolicy (RequestHandlerRoleDefaultPolicy2BFC8FB0) 
+OrderIntakeServiceStack | 57/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method               | OrderIntakeApi/Default/orders/POST (OrderIntakeApiordersPOSTEE8AAECE) 
+OrderIntakeServiceStack | 56/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | RequestHandlerFn (RequestHandlerFnAA99B048) 
+OrderIntakeServiceStack | 56/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment           | OrderIntakeApi/Deployment (OrderIntakeApiDeployment0FF57C779f0812e77495c5e3b1c6b2615518dbad) 
+OrderIntakeServiceStack | 57/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method               | OrderIntakeApi/Default/orders/POST (OrderIntakeApiordersPOSTEE8AAECE) 
+OrderIntakeServiceStack | 57/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage                | OrderIntakeApi/DeploymentStage.prod (OrderIntakeApiDeploymentStageprodF3062439) 
+OrderIntakeServiceStack | 58/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment           | OrderIntakeApi/Deployment (OrderIntakeApiDeployment0FF57C779f0812e77495c5e3b1c6b2615518dbad) 
+OrderIntakeServiceStack | 58/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | OrderIntakeApi/Default/orders/POST/ApiPermission.OrderIntakeServiceStackOrderIntakeApiEA12F0A9.POST..orders (OrderIntakeApiordersPOSTApiPermissionOrderIntakeServiceStackOrderIntakeApiEA12F0A9POSTordersC925DA6D) 
+OrderIntakeServiceStack | 59/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::ApiGateway::Stage                | OrderIntakeApi/DeploymentStage.prod (OrderIntakeApiDeploymentStageprodF3062439) 
+OrderIntakeServiceStack | 59/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | OrderIntakeApi/Default/orders/POST/ApiPermission.Test.OrderIntakeServiceStackOrderIntakeApiEA12F0A9.POST..orders (OrderIntakeApiordersPOSTApiPermissionTestOrderIntakeServiceStackOrderIntakeApiEA12F0A9POSTordersC4E0CC95) 
+OrderIntakeServiceStack | 60/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | OrderIntakeApi/Default/orders/POST/ApiPermission.OrderIntakeServiceStackOrderIntakeApiEA12F0A9.POST..orders (OrderIntakeApiordersPOSTApiPermissionOrderIntakeServiceStackOrderIntakeApiEA12F0A9POSTordersC925DA6D) 
+OrderIntakeServiceStack | 61/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | OrderIntakeApi/Default/orders/POST/ApiPermission.Test.OrderIntakeServiceStackOrderIntakeApiEA12F0A9.POST..orders (OrderIntakeApiordersPOSTApiPermissionTestOrderIntakeServiceStackOrderIntakeApiEA12F0A9POSTordersC4E0CC95) 
+OrderIntakeServiceStack | 61/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | OrderIntakeVpc/PublicSubnet2/RouteTable (OrderIntakeVpcPublicSubnet2RouteTable5F1D56B5) 
+OrderIntakeServiceStack | 61/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | OrderIntakeVpc/PublicSubnet2/DefaultRoute (OrderIntakeVpcPublicSubnet2DefaultRouteE6EAACF6) 
+OrderIntakeServiceStack | 62/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | OrderIntakeVpc/PublicSubnet2/RouteTable (OrderIntakeVpcPublicSubnet2RouteTable5F1D56B5) 
+OrderIntakeServiceStack | 63/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | OrderIntakeVpc/PublicSubnet2/DefaultRoute (OrderIntakeVpcPublicSubnet2DefaultRouteE6EAACF6) 
+OrderIntakeServiceStack | 63/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | OrderIntakeVpc/PublicSubnet2/Subnet (OrderIntakeVpcPublicSubnet2Subnet0794D9A7) 
+OrderIntakeServiceStack | 63/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | OrderIntakeVpc/PublicSubnet2/RouteTableAssociation (OrderIntakeVpcPublicSubnet2RouteTableAssociationC824AE84) 
+OrderIntakeServiceStack | 64/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | OrderIntakeVpc/PublicSubnet2/Subnet (OrderIntakeVpcPublicSubnet2Subnet0794D9A7) 
+OrderIntakeServiceStack | 64/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::SNS::Subscription                | OrderNotificationTopic/placeholder@example.com (OrderNotificationTopicplaceholderexamplecomC73751C3) 
+OrderIntakeServiceStack | 65/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | OrderIntakeVpc/PublicSubnet2/RouteTableAssociation (OrderIntakeVpcPublicSubnet2RouteTableAssociationC824AE84) 
+OrderIntakeServiceStack | 65/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
+OrderIntakeServiceStack | 66/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::SNS::Subscription                | OrderNotificationTopic/placeholder@example.com (OrderNotificationTopicplaceholderexamplecomC73751C3) 
+OrderIntakeServiceStack | 66/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
+OrderIntakeServiceStack | 67/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::Pipes::Pipe                      | OrderPipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
+OrderIntakeServiceStack | 67/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                      | OrderPipe 
+OrderIntakeServiceStack | 68/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
+OrderIntakeServiceStack | 68/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCEndpoint                 | S3GatewayEndpoint (S3GatewayEndpointE8BAF1BC) 
+OrderIntakeServiceStack | 69/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
+OrderIntakeServiceStack | 69/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | SmEndpointSg (SmEndpointSg1B9B4B31) 
+OrderIntakeServiceStack | 70/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::EC2::VPCEndpoint                 | S3GatewayEndpoint (S3GatewayEndpointE8BAF1BC) 
+OrderIntakeServiceStack | 71/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | SmEndpointSg (SmEndpointSg1B9B4B31) 
+OrderIntakeServiceStack | 71/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCEndpoint                 | SecretsManagerInterfaceEndpoint (SecretsManagerInterfaceEndpointE27DCE69) 
+OrderIntakeServiceStack | 72/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::EC2::VPCEndpoint                 | SecretsManagerInterfaceEndpoint (SecretsManagerInterfaceEndpointE27DCE69) 
+OrderIntakeServiceStack | 72/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | SqsEndpointSg (SqsEndpointSg00A55260) 
+OrderIntakeServiceStack | 72/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCEndpoint                 | SqsInterfaceEndpoint (SqsInterfaceEndpointC5BB4F3C) 
+OrderIntakeServiceStack | 73/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | SqsEndpointSg (SqsEndpointSg00A55260) 
+OrderIntakeServiceStack | 73/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | WorkerRole (WorkerRole8DD27D41) 
+OrderIntakeServiceStack | 74/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::EC2::VPCEndpoint                 | SqsInterfaceEndpoint (SqsInterfaceEndpointC5BB4F3C) 
+OrderIntakeServiceStack | 74/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | WorkerFn (WorkerFn847949AF) 
+OrderIntakeServiceStack | 75/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | WorkerRole (WorkerRole8DD27D41) 
+OrderIntakeServiceStack | 75/82 | 9:25:00 PM | CREATE_IN_PROGRESS   | Custom::LogRetention                  | WorkerFn/LogRetention (WorkerFnLogRetention92FA3A22) 
+OrderIntakeServiceStack | 76/82 | 9:25:00 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | WorkerFn (WorkerFn847949AF) 
+OrderIntakeServiceStack | 76/82 | 9:25:07 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | WorkerRole/DefaultPolicy (WorkerRoleDefaultPolicy1750E153) 
+OrderIntakeServiceStack | 77/82 | 9:25:07 PM | CREATE_COMPLETE      | Custom::LogRetention                  | WorkerFn/LogRetention (WorkerFnLogRetention92FA3A22) 
+OrderIntakeServiceStack | 77/82 | 9:25:07 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | WorkerFn (WorkerFn847949AF) 
+OrderIntakeServiceStack | 78/82 | 9:25:07 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | WorkerRole/DefaultPolicy (WorkerRoleDefaultPolicy1750E153) 
+OrderIntakeServiceStack | 78/82 | 9:25:07 PM | CREATE_IN_PROGRESS   | AWS::Lambda::EventSourceMapping       | WorkerFn/SqsEventSource:OrderIntakeServiceStackOrderQueue046D0D6F (WorkerFnSqsEventSourceOrderIntakeServiceStackOrderQueue046D0D6FE691D3B3) 
+OrderIntakeServiceStack | 77/82 | 9:25:07 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | WorkerFn (WorkerFn847949AF) 
+OrderIntakeServiceStack | 78/82 | 9:25:07 PM | CREATE_COMPLETE      | AWS::Lambda::EventSourceMapping       | WorkerFn/SqsEventSource:OrderIntakeServiceStackOrderQueue046D0D6F (WorkerFnSqsEventSourceOrderIntakeServiceStackOrderQueue046D0D6FE691D3B3) 
+OrderIntakeServiceStack | 79/82 | 9:25:07 PM | CREATE_COMPLETE      | AWS::CloudFormation::Stack            | OrderIntakeServiceStack 
 
  ✅  OrderIntakeServiceStack
 
-✨  Deployment time: 35.44s
+✨  Deployment time: 40.47s
 
 Outputs:
-OrderIntakeServiceStack.AnalyticsBucketName = orderintakeservicestack-orderanalyticsbucket962d-3ea97ed2
-OrderIntakeServiceStack.ApiGatewayInvokeUrl = https://6hozvd5ngx.execute-api.localhost.localstack.cloud:4566/prod/
-OrderIntakeServiceStack.OrderIntakeApiEndpoint45CFEE18 = https://6hozvd5ngx.execute-api.localhost.localstack.cloud:4566/prod/
+OrderIntakeServiceStack.AnalyticsBucketName = orderintakeservicestack-orderanalyticsbucket962d-80882265
+OrderIntakeServiceStack.ApiGatewayInvokeUrl = https://vgzpenjvet.execute-api.localhost.localstack.cloud:4566/prod/
+OrderIntakeServiceStack.OrderIntakeApiEndpoint45CFEE18 = https://vgzpenjvet.execute-api.localhost.localstack.cloud:4566/prod/
 Stack ARN:
-arn:aws:cloudformation:us-east-1:000000000000:stack/OrderIntakeServiceStack/ce7cc697-e831-4f38-be96-7f7d19f9ec10
+arn:aws:cloudformation:us-east-1:000000000000:stack/OrderIntakeServiceStack/6dd08a3d-22d3-4219-9818-eec2cb0b7484
 
-✨  Total time: 50.42s
+✨  Total time: 49.42s
 
 [32m✅ Step passed: Deploy (LocalStack)[0m
 
@@ -326,23 +356,23 @@ tests/integration_tests.py::test_network_isolation PASSED                [ 38%]
 tests/integration_tests.py::test_vpc_nat_gateway PASSED                  [ 44%]
 tests/integration_tests.py::test_vpc_endpoints PASSED                    [ 50%]
 tests/integration_tests.py::test_s3_bucket_versioning_and_encryption PASSED [ 55%]
-tests/integration_tests.py::test_s3_no_object_lock PASSED                [ 61%]
-tests/integration_tests.py::test_glue_catalog_and_crawler PASSED         [ 66%]
-tests/integration_tests.py::test_glue_crawler_iam_role PASSED            [ 72%]
-tests/integration_tests.py::test_athena_workgroup PASSED                 [ 77%]
-tests/integration_tests.py::test_worker_lambda_sqs_batch_config PASSED   [ 83%]
-tests/integration_tests.py::test_lambda_count_is_three PASSED            [ 88%]
-tests/integration_tests.py::test_cloudwatch_log_groups_no_kms PASSED     [ 94%]
-tests/integration_tests.py::test_rds_private_subnet_placement PASSED     [100%]
+tests/integration_tests.py::test_glue_catalog_and_crawler PASSED         [ 61%]
+tests/integration_tests.py::test_athena_workgroup PASSED                 [ 66%]
+tests/integration_tests.py::test_worker_event_source_mapping PASSED      [ 72%]
+tests/integration_tests.py::test_lambda_count_is_three PASSED            [ 77%]
+tests/integration_tests.py::test_cloudwatch_log_groups_no_kms PASSED     [ 83%]
+tests/integration_tests.py::test_rds_private_subnet_placement PASSED     [ 88%]
+tests/integration_tests.py::test_glue_crawler_iam_role_scoping PASSED    [ 94%]
+tests/integration_tests.py::test_enrichment_lambda_invocation PASSED     [100%]
 
-============================== 18 passed in 5.01s ==============================
+============================== 18 passed in 3.20s ==============================
 [32m✅ Step passed: Integration tests[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  Step: Destroy / Cleanup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 Running cdklocal destroy...
-Cleaning up worker container: harness-worker-59081
+Cleaning up worker container: harness-worker-22932
 [32m✅ Step passed: Destroy / Cleanup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
