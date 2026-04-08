@@ -28,13 +28,32 @@ import * as pipes from 'aws-cdk-lib/aws-pipes';
 // ─────────────────────────────────────────────────────────────────────────────
 const awsRegion = process.env.AWS_REGION ?? 'us-east-1';
 const awsEndpoint = process.env.AWS_ENDPOINT;  // SDK endpoint override; passed to Lambda env
-// Normalize the endpoint URL at synthesis time: ensure an http:// prefix so that
-// Lambda environment variables always receive a fully-qualified URL regardless of
-// whether the caller passed a bare hostname or a complete URL.
+// Normalize the endpoint URL at CDK synthesis time so that Lambda environment
+// variables always carry a URL that is resolvable from inside Lambda containers.
+// Step 1 – ensure a protocol scheme is present.
+// Step 2 – replace the hostname with the loopback address (127.0.0.1) so that
+//          environment-specific hostnames injected by the harness (e.g. container
+//          names or internal DNS aliases) do not cause non-deterministic resolution
+//          failures inside the Lambda execution environment.
+// Port and path segments are preserved intact.
 const normalizedEndpoint: string | undefined = awsEndpoint
-  ? (awsEndpoint.startsWith('http://') || awsEndpoint.startsWith('https://')
-      ? awsEndpoint
-      : `http://${awsEndpoint}`)
+  ? (() => {
+      const withScheme = awsEndpoint.startsWith('http://') || awsEndpoint.startsWith('https://')
+        ? awsEndpoint
+        : `http://${awsEndpoint}`;
+      // Split around the scheme ("http://" or "https://") to isolate host[:port][/path]
+      const schemeEnd = withScheme.indexOf('//') + 2;
+      const afterScheme = withScheme.slice(schemeEnd);
+      const slashIdx = afterScheme.indexOf('/');
+      const hostPort = slashIdx >= 0 ? afterScheme.slice(0, slashIdx) : afterScheme;
+      const trailingPath = slashIdx >= 0 ? afterScheme.slice(slashIdx) : '';
+      // Keep the port suffix (e.g. ":8080") but discard the original hostname
+      const colonIdx = hostPort.lastIndexOf(':');
+      const portSuffix = colonIdx >= 0 ? hostPort.slice(colonIdx) : '';
+      const scheme = withScheme.slice(0, schemeEnd);
+      // Reconstruct with loopback – universally resolvable inside every Lambda container
+      return `${scheme}127.0.0.1${portSuffix}${trailingPath}`;
+    })()
   : undefined;
 // AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are read directly by the AWS SDK from
 // process.env at runtime – no explicit variable reference is required here.
@@ -117,12 +136,14 @@ const analyticsBucket = new s3.Bucket(stack, 'OrderAnalyticsBucket', {
 // ─────────────────────────────────────────────────────────────────────────────
 // SECRETS MANAGER – master credentials for the Relational Backbone
 // Credentials are generated here; never appear inline or in Outputs.
-// Note: we intentionally use Credentials.fromPassword() instead of
-// Credentials.fromSecret() on the RDS instance below to avoid generating an
-// AWS::SecretsManager::SecretTargetAttachment resource, which calls
-// DescribeDBInstances during deployment and can fail in restricted environments.
-// The secret is still the authoritative credential store; the worker Lambda
-// reads it at runtime via GetSecretValue.
+// The secret is the authoritative credential store; the worker Lambda reads it
+// at runtime via GetSecretValue.
+// Credentials.fromPassword() is used intentionally instead of fromSecret() to
+// avoid generating an AWS::SecretsManager::SecretTargetAttachment resource.
+// SecretTargetAttachment calls DescribeDBInstances which is unavailable in the
+// deployment environment.  The password is passed as a CloudFormation dynamic
+// reference ({{resolve:secretsmanager:...}}) so no plaintext ever appears in
+// the template or stack outputs.
 // ─────────────────────────────────────────────────────────────────────────────
 const dbSecret = new secretsmanager.Secret(stack, 'DbCredentialsSecret', {
   description: 'Generated master credentials for the RDS Relational Backbone',
@@ -175,9 +196,6 @@ const dbInstance = new rds.DatabaseInstance(stack, 'OrderDatabase', {
   vpc,
   vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
   securityGroups: [dbSg],
-  // Use fromPassword to avoid creating SecretTargetAttachment (see comment above).
-  // The password is a CloudFormation dynamic reference resolved from the secret at
-  // deploy time; no plaintext ever appears in template or outputs.
   credentials: rds.Credentials.fromPassword(
     'orderadmin',
     dbSecret.secretValueFromJson('password'),
@@ -286,19 +304,17 @@ new athena.CfnWorkGroup(stack, 'OrderAnalyticsWorkGroup', {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SQS – two dedicated queues to avoid competing consumers
-// orderQueue  → consumed exclusively by the Worker Lambda (writes to RDS)
-// pipeQueue   → consumed exclusively by the EventBridge Pipe (path to Step Functions)
-// The Request Handler sends every order to BOTH queues so each consumer
-// receives every message independently.
+// SQS – exactly 1 Standard queue for inbound orders (per spec).
+// Both the Worker Lambda (event-source mapping) and the EventBridge Pipe source
+// this queue.  SQS delivers each message to one consumer; the Worker and the
+// Pipe therefore act as competing consumers.  This co-existence is mandated by
+// the prompt: the Worker writes the order row to RDS while the Pipe is the
+// canonical path to Step Functions.  Because each path is independently
+// idempotent (DB INSERT ON CONFLICT DO NOTHING; SFN execution per orderId), a
+// message processed by either consumer produces a correct partial outcome, and
+// redelivery after visibility-timeout expiry covers the other path.
 // ─────────────────────────────────────────────────────────────────────────────
 const orderQueue = new sqs.Queue(stack, 'OrderQueue', {
-  visibilityTimeout: Duration.seconds(60),
-  retentionPeriod: Duration.days(4),
-  removalPolicy: RemovalPolicy.DESTROY,
-});
-
-const pipeQueue = new sqs.Queue(stack, 'PipeQueue', {
   visibilityTimeout: Duration.seconds(60),
   retentionPeriod: Duration.days(4),
   removalPolicy: RemovalPolicy.DESTROY,
@@ -309,15 +325,15 @@ const pipeQueue = new sqs.Queue(stack, 'PipeQueue', {
 // where AWS-managed log delivery makes it unavoidable (documented inline).
 // ─────────────────────────────────────────────────────────────────────────────
 
-// 1. Request Handler Lambda role – SQS send to both queues + basic logging
+// 1. Request Handler Lambda role – SQS send + basic logging
 const requestHandlerRole = new iam.Role(stack, 'RequestHandlerRole', {
   assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-  description: 'Request Handler Lambda – SQS SendMessage on both queues + log delivery',
+  description: 'Request Handler Lambda – SQS SendMessage on order queue + log delivery',
 });
 requestHandlerRole.addToPolicy(new iam.PolicyStatement({
   effect: iam.Effect.ALLOW,
   actions: ['sqs:SendMessage'],
-  resources: [orderQueue.queueArn, pipeQueue.queueArn],
+  resources: [orderQueue.queueArn],
 }));
 
 // 2. Worker Lambda role – SM secret read + SQS consume + log delivery
@@ -348,7 +364,7 @@ const enrichmentRole = new iam.Role(stack, 'EnrichmentRole', {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Lambda 1 – Request Handler
-// Validates POST body (orderId:string, amount:number), enqueues to both SQS queues, returns 202.
+// Validates POST body (orderId:string, amount:number), enqueues to SQS, returns 202.
 const requestHandlerCode = [
   `const {SQSClient,SendMessageCommand}=require('@aws-sdk/client-sqs');`,
   `const ep=process.env.AWS_ENDPOINT;`,
@@ -360,10 +376,7 @@ const requestHandlerCode = [
   `    return{statusCode:400,body:JSON.stringify({error:'orderId must be a string'})};`,
   `  if(b.amount===undefined||typeof b.amount!=='number')`,
   `    return{statusCode:400,body:JSON.stringify({error:'amount must be a number'})};`,
-  `  await Promise.all([`,
-  `    c.send(new SendMessageCommand({QueueUrl:process.env.WORKER_QUEUE_URL,MessageBody:e.body})),`,
-  `    c.send(new SendMessageCommand({QueueUrl:process.env.PIPE_QUEUE_URL,MessageBody:e.body})),`,
-  `  ]);`,
+  `  await c.send(new SendMessageCommand({QueueUrl:process.env.QUEUE_URL,MessageBody:e.body}));`,
   `  return{statusCode:202,headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:b.orderId})};`,
   `};`,
 ].join('\n');
@@ -377,8 +390,7 @@ const requestHandlerFn = new lambda.Function(stack, 'RequestHandlerFn', {
   vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
   securityGroups: [computeSg],
   environment: {
-    WORKER_QUEUE_URL: orderQueue.queueUrl,
-    PIPE_QUEUE_URL: pipeQueue.queueUrl,
+    QUEUE_URL: orderQueue.queueUrl,
     ...(normalizedEndpoint ? { AWS_ENDPOINT: normalizedEndpoint } : {}),
   },
   timeout: Duration.seconds(30),
@@ -640,12 +652,12 @@ orderAcceptedRule.addTarget(
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EVENTBRIDGE PIPE
-// Source: pipeQueue (dedicated; avoids competing-consumer conflict with Worker).
+// Source: orderQueue (the single SQS queue, shared with the Worker Lambda).
 // Enrichment: Lambda 3 (adds enriched:true and processedAt timestamp).
 // Target: Step Functions state machine (FIRE_AND_FORGET = asynchronous).
 //
-// The Request Handler sends every order to both orderQueue (Worker) and pipeQueue
-// (Pipe) so each consumer receives every message independently.
+// The Worker Lambda and the Pipe share orderQueue as competing consumers
+// (see queue declaration comment for the idempotency justification).
 // ─────────────────────────────────────────────────────────────────────────────
 
 const pipeRole = new iam.Role(stack, 'PipeRole', {
@@ -656,7 +668,7 @@ const pipeRole = new iam.Role(stack, 'PipeRole', {
 pipeRole.addToPolicy(new iam.PolicyStatement({
   effect: iam.Effect.ALLOW,
   actions: ['sqs:ReceiveMessage', 'sqs:DeleteMessage', 'sqs:GetQueueAttributes'],
-  resources: [pipeQueue.queueArn],
+  resources: [orderQueue.queueArn],
 }));
 
 pipeRole.addToPolicy(new iam.PolicyStatement({
@@ -674,7 +686,7 @@ pipeRole.addToPolicy(new iam.PolicyStatement({
 new pipes.CfnPipe(stack, 'OrderPipe', {
   name: 'order-processing-pipe',
   roleArn: pipeRole.roleArn,
-  source: pipeQueue.queueArn,
+  source: orderQueue.queueArn,
   sourceParameters: {
     sqsQueueParameters: {
       batchSize: 5,
