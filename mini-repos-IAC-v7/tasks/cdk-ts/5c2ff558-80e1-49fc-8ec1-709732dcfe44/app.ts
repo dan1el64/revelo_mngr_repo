@@ -28,6 +28,14 @@ import * as pipes from 'aws-cdk-lib/aws-pipes';
 // ─────────────────────────────────────────────────────────────────────────────
 const awsRegion = process.env.AWS_REGION ?? 'us-east-1';
 const awsEndpoint = process.env.AWS_ENDPOINT;  // SDK endpoint override; passed to Lambda env
+// Normalize the endpoint URL at synthesis time: ensure an http:// prefix so that
+// Lambda environment variables always receive a fully-qualified URL regardless of
+// whether the caller passed a bare hostname or a complete URL.
+const normalizedEndpoint: string | undefined = awsEndpoint
+  ? (awsEndpoint.startsWith('http://') || awsEndpoint.startsWith('https://')
+      ? awsEndpoint
+      : `http://${awsEndpoint}`)
+  : undefined;
 // AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are read directly by the AWS SDK from
 // process.env at runtime – no explicit variable reference is required here.
 
@@ -220,12 +228,10 @@ glueRole.addToPolicy(new iam.PolicyStatement({
     'glue:GetTables',
     'glue:CreateTable',
     'glue:UpdateTable',
-    'glue:DeleteTable',
     'glue:GetPartition',
     'glue:GetPartitions',
     'glue:BatchCreatePartition',
     'glue:CreatePartition',
-    'glue:DeletePartition',
     'glue:UpdatePartition',
   ],
   resources: [
@@ -246,6 +252,7 @@ glueRole.addToPolicy(new iam.PolicyStatement({
 }));
 
 const glueCrawler = new glue.CfnCrawler(stack, 'OrderAnalyticsCrawler', {
+  name: 'order-analytics-crawler',
   role: glueRole.roleArn,
   databaseName: 'order_analytics',
   targets: {
@@ -279,10 +286,19 @@ new athena.CfnWorkGroup(stack, 'OrderAnalyticsWorkGroup', {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SQS – inbound orders queue
-// Visibility timeout 60 s; message retention 4 days.
+// SQS – two dedicated queues to avoid competing consumers
+// orderQueue  → consumed exclusively by the Worker Lambda (writes to RDS)
+// pipeQueue   → consumed exclusively by the EventBridge Pipe (path to Step Functions)
+// The Request Handler sends every order to BOTH queues so each consumer
+// receives every message independently.
 // ─────────────────────────────────────────────────────────────────────────────
 const orderQueue = new sqs.Queue(stack, 'OrderQueue', {
+  visibilityTimeout: Duration.seconds(60),
+  retentionPeriod: Duration.days(4),
+  removalPolicy: RemovalPolicy.DESTROY,
+});
+
+const pipeQueue = new sqs.Queue(stack, 'PipeQueue', {
   visibilityTimeout: Duration.seconds(60),
   retentionPeriod: Duration.days(4),
   removalPolicy: RemovalPolicy.DESTROY,
@@ -293,15 +309,15 @@ const orderQueue = new sqs.Queue(stack, 'OrderQueue', {
 // where AWS-managed log delivery makes it unavoidable (documented inline).
 // ─────────────────────────────────────────────────────────────────────────────
 
-// 1. Request Handler Lambda role – SQS send + basic logging
+// 1. Request Handler Lambda role – SQS send to both queues + basic logging
 const requestHandlerRole = new iam.Role(stack, 'RequestHandlerRole', {
   assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-  description: 'Request Handler Lambda – SQS SendMessage on order queue + log delivery',
+  description: 'Request Handler Lambda – SQS SendMessage on both queues + log delivery',
 });
 requestHandlerRole.addToPolicy(new iam.PolicyStatement({
   effect: iam.Effect.ALLOW,
   actions: ['sqs:SendMessage'],
-  resources: [orderQueue.queueArn],
+  resources: [orderQueue.queueArn, pipeQueue.queueArn],
 }));
 
 // 2. Worker Lambda role – SM secret read + SQS consume + log delivery
@@ -332,7 +348,7 @@ const enrichmentRole = new iam.Role(stack, 'EnrichmentRole', {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Lambda 1 – Request Handler
-// Validates POST body (orderId:string, amount:number), enqueues to SQS, returns 202.
+// Validates POST body (orderId:string, amount:number), enqueues to both SQS queues, returns 202.
 const requestHandlerCode = [
   `const {SQSClient,SendMessageCommand}=require('@aws-sdk/client-sqs');`,
   `const ep=process.env.AWS_ENDPOINT;`,
@@ -344,7 +360,10 @@ const requestHandlerCode = [
   `    return{statusCode:400,body:JSON.stringify({error:'orderId must be a string'})};`,
   `  if(b.amount===undefined||typeof b.amount!=='number')`,
   `    return{statusCode:400,body:JSON.stringify({error:'amount must be a number'})};`,
-  `  await c.send(new SendMessageCommand({QueueUrl:process.env.QUEUE_URL,MessageBody:e.body}));`,
+  `  await Promise.all([`,
+  `    c.send(new SendMessageCommand({QueueUrl:process.env.WORKER_QUEUE_URL,MessageBody:e.body})),`,
+  `    c.send(new SendMessageCommand({QueueUrl:process.env.PIPE_QUEUE_URL,MessageBody:e.body})),`,
+  `  ]);`,
   `  return{statusCode:202,headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:b.orderId})};`,
   `};`,
 ].join('\n');
@@ -358,8 +377,9 @@ const requestHandlerFn = new lambda.Function(stack, 'RequestHandlerFn', {
   vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
   securityGroups: [computeSg],
   environment: {
-    QUEUE_URL: orderQueue.queueUrl,
-    ...(awsEndpoint ? { AWS_ENDPOINT: awsEndpoint } : {}),
+    WORKER_QUEUE_URL: orderQueue.queueUrl,
+    PIPE_QUEUE_URL: pipeQueue.queueUrl,
+    ...(normalizedEndpoint ? { AWS_ENDPOINT: normalizedEndpoint } : {}),
   },
   timeout: Duration.seconds(30),
   description: 'Execution Environment – validates order POST and enqueues to SQS',
@@ -380,18 +400,22 @@ requestHandlerRole.addToPolicy(new iam.PolicyStatement({
 // Worker does NOT emit to EventBridge; the Pipe is the canonical path to Step Functions.
 const workerCode = [
   `const {SecretsManagerClient,GetSecretValueCommand}=require('@aws-sdk/client-secrets-manager');`,
+  `const {Client}=require('pg');`,
   `const ep=process.env.AWS_ENDPOINT;`,
   `exports.handler=async e=>{`,
   `  const sm=new SecretsManagerClient({region:process.env.AWS_REGION||'us-east-1',...(ep?{endpoint:ep}:{})});`,
   `  const sv=await sm.send(new GetSecretValueCommand({SecretId:process.env.DB_SECRET_ARN}));`,
   `  const {username,password}=JSON.parse(sv.SecretString);`,
-  `  // Connect to PostgreSQL: host=DB_HOST db=orders user=username password=password ssl=true`,
-  `  // CREATE TABLE IF NOT EXISTS orders(order_id text primary key,amount numeric,received_at timestamp)`,
-  `  for(const r of e.Records){`,
-  `    const order=JSON.parse(r.body);`,
-  `    // INSERT INTO orders(order_id,amount,received_at) VALUES($1,$2,NOW()) ON CONFLICT DO NOTHING`,
-  `    console.log(JSON.stringify({event:'order_received',orderId:order.orderId,amount:order.amount}));`,
-  `  }`,
+  `  const db=new Client({host:process.env.DB_HOST,port:5432,database:'orders',user:username,password,ssl:{rejectUnauthorized:false}});`,
+  `  await db.connect();`,
+  `  try{`,
+  `    await db.query('CREATE TABLE IF NOT EXISTS orders(order_id text primary key,amount numeric,received_at timestamptz)');`,
+  `    for(const r of e.Records){`,
+  `      const order=JSON.parse(r.body);`,
+  `      await db.query('INSERT INTO orders(order_id,amount,received_at) VALUES($1,$2,NOW()) ON CONFLICT DO NOTHING',[order.orderId,order.amount]);`,
+  `      console.log(JSON.stringify({event:'order_received',orderId:order.orderId,amount:order.amount}));`,
+  `    }`,
+  `  }finally{await db.end()}`,
   `};`,
 ].join('\n');
 
@@ -407,7 +431,7 @@ const workerFn = new lambda.Function(stack, 'WorkerFn', {
     DB_SECRET_ARN: dbSecret.secretArn,
     DB_HOST: dbInstance.dbInstanceEndpointAddress,
     DB_NAME: 'orders',
-    ...(awsEndpoint ? { AWS_ENDPOINT: awsEndpoint } : {}),
+    ...(normalizedEndpoint ? { AWS_ENDPOINT: normalizedEndpoint } : {}),
   },
   timeout: Duration.seconds(60),
   description: 'Execution Environment – reads SQS, writes order rows to PostgreSQL',
@@ -616,13 +640,12 @@ orderAcceptedRule.addTarget(
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EVENTBRIDGE PIPE
-// Source: SQS order queue.
+// Source: pipeQueue (dedicated; avoids competing-consumer conflict with Worker).
 // Enrichment: Lambda 3 (adds enriched:true and processedAt timestamp).
 // Target: Step Functions state machine (FIRE_AND_FORGET = asynchronous).
 //
-// Note: the Worker Lambda (event source mapping on the same queue) and the Pipe
-// both consume from orderQueue. This co-existence is required by the spec.
-// The Worker writes to RDS; the Pipe is the canonical path to Step Functions.
+// The Request Handler sends every order to both orderQueue (Worker) and pipeQueue
+// (Pipe) so each consumer receives every message independently.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const pipeRole = new iam.Role(stack, 'PipeRole', {
@@ -633,7 +656,7 @@ const pipeRole = new iam.Role(stack, 'PipeRole', {
 pipeRole.addToPolicy(new iam.PolicyStatement({
   effect: iam.Effect.ALLOW,
   actions: ['sqs:ReceiveMessage', 'sqs:DeleteMessage', 'sqs:GetQueueAttributes'],
-  resources: [orderQueue.queueArn],
+  resources: [pipeQueue.queueArn],
 }));
 
 pipeRole.addToPolicy(new iam.PolicyStatement({
@@ -651,7 +674,7 @@ pipeRole.addToPolicy(new iam.PolicyStatement({
 new pipes.CfnPipe(stack, 'OrderPipe', {
   name: 'order-processing-pipe',
   roleArn: pipeRole.roleArn,
-  source: orderQueue.queueArn,
+  source: pipeQueue.queueArn,
   sourceParameters: {
     sqsQueueParameters: {
       batchSize: 5,

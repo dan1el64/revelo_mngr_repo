@@ -585,3 +585,27 @@ def test_template_has_data_analytics_and_destroyable_settings():
     for logical_id, resource in template["Resources"].items():
         assert resource.get("DeletionPolicy") not in {"Retain", "Snapshot"}, logical_id
         assert resource.get("UpdateReplacePolicy") not in {"Retain", "Snapshot"}, logical_id
+
+
+def test_backend_handler_rejects_unrecognized_routes():
+    """Negative-path: the handler must return 404 for routes outside its contract.
+
+    Verifies both the source-code fallthrough and that no IAM policy grants
+    wildcard SQS permissions (which would be the wrong default for unknown callers).
+    """
+    source = source_text()
+
+    # The handler must have an explicit 404 fallthrough for unrecognized routes
+    assert "return jsonResponse(404, { error: 'Not found' })" in source
+
+    # DELETE and PATCH are not in the route table — they must fall through to 404
+    assert "method === 'DELETE'" not in source
+    assert "method === 'PATCH'" not in source
+
+    # No IAM statement grants sqs:SendMessage with a wildcard resource
+    template = load_template()
+    for statement in policy_statements(template):
+        if "sqs:SendMessage" in actions_for_statement(statement):
+            assert statement.get("Resource") != "*", (
+                "sqs:SendMessage must be scoped to a specific queue ARN, not '*'"
+            )

@@ -2,6 +2,7 @@ import json
 import os
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 
@@ -77,6 +78,16 @@ def alb_base_url(resources: list[dict]) -> str:
     dns_name = load_balancer_description(resources)["DNSName"]
     if dns_name.startswith("http://") or dns_name.startswith("https://"):
         return dns_name.rstrip("/")
+    # When a custom endpoint is configured, the ALB is served through that port, not port 80.
+    # Extract the port from AWS_ENDPOINT so the URL resolves correctly.
+    endpoint = os.getenv("AWS_ENDPOINT")
+    if endpoint:
+        try:
+            parsed = urllib.parse.urlparse(endpoint)
+            if parsed.port and parsed.port not in (80, 443):
+                return f"http://{dns_name}:{parsed.port}".rstrip("/")
+        except Exception:
+            pass
     return f"http://{dns_name}".rstrip("/")
 
 
@@ -402,3 +413,20 @@ def test_deployed_async_pipeline_configuration():
     assert only_state["Resource"] == "arn:aws:states:::lambda:invoke"
     assert only_state["Parameters"]["FunctionName"] == enrichment_function_arn
     assert only_state["Parameters"]["Payload.$"] == "$"
+
+
+def test_backend_lambda_returns_404_for_unknown_route():
+    """Negative-path: backend Lambda must return 404 for an unrecognized path."""
+    require_integration_environment()
+
+    resources = get_stack_resources()
+    lambda_client = aws_client("lambda")
+    backend_function_name = physical_id(resources, "AWS::Lambda::Function", "BackendFunction")
+
+    status, payload = invoke_backend_route(lambda_client, backend_function_name, "GET", "/not-a-real-path")
+    assert status == 404
+    assert "error" in payload
+
+    status2, payload2 = invoke_backend_route(lambda_client, backend_function_name, "DELETE", "/orders")
+    assert status2 == 404
+    assert "error" in payload2

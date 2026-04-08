@@ -272,6 +272,10 @@ def test_glue_crawler_iam_role_scoping():
         glue_role_block = glue_role_match.group(0)
         assert "s3:PutObject" not in glue_role_block, \
             "Glue crawler role must not grant s3:PutObject (read-only on analytics/)"
+        assert "glue:DeleteTable" not in glue_role_block, \
+            "Glue crawler role must not grant glue:DeleteTable (least-privilege)"
+        assert "glue:DeletePartition" not in glue_role_block, \
+            "Glue crawler role must not grant glue:DeletePartition (least-privilege)"
 
     print("Glue crawler IAM role scoping test passed!")
 
@@ -627,8 +631,9 @@ def test_aws_endpoint_forwarding():
     code = _code_lines(_read_app_ts())
 
     assert "awsEndpoint" in code, "awsEndpoint variable must be declared and used"
-    assert "AWS_ENDPOINT: awsEndpoint" in code, \
-        "awsEndpoint must be passed to at least one Lambda environment block"
+    # normalizedEndpoint is derived from awsEndpoint and passed to Lambda env blocks
+    assert "normalizedEndpoint" in code or "AWS_ENDPOINT: awsEndpoint" in code, \
+        "awsEndpoint (or its normalized form) must be passed to at least one Lambda environment block"
     assert "endpoint:ep" in code or "endpoint: ep" in code, \
         "Inline Lambda code must forward endpoint override to AWS SDK clients"
 

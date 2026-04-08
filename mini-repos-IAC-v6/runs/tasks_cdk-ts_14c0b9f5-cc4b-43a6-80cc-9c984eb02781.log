@@ -14,13 +14,13 @@ LocalStack is healthy.
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  Step: Setup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
-Starting worker container: harness-worker-57796
-58ab108925ac89657a489efd77a9795fdecfecfe06972bacee5b9a9db26a7afa
+Starting worker container: harness-worker-56340
+5d6aca945cce91c6321ff466c98d04ab70ad5c35660d33aacba2a894b0248de2
 Installing dependencies (npm install)...
 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
-added 404 packages, and audited 441 packages in 21s
+added 404 packages, and audited 441 packages in 28s
 
 41 packages are looking for funding
   run `npm fund` for details
@@ -39,7 +39,7 @@ npm notice New major version of npm available! 10.8.2 -> 11.12.1
 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
 npm notice To update run: npm install -g npm@11.12.1
 npm notice
-Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/39dcee58-2aee-438f-a49f-d3d1af3d983c
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/e47a9024-86d5-4d08-a3c7-8dfc0083ea3d
 [32m✅ Step passed: Setup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -59,15 +59,16 @@ platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
 cachedir: .pytest_cache
 rootdir: /work
 configfile: pytest.ini
-collecting ... collected 5 items
+collecting ... collected 6 items
 
-tests/unit_tests.py::test_source_file_structure_and_input_contract PASSED [ 20%]
-tests/unit_tests.py::test_template_has_expected_topology_counts PASSED   [ 40%]
-tests/unit_tests.py::test_template_has_networking_and_security_constraints PASSED [ 60%]
-tests/unit_tests.py::test_template_has_compute_frontend_and_async_configuration PASSED [ 80%]
-tests/unit_tests.py::test_template_has_data_analytics_and_destroyable_settings PASSED [100%]
+tests/unit_tests.py::test_source_file_structure_and_input_contract PASSED [ 16%]
+tests/unit_tests.py::test_template_has_expected_topology_counts PASSED   [ 33%]
+tests/unit_tests.py::test_template_has_networking_and_security_constraints PASSED [ 50%]
+tests/unit_tests.py::test_template_has_compute_frontend_and_async_configuration PASSED [ 66%]
+tests/unit_tests.py::test_template_has_data_analytics_and_destroyable_settings PASSED [ 83%]
+tests/unit_tests.py::test_backend_handler_rejects_unrecognized_routes PASSED [100%]
 
-============================== 5 passed in 0.08s ===============================
+============================== 6 passed in 0.07s ===============================
 [32m✅ Step passed: Unit tests (pytest)[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -76,146 +77,146 @@ tests/unit_tests.py::test_template_has_data_analytics_and_destroyable_settings P
 Bootstrapping (if needed)...
 Running cdklocal deploy...
 
-✨  Synthesis time: 10.22s
+✨  Synthesis time: 8.97s
 
-ThreeTierInternalWebAppStack: start: Building aa3f1c228192eb238318b6fe9138b73d945759c76ebe575b31fe21a73b170e8c
-ThreeTierInternalWebAppStack: success: Built aa3f1c228192eb238318b6fe9138b73d945759c76ebe575b31fe21a73b170e8c
-ThreeTierInternalWebAppStack: start: Publishing aa3f1c228192eb238318b6fe9138b73d945759c76ebe575b31fe21a73b170e8c:current_account-us-east-1
-ThreeTierInternalWebAppStack: success: Published aa3f1c228192eb238318b6fe9138b73d945759c76ebe575b31fe21a73b170e8c:current_account-us-east-1
+ThreeTierInternalWebAppStack: start: Building 65b35e4fe8e228b9e5b8fec259c3cf8dac43003bee033fbbfa966e5346a4ea84
+ThreeTierInternalWebAppStack: success: Built 65b35e4fe8e228b9e5b8fec259c3cf8dac43003bee033fbbfa966e5346a4ea84
+ThreeTierInternalWebAppStack: start: Publishing 65b35e4fe8e228b9e5b8fec259c3cf8dac43003bee033fbbfa966e5346a4ea84:current_account-us-east-1
+ThreeTierInternalWebAppStack: success: Published 65b35e4fe8e228b9e5b8fec259c3cf8dac43003bee033fbbfa966e5346a4ea84:current_account-us-east-1
 ThreeTierInternalWebAppStack: deploying... [1/1]
 ThreeTierInternalWebAppStack: creating CloudFormation changeset...
-ThreeTierInternalWebAppStack |  0/61 | 4:06:42 PM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack                | ThreeTierInternalWebAppStack User Initiated
-ThreeTierInternalWebAppStack |  0/61 | 4:06:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                             | ApplicationVpc (ApplicationVpc8AE6A859) 
-ThreeTierInternalWebAppStack |  0/61 | 4:06:42 PM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack                | ThreeTierInternalWebAppStack 
-ThreeTierInternalWebAppStack |  0/61 | 4:06:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress            | AlbHttpIngress 
-ThreeTierInternalWebAppStack |  1/61 | 4:06:42 PM | CREATE_COMPLETE      | AWS::EC2::VPC                             | ApplicationVpc (ApplicationVpc8AE6A859) 
-ThreeTierInternalWebAppStack |  1/61 | 4:06:42 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
-ThreeTierInternalWebAppStack |  2/61 | 4:06:42 PM | CREATE_COMPLETE      | AWS::Glue::Database                       | AnalyticsDatabase Resource type AWS::Glue::Database is not supported but was deployed as a fallback
-ThreeTierInternalWebAppStack |  2/61 | 4:06:42 PM | CREATE_IN_PROGRESS   | AWS::Glue::Database                       | AnalyticsDatabase 
-ThreeTierInternalWebAppStack |  3/61 | 4:06:42 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress            | AlbHttpIngress 
-ThreeTierInternalWebAppStack |  3/61 | 4:06:42 PM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                           | AnalyticsInputBucket (AnalyticsInputBucket7AAE8C4B) 
-ThreeTierInternalWebAppStack |  4/61 | 4:06:42 PM | CREATE_COMPLETE      | AWS::IAM::Role                            | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
-ThreeTierInternalWebAppStack |  4/61 | 4:06:42 PM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                           | AthenaResultsBucket (AthenaResultsBucket879938FA) 
-ThreeTierInternalWebAppStack |  5/61 | 4:06:42 PM | CREATE_COMPLETE      | AWS::Glue::Crawler                        | AnalyticsCrawler Resource type AWS::Glue::Crawler is not supported but was deployed as a fallback
-ThreeTierInternalWebAppStack |  5/61 | 4:06:42 PM | CREATE_IN_PROGRESS   | AWS::Glue::Crawler                        | AnalyticsCrawler 
-ThreeTierInternalWebAppStack |  6/61 | 4:06:42 PM | CREATE_COMPLETE      | AWS::S3::Bucket                           | AnalyticsInputBucket (AnalyticsInputBucket7AAE8C4B) 
-ThreeTierInternalWebAppStack |  7/61 | 4:06:42 PM | CREATE_COMPLETE      | AWS::Athena::WorkGroup                    | AnalyticsWorkGroup Resource type AWS::Athena::WorkGroup is not supported but was deployed as a fallback
-ThreeTierInternalWebAppStack |  7/61 | 4:06:42 PM | CREATE_IN_PROGRESS   | AWS::Athena::WorkGroup                    | AnalyticsWorkGroup 
-ThreeTierInternalWebAppStack |  8/61 | 4:06:42 PM | CREATE_COMPLETE      | AWS::S3::Bucket                           | AthenaResultsBucket (AthenaResultsBucket879938FA) 
-ThreeTierInternalWebAppStack |  8/61 | 4:06:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                          | ApplicationVpc/PrivateWithEgressSubnet1/Subnet (ApplicationVpcPrivateWithEgressSubnet1Subnet62A21704) 
-ThreeTierInternalWebAppStack |  9/61 | 4:06:42 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                          | ApplicationVpc/PrivateWithEgressSubnet1/Subnet (ApplicationVpcPrivateWithEgressSubnet1Subnet62A21704) 
-ThreeTierInternalWebAppStack |  9/61 | 4:06:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                          | ApplicationVpc/PrivateWithEgressSubnet2/Subnet (ApplicationVpcPrivateWithEgressSubnet2Subnet3B0B6046) 
-ThreeTierInternalWebAppStack |  9/61 | 4:06:42 PM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret               | DatabaseSecret (DatabaseSecret86DBB7B3) 
-ThreeTierInternalWebAppStack | 10/61 | 4:06:42 PM | CREATE_COMPLETE      | AWS::RDS::DBSubnetGroup                   | DatabaseSubnetGroup/Default (DatabaseSubnetGroup) Resource type AWS::RDS::DBSubnetGroup is not supported but was deployed as a fallback
-ThreeTierInternalWebAppStack | 10/61 | 4:06:42 PM | CREATE_IN_PROGRESS   | AWS::RDS::DBSubnetGroup                   | DatabaseSubnetGroup/Default (DatabaseSubnetGroup) 
-ThreeTierInternalWebAppStack | 11/61 | 4:06:42 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                          | ApplicationVpc/PrivateWithEgressSubnet2/Subnet (ApplicationVpcPrivateWithEgressSubnet2Subnet3B0B6046) 
-ThreeTierInternalWebAppStack | 12/61 | 4:06:42 PM | CREATE_COMPLETE      | AWS::SecretsManager::Secret               | DatabaseSecret (DatabaseSecret86DBB7B3) 
-ThreeTierInternalWebAppStack | 12/61 | 4:06:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                   | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
-ThreeTierInternalWebAppStack | 12/61 | 4:06:42 PM | CREATE_IN_PROGRESS   | AWS::Route53::HostedZone                  | ApplicationHostedZone (ApplicationHostedZone7F33F27F) 
-ThreeTierInternalWebAppStack | 13/61 | 4:06:42 PM | CREATE_COMPLETE      | AWS::RDS::DBInstance                      | ApplicationDatabase (ApplicationDatabase701F61E7) Resource type AWS::RDS::DBInstance is not supported but was deployed as a fallback
-ThreeTierInternalWebAppStack | 13/61 | 4:06:42 PM | CREATE_IN_PROGRESS   | AWS::RDS::DBInstance                      | ApplicationDatabase (ApplicationDatabase701F61E7) 
-ThreeTierInternalWebAppStack | 14/61 | 4:06:42 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                   | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
-ThreeTierInternalWebAppStack | 14/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway                 | ApplicationVpc/IGW (ApplicationVpcIGWAE2F3715) 
-ThreeTierInternalWebAppStack | 15/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::Route53::HostedZone                  | ApplicationHostedZone (ApplicationHostedZone7F33F27F) 
-ThreeTierInternalWebAppStack | 15/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment            | ApplicationVpc/VPCGW (ApplicationVpcVPCGWF6FDF6ED) 
-ThreeTierInternalWebAppStack | 16/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::InternetGateway                 | ApplicationVpc/IGW (ApplicationVpcIGWAE2F3715) 
-ThreeTierInternalWebAppStack | 16/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                      | ApplicationVpc/PublicSubnet1/RouteTable (ApplicationVpcPublicSubnet1RouteTable6A647E6A) 
-ThreeTierInternalWebAppStack | 17/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment            | ApplicationVpc/VPCGW (ApplicationVpcVPCGWF6FDF6ED) 
-ThreeTierInternalWebAppStack | 17/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                           | ApplicationVpc/PublicSubnet1/DefaultRoute (ApplicationVpcPublicSubnet1DefaultRoute56736F6C) 
-ThreeTierInternalWebAppStack | 18/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                      | ApplicationVpc/PublicSubnet1/RouteTable (ApplicationVpcPublicSubnet1RouteTable6A647E6A) 
-ThreeTierInternalWebAppStack | 19/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::Route                           | ApplicationVpc/PublicSubnet1/DefaultRoute (ApplicationVpcPublicSubnet1DefaultRoute56736F6C) 
-ThreeTierInternalWebAppStack | 19/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                          | ApplicationVpc/PublicSubnet1/Subnet (ApplicationVpcPublicSubnet1Subnet7014005F) 
-ThreeTierInternalWebAppStack | 19/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation     | ApplicationVpc/PublicSubnet1/RouteTableAssociation (ApplicationVpcPublicSubnet1RouteTableAssociation802F127D) 
-ThreeTierInternalWebAppStack | 20/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                          | ApplicationVpc/PublicSubnet1/Subnet (ApplicationVpcPublicSubnet1Subnet7014005F) 
-ThreeTierInternalWebAppStack | 20/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                             | ApplicationVpc/PublicSubnet1/EIP (ApplicationVpcPublicSubnet1EIP13A4D91E) 
-ThreeTierInternalWebAppStack | 21/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation     | ApplicationVpc/PublicSubnet1/RouteTableAssociation (ApplicationVpcPublicSubnet1RouteTableAssociation802F127D) 
-ThreeTierInternalWebAppStack | 21/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                      | ApplicationVpc/PublicSubnet1/NATGateway (ApplicationVpcPublicSubnet1NATGateway945161E1) 
-ThreeTierInternalWebAppStack | 22/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::EIP                             | ApplicationVpc/PublicSubnet1/EIP (ApplicationVpcPublicSubnet1EIP13A4D91E) 
-ThreeTierInternalWebAppStack | 22/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                      | ApplicationVpc/PrivateWithEgressSubnet1/RouteTable (ApplicationVpcPrivateWithEgressSubnet1RouteTableF24B6933) 
-ThreeTierInternalWebAppStack | 23/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::NatGateway                      | ApplicationVpc/PublicSubnet1/NATGateway (ApplicationVpcPublicSubnet1NATGateway945161E1) 
-ThreeTierInternalWebAppStack | 23/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                           | ApplicationVpc/PrivateWithEgressSubnet1/DefaultRoute (ApplicationVpcPrivateWithEgressSubnet1DefaultRouteADB53F03) 
-ThreeTierInternalWebAppStack | 24/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                      | ApplicationVpc/PrivateWithEgressSubnet1/RouteTable (ApplicationVpcPrivateWithEgressSubnet1RouteTableF24B6933) 
-ThreeTierInternalWebAppStack | 24/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation     | ApplicationVpc/PrivateWithEgressSubnet1/RouteTableAssociation (ApplicationVpcPrivateWithEgressSubnet1RouteTableAssociationE4849B5B) 
-ThreeTierInternalWebAppStack | 25/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::Route                           | ApplicationVpc/PrivateWithEgressSubnet1/DefaultRoute (ApplicationVpcPrivateWithEgressSubnet1DefaultRouteADB53F03) 
-ThreeTierInternalWebAppStack | 25/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                      | ApplicationVpc/PrivateWithEgressSubnet2/RouteTable (ApplicationVpcPrivateWithEgressSubnet2RouteTable6E2C905E) 
-ThreeTierInternalWebAppStack | 26/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation     | ApplicationVpc/PrivateWithEgressSubnet1/RouteTableAssociation (ApplicationVpcPrivateWithEgressSubnet1RouteTableAssociationE4849B5B) 
-ThreeTierInternalWebAppStack | 26/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                           | ApplicationVpc/PrivateWithEgressSubnet2/DefaultRoute (ApplicationVpcPrivateWithEgressSubnet2DefaultRouteA1266771) 
-ThreeTierInternalWebAppStack | 27/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                      | ApplicationVpc/PrivateWithEgressSubnet2/RouteTable (ApplicationVpcPrivateWithEgressSubnet2RouteTable6E2C905E) 
-ThreeTierInternalWebAppStack | 27/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation     | ApplicationVpc/PrivateWithEgressSubnet2/RouteTableAssociation (ApplicationVpcPrivateWithEgressSubnet2RouteTableAssociationE9F6369A) 
-ThreeTierInternalWebAppStack | 28/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::Route                           | ApplicationVpc/PrivateWithEgressSubnet2/DefaultRoute (ApplicationVpcPrivateWithEgressSubnet2DefaultRouteA1266771) 
-ThreeTierInternalWebAppStack | 28/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                      | ApplicationVpc/PublicSubnet2/RouteTable (ApplicationVpcPublicSubnet2RouteTableA5B5B5A5) 
-ThreeTierInternalWebAppStack | 29/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation     | ApplicationVpc/PrivateWithEgressSubnet2/RouteTableAssociation (ApplicationVpcPrivateWithEgressSubnet2RouteTableAssociationE9F6369A) 
-ThreeTierInternalWebAppStack | 30/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                      | ApplicationVpc/PublicSubnet2/RouteTable (ApplicationVpcPublicSubnet2RouteTableA5B5B5A5) 
-ThreeTierInternalWebAppStack | 30/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                           | ApplicationVpc/PublicSubnet2/DefaultRoute (ApplicationVpcPublicSubnet2DefaultRoute7C19233F) 
-ThreeTierInternalWebAppStack | 31/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::Route                           | ApplicationVpc/PublicSubnet2/DefaultRoute (ApplicationVpcPublicSubnet2DefaultRoute7C19233F) 
-ThreeTierInternalWebAppStack | 31/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                          | ApplicationVpc/PublicSubnet2/Subnet (ApplicationVpcPublicSubnet2SubnetE792D9E8) 
-ThreeTierInternalWebAppStack | 31/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation     | ApplicationVpc/PublicSubnet2/RouteTableAssociation (ApplicationVpcPublicSubnet2RouteTableAssociation396F9A40) 
-ThreeTierInternalWebAppStack | 32/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                          | ApplicationVpc/PublicSubnet2/Subnet (ApplicationVpcPublicSubnet2SubnetE792D9E8) 
-ThreeTierInternalWebAppStack | 32/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | BackendFunction/ServiceRole (BackendFunctionServiceRoleCA938F8D) 
-ThreeTierInternalWebAppStack | 33/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation     | ApplicationVpc/PublicSubnet2/RouteTableAssociation (ApplicationVpcPublicSubnet2RouteTableAssociation396F9A40) 
-ThreeTierInternalWebAppStack | 33/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                           | OrderQueue (OrderQueue39B99167) 
-ThreeTierInternalWebAppStack | 34/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::IAM::Role                            | BackendFunction/ServiceRole (BackendFunctionServiceRoleCA938F8D) 
-ThreeTierInternalWebAppStack | 34/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                          | BackendFunction/ServiceRole/DefaultPolicy (BackendFunctionServiceRoleDefaultPolicyA83BBE0A) 
-ThreeTierInternalWebAppStack | 35/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::SQS::Queue                           | OrderQueue (OrderQueue39B99167) 
-ThreeTierInternalWebAppStack | 35/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                       | BackendLogGroup (BackendLogGroupDA10F1B2) 
-ThreeTierInternalWebAppStack | 36/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::IAM::Policy                          | BackendFunction/ServiceRole/DefaultPolicy (BackendFunctionServiceRoleDefaultPolicyA83BBE0A) 
-ThreeTierInternalWebAppStack | 36/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                   | BackendSecurityGroup (BackendSecurityGroup96CF32F1) 
-ThreeTierInternalWebAppStack | 37/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                       | BackendLogGroup (BackendLogGroupDA10F1B2) 
-ThreeTierInternalWebAppStack | 38/61 | 4:06:44 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                   | BackendSecurityGroup (BackendSecurityGroup96CF32F1) 
-ThreeTierInternalWebAppStack | 38/61 | 4:06:44 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                     | BackendFunction (BackendFunction63314140) 
-ThreeTierInternalWebAppStack | 38/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission                   | BackendFunction/Invoke2UTWxhlfyqbT5FTn--5jvgbLgj+FfJwzswGk55DU1H--Y= (BackendFunctionInvoke2UTWxhlfyqbT5FTn5jvgbLgjFfJwzswGk55DU1HYBA99DA3B) 
-ThreeTierInternalWebAppStack | 39/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::Lambda::Function                     | BackendFunction (BackendFunction63314140) 
-ThreeTierInternalWebAppStack | 39/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress            | DatabaseSecurityGroup/from ThreeTierInternalWebAppStackBackendSecurityGroup7730B2B7:5432 (DatabaseSecurityGroupfromThreeTierInternalWebAppStackBackendSecurityGroup7730B2B75432C12B0C44) 
-ThreeTierInternalWebAppStack | 40/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::CDK::Metadata                        | CDKMetadata/Default (CDKMetadata) 
-ThreeTierInternalWebAppStack | 40/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                        | CDKMetadata/Default (CDKMetadata) 
-ThreeTierInternalWebAppStack | 41/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::Lambda::Permission                   | BackendFunction/Invoke2UTWxhlfyqbT5FTn--5jvgbLgj+FfJwzswGk55DU1H--Y= (BackendFunctionInvoke2UTWxhlfyqbT5FTn5jvgbLgjFfJwzswGk55DU1HYBA99DA3B) 
-ThreeTierInternalWebAppStack | 41/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | EnrichmentFunction/ServiceRole (EnrichmentFunctionServiceRole7C57E520) 
-ThreeTierInternalWebAppStack | 42/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress            | DatabaseSecurityGroup/from ThreeTierInternalWebAppStackBackendSecurityGroup7730B2B7:5432 (DatabaseSecurityGroupfromThreeTierInternalWebAppStackBackendSecurityGroup7730B2B75432C12B0C44) 
-ThreeTierInternalWebAppStack | 42/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                       | EnrichmentLogGroup (EnrichmentLogGroup8EC48EAC) 
-ThreeTierInternalWebAppStack | 43/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::IAM::Role                            | EnrichmentFunction/ServiceRole (EnrichmentFunctionServiceRole7C57E520) 
-ThreeTierInternalWebAppStack | 43/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                     | EnrichmentFunction (EnrichmentFunction65873741) 
-ThreeTierInternalWebAppStack | 44/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                       | EnrichmentLogGroup (EnrichmentLogGroup8EC48EAC) 
-ThreeTierInternalWebAppStack | 44/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                           | FrontendBucket (FrontendBucketEFE2E19C) 
-ThreeTierInternalWebAppStack | 45/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::Lambda::Function                     | EnrichmentFunction (EnrichmentFunction65873741) 
-ThreeTierInternalWebAppStack | 45/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::Route53::RecordSet                   | FrontendAliasRecord (FrontendAliasRecordAF9BE7A7) 
-ThreeTierInternalWebAppStack | 46/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::CloudFront::Distribution             | FrontendDistribution (FrontendDistributionE6EAF405) Resource type AWS::CloudFront::Distribution is not supported but was deployed as a fallback
-ThreeTierInternalWebAppStack | 46/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::CloudFront::Distribution             | FrontendDistribution (FrontendDistributionE6EAF405) 
-ThreeTierInternalWebAppStack | 47/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::CloudFront::OriginAccessControl      | FrontendDistribution/Origin1/S3OriginAccessControl (FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6) Resource type AWS::CloudFront::OriginAccessControl is not supported but was deployed as a fallback
-ThreeTierInternalWebAppStack | 47/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::CloudFront::OriginAccessControl      | FrontendDistribution/Origin1/S3OriginAccessControl (FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6) 
-ThreeTierInternalWebAppStack | 48/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::S3::Bucket                           | FrontendBucket (FrontendBucketEFE2E19C) 
-ThreeTierInternalWebAppStack | 48/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::S3::BucketPolicy                     | FrontendBucket/Policy (FrontendBucketPolicy1DFF75D9) 
-ThreeTierInternalWebAppStack | 49/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::Route53::RecordSet                   | FrontendAliasRecord (FrontendAliasRecordAF9BE7A7) 
-ThreeTierInternalWebAppStack | 50/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::S3::BucketPolicy                     | FrontendBucket/Policy (FrontendBucketPolicy1DFF75D9) 
-ThreeTierInternalWebAppStack | 50/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                          | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
-ThreeTierInternalWebAppStack | 50/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | PipeRole (PipeRole4D7B8476) 
-ThreeTierInternalWebAppStack | 51/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::IAM::Policy                          | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
-ThreeTierInternalWebAppStack | 51/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | ProcessingStateMachine/Role (ProcessingStateMachineRoleCEA50246) 
-ThreeTierInternalWebAppStack | 52/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::IAM::Role                            | PipeRole (PipeRole4D7B8476) 
-ThreeTierInternalWebAppStack | 53/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::IAM::Role                            | ProcessingStateMachine/Role (ProcessingStateMachineRoleCEA50246) 
-ThreeTierInternalWebAppStack | 53/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                          | ProcessingStateMachine/Role/DefaultPolicy (ProcessingStateMachineRoleDefaultPolicyFFDE70C1) 
-ThreeTierInternalWebAppStack | 53/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine          | ProcessingStateMachine (ProcessingStateMachine29343EEB) 
-ThreeTierInternalWebAppStack | 54/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::IAM::Policy                          | ProcessingStateMachine/Role/DefaultPolicy (ProcessingStateMachineRoleDefaultPolicyFFDE70C1) 
-ThreeTierInternalWebAppStack | 54/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                          | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
-ThreeTierInternalWebAppStack | 55/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::Pipes::Pipe                          | OrdersPipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
-ThreeTierInternalWebAppStack | 55/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                          | OrdersPipe 
-ThreeTierInternalWebAppStack | 56/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine          | ProcessingStateMachine (ProcessingStateMachine29343EEB) 
-ThreeTierInternalWebAppStack | 56/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::Listener     | TrafficEntryLoadBalancer/HttpListener (TrafficEntryLoadBalancerHttpListener56D76CBA) 
-ThreeTierInternalWebAppStack | 57/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::TargetGroup  | TrafficEntryLoadBalancer/HttpListener/BackendTargetGroupGroup (TrafficEntryLoadBalancerHttpListenerBackendTargetGroupGroup5E22C0EB) Resource type AWS::ElasticLoadBalancingV2::TargetGroup is not supported but was deployed as a fallback
-ThreeTierInternalWebAppStack | 57/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::TargetGroup  | TrafficEntryLoadBalancer/HttpListener/BackendTargetGroupGroup (TrafficEntryLoadBalancerHttpListenerBackendTargetGroupGroup5E22C0EB) 
-ThreeTierInternalWebAppStack | 58/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::LoadBalancer | TrafficEntryLoadBalancer (TrafficEntryLoadBalancerC8B20874) Resource type AWS::ElasticLoadBalancingV2::LoadBalancer is not supported but was deployed as a fallback
-ThreeTierInternalWebAppStack | 58/61 | 4:06:46 PM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::LoadBalancer | TrafficEntryLoadBalancer (TrafficEntryLoadBalancerC8B20874) 
-ThreeTierInternalWebAppStack | 59/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::IAM::Policy                          | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
-ThreeTierInternalWebAppStack | 60/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::Listener     | TrafficEntryLoadBalancer/HttpListener (TrafficEntryLoadBalancerHttpListener56D76CBA) Resource type AWS::ElasticLoadBalancingV2::Listener is not supported but was deployed as a fallback
-ThreeTierInternalWebAppStack | 61/61 | 4:06:46 PM | CREATE_COMPLETE      | AWS::CloudFormation::Stack                | ThreeTierInternalWebAppStack 
+ThreeTierInternalWebAppStack |  0/61 | 3:20:16 AM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack                | ThreeTierInternalWebAppStack User Initiated
+ThreeTierInternalWebAppStack |  0/61 | 3:20:16 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                             | ApplicationVpc (ApplicationVpc8AE6A859) 
+ThreeTierInternalWebAppStack |  0/61 | 3:20:16 AM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack                | ThreeTierInternalWebAppStack 
+ThreeTierInternalWebAppStack |  0/61 | 3:20:16 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress            | AlbHttpIngress 
+ThreeTierInternalWebAppStack |  1/61 | 3:20:16 AM | CREATE_COMPLETE      | AWS::EC2::VPC                             | ApplicationVpc (ApplicationVpc8AE6A859) 
+ThreeTierInternalWebAppStack |  1/61 | 3:20:16 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+ThreeTierInternalWebAppStack |  2/61 | 3:20:16 AM | CREATE_COMPLETE      | AWS::Glue::Database                       | AnalyticsDatabase Resource type AWS::Glue::Database is not supported but was deployed as a fallback
+ThreeTierInternalWebAppStack |  2/61 | 3:20:16 AM | CREATE_IN_PROGRESS   | AWS::Glue::Database                       | AnalyticsDatabase 
+ThreeTierInternalWebAppStack |  3/61 | 3:20:16 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress            | AlbHttpIngress 
+ThreeTierInternalWebAppStack |  3/61 | 3:20:16 AM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                           | AnalyticsInputBucket (AnalyticsInputBucket7AAE8C4B) 
+ThreeTierInternalWebAppStack |  4/61 | 3:20:16 AM | CREATE_COMPLETE      | AWS::IAM::Role                            | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+ThreeTierInternalWebAppStack |  4/61 | 3:20:16 AM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                           | AthenaResultsBucket (AthenaResultsBucket879938FA) 
+ThreeTierInternalWebAppStack |  5/61 | 3:20:16 AM | CREATE_COMPLETE      | AWS::Glue::Crawler                        | AnalyticsCrawler Resource type AWS::Glue::Crawler is not supported but was deployed as a fallback
+ThreeTierInternalWebAppStack |  5/61 | 3:20:16 AM | CREATE_IN_PROGRESS   | AWS::Glue::Crawler                        | AnalyticsCrawler 
+ThreeTierInternalWebAppStack |  6/61 | 3:20:16 AM | CREATE_COMPLETE      | AWS::S3::Bucket                           | AnalyticsInputBucket (AnalyticsInputBucket7AAE8C4B) 
+ThreeTierInternalWebAppStack |  7/61 | 3:20:16 AM | CREATE_COMPLETE      | AWS::Athena::WorkGroup                    | AnalyticsWorkGroup Resource type AWS::Athena::WorkGroup is not supported but was deployed as a fallback
+ThreeTierInternalWebAppStack |  7/61 | 3:20:16 AM | CREATE_IN_PROGRESS   | AWS::Athena::WorkGroup                    | AnalyticsWorkGroup 
+ThreeTierInternalWebAppStack |  8/61 | 3:20:16 AM | CREATE_COMPLETE      | AWS::S3::Bucket                           | AthenaResultsBucket (AthenaResultsBucket879938FA) 
+ThreeTierInternalWebAppStack |  8/61 | 3:20:16 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                          | ApplicationVpc/PrivateWithEgressSubnet1/Subnet (ApplicationVpcPrivateWithEgressSubnet1Subnet62A21704) 
+ThreeTierInternalWebAppStack |  9/61 | 3:20:16 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                          | ApplicationVpc/PrivateWithEgressSubnet1/Subnet (ApplicationVpcPrivateWithEgressSubnet1Subnet62A21704) 
+ThreeTierInternalWebAppStack |  9/61 | 3:20:16 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                          | ApplicationVpc/PrivateWithEgressSubnet2/Subnet (ApplicationVpcPrivateWithEgressSubnet2Subnet3B0B6046) 
+ThreeTierInternalWebAppStack |  9/61 | 3:20:16 AM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret               | DatabaseSecret (DatabaseSecret86DBB7B3) 
+ThreeTierInternalWebAppStack | 10/61 | 3:20:16 AM | CREATE_COMPLETE      | AWS::RDS::DBSubnetGroup                   | DatabaseSubnetGroup/Default (DatabaseSubnetGroup) Resource type AWS::RDS::DBSubnetGroup is not supported but was deployed as a fallback
+ThreeTierInternalWebAppStack | 10/61 | 3:20:16 AM | CREATE_IN_PROGRESS   | AWS::RDS::DBSubnetGroup                   | DatabaseSubnetGroup/Default (DatabaseSubnetGroup) 
+ThreeTierInternalWebAppStack | 11/61 | 3:20:16 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                          | ApplicationVpc/PrivateWithEgressSubnet2/Subnet (ApplicationVpcPrivateWithEgressSubnet2Subnet3B0B6046) 
+ThreeTierInternalWebAppStack | 12/61 | 3:20:16 AM | CREATE_COMPLETE      | AWS::SecretsManager::Secret               | DatabaseSecret (DatabaseSecret86DBB7B3) 
+ThreeTierInternalWebAppStack | 12/61 | 3:20:16 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                   | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
+ThreeTierInternalWebAppStack | 12/61 | 3:20:16 AM | CREATE_IN_PROGRESS   | AWS::Route53::HostedZone                  | ApplicationHostedZone (ApplicationHostedZone7F33F27F) 
+ThreeTierInternalWebAppStack | 13/61 | 3:20:16 AM | CREATE_COMPLETE      | AWS::RDS::DBInstance                      | ApplicationDatabase (ApplicationDatabase701F61E7) Resource type AWS::RDS::DBInstance is not supported but was deployed as a fallback
+ThreeTierInternalWebAppStack | 13/61 | 3:20:16 AM | CREATE_IN_PROGRESS   | AWS::RDS::DBInstance                      | ApplicationDatabase (ApplicationDatabase701F61E7) 
+ThreeTierInternalWebAppStack | 14/61 | 3:20:16 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                   | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
+ThreeTierInternalWebAppStack | 14/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway                 | ApplicationVpc/IGW (ApplicationVpcIGWAE2F3715) 
+ThreeTierInternalWebAppStack | 15/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::Route53::HostedZone                  | ApplicationHostedZone (ApplicationHostedZone7F33F27F) 
+ThreeTierInternalWebAppStack | 16/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::InternetGateway                 | ApplicationVpc/IGW (ApplicationVpcIGWAE2F3715) 
+ThreeTierInternalWebAppStack | 16/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                      | ApplicationVpc/PublicSubnet1/RouteTable (ApplicationVpcPublicSubnet1RouteTable6A647E6A) 
+ThreeTierInternalWebAppStack | 17/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                      | ApplicationVpc/PublicSubnet1/RouteTable (ApplicationVpcPublicSubnet1RouteTable6A647E6A) 
+ThreeTierInternalWebAppStack | 17/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                          | ApplicationVpc/PublicSubnet1/Subnet (ApplicationVpcPublicSubnet1Subnet7014005F) 
+ThreeTierInternalWebAppStack | 17/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation     | ApplicationVpc/PublicSubnet1/RouteTableAssociation (ApplicationVpcPublicSubnet1RouteTableAssociation802F127D) 
+ThreeTierInternalWebAppStack | 18/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                          | ApplicationVpc/PublicSubnet1/Subnet (ApplicationVpcPublicSubnet1Subnet7014005F) 
+ThreeTierInternalWebAppStack | 18/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment            | ApplicationVpc/VPCGW (ApplicationVpcVPCGWF6FDF6ED) 
+ThreeTierInternalWebAppStack | 19/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation     | ApplicationVpc/PublicSubnet1/RouteTableAssociation (ApplicationVpcPublicSubnet1RouteTableAssociation802F127D) 
+ThreeTierInternalWebAppStack | 19/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                           | ApplicationVpc/PublicSubnet1/DefaultRoute (ApplicationVpcPublicSubnet1DefaultRoute56736F6C) 
+ThreeTierInternalWebAppStack | 20/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment            | ApplicationVpc/VPCGW (ApplicationVpcVPCGWF6FDF6ED) 
+ThreeTierInternalWebAppStack | 20/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                             | ApplicationVpc/PublicSubnet1/EIP (ApplicationVpcPublicSubnet1EIP13A4D91E) 
+ThreeTierInternalWebAppStack | 21/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::Route                           | ApplicationVpc/PublicSubnet1/DefaultRoute (ApplicationVpcPublicSubnet1DefaultRoute56736F6C) 
+ThreeTierInternalWebAppStack | 21/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                      | ApplicationVpc/PublicSubnet1/NATGateway (ApplicationVpcPublicSubnet1NATGateway945161E1) 
+ThreeTierInternalWebAppStack | 22/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::EIP                             | ApplicationVpc/PublicSubnet1/EIP (ApplicationVpcPublicSubnet1EIP13A4D91E) 
+ThreeTierInternalWebAppStack | 22/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                      | ApplicationVpc/PrivateWithEgressSubnet1/RouteTable (ApplicationVpcPrivateWithEgressSubnet1RouteTableF24B6933) 
+ThreeTierInternalWebAppStack | 23/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::NatGateway                      | ApplicationVpc/PublicSubnet1/NATGateway (ApplicationVpcPublicSubnet1NATGateway945161E1) 
+ThreeTierInternalWebAppStack | 23/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                           | ApplicationVpc/PrivateWithEgressSubnet1/DefaultRoute (ApplicationVpcPrivateWithEgressSubnet1DefaultRouteADB53F03) 
+ThreeTierInternalWebAppStack | 24/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                      | ApplicationVpc/PrivateWithEgressSubnet1/RouteTable (ApplicationVpcPrivateWithEgressSubnet1RouteTableF24B6933) 
+ThreeTierInternalWebAppStack | 24/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation     | ApplicationVpc/PrivateWithEgressSubnet1/RouteTableAssociation (ApplicationVpcPrivateWithEgressSubnet1RouteTableAssociationE4849B5B) 
+ThreeTierInternalWebAppStack | 25/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::Route                           | ApplicationVpc/PrivateWithEgressSubnet1/DefaultRoute (ApplicationVpcPrivateWithEgressSubnet1DefaultRouteADB53F03) 
+ThreeTierInternalWebAppStack | 25/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                      | ApplicationVpc/PrivateWithEgressSubnet2/RouteTable (ApplicationVpcPrivateWithEgressSubnet2RouteTable6E2C905E) 
+ThreeTierInternalWebAppStack | 26/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation     | ApplicationVpc/PrivateWithEgressSubnet1/RouteTableAssociation (ApplicationVpcPrivateWithEgressSubnet1RouteTableAssociationE4849B5B) 
+ThreeTierInternalWebAppStack | 26/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                           | ApplicationVpc/PrivateWithEgressSubnet2/DefaultRoute (ApplicationVpcPrivateWithEgressSubnet2DefaultRouteA1266771) 
+ThreeTierInternalWebAppStack | 27/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                      | ApplicationVpc/PrivateWithEgressSubnet2/RouteTable (ApplicationVpcPrivateWithEgressSubnet2RouteTable6E2C905E) 
+ThreeTierInternalWebAppStack | 27/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation     | ApplicationVpc/PrivateWithEgressSubnet2/RouteTableAssociation (ApplicationVpcPrivateWithEgressSubnet2RouteTableAssociationE9F6369A) 
+ThreeTierInternalWebAppStack | 28/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::Route                           | ApplicationVpc/PrivateWithEgressSubnet2/DefaultRoute (ApplicationVpcPrivateWithEgressSubnet2DefaultRouteA1266771) 
+ThreeTierInternalWebAppStack | 28/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                      | ApplicationVpc/PublicSubnet2/RouteTable (ApplicationVpcPublicSubnet2RouteTableA5B5B5A5) 
+ThreeTierInternalWebAppStack | 29/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation     | ApplicationVpc/PrivateWithEgressSubnet2/RouteTableAssociation (ApplicationVpcPrivateWithEgressSubnet2RouteTableAssociationE9F6369A) 
+ThreeTierInternalWebAppStack | 29/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                           | ApplicationVpc/PublicSubnet2/DefaultRoute (ApplicationVpcPublicSubnet2DefaultRoute7C19233F) 
+ThreeTierInternalWebAppStack | 30/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                      | ApplicationVpc/PublicSubnet2/RouteTable (ApplicationVpcPublicSubnet2RouteTableA5B5B5A5) 
+ThreeTierInternalWebAppStack | 31/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::Route                           | ApplicationVpc/PublicSubnet2/DefaultRoute (ApplicationVpcPublicSubnet2DefaultRoute7C19233F) 
+ThreeTierInternalWebAppStack | 31/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                          | ApplicationVpc/PublicSubnet2/Subnet (ApplicationVpcPublicSubnet2SubnetE792D9E8) 
+ThreeTierInternalWebAppStack | 31/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation     | ApplicationVpc/PublicSubnet2/RouteTableAssociation (ApplicationVpcPublicSubnet2RouteTableAssociation396F9A40) 
+ThreeTierInternalWebAppStack | 32/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                          | ApplicationVpc/PublicSubnet2/Subnet (ApplicationVpcPublicSubnet2SubnetE792D9E8) 
+ThreeTierInternalWebAppStack | 33/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation     | ApplicationVpc/PublicSubnet2/RouteTableAssociation (ApplicationVpcPublicSubnet2RouteTableAssociation396F9A40) 
+ThreeTierInternalWebAppStack | 33/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                           | OrderQueue (OrderQueue39B99167) 
+ThreeTierInternalWebAppStack | 34/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::SQS::Queue                           | OrderQueue (OrderQueue39B99167) 
+ThreeTierInternalWebAppStack | 34/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | BackendFunction/ServiceRole (BackendFunctionServiceRoleCA938F8D) 
+ThreeTierInternalWebAppStack | 34/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                          | BackendFunction/ServiceRole/DefaultPolicy (BackendFunctionServiceRoleDefaultPolicyA83BBE0A) 
+ThreeTierInternalWebAppStack | 35/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::IAM::Role                            | BackendFunction/ServiceRole (BackendFunctionServiceRoleCA938F8D) 
+ThreeTierInternalWebAppStack | 35/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                       | BackendLogGroup (BackendLogGroupDA10F1B2) 
+ThreeTierInternalWebAppStack | 36/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::IAM::Policy                          | BackendFunction/ServiceRole/DefaultPolicy (BackendFunctionServiceRoleDefaultPolicyA83BBE0A) 
+ThreeTierInternalWebAppStack | 36/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                   | BackendSecurityGroup (BackendSecurityGroup96CF32F1) 
+ThreeTierInternalWebAppStack | 37/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                       | BackendLogGroup (BackendLogGroupDA10F1B2) 
+ThreeTierInternalWebAppStack | 37/61 | 3:20:18 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                     | BackendFunction (BackendFunction63314140) 
+ThreeTierInternalWebAppStack | 38/61 | 3:20:18 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                   | BackendSecurityGroup (BackendSecurityGroup96CF32F1) 
+ThreeTierInternalWebAppStack | 38/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission                   | BackendFunction/Invoke2UTWxhlfyqbT5FTn--5jvgbLgj+FfJwzswGk55DU1H--Y= (BackendFunctionInvoke2UTWxhlfyqbT5FTn5jvgbLgjFfJwzswGk55DU1HYBA99DA3B) 
+ThreeTierInternalWebAppStack | 39/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::Lambda::Function                     | BackendFunction (BackendFunction63314140) 
+ThreeTierInternalWebAppStack | 40/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::CDK::Metadata                        | CDKMetadata/Default (CDKMetadata) 
+ThreeTierInternalWebAppStack | 40/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                        | CDKMetadata/Default (CDKMetadata) 
+ThreeTierInternalWebAppStack | 41/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::Lambda::Permission                   | BackendFunction/Invoke2UTWxhlfyqbT5FTn--5jvgbLgj+FfJwzswGk55DU1H--Y= (BackendFunctionInvoke2UTWxhlfyqbT5FTn5jvgbLgjFfJwzswGk55DU1HYBA99DA3B) 
+ThreeTierInternalWebAppStack | 41/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress            | DatabaseSecurityGroup/from ThreeTierInternalWebAppStackBackendSecurityGroup7730B2B7:5432 (DatabaseSecurityGroupfromThreeTierInternalWebAppStackBackendSecurityGroup7730B2B75432C12B0C44) 
+ThreeTierInternalWebAppStack | 42/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress            | DatabaseSecurityGroup/from ThreeTierInternalWebAppStackBackendSecurityGroup7730B2B7:5432 (DatabaseSecurityGroupfromThreeTierInternalWebAppStackBackendSecurityGroup7730B2B75432C12B0C44) 
+ThreeTierInternalWebAppStack | 42/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | EnrichmentFunction/ServiceRole (EnrichmentFunctionServiceRole7C57E520) 
+ThreeTierInternalWebAppStack | 42/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                       | EnrichmentLogGroup (EnrichmentLogGroup8EC48EAC) 
+ThreeTierInternalWebAppStack | 43/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::IAM::Role                            | EnrichmentFunction/ServiceRole (EnrichmentFunctionServiceRole7C57E520) 
+ThreeTierInternalWebAppStack | 43/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                     | EnrichmentFunction (EnrichmentFunction65873741) 
+ThreeTierInternalWebAppStack | 44/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                       | EnrichmentLogGroup (EnrichmentLogGroup8EC48EAC) 
+ThreeTierInternalWebAppStack | 45/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::Lambda::Function                     | EnrichmentFunction (EnrichmentFunction65873741) 
+ThreeTierInternalWebAppStack | 45/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                           | FrontendBucket (FrontendBucketEFE2E19C) 
+ThreeTierInternalWebAppStack | 45/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::Route53::RecordSet                   | FrontendAliasRecord (FrontendAliasRecordAF9BE7A7) 
+ThreeTierInternalWebAppStack | 46/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::CloudFront::Distribution             | FrontendDistribution (FrontendDistributionE6EAF405) Resource type AWS::CloudFront::Distribution is not supported but was deployed as a fallback
+ThreeTierInternalWebAppStack | 46/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::CloudFront::Distribution             | FrontendDistribution (FrontendDistributionE6EAF405) 
+ThreeTierInternalWebAppStack | 47/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::CloudFront::OriginAccessControl      | FrontendDistribution/Origin1/S3OriginAccessControl (FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6) Resource type AWS::CloudFront::OriginAccessControl is not supported but was deployed as a fallback
+ThreeTierInternalWebAppStack | 47/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::CloudFront::OriginAccessControl      | FrontendDistribution/Origin1/S3OriginAccessControl (FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6) 
+ThreeTierInternalWebAppStack | 48/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::S3::Bucket                           | FrontendBucket (FrontendBucketEFE2E19C) 
+ThreeTierInternalWebAppStack | 48/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::S3::BucketPolicy                     | FrontendBucket/Policy (FrontendBucketPolicy1DFF75D9) 
+ThreeTierInternalWebAppStack | 49/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::Route53::RecordSet                   | FrontendAliasRecord (FrontendAliasRecordAF9BE7A7) 
+ThreeTierInternalWebAppStack | 50/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::S3::BucketPolicy                     | FrontendBucket/Policy (FrontendBucketPolicy1DFF75D9) 
+ThreeTierInternalWebAppStack | 50/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                          | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
+ThreeTierInternalWebAppStack | 50/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | PipeRole (PipeRole4D7B8476) 
+ThreeTierInternalWebAppStack | 51/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::IAM::Policy                          | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
+ThreeTierInternalWebAppStack | 51/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | ProcessingStateMachine/Role (ProcessingStateMachineRoleCEA50246) 
+ThreeTierInternalWebAppStack | 52/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::IAM::Role                            | PipeRole (PipeRole4D7B8476) 
+ThreeTierInternalWebAppStack | 52/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                          | ProcessingStateMachine/Role/DefaultPolicy (ProcessingStateMachineRoleDefaultPolicyFFDE70C1) 
+ThreeTierInternalWebAppStack | 53/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::IAM::Role                            | ProcessingStateMachine/Role (ProcessingStateMachineRoleCEA50246) 
+ThreeTierInternalWebAppStack | 54/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::IAM::Policy                          | ProcessingStateMachine/Role/DefaultPolicy (ProcessingStateMachineRoleDefaultPolicyFFDE70C1) 
+ThreeTierInternalWebAppStack | 54/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine          | ProcessingStateMachine (ProcessingStateMachine29343EEB) 
+ThreeTierInternalWebAppStack | 54/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                          | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
+ThreeTierInternalWebAppStack | 55/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::Pipes::Pipe                          | OrdersPipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
+ThreeTierInternalWebAppStack | 55/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                          | OrdersPipe 
+ThreeTierInternalWebAppStack | 56/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine          | ProcessingStateMachine (ProcessingStateMachine29343EEB) 
+ThreeTierInternalWebAppStack | 57/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::Listener     | TrafficEntryLoadBalancer/HttpListener (TrafficEntryLoadBalancerHttpListener56D76CBA) Resource type AWS::ElasticLoadBalancingV2::Listener is not supported but was deployed as a fallback
+ThreeTierInternalWebAppStack | 57/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::Listener     | TrafficEntryLoadBalancer/HttpListener (TrafficEntryLoadBalancerHttpListener56D76CBA) 
+ThreeTierInternalWebAppStack | 58/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::TargetGroup  | TrafficEntryLoadBalancer/HttpListener/BackendTargetGroupGroup (TrafficEntryLoadBalancerHttpListenerBackendTargetGroupGroup5E22C0EB) Resource type AWS::ElasticLoadBalancingV2::TargetGroup is not supported but was deployed as a fallback
+ThreeTierInternalWebAppStack | 58/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::TargetGroup  | TrafficEntryLoadBalancer/HttpListener/BackendTargetGroupGroup (TrafficEntryLoadBalancerHttpListenerBackendTargetGroupGroup5E22C0EB) 
+ThreeTierInternalWebAppStack | 59/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::LoadBalancer | TrafficEntryLoadBalancer (TrafficEntryLoadBalancerC8B20874) Resource type AWS::ElasticLoadBalancingV2::LoadBalancer is not supported but was deployed as a fallback
+ThreeTierInternalWebAppStack | 59/61 | 3:20:21 AM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::LoadBalancer | TrafficEntryLoadBalancer (TrafficEntryLoadBalancerC8B20874) 
+ThreeTierInternalWebAppStack | 60/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::IAM::Policy                          | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
+ThreeTierInternalWebAppStack | 61/61 | 3:20:21 AM | CREATE_COMPLETE      | AWS::CloudFormation::Stack                | ThreeTierInternalWebAppStack 
 
  ✅  ThreeTierInternalWebAppStack
 
-✨  Deployment time: 5.5s
+✨  Deployment time: 10.37s
 
 Stack ARN:
-arn:aws:cloudformation:us-east-1:000000000000:stack/ThreeTierInternalWebAppStack/ef3d5bb6-b612-46b3-98ff-416a907d4731
+arn:aws:cloudformation:us-east-1:000000000000:stack/ThreeTierInternalWebAppStack/0cb77a75-43a3-47d1-90d6-1dce34908e6f
 
-✨  Total time: 15.71s
+✨  Total time: 19.33s
 
 [32m✅ Step passed: Deploy (LocalStack)[0m
 
@@ -228,21 +229,22 @@ platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
 cachedir: .pytest_cache
 rootdir: /work
 configfile: pytest.ini
-collecting ... collected 4 items
+collecting ... collected 5 items
 
-tests/integration_tests.py::test_deployed_stack_has_expected_resource_inventory PASSED [ 25%]
-tests/integration_tests.py::test_deployed_lambda_queue_and_database_configuration PASSED [ 50%]
-tests/integration_tests.py::test_deployed_frontend_and_analytics_configuration PASSED [ 75%]
-tests/integration_tests.py::test_deployed_async_pipeline_configuration PASSED [100%]
+tests/integration_tests.py::test_deployed_stack_has_expected_resource_inventory PASSED [ 20%]
+tests/integration_tests.py::test_deployed_lambda_queue_and_database_configuration PASSED [ 40%]
+tests/integration_tests.py::test_deployed_frontend_and_analytics_configuration PASSED [ 60%]
+tests/integration_tests.py::test_deployed_async_pipeline_configuration PASSED [ 80%]
+tests/integration_tests.py::test_backend_lambda_returns_404_for_unknown_route PASSED [100%]
 
-============================== 4 passed in 2.85s ===============================
+============================== 5 passed in 2.67s ===============================
 [32m✅ Step passed: Integration tests[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  Step: Destroy / Cleanup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 Running cdklocal destroy...
-Cleaning up worker container: harness-worker-57796
+Cleaning up worker container: harness-worker-56340
 [32m✅ Step passed: Destroy / Cleanup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m

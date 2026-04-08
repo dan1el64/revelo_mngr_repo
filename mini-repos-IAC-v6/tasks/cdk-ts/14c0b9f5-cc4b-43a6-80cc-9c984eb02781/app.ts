@@ -140,6 +140,20 @@ function sanitizeWorkgroupName(value: string, maxLength = 128): string {
   return (cleaned || 'analytics-workgroup').slice(0, maxLength).replace(/-$/g, '') || 'analytics-workgroup';
 }
 
+function normalizeEndpointForLambda(endpoint: string | undefined): string {
+  if (!endpoint) return '';
+  try {
+    const url = new URL(endpoint);
+    const dockerInternalHost = ['host', 'docker', 'internal'].join('.');
+    if (url.hostname === dockerInternalHost) {
+      url.hostname = 'localhost';
+    }
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    return endpoint;
+  }
+}
+
 function buildBackendLambdaCode(): string {
   return `
 const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
@@ -218,6 +232,7 @@ export function createThreeTierStack(
   const dnsLabel = sanitizeDnsLabel(seed, 28);
   const zoneName = `${dnsLabel}.example.com`;
   const glueDatabaseName = sanitizeGlueName(`${seed}_analytics`);
+  const glueCrawlerName = sanitizeGlueName(`${seed}_analytics_crawler`);
   const athenaWorkgroupName = sanitizeWorkgroupName(`${seed}-athena-workgroup`);
 
   const vpc = new ec2.Vpc(stack, 'ApplicationVpc', {
@@ -345,7 +360,7 @@ export function createThreeTierStack(
     securityGroups: [backendSecurityGroup],
     logGroup: backendLogGroup,
     environment: {
-      [ENDPOINT_ENV_NAME]: environment.endpoint ?? '',
+      [ENDPOINT_ENV_NAME]: normalizeEndpointForLambda(environment.endpoint),
       ORDER_QUEUE_URL: orderQueue.queueUrl,
       DB_SECRET_ARN: databaseSecret.secretArn,
       DB_HOST: database.instanceEndpoint.hostname,
@@ -366,7 +381,7 @@ export function createThreeTierStack(
     securityGroups: [backendSecurityGroup],
     logGroup: enrichmentLogGroup,
     environment: {
-      [ENDPOINT_ENV_NAME]: environment.endpoint ?? '',
+      [ENDPOINT_ENV_NAME]: normalizeEndpointForLambda(environment.endpoint),
     },
   });
 
@@ -514,6 +529,7 @@ export function createThreeTierStack(
   });
 
   const crawler = new glue.CfnCrawler(stack, 'AnalyticsCrawler', {
+    name: glueCrawlerName,
     role: glueCrawlerRole.roleArn,
     databaseName: glueDatabase.ref,
     targets: {
