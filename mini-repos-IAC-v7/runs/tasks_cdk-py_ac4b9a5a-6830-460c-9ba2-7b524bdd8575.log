@@ -1,0 +1,7 @@
+Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/tasks/cdk-py/ac4b9a5a-6830-460c-9ba2-7b524bdd8575 FRAMEWORK=cdk-py
+
+
+Starting LocalStack (harness environment)...
+
+
+Stopping LocalStack...
