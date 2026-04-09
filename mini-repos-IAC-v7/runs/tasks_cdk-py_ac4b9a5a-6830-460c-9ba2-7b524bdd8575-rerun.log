@@ -1,0 +1,8 @@
+Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/tasks/cdk-py/ac4b9a5a-6830-460c-9ba2-7b524bdd8575 FRAMEWORK=cdk-py
+
+
+Starting LocalStack (harness environment)...
+../../../harness.sh: line 314: docker: command not found
+
+Stopping LocalStack...
+../../../harness.sh: line 67: docker: command not found

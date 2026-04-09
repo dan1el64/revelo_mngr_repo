@@ -195,6 +195,18 @@ def test_connectivity_mesh_topology_is_exact_and_routed():
     assert "aws_route_table.private.id" in endpoint
 
 
+def test_s3_gateway_endpoint_attaches_exactly_both_route_tables():
+    endpoint = resource_block("aws_vpc_endpoint", "s3")
+    route_table_ids = re.search(r"route_table_ids\s*=\s*\[(?P<body>.*?)\]", endpoint, re.DOTALL)
+    assert route_table_ids, "aws_vpc_endpoint.s3 must declare route_table_ids"
+
+    referenced_ids = re.findall(r"aws_route_table\.[^.]+\.(?:id)", route_table_ids.group("body"))
+    assert referenced_ids == [
+        "aws_route_table.public.id",
+        "aws_route_table.private.id",
+    ]
+
+
 def test_security_groups_are_exact_and_database_ingress_is_lambda_only():
     assert_resource_count("aws_security_group", 2)
     lambda_sg = resource_block("aws_security_group", "lambda")
@@ -213,6 +225,11 @@ def test_security_groups_are_exact_and_database_ingress_is_lambda_only():
     assert 'protocol        = "tcp"' in rds_sg
     assert "security_groups = [aws_security_group.lambda.id]" in rds_sg
     assert "cidr_blocks" not in rds_sg.split("ingress {", 1)[1].split("}", 1)[0]
+
+
+def test_lambda_security_group_has_zero_ingress_blocks():
+    lambda_sg = resource_block("aws_security_group", "lambda")
+    assert lambda_sg.count("ingress {") == 0
 
 
 def test_s3_archive_bucket_is_encrypted_private_and_tls_only():
@@ -330,6 +347,14 @@ def test_lambda_package_state_machine_and_logs_match_runtime_contract():
     assert "id TEXT PRIMARY KEY" in source
     assert "created_at TIMESTAMPTZ DEFAULT NOW()" in source
     assert 'if os.environ.get("DB_WRITE_MODE", "enabled") != "enabled":' in source
+
+
+def test_state_machine_passes_full_input_execution_id_and_timestamp_to_lambda():
+    state_machine = resource_block("aws_sfn_state_machine", "worker")
+    assert '"payload.$"      = "$"' in state_machine
+    assert '"execution_id.$" = "$$.Execution.Id"' in state_machine
+    assert '"timestamp.$"    = "$$.State.EnteredTime"' in state_machine
+    assert "OutputPath = \"$.Payload\"" in state_machine
 
 
 def test_lambda_runtime_uses_secret_credentials_and_no_inline_db_credentials():
@@ -467,6 +492,16 @@ def test_observability_alarms_and_sns_notifications_are_exact():
 
     assert 'protocol  = "email"' in subscription
     assert 'endpoint  = "alerts@example.com"' in subscription
+
+
+def test_event_rule_pattern_is_exact_and_complete():
+    rule = resource_block("aws_cloudwatch_event_rule", "ingest_work_item")
+    assert 'source        = ["app.ingest"]' in rule
+    assert '"detail-type" = ["work-item"]' in rule
+    event_pattern = re.search(r"event_pattern\s*=\s*jsonencode\(\{(?P<body>.*?)\}\)", rule, re.DOTALL)
+    assert event_pattern, "aws_cloudwatch_event_rule.ingest_work_item must define event_pattern"
+    keys = re.findall(r'^\s*("?detail-type"?|source)\s*=', event_pattern.group("body"), re.MULTILINE)
+    assert keys == ["source", '"detail-type"']
 
 
 def test_teardown_stays_simple_and_state_machine_has_no_direct_trigger():

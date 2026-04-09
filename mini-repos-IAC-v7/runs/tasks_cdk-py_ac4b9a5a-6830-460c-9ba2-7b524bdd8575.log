@@ -2,6 +2,201 @@ Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/m
 
 
 Starting LocalStack (harness environment)...
+ Network iac-harness-network  Creating
+ Network iac-harness-network  Created
+ Container localstack-harness  Creating
+ Container localstack-harness  Created
+ Container localstack-harness  Starting
+ Container localstack-harness  Started
+Waiting for LocalStack health endpoint: http://localhost:4566/_localstack/health
+LocalStack is healthy.
 
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Setup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Starting worker container: harness-worker-14912
+9e71ebe4287f64c22c3ee9e57700daa5859495ea0f8ee366ec4da79e1d29993f
+Installing dependencies (pip install -r requirements.txt)...
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/c99b7659-b987-401e-b35d-779e12e5560a
+[32m✅ Step passed: Setup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Syntax / Synth[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Checking for LocalStack references...
+Running cdklocal synth...
+Generating template.json for unit tests...
+[32m✅ Step passed: Syntax / Synth[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Unit tests (pytest)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest unit tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+plugins: typeguard-2.13.3
+collecting ... collected 17 items
+
+tests/unit_tests.py::test_single_file_delivery_and_input_contract PASSED [  5%]
+tests/unit_tests.py::test_s3_bucket_and_bucket_policy_contract PASSED    [ 11%]
+tests/unit_tests.py::test_dynamodb_table_contract PASSED                 [ 17%]
+tests/unit_tests.py::test_log_group_contract PASSED                      [ 23%]
+tests/unit_tests.py::test_lambda_function_contracts_and_internal_wiring PASSED [ 29%]
+tests/unit_tests.py::test_api_gateway_contract_and_query_lambda_wiring PASSED [ 35%]
+tests/unit_tests.py::test_scheduler_contract_and_collector_wiring PASSED [ 41%]
+tests/unit_tests.py::test_iam_policies_are_inline_scoped_and_without_wildcard_actions PASSED [ 47%]
+tests/unit_tests.py::test_collector_and_query_iam_permissions_are_exact PASSED [ 52%]
+tests/unit_tests.py::test_no_vpc_kms_or_retain_semantics_anywhere PASSED [ 58%]
+tests/unit_tests.py::test_dynamic_names_follow_stack_name PASSED         [ 64%]
+tests/unit_tests.py::test_collect_inventory_returns_required_services_counts_and_samples PASSED [ 70%]
+tests/unit_tests.py::test_collector_handler_writes_latest_records_snapshot_and_structured_logs PASSED [ 76%]
+tests/unit_tests.py::test_query_handler_lists_inventory_with_hard_limit_and_sorted_output PASSED [ 82%]
+tests/unit_tests.py::test_query_handler_gets_single_service_entry_and_404s PASSED [ 88%]
+tests/unit_tests.py::test_runtime_client_reads_env_vars_for_endpoint_and_region PASSED [ 94%]
+tests/unit_tests.py::test_handler_routes_events_between_collector_and_query PASSED [100%]
+
+============================== 17 passed in 7.66s ==============================
+[32m✅ Step passed: Unit tests (pytest)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Deploy (LocalStack)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Bootstrapping (if needed)...
+Running cdklocal deploy...
+
+✨  Synthesis time: 5.69s
+
+InventoryStack: start: Building 2692e68ca2da1630ee9714e02caf5adbc31368be12cbc1f52463871cb7f4f41c
+InventoryStack: success: Built 2692e68ca2da1630ee9714e02caf5adbc31368be12cbc1f52463871cb7f4f41c
+InventoryStack: start: Building 7ebc114ec3fc7fbebf7b88b1735b9c308c782a88d238ed49d21e2e1fb3432eed
+InventoryStack: success: Built 7ebc114ec3fc7fbebf7b88b1735b9c308c782a88d238ed49d21e2e1fb3432eed
+InventoryStack: start: Publishing 2692e68ca2da1630ee9714e02caf5adbc31368be12cbc1f52463871cb7f4f41c:current_account-current_region
+InventoryStack: start: Publishing 7ebc114ec3fc7fbebf7b88b1735b9c308c782a88d238ed49d21e2e1fb3432eed:current_account-current_region
+InventoryStack: success: Published 7ebc114ec3fc7fbebf7b88b1735b9c308c782a88d238ed49d21e2e1fb3432eed:current_account-current_region
+InventoryStack: success: Published 2692e68ca2da1630ee9714e02caf5adbc31368be12cbc1f52463871cb7f4f41c:current_account-current_region
+InventoryStack: deploying... [1/1]
+InventoryStack: creating CloudFormation changeset...
+InventoryStack |  0/27 | 5:21:11 AM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack  | InventoryStack User Initiated
+InventoryStack |  1/27 | 5:21:11 AM | CREATE_COMPLETE      | AWS::CDK::Metadata          | CDKMetadata/Default (CDKMetadata) 
+InventoryStack |  1/27 | 5:21:11 AM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata          | CDKMetadata/Default (CDKMetadata) 
+InventoryStack |  1/27 | 5:21:11 AM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack  | InventoryStack 
+InventoryStack |  1/27 | 5:21:11 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup         | CollectorLogGroup (CollectorLogGroup1D43C0E2) 
+InventoryStack |  1/27 | 5:21:12 AM | CREATE_IN_PROGRESS   | AWS::S3::Bucket             | InventoryBucket (InventoryBucketA869B8CB) 
+InventoryStack |  2/27 | 5:21:12 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup         | CollectorLogGroup (CollectorLogGroup1D43C0E2) 
+InventoryStack |  2/27 | 5:21:12 AM | CREATE_IN_PROGRESS   | AWS::DynamoDB::Table        | InventoryTable (InventoryTableFD135387) 
+InventoryStack |  3/27 | 5:21:12 AM | CREATE_COMPLETE      | AWS::S3::Bucket             | InventoryBucket (InventoryBucketA869B8CB) 
+InventoryStack |  3/27 | 5:21:13 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role              | CollectorRole (CollectorRole8FF99B37) 
+InventoryStack |  4/27 | 5:21:13 AM | CREATE_COMPLETE      | AWS::DynamoDB::Table        | InventoryTable (InventoryTableFD135387) 
+InventoryStack |  4/27 | 5:21:13 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy            | CollectorRole/DefaultPolicy (CollectorRoleDefaultPolicy3CB789BE) 
+InventoryStack |  5/27 | 5:21:13 AM | CREATE_COMPLETE      | AWS::IAM::Role              | CollectorRole (CollectorRole8FF99B37) 
+InventoryStack |  5/27 | 5:21:13 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function       | CollectorLambda (CollectorLambda959B3B7F) 
+InventoryStack |  6/27 | 5:21:13 AM | CREATE_COMPLETE      | AWS::IAM::Policy            | CollectorRole/DefaultPolicy (CollectorRoleDefaultPolicy3CB789BE) 
+InventoryStack |  7/27 | 5:21:15 AM | CREATE_COMPLETE      | AWS::Lambda::Function       | CollectorLambda (CollectorLambda959B3B7F) 
+InventoryStack |  7/27 | 5:21:15 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role              | SchedulerRole (SchedulerRole59E73443) 
+InventoryStack |  7/27 | 5:21:15 AM | CREATE_IN_PROGRESS   | AWS::Scheduler::Schedule    | CollectorSchedule 
+InventoryStack |  8/27 | 5:21:15 AM | CREATE_COMPLETE      | AWS::IAM::Role              | SchedulerRole (SchedulerRole59E73443) 
+InventoryStack |  8/27 | 5:21:17 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission     | CollectorLambda/AllowSchedulerInvoke (CollectorLambdaAllowSchedulerInvokeD27BD6D2) 
+InventoryStack |  9/27 | 5:21:17 AM | CREATE_COMPLETE      | AWS::Scheduler::Schedule    | CollectorSchedule 
+InventoryStack |  9/27 | 5:21:17 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi    | InventoryApi (InventoryApi49B09E7D) 
+InventoryStack | 10/27 | 5:21:17 AM | CREATE_COMPLETE      | AWS::Lambda::Permission     | CollectorLambda/AllowSchedulerInvoke (CollectorLambdaAllowSchedulerInvokeD27BD6D2) 
+InventoryStack | 10/27 | 5:21:19 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role              | QueryRole (QueryRoleF6300167) 
+InventoryStack | 11/27 | 5:21:19 AM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi    | InventoryApi (InventoryApi49B09E7D) 
+InventoryStack | 11/27 | 5:21:19 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup         | QueryLogGroup (QueryLogGroup129F354A) 
+InventoryStack | 12/27 | 5:21:19 AM | CREATE_COMPLETE      | AWS::IAM::Role              | QueryRole (QueryRoleF6300167) 
+InventoryStack | 12/27 | 5:21:19 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy            | QueryRole/DefaultPolicy (QueryRoleDefaultPolicy1446A118) 
+InventoryStack | 13/27 | 5:21:19 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup         | QueryLogGroup (QueryLogGroup129F354A) 
+InventoryStack | 13/27 | 5:21:19 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function       | QueryLambda (QueryLambda54767050) 
+InventoryStack | 14/27 | 5:21:19 AM | CREATE_COMPLETE      | AWS::IAM::Policy            | QueryRole/DefaultPolicy (QueryRoleDefaultPolicy1446A118) 
+InventoryStack | 15/27 | 5:21:19 AM | CREATE_COMPLETE      | AWS::Lambda::Function       | QueryLambda (QueryLambda54767050) 
+InventoryStack | 15/27 | 5:21:19 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource   | InventoryApi/Default/inventory (InventoryApiinventory42862087) 
+InventoryStack | 15/27 | 5:21:19 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method     | InventoryApi/Default/inventory/GET (InventoryApiinventoryGET006FAEB1) 
+InventoryStack | 16/27 | 5:21:19 AM | CREATE_COMPLETE      | AWS::ApiGateway::Resource   | InventoryApi/Default/inventory (InventoryApiinventory42862087) 
+InventoryStack | 16/27 | 5:21:19 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource   | InventoryApi/Default/inventory/{service} (InventoryApiinventoryserviceB9B0BFC3) 
+InventoryStack | 17/27 | 5:21:19 AM | CREATE_COMPLETE      | AWS::ApiGateway::Method     | InventoryApi/Default/inventory/GET (InventoryApiinventoryGET006FAEB1) 
+InventoryStack | 17/27 | 5:21:19 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method     | InventoryApi/Default/inventory/{service}/GET (InventoryApiinventoryserviceGET943D2A29) 
+InventoryStack | 18/27 | 5:21:19 AM | CREATE_COMPLETE      | AWS::ApiGateway::Resource   | InventoryApi/Default/inventory/{service} (InventoryApiinventoryserviceB9B0BFC3) 
+InventoryStack | 18/27 | 5:21:19 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment | InventoryApi/Deployment (InventoryApiDeployment382203FBc237789a4fec102cdef8f84e792d501d) 
+InventoryStack | 19/27 | 5:21:19 AM | CREATE_COMPLETE      | AWS::ApiGateway::Method     | InventoryApi/Default/inventory/{service}/GET (InventoryApiinventoryserviceGET943D2A29) 
+InventoryStack | 19/27 | 5:21:20 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage      | InventoryApi/DeploymentStage.prod (InventoryApiDeploymentStageprod5D1FE13B) 
+InventoryStack | 20/27 | 5:21:20 AM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment | InventoryApi/Deployment (InventoryApiDeployment382203FBc237789a4fec102cdef8f84e792d501d) 
+InventoryStack | 21/27 | 5:21:20 AM | CREATE_COMPLETE      | AWS::ApiGateway::Stage      | InventoryApi/DeploymentStage.prod (InventoryApiDeploymentStageprod5D1FE13B) 
+InventoryStack | 21/27 | 5:21:20 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission     | InventoryApi/Default/inventory/GET/ApiPermission.InventoryStackInventoryApi94FE8192.GET..inventory (InventoryApiinventoryGETApiPermissionInventoryStackInventoryApi94FE8192GETinventoryF9D7A00C) 
+InventoryStack | 21/27 | 5:21:20 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission     | InventoryApi/Default/inventory/GET/ApiPermission.Test.InventoryStackInventoryApi94FE8192.GET..inventory (InventoryApiinventoryGETApiPermissionTestInventoryStackInventoryApi94FE8192GETinventoryE1BC283E) 
+InventoryStack | 22/27 | 5:21:20 AM | CREATE_COMPLETE      | AWS::Lambda::Permission     | InventoryApi/Default/inventory/GET/ApiPermission.InventoryStackInventoryApi94FE8192.GET..inventory (InventoryApiinventoryGETApiPermissionInventoryStackInventoryApi94FE8192GETinventoryF9D7A00C) 
+InventoryStack | 22/27 | 5:21:20 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission     | InventoryApi/Default/inventory/{service}/GET/ApiPermission.InventoryStackInventoryApi94FE8192.GET..inventory.{service} (InventoryApiinventoryserviceGETApiPermissionInventoryStackInventoryApi94FE8192GETinventoryservice8C1B5B4E) 
+InventoryStack | 23/27 | 5:21:20 AM | CREATE_COMPLETE      | AWS::Lambda::Permission     | InventoryApi/Default/inventory/GET/ApiPermission.Test.InventoryStackInventoryApi94FE8192.GET..inventory (InventoryApiinventoryGETApiPermissionTestInventoryStackInventoryApi94FE8192GETinventoryE1BC283E) 
+InventoryStack | 23/27 | 5:21:20 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission     | InventoryApi/Default/inventory/{service}/GET/ApiPermission.Test.InventoryStackInventoryApi94FE8192.GET..inventory.{service} (InventoryApiinventoryserviceGETApiPermissionTestInventoryStackInventoryApi94FE8192GETinventoryserviceD469414D) 
+InventoryStack | 24/27 | 5:21:20 AM | CREATE_COMPLETE      | AWS::Lambda::Permission     | InventoryApi/Default/inventory/{service}/GET/ApiPermission.InventoryStackInventoryApi94FE8192.GET..inventory.{service} (InventoryApiinventoryserviceGETApiPermissionInventoryStackInventoryApi94FE8192GETinventoryservice8C1B5B4E) 
+InventoryStack | 24/27 | 5:21:20 AM | CREATE_IN_PROGRESS   | AWS::S3::BucketPolicy       | InventoryBucket/Policy (InventoryBucketPolicyEDF94353) 
+InventoryStack | 25/27 | 5:21:20 AM | CREATE_COMPLETE      | AWS::Lambda::Permission     | InventoryApi/Default/inventory/{service}/GET/ApiPermission.Test.InventoryStackInventoryApi94FE8192.GET..inventory.{service} (InventoryApiinventoryserviceGETApiPermissionTestInventoryStackInventoryApi94FE8192GETinventoryserviceD469414D) 
+InventoryStack | 26/27 | 5:21:20 AM | CREATE_COMPLETE      | AWS::S3::BucketPolicy       | InventoryBucket/Policy (InventoryBucketPolicyEDF94353) 
+InventoryStack | 27/27 | 5:21:20 AM | CREATE_COMPLETE      | AWS::CloudFormation::Stack  | InventoryStack 
+
+ ✅  InventoryStack
+
+✨  Deployment time: 10.16s
+
+Outputs:
+InventoryStack.InventoryApiEndpoint825CF96A = https://siipxmpmrl.execute-api.localhost.localstack.cloud:4566/prod/
+Stack ARN:
+arn:aws:cloudformation:us-east-1:000000000000:stack/InventoryStack/36acca6a-6bdd-45ef-8f2c-032e42b19572
+
+✨  Total time: 15.85s
+
+[32m✅ Step passed: Deploy (LocalStack)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Integration tests[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest integration tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+plugins: typeguard-2.13.3
+collecting ... collected 7 items
+
+tests/integration_tests.py::test_stack_is_deployed_with_expected_resource_inventory PASSED [ 14%]
+tests/integration_tests.py::test_deployed_bucket_matches_contract PASSED [ 28%]
+tests/integration_tests.py::test_deployed_dynamodb_table_matches_contract PASSED [ 42%]
+tests/integration_tests.py::test_deployed_lambda_configs_and_roles_match_contract PASSED [ 57%]
+tests/integration_tests.py::test_scheduler_and_api_gateway_are_wired_to_expected_targets PASSED [ 71%]
+tests/integration_tests.py::test_collector_populates_snapshot_and_latest_dynamodb_rows PASSED [ 85%]
+tests/integration_tests.py::test_query_lambda_and_api_surface_return_expected_payloads PASSED [100%]
+
+============================== 7 passed in 3.67s ===============================
+[32m✅ Step passed: Integration tests[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Destroy / Cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running cdklocal destroy...
+Cleaning up worker container: harness-worker-14912
+[32m✅ Step passed: Destroy / Cleanup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  HARNESS SUMMARY[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ setup[0m
+[32m✅ syntax/plan[0m
+[32m✅ unit tests[0m
+[32m✅ deploy (localstack)[0m
+[32m✅ integration tests[0m
+[32m✅ destroy/cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ All steps passed.[0m
+
+Log saved to: /Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/runs/tasks_cdk-py_ac4b9a5a-6830-460c-9ba2-7b524bdd8575.log
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 
 Stopping LocalStack...
+ Container localstack-harness  Stopping
+ Container localstack-harness  Stopped
+ Container localstack-harness  Removing
+ Container localstack-harness  Removed
+ Network iac-harness-network  Removing
+ Network iac-harness-network  Removed

@@ -6,6 +6,7 @@ from decimal import Decimal
 
 import boto3
 from boto3.dynamodb.types import TypeDeserializer, TypeSerializer
+from botocore.exceptions import BotoCoreError, ClientError
 
 if "AWS_LAMBDA_FUNCTION_NAME" not in os.environ:
     from aws_cdk import (
@@ -39,6 +40,14 @@ SERIALIZER = TypeSerializer()
 DESERIALIZER = TypeDeserializer()
 
 
+def _sample_map(**values):
+    sample = {}
+    for key, value in values.items():
+        if value is not None and len(sample) < 5:
+            sample[key] = value
+    return sample
+
+
 def _runtime_client(service_name: str):
     return boto3.client(
         service_name,
@@ -52,6 +61,20 @@ def _paginate(client, operation_name, result_key, **kwargs):
     for page in paginator.paginate(**kwargs):
         for item in page.get(result_key, []):
             yield item
+
+
+def _safe_paginate(client, operation_name, result_key, **kwargs):
+    try:
+        return list(_paginate(client, operation_name, result_key, **kwargs))
+    except (ClientError, BotoCoreError):
+        return []
+
+
+def _safe_call_items(client, operation_name, result_key, **kwargs):
+    try:
+        return getattr(client, operation_name)(**kwargs).get(result_key, [])
+    except (ClientError, BotoCoreError):
+        return []
 
 
 def _iso_now() -> str:
@@ -88,30 +111,35 @@ def _collect_inventory():
     rds_client = _runtime_client("rds")
     glue_client = _runtime_client("glue")
 
-    roles = list(_paginate(iam_client, "list_roles", "Roles"))
-    users = list(_paginate(iam_client, "list_users", "Users"))
-    vpcs = list(_paginate(ec2_client, "describe_vpcs", "Vpcs"))
-    subnets = list(_paginate(ec2_client, "describe_subnets", "Subnets"))
-    security_groups = list(
-        _paginate(ec2_client, "describe_security_groups", "SecurityGroups")
+    roles = _safe_paginate(iam_client, "list_roles", "Roles")
+    users = _safe_paginate(iam_client, "list_users", "Users")
+    vpcs = _safe_paginate(ec2_client, "describe_vpcs", "Vpcs")
+    subnets = _safe_paginate(ec2_client, "describe_subnets", "Subnets")
+    security_groups = _safe_paginate(
+        ec2_client,
+        "describe_security_groups",
+        "SecurityGroups",
     )
-    buckets = s3_client.list_buckets().get("Buckets", [])
-    functions = list(_paginate(lambda_client, "list_functions", "Functions"))
-    rules = list(
-        _paginate(events_client, "list_rules", "Rules", EventBusName="default")
+    buckets = _safe_call_items(s3_client, "list_buckets", "Buckets")
+    functions = _safe_paginate(lambda_client, "list_functions", "Functions")
+    rules = _safe_paginate(
+        events_client,
+        "list_rules",
+        "Rules",
+        EventBusName="default",
     )
-    db_instances = list(_paginate(rds_client, "describe_db_instances", "DBInstances"))
-    databases = list(_paginate(glue_client, "get_databases", "DatabaseList"))
-    crawlers = list(_paginate(glue_client, "get_crawlers", "Crawlers"))
+    db_instances = _safe_paginate(rds_client, "describe_db_instances", "DBInstances")
+    databases = _safe_paginate(glue_client, "get_databases", "DatabaseList")
+    crawlers = _safe_paginate(glue_client, "get_crawlers", "Crawlers")
 
     return [
         {
             "service": "IAM",
             "counts": {"roles": len(roles), "users": len(users)},
-            "sample": {
-                "first_role_name": roles[0]["RoleName"] if roles else None,
-                "first_user_name": users[0]["UserName"] if users else None,
-            },
+            "sample": _sample_map(
+                first_role_name=roles[0]["RoleName"] if roles else None,
+                first_user_name=users[0]["UserName"] if users else None,
+            ),
         },
         {
             "service": "EC2",
@@ -120,51 +148,51 @@ def _collect_inventory():
                 "subnets": len(subnets),
                 "security_groups": len(security_groups),
             },
-            "sample": {
-                "first_vpc_id": vpcs[0]["VpcId"] if vpcs else None,
-                "first_subnet_id": subnets[0]["SubnetId"] if subnets else None,
-                "first_security_group_id": (
+            "sample": _sample_map(
+                first_vpc_id=vpcs[0]["VpcId"] if vpcs else None,
+                first_subnet_id=subnets[0]["SubnetId"] if subnets else None,
+                first_security_group_id=(
                     security_groups[0]["GroupId"] if security_groups else None
                 ),
-            },
+            ),
         },
         {
             "service": "S3",
             "counts": {"buckets": len(buckets)},
-            "sample": {
-                "first_bucket_name": buckets[0]["Name"] if buckets else None,
-            },
+            "sample": _sample_map(
+                first_bucket_name=buckets[0]["Name"] if buckets else None,
+            ),
         },
         {
             "service": "Lambda",
             "counts": {"functions": len(functions)},
-            "sample": {
-                "first_function_name": functions[0]["FunctionName"] if functions else None,
-            },
+            "sample": _sample_map(
+                first_function_name=functions[0]["FunctionName"] if functions else None,
+            ),
         },
         {
             "service": "EventBridge",
             "counts": {"default_bus_rules": len(rules)},
-            "sample": {
-                "first_rule_name": rules[0]["Name"] if rules else None,
-            },
+            "sample": _sample_map(
+                first_rule_name=rules[0]["Name"] if rules else None,
+            ),
         },
         {
             "service": "RDS",
             "counts": {"db_instances": len(db_instances)},
-            "sample": {
-                "first_db_instance_identifier": (
+            "sample": _sample_map(
+                first_db_instance_identifier=(
                     db_instances[0]["DBInstanceIdentifier"] if db_instances else None
                 ),
-            },
+            ),
         },
         {
             "service": "Glue",
             "counts": {"databases": len(databases), "crawlers": len(crawlers)},
-            "sample": {
-                "first_database_name": databases[0]["Name"] if databases else None,
-                "first_crawler_name": crawlers[0]["Name"] if crawlers else None,
-            },
+            "sample": _sample_map(
+                first_database_name=databases[0]["Name"] if databases else None,
+                first_crawler_name=crawlers[0]["Name"] if crawlers else None,
+            ),
         },
     ]
 
@@ -278,158 +306,164 @@ def handler(event, context):
         return _collector_handler()
     return _query_handler(event)
 
+if "AWS_LAMBDA_FUNCTION_NAME" not in os.environ:
 
-class InventoryStack(Stack):
-    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
+    class InventoryStack(Stack):
+        def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+            super().__init__(scope, construct_id, **kwargs)
 
-        collector_function_name = f"{self.stack_name}-collector"
-        query_function_name = f"{self.stack_name}-query"
+            collector_function_name = f"{self.stack_name}-collector"
+            query_function_name = f"{self.stack_name}-query"
 
-        aws_region = CfnParameter(
-            self,
-            "aws_region",
-            type="String",
-            default="us-east-1",
-        )
-        aws_endpoint = CfnParameter(
-            self,
-            "aws_endpoint",
-            type="String",
-        )
-
-        inventory_bucket = s3.Bucket(
-            self,
-            "InventoryBucket",
-            versioned=True,
-            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            encryption=s3.BucketEncryption.S3_MANAGED,
-            lifecycle_rules=[
-                s3.LifecycleRule(
-                    enabled=True,
-                    noncurrent_version_expiration=Duration.days(30),
-                    abort_incomplete_multipart_upload_after=Duration.days(7),
-                )
-            ],
-            removal_policy=RemovalPolicy.DESTROY,
-        )
-
-        inventory_bucket.add_to_resource_policy(
-            iam.PolicyStatement(
-                sid="DenyInsecureBucketAccess",
-                effect=iam.Effect.DENY,
-                principals=[iam.AnyPrincipal()],
-                actions=[
-                    "s3:GetBucketLocation",
-                    "s3:ListBucket",
-                    "s3:ListBucketVersions",
-                ],
-                resources=[inventory_bucket.bucket_arn],
-                conditions={"Bool": {"aws:SecureTransport": "false"}},
+            aws_region = CfnParameter(
+                self,
+                "aws_region",
+                type="String",
+                default="us-east-1",
             )
-        )
-        inventory_bucket.add_to_resource_policy(
-            iam.PolicyStatement(
-                sid="DenyInsecureObjectAccess",
-                effect=iam.Effect.DENY,
-                principals=[iam.AnyPrincipal()],
-                actions=[
-                    "s3:AbortMultipartUpload",
-                    "s3:DeleteObject",
-                    "s3:DeleteObjectVersion",
-                    "s3:GetObject",
-                    "s3:GetObjectVersion",
-                    "s3:PutObject",
-                ],
-                resources=[inventory_bucket.arn_for_objects("*")],
-                conditions={"Bool": {"aws:SecureTransport": "false"}},
+            endpoint_default = self.node.try_get_context("aws_endpoint") or None
+            aws_endpoint = CfnParameter(
+                self,
+                "aws_endpoint",
+                type="String",
+                **({"default": endpoint_default} if endpoint_default else {}),
             )
-        )
 
-        inventory_table = dynamodb.Table(
-            self,
-            "InventoryTable",
-            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
-            partition_key=dynamodb.Attribute(
-                name="pk",
-                type=dynamodb.AttributeType.STRING,
-            ),
-            sort_key=dynamodb.Attribute(
-                name="sk",
-                type=dynamodb.AttributeType.STRING,
-            ),
-            time_to_live_attribute="ttl",
-            point_in_time_recovery_specification=(
-                dynamodb.PointInTimeRecoverySpecification(
-                    point_in_time_recovery_enabled=False
+            inventory_bucket = s3.Bucket(
+                self,
+                "InventoryBucket",
+                versioned=True,
+                block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+                encryption=s3.BucketEncryption.S3_MANAGED,
+                lifecycle_rules=[
+                    s3.LifecycleRule(
+                        enabled=True,
+                        noncurrent_version_expiration=Duration.days(30),
+                        abort_incomplete_multipart_upload_after=Duration.days(7),
+                    )
+                ],
+                removal_policy=RemovalPolicy.DESTROY,
+            )
+
+            inventory_bucket.add_to_resource_policy(
+                iam.PolicyStatement(
+                    sid="DenyInsecureBucketAccess",
+                    effect=iam.Effect.DENY,
+                    principals=[iam.AnyPrincipal()],
+                    actions=[
+                        "s3:GetBucketLocation",
+                        "s3:ListBucket",
+                        "s3:ListBucketVersions",
+                    ],
+                    resources=[inventory_bucket.bucket_arn],
+                    conditions={"Bool": {"aws:SecureTransport": "false"}},
                 )
-            ),
-            removal_policy=RemovalPolicy.DESTROY,
-        )
-
-        collector_role = iam.Role(
-            self,
-            "CollectorRole",
-            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
-            inline_policies={
-                "CollectorAccess": iam.PolicyDocument(
-                    statements=[
-                        iam.PolicyStatement(
-                            actions=["s3:PutObject"],
-                            resources=[inventory_bucket.arn_for_objects("*")],
-                        ),
-                        iam.PolicyStatement(
-                            actions=["s3:ListBucket"],
-                            resources=[inventory_bucket.bucket_arn],
-                        ),
-                        iam.PolicyStatement(
-                            actions=[
-                                "dynamodb:PutItem",
-                                "dynamodb:UpdateItem",
-                            ],
-                            resources=[inventory_table.table_arn],
-                        ),
-                        iam.PolicyStatement(
-                            actions=[
-                                "ec2:DescribeSecurityGroups",
-                                "ec2:DescribeSubnets",
-                                "ec2:DescribeVpcs",
-                                "events:ListRules",
-                                "glue:GetCrawlers",
-                                "glue:GetDatabases",
-                                "iam:ListRoles",
-                                "iam:ListUsers",
-                                "lambda:ListFunctions",
-                                "rds:DescribeDBInstances",
-                                "s3:ListAllMyBuckets",
-                            ],
-                            resources=["*"],
-                        ),
-                    ]
+            )
+            inventory_bucket.add_to_resource_policy(
+                iam.PolicyStatement(
+                    sid="DenyInsecureObjectAccess",
+                    effect=iam.Effect.DENY,
+                    principals=[iam.AnyPrincipal()],
+                    actions=[
+                        "s3:AbortMultipartUpload",
+                        "s3:DeleteObject",
+                        "s3:DeleteObjectVersion",
+                        "s3:GetObject",
+                        "s3:GetObjectVersion",
+                        "s3:PutObject",
+                    ],
+                    resources=[inventory_bucket.arn_for_objects("*")],
+                    conditions={"Bool": {"aws:SecureTransport": "false"}},
                 )
-            },
-        )
+            )
 
-        query_role = iam.Role(
-            self,
-            "QueryRole",
-            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
-            inline_policies={
-                "QueryAccess": iam.PolicyDocument(
-                    statements=[
-                        iam.PolicyStatement(
-                            actions=[
-                                "dynamodb:GetItem",
-                                "dynamodb:Scan",
-                            ],
-                            resources=[inventory_table.table_arn],
-                        )
-                    ]
-                )
-            },
-        )
+            inventory_table = dynamodb.Table(
+                self,
+                "InventoryTable",
+                billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+                partition_key=dynamodb.Attribute(
+                    name="pk",
+                    type=dynamodb.AttributeType.STRING,
+                ),
+                sort_key=dynamodb.Attribute(
+                    name="sk",
+                    type=dynamodb.AttributeType.STRING,
+                ),
+                time_to_live_attribute="ttl",
+                point_in_time_recovery_specification=(
+                    dynamodb.PointInTimeRecoverySpecification(
+                        point_in_time_recovery_enabled=False
+                    )
+                ),
+                removal_policy=RemovalPolicy.DESTROY,
+            )
 
-        collector_lambda = lambda_.Function(
+            collector_role = iam.Role(
+                self,
+                "CollectorRole",
+                assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+                inline_policies={
+                    "CollectorAccess": iam.PolicyDocument(
+                        statements=[
+                            iam.PolicyStatement(
+                                actions=["s3:PutObject"],
+                                resources=[
+                                    inventory_bucket.bucket_arn,
+                                    inventory_bucket.arn_for_objects("*"),
+                                ],
+                            ),
+                            iam.PolicyStatement(
+                                actions=["s3:ListBucket"],
+                                resources=[inventory_bucket.bucket_arn],
+                            ),
+                            iam.PolicyStatement(
+                                actions=[
+                                    "dynamodb:PutItem",
+                                    "dynamodb:UpdateItem",
+                                ],
+                                resources=[inventory_table.table_arn],
+                            ),
+                            iam.PolicyStatement(
+                                actions=[
+                                    "ec2:DescribeSecurityGroups",
+                                    "ec2:DescribeSubnets",
+                                    "ec2:DescribeVpcs",
+                                    "events:ListRules",
+                                    "glue:GetCrawlers",
+                                    "glue:GetDatabases",
+                                    "iam:ListRoles",
+                                    "iam:ListUsers",
+                                    "lambda:ListFunctions",
+                                    "rds:DescribeDBInstances",
+                                    "s3:ListAllMyBuckets",
+                                ],
+                                resources=["*"],
+                            ),
+                        ]
+                    )
+                },
+            )
+
+            query_role = iam.Role(
+                self,
+                "QueryRole",
+                assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+                inline_policies={
+                    "QueryAccess": iam.PolicyDocument(
+                        statements=[
+                            iam.PolicyStatement(
+                                actions=[
+                                    "dynamodb:GetItem",
+                                    "dynamodb:Scan",
+                                ],
+                                resources=[inventory_table.table_arn],
+                            )
+                        ]
+                    )
+                },
+            )
+
+            collector_lambda = lambda_.Function(
             self,
             "CollectorLambda",
             function_name=collector_function_name,
@@ -458,7 +492,7 @@ class InventoryStack(Stack):
             },
         )
 
-        query_lambda = lambda_.Function(
+            query_lambda = lambda_.Function(
             self,
             "QueryLambda",
             function_name=query_function_name,
@@ -486,14 +520,14 @@ class InventoryStack(Stack):
             },
         )
 
-        collector_log_group = logs.LogGroup(
+            collector_log_group = logs.LogGroup(
             self,
             "CollectorLogGroup",
             log_group_name=f"/aws/lambda/{collector_function_name}",
             retention=logs.RetentionDays.TWO_WEEKS,
             removal_policy=RemovalPolicy.DESTROY,
         )
-        query_log_group = logs.LogGroup(
+            query_log_group = logs.LogGroup(
             self,
             "QueryLogGroup",
             log_group_name=f"/aws/lambda/{query_function_name}",
@@ -501,7 +535,7 @@ class InventoryStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
         )
 
-        collector_role.add_to_policy(
+            collector_role.add_to_policy(
             iam.PolicyStatement(
                 actions=[
                     "logs:CreateLogStream",
@@ -510,7 +544,7 @@ class InventoryStack(Stack):
                 resources=[f"{collector_log_group.log_group_arn}:*"],
             )
         )
-        query_role.add_to_policy(
+            query_role.add_to_policy(
             iam.PolicyStatement(
                 actions=[
                     "logs:CreateLogStream",
@@ -520,7 +554,7 @@ class InventoryStack(Stack):
             )
         )
 
-        api = apigateway.RestApi(
+            api = apigateway.RestApi(
             self,
             "InventoryApi",
             endpoint_configuration=apigateway.EndpointConfiguration(
@@ -544,20 +578,20 @@ class InventoryStack(Stack):
             ),
         )
 
-        inventory_resource = api.root.add_resource("inventory")
-        inventory_resource.add_method(
+            inventory_resource = api.root.add_resource("inventory")
+            inventory_resource.add_method(
             "GET",
             apigateway.LambdaIntegration(query_lambda, proxy=True),
             authorization_type=apigateway.AuthorizationType.NONE,
         )
-        inventory_service_resource = inventory_resource.add_resource("{service}")
-        inventory_service_resource.add_method(
+            inventory_service_resource = inventory_resource.add_resource("{service}")
+            inventory_service_resource.add_method(
             "GET",
             apigateway.LambdaIntegration(query_lambda, proxy=True),
             authorization_type=apigateway.AuthorizationType.NONE,
         )
 
-        scheduler_role = iam.Role(
+            scheduler_role = iam.Role(
             self,
             "SchedulerRole",
             assumed_by=iam.ServicePrincipal("scheduler.amazonaws.com"),
@@ -573,7 +607,7 @@ class InventoryStack(Stack):
             },
         )
 
-        collection_schedule = scheduler.CfnSchedule(
+            collection_schedule = scheduler.CfnSchedule(
             self,
             "CollectorSchedule",
             flexible_time_window=scheduler.CfnSchedule.FlexibleTimeWindowProperty(
@@ -586,15 +620,15 @@ class InventoryStack(Stack):
             ),
         )
 
-        collector_lambda.add_permission(
-            "AllowSchedulerInvoke",
-            principal=iam.ServicePrincipal("scheduler.amazonaws.com"),
-            action="lambda:InvokeFunction",
-            source_arn=collection_schedule.attr_arn,
-        )
+            collector_lambda.add_permission(
+                "AllowSchedulerInvoke",
+                principal=iam.ServicePrincipal("scheduler.amazonaws.com"),
+                action="lambda:InvokeFunction",
+                source_arn=collection_schedule.attr_arn,
+            )
 
 
-if __name__ == "__main__":
-    app = App()
+if "AWS_LAMBDA_FUNCTION_NAME" not in os.environ and __name__ == "__main__":
+    app = App(context={"aws_endpoint": os.environ.get("AWS_ENDPOINT", "")})
     InventoryStack(app, "InventoryStack")
     app.synth()
