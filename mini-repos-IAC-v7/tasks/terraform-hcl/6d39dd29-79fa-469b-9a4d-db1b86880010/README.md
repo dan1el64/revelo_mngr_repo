@@ -21,3 +21,9 @@ terraform init -backend=false
 terraform validate
 python3 -m pytest -q
 ```
+
+Integration tests require a deployed stack plus `state.json` generated from `terraform show -json > state.json`.
+
+## Submission
+
+Zip only this task directory. Do not include repository-level harness or helper scripts in the submitted archive.

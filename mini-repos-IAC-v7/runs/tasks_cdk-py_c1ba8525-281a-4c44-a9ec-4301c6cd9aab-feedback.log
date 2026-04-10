@@ -1,0 +1,344 @@
+Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/tasks/cdk-py/c1ba8525-281a-4c44-a9ec-4301c6cd9aab FRAMEWORK=cdk-py
+
+
+Starting LocalStack (harness environment)...
+ Container localstack-harness  Recreate
+ Container localstack-harness  Recreated
+ Container localstack-harness  Starting
+ Container localstack-harness  Started
+Waiting for LocalStack health endpoint: http://localhost:4566/_localstack/health
+LocalStack is healthy.
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Setup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Starting worker container: harness-worker-24349
+0298aeba9ae91f470c572cedc73654b17c70d8ac697562470c0a966f087a0dcd
+Installing dependencies (pip install -r requirements.txt)...
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/bdd75ec7-bdab-45b0-97c5-734f1da46b3a
+[32m✅ Step passed: Setup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Syntax / Synth[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Checking for LocalStack references...
+Running cdklocal synth...
+Generating template.json for unit tests...
+[32m✅ Step passed: Syntax / Synth[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Unit tests (pytest)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest unit tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+plugins: typeguard-2.13.3
+collecting ... collected 17 items
+
+tests/unit_tests.py::test_input_contract_and_sdk_configuration PASSED    [  5%]
+tests/unit_tests.py::test_only_declared_inputs_are_read_by_the_app PASSED [ 11%]
+tests/unit_tests.py::test_stack_synthesises_without_optional_env_vars PASSED [ 17%]
+tests/unit_tests.py::test_no_kms_keys_anywhere_in_template PASSED        [ 23%]
+tests/unit_tests.py::test_rds_credentials_use_secrets_manager_dynamic_reference PASSED [ 29%]
+tests/unit_tests.py::test_no_publicly_accessible_rds_and_no_deletion_protection PASSED [ 35%]
+tests/unit_tests.py::test_network_topology_az_spread_and_endpoint_wiring PASSED [ 41%]
+tests/unit_tests.py::test_security_group_rules_cover_required_flows PASSED [ 47%]
+tests/unit_tests.py::test_no_retention_policies_and_database_teardown_settings PASSED [ 52%]
+tests/unit_tests.py::test_log_groups_have_retention_without_kms_keys PASSED [ 58%]
+tests/unit_tests.py::test_cluster_and_output_contract PASSED             [ 64%]
+tests/unit_tests.py::test_single_app_file_and_inline_delivery_shape PASSED [ 70%]
+tests/unit_tests.py::test_no_manual_prerequisites_are_modeled_in_template PASSED [ 76%]
+tests/unit_tests.py::test_frontend_and_api_gateway_contract PASSED       [ 82%]
+tests/unit_tests.py::test_backend_lambda_code_and_vpc_configuration PASSED [ 88%]
+tests/unit_tests.py::test_persistence_eventing_and_data_catalog_contract PASSED [ 94%]
+tests/unit_tests.py::test_iam_policies_are_scoped_to_stack_resources PASSED [100%]
+
+============================== 17 passed in 6.38s ==============================
+[32m✅ Step passed: Unit tests (pytest)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Deploy (LocalStack)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Bootstrapping (if needed)...
+Running cdklocal deploy...
+[Warning at /PocStack/FrontendService] minHealthyPercent has not been configured so the default value of 50% is used. The number of running tasks will decrease below the desired count during deployments etc. See https://github.com/aws/aws-cdk/issues/31705 [ack: @aws-cdk/aws-ecs:minHealthyPercent]
+
+✨  Synthesis time: 4.97s
+
+PocStack: start: Building b9853df22cb8861df71324e78134bfbd5f83059f156465f921b4db45be0bbfe6
+PocStack: success: Built b9853df22cb8861df71324e78134bfbd5f83059f156465f921b4db45be0bbfe6
+PocStack: start: Publishing b9853df22cb8861df71324e78134bfbd5f83059f156465f921b4db45be0bbfe6:current_account-us-east-1
+PocStack: success: Published b9853df22cb8861df71324e78134bfbd5f83059f156465f921b4db45be0bbfe6:current_account-us-east-1
+PocStack: deploying... [1/1]
+PocStack: creating CloudFormation changeset...
+PocStack |  0/80 | 8:56:48 PM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack                | PocStack User Initiated
+PocStack |  0/80 | 8:56:48 PM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack                | PocStack 
+PocStack |  0/80 | 8:56:48 PM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                           | AnalyticsBucket (AnalyticsBucket39EAAEEA) 
+PocStack |  0/80 | 8:56:48 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                       | ApiAccessLogGroup (ApiAccessLogGroupCEA70788) 
+PocStack |  1/80 | 8:56:48 PM | CREATE_COMPLETE      | AWS::S3::Bucket                           | AnalyticsBucket (AnalyticsBucket39EAAEEA) 
+PocStack |  2/80 | 8:56:48 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                       | ApiAccessLogGroup (ApiAccessLogGroupCEA70788) 
+PocStack |  2/80 | 8:56:48 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                             | Vpc (Vpc8378EB38) 
+PocStack |  2/80 | 8:56:48 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                          | Vpc/PrivateSubnet1/Subnet (VpcPrivateSubnet1Subnet536B997A) 
+PocStack |  3/80 | 8:56:48 PM | CREATE_COMPLETE      | AWS::EC2::VPC                             | Vpc (Vpc8378EB38) 
+PocStack |  4/80 | 8:56:48 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                          | Vpc/PrivateSubnet1/Subnet (VpcPrivateSubnet1Subnet536B997A) 
+PocStack |  4/80 | 8:56:48 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                          | Vpc/PrivateSubnet2/Subnet (VpcPrivateSubnet2Subnet3788AAA1) 
+PocStack |  5/80 | 8:56:48 PM | CREATE_COMPLETE      | AWS::RDS::DBSubnetGroup                   | ApplicationDatabaseSubnetGroup Resource type AWS::RDS::DBSubnetGroup is not supported but was deployed as a fallback
+PocStack |  5/80 | 8:56:48 PM | CREATE_IN_PROGRESS   | AWS::RDS::DBSubnetGroup                   | ApplicationDatabaseSubnetGroup 
+PocStack |  6/80 | 8:56:48 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                          | Vpc/PrivateSubnet2/Subnet (VpcPrivateSubnet2Subnet3788AAA1) 
+PocStack |  6/80 | 8:56:48 PM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret               | DbCredentialsSecret (DbCredentialsSecret4110FA1D) 
+PocStack |  7/80 | 8:56:48 PM | CREATE_COMPLETE      | AWS::SecretsManager::Secret               | DbCredentialsSecret (DbCredentialsSecret4110FA1D) 
+PocStack |  7/80 | 8:56:48 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                   | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
+PocStack |  7/80 | 8:56:48 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi                  | BackendApi (BackendApiED3D8698) 
+PocStack |  8/80 | 8:56:48 PM | CREATE_COMPLETE      | AWS::RDS::DBInstance                      | ApplicationDatabase Resource type AWS::RDS::DBInstance is not supported but was deployed as a fallback
+PocStack |  8/80 | 8:56:48 PM | CREATE_IN_PROGRESS   | AWS::RDS::DBInstance                      | ApplicationDatabase 
+PocStack |  9/80 | 8:56:48 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                   | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
+PocStack |  9/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | BackendApi/CloudWatchRole (BackendApiCloudWatchRole4A62A399) 
+PocStack | 10/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi                  | BackendApi (BackendApiED3D8698) 
+PocStack | 10/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Account                  | BackendApi/Account (BackendApiAccountAF60F65B) 
+PocStack | 11/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::IAM::Role                            | BackendApi/CloudWatchRole (BackendApiCloudWatchRole4A62A399) 
+PocStack | 11/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource                 | BackendApi/Default/health (BackendApihealthE7DF3B80) 
+PocStack | 12/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::ApiGateway::Account                  | BackendApi/Account (BackendApiAccountAF60F65B) 
+PocStack | 12/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | BackendApiLambdaRole (BackendApiLambdaRoleBBDF9CD8) 
+PocStack | 13/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::ApiGateway::Resource                 | BackendApi/Default/health (BackendApihealthE7DF3B80) 
+PocStack | 13/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                      | Vpc/PrivateSubnet1/RouteTable (VpcPrivateSubnet1RouteTableB2C5B500) 
+PocStack | 14/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::IAM::Role                            | BackendApiLambdaRole (BackendApiLambdaRoleBBDF9CD8) 
+PocStack | 14/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation     | Vpc/PrivateSubnet1/RouteTableAssociation (VpcPrivateSubnet1RouteTableAssociation70C59FA6) 
+PocStack | 15/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                      | Vpc/PrivateSubnet1/RouteTable (VpcPrivateSubnet1RouteTableB2C5B500) 
+PocStack | 15/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                      | Vpc/PublicSubnet1/RouteTable (VpcPublicSubnet1RouteTable6C95E38E) 
+PocStack | 16/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation     | Vpc/PrivateSubnet1/RouteTableAssociation (VpcPrivateSubnet1RouteTableAssociation70C59FA6) 
+PocStack | 17/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                      | Vpc/PublicSubnet1/RouteTable (VpcPublicSubnet1RouteTable6C95E38E) 
+PocStack | 17/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                          | Vpc/PublicSubnet1/Subnet (VpcPublicSubnet1Subnet5C2D37C4) 
+PocStack | 17/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation     | Vpc/PublicSubnet1/RouteTableAssociation (VpcPublicSubnet1RouteTableAssociation97140677) 
+PocStack | 18/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                          | Vpc/PublicSubnet1/Subnet (VpcPublicSubnet1Subnet5C2D37C4) 
+PocStack | 19/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation     | Vpc/PublicSubnet1/RouteTableAssociation (VpcPublicSubnet1RouteTableAssociation97140677) 
+PocStack | 19/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway                 | Vpc/IGW (VpcIGWD7BA715C) 
+PocStack | 19/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment            | Vpc/VPCGW (VpcVPCGWBF912B6E) 
+PocStack | 20/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::EC2::InternetGateway                 | Vpc/IGW (VpcIGWD7BA715C) 
+PocStack | 20/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                           | Vpc/PublicSubnet1/DefaultRoute (VpcPublicSubnet1DefaultRoute3DA9E72A) 
+PocStack | 21/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment            | Vpc/VPCGW (VpcVPCGWBF912B6E) 
+PocStack | 21/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                             | Vpc/PublicSubnet1/EIP (VpcPublicSubnet1EIPD7E02669) 
+PocStack | 22/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::EC2::Route                           | Vpc/PublicSubnet1/DefaultRoute (VpcPublicSubnet1DefaultRoute3DA9E72A) 
+PocStack | 22/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                      | Vpc/PublicSubnet1/NATGateway (VpcPublicSubnet1NATGateway4D7517AA) 
+PocStack | 23/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::EC2::EIP                             | Vpc/PublicSubnet1/EIP (VpcPublicSubnet1EIPD7E02669) 
+PocStack | 23/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                      | Vpc/PrivateSubnet2/RouteTable (VpcPrivateSubnet2RouteTableA678073B) 
+PocStack | 24/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::EC2::NatGateway                      | Vpc/PublicSubnet1/NATGateway (VpcPublicSubnet1NATGateway4D7517AA) 
+PocStack | 24/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                           | Vpc/PrivateSubnet2/DefaultRoute (VpcPrivateSubnet2DefaultRoute060D2087) 
+PocStack | 25/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                      | Vpc/PrivateSubnet2/RouteTable (VpcPrivateSubnet2RouteTableA678073B) 
+PocStack | 25/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                           | Vpc/PrivateSubnet1/DefaultRoute (VpcPrivateSubnet1DefaultRouteBE02A9ED) 
+PocStack | 26/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::EC2::Route                           | Vpc/PrivateSubnet2/DefaultRoute (VpcPrivateSubnet2DefaultRoute060D2087) 
+PocStack | 26/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                       | BackendApiLogGroup (BackendApiLogGroupFAD6CEA5) 
+PocStack | 27/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::EC2::Route                           | Vpc/PrivateSubnet1/DefaultRoute (VpcPrivateSubnet1DefaultRouteBE02A9ED) 
+PocStack | 27/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                          | BackendApiLambdaRole/DefaultPolicy (BackendApiLambdaRoleDefaultPolicy2E48EB54) 
+PocStack | 28/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                       | BackendApiLogGroup (BackendApiLogGroupFAD6CEA5) 
+PocStack | 28/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation     | Vpc/PrivateSubnet2/RouteTableAssociation (VpcPrivateSubnet2RouteTableAssociationA89CAD56) 
+PocStack | 29/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::IAM::Policy                          | BackendApiLambdaRole/DefaultPolicy (BackendApiLambdaRoleDefaultPolicy2E48EB54) 
+PocStack | 29/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                           | BackgroundWorkQueue (BackgroundWorkQueueA4CF87B6) 
+PocStack | 30/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation     | Vpc/PrivateSubnet2/RouteTableAssociation (VpcPrivateSubnet2RouteTableAssociationA89CAD56) 
+PocStack | 30/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                   | BackendServiceSecurityGroup (BackendServiceSecurityGroupF0F7037A) 
+PocStack | 31/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::SQS::Queue                           | BackgroundWorkQueue (BackgroundWorkQueueA4CF87B6) 
+PocStack | 31/80 | 8:56:50 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                     | BackendApiHandler (BackendApiHandler7A1EAB14) 
+PocStack | 32/80 | 8:56:50 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                   | BackendServiceSecurityGroup (BackendServiceSecurityGroupF0F7037A) 
+PocStack | 32/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource                 | BackendApi/Default/items (BackendApiitems7A2098B5) 
+PocStack | 33/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::Lambda::Function                     | BackendApiHandler (BackendApiHandler7A1EAB14) 
+PocStack | 34/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::ApiGateway::Resource                 | BackendApi/Default/items (BackendApiitems7A2098B5) 
+PocStack | 34/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method                   | BackendApi/Default/items/GET (BackendApiitemsGETB81C090F) 
+PocStack | 34/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method                   | BackendApi/Default/health/GET (BackendApihealthGET9E94DDDB) 
+PocStack | 35/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method                   | BackendApi/Default/items/GET (BackendApiitemsGETB81C090F) 
+PocStack | 35/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method                   | BackendApi/Default/items/POST (BackendApiitemsPOSTCFD9FA52) 
+PocStack | 36/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method                   | BackendApi/Default/health/GET (BackendApihealthGET9E94DDDB) 
+PocStack | 36/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment               | BackendApi/Deployment (BackendApiDeploymentC697591612ba57a82e3da756630114e4f7f01cc7) 
+PocStack | 37/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method                   | BackendApi/Default/items/POST (BackendApiitemsPOSTCFD9FA52) 
+PocStack | 37/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage                    | BackendApi/DeploymentStage.prod (BackendApiDeploymentStageprodC399B877) 
+PocStack | 38/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment               | BackendApi/Deployment (BackendApiDeploymentC697591612ba57a82e3da756630114e4f7f01cc7) 
+PocStack | 39/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::ApiGateway::Stage                    | BackendApi/DeploymentStage.prod (BackendApiDeploymentStageprodC399B877) 
+PocStack | 39/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission                   | BackendApi/Default/health/GET/ApiPermission.PocStackBackendApi4D726E59.GET..health (BackendApihealthGETApiPermissionPocStackBackendApi4D726E59GEThealthE59C0783) 
+PocStack | 39/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission                   | BackendApi/Default/health/GET/ApiPermission.Test.PocStackBackendApi4D726E59.GET..health (BackendApihealthGETApiPermissionTestPocStackBackendApi4D726E59GEThealthD1D88B07) 
+PocStack | 40/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::Lambda::Permission                   | BackendApi/Default/health/GET/ApiPermission.PocStackBackendApi4D726E59.GET..health (BackendApihealthGETApiPermissionPocStackBackendApi4D726E59GEThealthE59C0783) 
+PocStack | 40/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission                   | BackendApi/Default/items/GET/ApiPermission.PocStackBackendApi4D726E59.GET..items (BackendApiitemsGETApiPermissionPocStackBackendApi4D726E59GETitems1CAF7BF5) 
+PocStack | 41/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::Lambda::Permission                   | BackendApi/Default/health/GET/ApiPermission.Test.PocStackBackendApi4D726E59.GET..health (BackendApihealthGETApiPermissionTestPocStackBackendApi4D726E59GEThealthD1D88B07) 
+PocStack | 41/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission                   | BackendApi/Default/items/GET/ApiPermission.Test.PocStackBackendApi4D726E59.GET..items (BackendApiitemsGETApiPermissionTestPocStackBackendApi4D726E59GETitems7F44FC16) 
+PocStack | 42/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::Lambda::Permission                   | BackendApi/Default/items/GET/ApiPermission.PocStackBackendApi4D726E59.GET..items (BackendApiitemsGETApiPermissionPocStackBackendApi4D726E59GETitems1CAF7BF5) 
+PocStack | 42/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission                   | BackendApi/Default/items/POST/ApiPermission.PocStackBackendApi4D726E59.POST..items (BackendApiitemsPOSTApiPermissionPocStackBackendApi4D726E59POSTitemsA95F8357) 
+PocStack | 43/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::Lambda::Permission                   | BackendApi/Default/items/GET/ApiPermission.Test.PocStackBackendApi4D726E59.GET..items (BackendApiitemsGETApiPermissionTestPocStackBackendApi4D726E59GETitems7F44FC16) 
+PocStack | 43/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission                   | BackendApi/Default/items/POST/ApiPermission.Test.PocStackBackendApi4D726E59.POST..items (BackendApiitemsPOSTApiPermissionTestPocStackBackendApi4D726E59POSTitems4A4854BA) 
+PocStack | 44/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::Lambda::Permission                   | BackendApi/Default/items/POST/ApiPermission.PocStackBackendApi4D726E59.POST..items (BackendApiitemsPOSTApiPermissionPocStackBackendApi4D726E59POSTitemsA95F8357) 
+PocStack | 44/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                   | FrontendAlbSecurityGroup (FrontendAlbSecurityGroupD996BD33) 
+PocStack | 45/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::Lambda::Permission                   | BackendApi/Default/items/POST/ApiPermission.Test.PocStackBackendApi4D726E59.POST..items (BackendApiitemsPOSTApiPermissionTestPocStackBackendApi4D726E59POSTitems4A4854BA) 
+PocStack | 45/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress            | BackendServiceSecurityGroup/from PocStackFrontendAlbSecurityGroupABB51B3D:3000 (BackendServiceSecurityGroupfromPocStackFrontendAlbSecurityGroupABB51B3D3000C3E41530) 
+PocStack | 46/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                   | FrontendAlbSecurityGroup (FrontendAlbSecurityGroupD996BD33) 
+PocStack | 46/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupEgress             | BackendServiceSecurityGroup/to PocStackDatabaseSecurityGroup750D196B:5432 (BackendServiceSecurityGrouptoPocStackDatabaseSecurityGroup750D196B543222A21D0D) 
+PocStack | 47/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress            | BackendServiceSecurityGroup/from PocStackFrontendAlbSecurityGroupABB51B3D:3000 (BackendServiceSecurityGroupfromPocStackFrontendAlbSecurityGroupABB51B3D3000C3E41530) 
+PocStack | 47/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::Events::Rule                         | ItemCreatedRule (ItemCreatedRule46967B55) 
+PocStack | 48/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupEgress             | BackendServiceSecurityGroup/to PocStackDatabaseSecurityGroup750D196B:5432 (BackendServiceSecurityGrouptoPocStackDatabaseSecurityGroup750D196B543222A21D0D) 
+PocStack | 48/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::SQS::QueuePolicy                     | BackgroundWorkQueue/Policy (BackgroundWorkQueuePolicy50377C53) 
+PocStack | 49/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::Events::Rule                         | ItemCreatedRule (ItemCreatedRule46967B55) 
+PocStack | 49/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress            | DatabaseSecurityGroup/from PocStackBackendServiceSecurityGroup11C05D63:5432 (DatabaseSecurityGroupfromPocStackBackendServiceSecurityGroup11C05D6354326DF18CEF) 
+PocStack | 50/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::CDK::Metadata                        | CDKMetadata/Default (CDKMetadata) 
+PocStack | 50/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                        | CDKMetadata/Default (CDKMetadata) 
+PocStack | 51/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::SQS::QueuePolicy                     | BackgroundWorkQueue/Policy (BackgroundWorkQueuePolicy50377C53) 
+PocStack | 51/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                       | EventProcessorLogGroup (EventProcessorLogGroup696DFF5A) 
+PocStack | 52/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress            | DatabaseSecurityGroup/from PocStackBackendServiceSecurityGroup11C05D63:5432 (DatabaseSecurityGroupfromPocStackBackendServiceSecurityGroup11C05D6354326DF18CEF) 
+PocStack | 52/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | EventProcessorRole (EventProcessorRoleDF96A0DC) 
+PocStack | 53/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                       | EventProcessorLogGroup (EventProcessorLogGroup696DFF5A) 
+PocStack | 53/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                          | EventProcessorRole/DefaultPolicy (EventProcessorRoleDefaultPolicy5D6E7B38) 
+PocStack | 54/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::IAM::Role                            | EventProcessorRole (EventProcessorRoleDF96A0DC) 
+PocStack | 54/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                     | EventProcessor (EventProcessorD4153CB5) 
+PocStack | 55/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::IAM::Policy                          | EventProcessorRole/DefaultPolicy (EventProcessorRoleDefaultPolicy5D6E7B38) 
+PocStack | 55/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                      | Vpc/PublicSubnet2/RouteTable (VpcPublicSubnet2RouteTable94F7E489) 
+PocStack | 56/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::Lambda::Function                     | EventProcessor (EventProcessorD4153CB5) 
+PocStack | 56/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                           | Vpc/PublicSubnet2/DefaultRoute (VpcPublicSubnet2DefaultRoute97F91067) 
+PocStack | 57/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                      | Vpc/PublicSubnet2/RouteTable (VpcPublicSubnet2RouteTable94F7E489) 
+PocStack | 58/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::EC2::Route                           | Vpc/PublicSubnet2/DefaultRoute (VpcPublicSubnet2DefaultRoute97F91067) 
+PocStack | 58/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                          | Vpc/PublicSubnet2/Subnet (VpcPublicSubnet2Subnet691E08A3) 
+PocStack | 58/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation     | Vpc/PublicSubnet2/RouteTableAssociation (VpcPublicSubnet2RouteTableAssociationDD5762D8) 
+PocStack | 59/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                          | Vpc/PublicSubnet2/Subnet (VpcPublicSubnet2Subnet691E08A3) 
+PocStack | 59/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress            | FrontendAlbSecurityGroup/from PocStackFrontendAlbSecurityGroupABB51B3D:80 (FrontendAlbSecurityGroupfromPocStackFrontendAlbSecurityGroupABB51B3D80D54644D0) 
+PocStack | 60/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::Listener     | FrontendAlb/HttpListener (FrontendAlbHttpListenerF5DC6CBE) Resource type AWS::ElasticLoadBalancingV2::Listener is not supported but was deployed as a fallback
+PocStack | 60/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::Listener     | FrontendAlb/HttpListener (FrontendAlbHttpListenerF5DC6CBE) 
+PocStack | 61/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::TargetGroup  | FrontendTargetGroup (FrontendTargetGroupED7B3E5D) Resource type AWS::ElasticLoadBalancingV2::TargetGroup is not supported but was deployed as a fallback
+PocStack | 61/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::TargetGroup  | FrontendTargetGroup (FrontendTargetGroupED7B3E5D) 
+PocStack | 62/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::LoadBalancer | FrontendAlb (FrontendAlb8A663C84) Resource type AWS::ElasticLoadBalancingV2::LoadBalancer is not supported but was deployed as a fallback
+PocStack | 62/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::LoadBalancer | FrontendAlb (FrontendAlb8A663C84) 
+PocStack | 63/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation     | Vpc/PublicSubnet2/RouteTableAssociation (VpcPublicSubnet2RouteTableAssociationDD5762D8) 
+PocStack | 63/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupEgress             | FrontendAlbSecurityGroup/to PocStackBackendServiceSecurityGroup11C05D63:3000 (FrontendAlbSecurityGrouptoPocStackBackendServiceSecurityGroup11C05D6330003251ED10) 
+PocStack | 64/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress            | FrontendAlbSecurityGroup/from PocStackFrontendAlbSecurityGroupABB51B3D:80 (FrontendAlbSecurityGroupfromPocStackFrontendAlbSecurityGroupABB51B3D80D54644D0) 
+PocStack | 64/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupEgress             | FrontendAlbSecurityGroup/to PocStackFrontendAlbSecurityGroupABB51B3D:80 (FrontendAlbSecurityGrouptoPocStackFrontendAlbSecurityGroupABB51B3D80AED23E4D) 
+PocStack | 65/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupEgress             | FrontendAlbSecurityGroup/to PocStackBackendServiceSecurityGroup11C05D63:3000 (FrontendAlbSecurityGrouptoPocStackBackendServiceSecurityGroup11C05D6330003251ED10) 
+PocStack | 65/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                       | FrontendLogGroup (FrontendLogGroupCE4F14E0) 
+PocStack | 66/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::ECS::Cluster                         | FrontendCluster (FrontendCluster268760AC) Resource type AWS::ECS::Cluster is not supported but was deployed as a fallback
+PocStack | 66/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::ECS::Cluster                         | FrontendCluster (FrontendCluster268760AC) 
+PocStack | 67/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupEgress             | FrontendAlbSecurityGroup/to PocStackFrontendAlbSecurityGroupABB51B3D:80 (FrontendAlbSecurityGrouptoPocStackFrontendAlbSecurityGroupABB51B3D80AED23E4D) 
+PocStack | 67/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | FrontendTaskDefinition/TaskRole (FrontendTaskDefinitionTaskRole0DD17CB3) 
+PocStack | 68/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                       | FrontendLogGroup (FrontendLogGroupCE4F14E0) 
+PocStack | 68/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | FrontendTaskDefinition/ExecutionRole (FrontendTaskDefinitionExecutionRole81F7E63C) 
+PocStack | 69/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::IAM::Role                            | FrontendTaskDefinition/TaskRole (FrontendTaskDefinitionTaskRole0DD17CB3) 
+PocStack | 69/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                          | FrontendTaskDefinition/ExecutionRole/DefaultPolicy (FrontendTaskDefinitionExecutionRoleDefaultPolicyD4B6E7E4) 
+PocStack | 70/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::ECS::Service                         | FrontendService/Service (FrontendServiceBC94BA93) Resource type AWS::ECS::Service is not supported but was deployed as a fallback
+PocStack | 70/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::ECS::Service                         | FrontendService/Service (FrontendServiceBC94BA93) 
+PocStack | 71/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::ECS::TaskDefinition                  | FrontendTaskDefinition (FrontendTaskDefinition6CBC2B00) Resource type AWS::ECS::TaskDefinition is not supported but was deployed as a fallback
+PocStack | 71/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::ECS::TaskDefinition                  | FrontendTaskDefinition (FrontendTaskDefinition6CBC2B00) 
+PocStack | 72/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::IAM::Role                            | FrontendTaskDefinition/ExecutionRole (FrontendTaskDefinitionExecutionRole81F7E63C) 
+PocStack | 72/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+PocStack | 73/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::Glue::Database                       | GlueDatabase Resource type AWS::Glue::Database is not supported but was deployed as a fallback
+PocStack | 73/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::Glue::Database                       | GlueDatabase 
+PocStack | 74/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::IAM::Policy                          | FrontendTaskDefinition/ExecutionRole/DefaultPolicy (FrontendTaskDefinitionExecutionRoleDefaultPolicyD4B6E7E4) 
+PocStack | 74/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                          | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
+PocStack | 75/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::Glue::Crawler                        | GlueCrawler Resource type AWS::Glue::Crawler is not supported but was deployed as a fallback
+PocStack | 75/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::Glue::Crawler                        | GlueCrawler 
+PocStack | 76/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::IAM::Role                            | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+PocStack | 76/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::Lambda::EventSourceMapping           | QueueEventSourceMapping (QueueEventSourceMappingA71531C4) 
+PocStack | 77/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::IAM::Policy                          | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
+PocStack | 77/80 | 8:56:58 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCEndpoint                     | Vpc/S3GatewayEndpoint (VpcS3GatewayEndpoint68BA86CD) 
+PocStack | 78/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::Lambda::EventSourceMapping           | QueueEventSourceMapping (QueueEventSourceMappingA71531C4) 
+PocStack | 79/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::EC2::VPCEndpoint                     | Vpc/S3GatewayEndpoint (VpcS3GatewayEndpoint68BA86CD) 
+PocStack | 80/80 | 8:56:58 PM | CREATE_COMPLETE      | AWS::CloudFormation::Stack                | PocStack 
+
+ ✅  PocStack
+
+✨  Deployment time: 15.42s
+
+Outputs:
+PocStack.AnalyticsBucketName = pocstack-analyticsbucket39eaaeea-022e5477
+PocStack.ApiUrl = https://shxpmv9meb.execute-api.localhost.localstack.cloud:4566/prod/
+PocStack.BackendApiEndpoint94865037 = https://shxpmv9meb.execute-api.localhost.localstack.cloud:4566/prod/
+PocStack.BackendLambdaName = backend-api-handler
+PocStack.BackendLogGroupName = /aws/lambda/backend-api-handler
+PocStack.DatabaseEndpointAddress = unknown
+PocStack.DatabaseInstanceIdentifier = unknown
+PocStack.DatabaseSecretArn = arn:aws:secretsmanager:us-east-1:000000000000:secret:PocStack-DbCredentialsSecret4110F-6a19128f-cSMmgG
+PocStack.EventProcessorLambdaName = event-processor-handler
+PocStack.EventProcessorLogGroupName = /aws/lambda/event-processor-handler
+PocStack.FrontendAlbDns = unknown
+PocStack.QueueUrl = http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/PocStack-BackgroundWorkQueueA4CF8-d7a07fcd
+PocStack.RestApiId = shxpmv9meb
+Stack ARN:
+arn:aws:cloudformation:us-east-1:000000000000:stack/PocStack/086acf87-fc64-4d53-8982-5e0d4f69862a
+
+✨  Total time: 20.38s
+
+[32m✅ Step passed: Deploy (LocalStack)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Integration tests[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest integration tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+plugins: typeguard-2.13.3
+collecting ... collected 4 items
+
+tests/integration_tests.py::test_deployed_outputs_resolve_live_resources FAILED [ 25%]
+tests/integration_tests.py::test_health_items_and_event_pipeline_end_to_end FAILED [ 50%]
+tests/integration_tests.py::test_real_http_negative_paths PASSED         [ 75%]
+tests/integration_tests.py::test_processor_surfaces_malformed_queue_message PASSED [100%]
+
+=================================== FAILURES ===================================
+_________________ test_deployed_outputs_resolve_live_resources _________________
+tests/integration_tests.py:211: in test_deployed_outputs_resolve_live_resources
+    database = rds.describe_db_instances(
+/usr/local/lib/python3.12/site-packages/botocore/client.py:602: in _api_call
+    return self._make_api_call(operation_name, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/site-packages/botocore/context.py:123: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/site-packages/botocore/client.py:1078: in _make_api_call
+    raise error_class(parsed_response, operation_name)
+E   botocore.exceptions.ClientError: An error occurred (InternalFailure) when calling the DescribeDBInstances operation: Sorry, the rds service is not included within your LocalStack license, but is available in an upgraded license. Please refer to https://docs.localstack.cloud/references/coverage for more details.
+_______________ test_health_items_and_event_pipeline_end_to_end ________________
+tests/integration_tests.py:226: in test_health_items_and_event_pipeline_end_to_end
+    item_one = _post_item(deployed_stack, value_one)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration_tests.py:183: in _post_item
+    return _eventually(assert_created, timeout_seconds=180, interval_seconds=5)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration_tests.py:122: in _eventually
+    raise last_error
+tests/integration_tests.py:117: in _eventually
+    return assertion()
+           ^^^^^^^^^^^
+tests/integration_tests.py:178: in assert_created
+    assert status == 201, body
+E   AssertionError: {'error': 'pg8000 dependency is not available in the Lambda runtime'}
+E   assert 500 == 201
+=========================== short test summary info ============================
+FAILED tests/integration_tests.py::test_deployed_outputs_resolve_live_resources
+FAILED tests/integration_tests.py::test_health_items_and_event_pipeline_end_to_end
+=================== 2 failed, 2 passed in 189.81s (0:03:09) ====================
+[31m❌ Step failed: Integration tests[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Destroy / Cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running cdklocal destroy...
+Cleaning up worker container: harness-worker-24349
+[32m✅ Step passed: Destroy / Cleanup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  HARNESS SUMMARY[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ setup[0m
+[32m✅ syntax/plan[0m
+[32m✅ unit tests[0m
+[32m✅ deploy (localstack)[0m
+[31m❌ integration tests[0m
+[32m✅ destroy/cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[31m❌ 1 step(s) failed.[0m
+
+Log saved to: ../../../runs/tasks_cdk-py_c1ba8525-281a-4c44-a9ec-4301c6cd9aab-feedback.log
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+Stopping LocalStack...
+ Container localstack-harness  Stopping
+ Container localstack-harness  Stopped
+ Container localstack-harness  Removing
+ Container localstack-harness  Removed
+ Network iac-harness-network  Removing
+ Network iac-harness-network  Removed

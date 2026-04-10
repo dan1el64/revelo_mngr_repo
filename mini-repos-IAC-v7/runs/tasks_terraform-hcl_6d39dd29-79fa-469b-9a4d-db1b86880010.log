@@ -14,28 +14,9 @@ LocalStack is healthy.
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  Step: Setup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
-Starting worker container: harness-worker-10034
-Unable to find image 'revelotalentcorp/iac-terraform-hcl:latest' locally
-latest: Pulling from revelotalentcorp/iac-terraform-hcl
-1ba112ff5ba8: Pulling fs layer
-2c04184b2cb8: Pulling fs layer
-a2d87fffe94a: Pulling fs layer
-1759fc129ca6: Pulling fs layer
-c9ca67c016f5: Pulling fs layer
-1ba112ff5ba8: Download complete
-c9ca67c016f5: Download complete
-a2d87fffe94a: Download complete
-a2d87fffe94a: Pull complete
-1759fc129ca6: Download complete
-2c04184b2cb8: Download complete
-2c04184b2cb8: Pull complete
-1759fc129ca6: Pull complete
-c9ca67c016f5: Pull complete
-1ba112ff5ba8: Pull complete
-Digest: sha256:9db60560c69f1374aa1d682df7406e0aae631fe62228573149fd21c45cd49f42
-Status: Downloaded newer image for revelotalentcorp/iac-terraform-hcl:latest
-2453e968422620e152aeffd9e66258bc724d0f603eed700b7d1a6ef9c1c3a579
-Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/19744114-e696-4ac4-8e66-8fd7a2a1a758
+Starting worker container: harness-worker-18543
+21b153c656774634e724ec80fdf76e57c82561a82c2babd63060484e06306d76
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/25788f8d-09f8-45ed-b8f7-52731098d32c
 [32m✅ Step passed: Setup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -45,15 +26,15 @@ Checking for LocalStack references...
 Running terraform fmt -check...
 Running terraform init...
 [0m[1mInitializing provider plugins...[0m
-- Finding hashicorp/random versions matching ">= 3.5.0"...
 - Finding hashicorp/archive versions matching ">= 2.4.0"...
 - Finding hashicorp/aws versions matching ">= 5.0.0"...
-- Installing hashicorp/random v3.8.1...
-- Installed hashicorp/random v3.8.1 (signed by HashiCorp)
+- Finding hashicorp/random versions matching ">= 3.5.0"...
 - Installing hashicorp/archive v2.7.1...
 - Installed hashicorp/archive v2.7.1 (signed by HashiCorp)
 - Installing hashicorp/aws v6.40.0...
 - Installed hashicorp/aws v6.40.0 (signed by HashiCorp)
+- Installing hashicorp/random v3.8.1...
+- Installed hashicorp/random v3.8.1 (signed by HashiCorp)
 Terraform has created a lock file [1m.terraform.lock.hcl[0m to record the provider
 selections it made above. Include this file in your version control repository
 so that Terraform can guarantee to make the same selections by default when
@@ -1063,28 +1044,24 @@ platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/p
 cachedir: .pytest_cache
 rootdir: /work
 configfile: pytest.ini
-collecting ... collected 18 items
+collecting ... collected 14 items
 
-tests/unit_tests.py::test_single_terraform_file_and_allowed_variables_only PASSED [  5%]
-tests/unit_tests.py::test_exact_resource_inventory_matches_prompt_scope PASSED [ 11%]
-tests/unit_tests.py::test_provider_is_single_regioned_and_endpoint_driven PASSED [ 16%]
-tests/unit_tests.py::test_connectivity_mesh_topology_is_exact_and_routed PASSED [ 22%]
-tests/unit_tests.py::test_s3_gateway_endpoint_attaches_exactly_both_route_tables PASSED [ 27%]
-tests/unit_tests.py::test_security_groups_are_exact_and_database_ingress_is_lambda_only PASSED [ 33%]
-tests/unit_tests.py::test_lambda_security_group_has_zero_ingress_blocks PASSED [ 38%]
-tests/unit_tests.py::test_s3_archive_bucket_is_encrypted_private_and_tls_only PASSED [ 44%]
-tests/unit_tests.py::test_sqs_eventbridge_rule_and_pipe_are_fully_wired PASSED [ 50%]
-tests/unit_tests.py::test_lambda_package_state_machine_and_logs_match_runtime_contract PASSED [ 55%]
-tests/unit_tests.py::test_state_machine_passes_full_input_execution_id_and_timestamp_to_lambda PASSED [ 61%]
-tests/unit_tests.py::test_lambda_runtime_uses_secret_credentials_and_no_inline_db_credentials PASSED [ 66%]
-tests/unit_tests.py::test_iam_roles_are_exact_service_roles_and_no_admin_policy_is_granted PASSED [ 72%]
-tests/unit_tests.py::test_rds_postgres_and_secret_contract_are_exact PASSED [ 77%]
-tests/unit_tests.py::test_observability_alarms_and_sns_notifications_are_exact PASSED [ 83%]
-tests/unit_tests.py::test_event_rule_pattern_is_exact_and_complete PASSED [ 88%]
-tests/unit_tests.py::test_teardown_stays_simple_and_state_machine_has_no_direct_trigger PASSED [ 94%]
-tests/unit_tests.py::test_state_machine_start_permission_exists_only_on_pipes_role PASSED [100%]
+tests/unit_tests.py::test_single_terraform_file_and_expected_variables_only PASSED [  7%]
+tests/unit_tests.py::test_aws_provider_is_parameterized_for_region_credentials_and_endpoint_override PASSED [ 14%]
+tests/unit_tests.py::test_network_layout_models_public_and_private_routing PASSED [ 21%]
+tests/unit_tests.py::test_security_groups_and_database_are_constrained_to_expected_access PASSED [ 28%]
+tests/unit_tests.py::test_archive_bucket_and_queues_enforce_encryption_transport_and_redrive PASSED [ 35%]
+tests/unit_tests.py::test_event_routing_resources_wire_bus_queue_pipe_and_state_machine PASSED [ 42%]
+tests/unit_tests.py::test_lambda_source_derives_s3_key_and_reads_secret_at_runtime PASSED [ 50%]
+tests/unit_tests.py::test_lambda_source_uses_runtime_secret_to_open_database_connection PASSED [ 57%]
+tests/unit_tests.py::test_lambda_environment_uses_secret_reference_without_inline_credentials PASSED [ 64%]
+tests/unit_tests.py::test_iam_policies_avoid_service_wildcards_and_scope_sensitive_access PASSED [ 71%]
+tests/unit_tests.py::test_only_expected_iam_statements_use_wildcard_resource PASSED [ 78%]
+tests/unit_tests.py::test_step_functions_and_pipe_policies_target_only_their_runtime_dependencies PASSED [ 85%]
+tests/unit_tests.py::test_log_groups_keep_retention_without_customer_managed_kms_keys PASSED [ 92%]
+tests/unit_tests.py::test_observability_resources_track_failures_and_notify_via_sns PASSED [100%]
 
-============================== 18 passed in 0.12s ==============================
+============================== 14 passed in 0.10s ==============================
 [32m✅ Step passed: Unit tests (pytest)[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -2066,102 +2043,101 @@ Terraform will perform the following actions:
 [0m[0m[1mrandom_password.db_password: Creating...[0m[0m
 [0m[1mrandom_password.db_password: Creation complete after 0s [id=none][0m
 [0m[1maws_vpc.connectivity_mesh: Creating...[0m[0m
-[0m[1maws_eip.nat: Creating...[0m[0m
 [0m[1maws_s3_bucket.event_archive: Creating...[0m[0m
-[0m[1maws_eip.nat: Creation complete after 1s [id=eipalloc-f896e9a4540e621b2][0m
-[0m[1maws_s3_bucket.event_archive: Creation complete after 1s [id=event-payload-archive-20260409145916116300000001][0m
-[0m[1maws_vpc.connectivity_mesh: Creation complete after 1s [id=vpc-c92584b843cc0b8b4][0m
-[0m[1maws_s3_bucket_public_access_block.event_archive: Creating...[0m[0m
+[0m[1maws_eip.nat: Creating...[0m[0m
+[0m[1maws_eip.nat: Creation complete after 2s [id=eipalloc-94746781c502a8bb4][0m
+[0m[1maws_vpc.connectivity_mesh: Creation complete after 2s [id=vpc-14566af703ad6a7af][0m
+[0m[1maws_s3_bucket.event_archive: Creation complete after 2s [id=event-payload-archive-20260410203733483300000001][0m
+[0m[1maws_internet_gateway.connectivity_mesh: Creating...[0m[0m
+[0m[1maws_subnet.private_b: Creating...[0m[0m
+[0m[1maws_subnet.public_b: Creating...[0m[0m
+[0m[1maws_subnet.private_a: Creating...[0m[0m
+[0m[1maws_subnet.public_a: Creating...[0m[0m
+[0m[1maws_security_group.lambda: Creating...[0m[0m
 [0m[1maws_secretsmanager_secret.db_credentials: Creating...[0m[0m
 [0m[1maws_cloudwatch_log_group.lambda: Creating...[0m[0m
-[0m[1maws_cloudwatch_event_bus.ingest: Creating...[0m[0m
-[0m[1maws_s3_bucket_server_side_encryption_configuration.event_archive: Creating...[0m[0m
-[0m[1maws_sns_topic.alarms: Creating...[0m[0m
 [0m[1maws_cloudwatch_log_group.step_functions: Creating...[0m[0m
 [0m[1maws_iam_role.lambda: Creating...[0m[0m
-[0m[1maws_iam_role.pipes: Creating...[0m[0m
-[0m[1maws_iam_role.step_functions: Creating...[0m[0m
-[0m[1maws_s3_bucket_public_access_block.event_archive: Creation complete after 0s [id=event-payload-archive-20260409145916116300000001][0m
+[0m[1maws_subnet.private_a: Creation complete after 0s [id=subnet-5300d8ac5bc6fae9a][0m
+[0m[1maws_subnet.private_b: Creation complete after 0s [id=subnet-222d4795f7c62db5b][0m
+[0m[1maws_internet_gateway.connectivity_mesh: Creation complete after 0s [id=igw-1a4da045b5e314232][0m
 [0m[1maws_sqs_queue.dead_letter: Creating...[0m[0m
-[0m[1maws_s3_bucket_server_side_encryption_configuration.event_archive: Creation complete after 0s [id=event-payload-archive-20260409145916116300000001][0m
-[0m[1maws_subnet.public_a: Creating...[0m[0m
-[0m[1maws_secretsmanager_secret.db_credentials: Creation complete after 0s [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-1b09c407-db-credentials-OkCxlu][0m
-[0m[1maws_subnet.private_a: Creating...[0m[0m
-[0m[1maws_subnet.private_a: Creation complete after 1s [id=subnet-45ffcee08918ac052][0m
-[0m[1maws_internet_gateway.connectivity_mesh: Creating...[0m[0m
-[0m[1maws_internet_gateway.connectivity_mesh: Creation complete after 0s [id=igw-c62f7f4d8f356f231][0m
-[0m[1maws_security_group.lambda: Creating...[0m[0m
-[0m[1maws_sns_topic.alarms: Creation complete after 1s [id=arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-1b09c407-alarms][0m
-[0m[1maws_subnet.public_b: Creating...[0m[0m
-[0m[1maws_cloudwatch_event_bus.ingest: Creation complete after 1s [id=pilot-landing-zone-1b09c407-ingest][0m
-[0m[1maws_cloudwatch_log_group.step_functions: Creation complete after 1s [id=/aws/vendedlogs/states/pilot-landing-zone-worker-1b09c407][0m
-[0m[1maws_subnet.private_b: Creating...[0m[0m
-[0m[1maws_cloudwatch_log_group.lambda: Creation complete after 1s [id=/aws/lambda/pilot-landing-zone-worker-1b09c407][0m
-[0m[1maws_s3_bucket_policy.event_archive_tls: Creating...[0m[0m
-[0m[1maws_secretsmanager_secret_version.db_credentials: Creating...[0m[0m
-[0m[1maws_subnet.private_b: Creation complete after 0s [id=subnet-ef8e2c0d4f0cd4bee][0m
-[0m[1maws_s3_bucket_policy.event_archive_tls: Creation complete after 0s [id=event-payload-archive-20260409145916116300000001][0m
-[0m[1maws_sns_topic_subscription.email: Creating...[0m[0m
-[0m[1maws_secretsmanager_secret_version.db_credentials: Creation complete after 0s [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-1b09c407-db-credentials-OkCxlu|terraform-20260409145917760000000003][0m
+[0m[1maws_iam_role.step_functions: Creating...[0m[0m
+[0m[1maws_sns_topic.alarms: Creating...[0m[0m
+[0m[1maws_secretsmanager_secret.db_credentials: Creation complete after 0s [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-f99a89b9-db-credentials-XuPsUm][0m
+[0m[1maws_s3_bucket_public_access_block.event_archive: Creating...[0m[0m
+[0m[1maws_s3_bucket_public_access_block.event_archive: Creation complete after 0s [id=event-payload-archive-20260410203733483300000001][0m
+[0m[1maws_cloudwatch_event_bus.ingest: Creating...[0m[0m
+[0m[1maws_security_group.lambda: Creation complete after 0s [id=sg-7b9a8a5cc595be8c9][0m
+[0m[1maws_iam_role.pipes: Creating...[0m[0m
+[0m[1maws_iam_role.lambda: Creation complete after 0s [id=pilot-landing-zone-f99a89b9-lambda-role][0m
+[0m[1maws_iam_role.pipes: Creation complete after 0s [id=pilot-landing-zone-f99a89b9-pipes-role][0m
+[0m[1maws_iam_role.step_functions: Creation complete after 0s [id=pilot-landing-zone-f99a89b9-step-functions-role][0m
+[0m[1maws_s3_bucket_server_side_encryption_configuration.event_archive: Creating...[0m[0m
 [0m[1maws_route_table.public: Creating...[0m[0m
-[0m[1maws_iam_role.lambda: Creation complete after 1s [id=pilot-landing-zone-1b09c407-lambda-role][0m
-[0m[1maws_iam_role.step_functions: Creation complete after 1s [id=pilot-landing-zone-1b09c407-step-functions-role][0m
-[0m[1maws_cloudwatch_event_rule.ingest_work_item: Creating...[0m[0m
-[0m[1maws_iam_role.pipes: Creation complete after 1s [id=pilot-landing-zone-1b09c407-pipes-role][0m
-[0m[1maws_iam_role_policy.lambda_execution: Creating...[0m[0m
-[0m[1maws_sns_topic_subscription.email: Creation complete after 0s [id=arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-1b09c407-alarms:a6a5c364-884a-4f57-bdb3-06584c641eb5][0m
-[0m[1maws_iam_role_policy.lambda_execution: Creation complete after 0s [id=pilot-landing-zone-1b09c407-lambda-role:pilot-landing-zone-lambda-execution][0m
-[0m[1maws_cloudwatch_event_rule.ingest_work_item: Creation complete after 0s [id=pilot-landing-zone-1b09c407-ingest/pilot-landing-zone-1b09c407-ingest-work-item][0m
-[0m[1maws_security_group.lambda: Creation complete after 0s [id=sg-2ee1f14e4906247c2][0m
+[0m[1maws_s3_bucket_policy.event_archive_tls: Creating...[0m[0m
+[0m[1maws_s3_bucket_server_side_encryption_configuration.event_archive: Creation complete after 0s [id=event-payload-archive-20260410203733483300000001][0m
+[0m[1maws_s3_bucket_policy.event_archive_tls: Creation complete after 0s [id=event-payload-archive-20260410203733483300000001][0m
+[0m[1maws_secretsmanager_secret_version.db_credentials: Creating...[0m[0m
 [0m[1maws_security_group.rds: Creating...[0m[0m
-[0m[1maws_route_table.public: Creation complete after 0s [id=rtb-ae61a6cfb66f230ae][0m
-[0m[1maws_security_group.rds: Creation complete after 0s [id=sg-a90508739d6a26f5e][0m
+[0m[1maws_secretsmanager_secret_version.db_credentials: Creation complete after 0s [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-f99a89b9-db-credentials-XuPsUm|terraform-20260410203735261000000004][0m
+[0m[1maws_sns_topic.alarms: Creation complete after 0s [id=arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-f99a89b9-alarms][0m
+[0m[1maws_sns_topic_subscription.email: Creating...[0m[0m
+[0m[1maws_sns_topic_subscription.email: Creation complete after 0s [id=arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-f99a89b9-alarms:52f174e8-6137-4c5a-83d4-5d14972e00eb][0m
+[0m[1maws_cloudwatch_log_group.lambda: Creation complete after 0s [id=/aws/lambda/pilot-landing-zone-worker-f99a89b9][0m
+[0m[1maws_cloudwatch_log_group.step_functions: Creation complete after 0s [id=/aws/vendedlogs/states/pilot-landing-zone-worker-f99a89b9][0m
+[0m[1maws_cloudwatch_event_bus.ingest: Creation complete after 0s [id=pilot-landing-zone-f99a89b9-ingest][0m
+[0m[1maws_cloudwatch_event_rule.ingest_work_item: Creating...[0m[0m
+[0m[1maws_iam_role_policy.lambda_execution: Creating...[0m[0m
+[0m[1maws_iam_role_policy.lambda_execution: Creation complete after 0s [id=pilot-landing-zone-f99a89b9-lambda-role:pilot-landing-zone-lambda-execution][0m
+[0m[1maws_cloudwatch_event_rule.ingest_work_item: Creation complete after 0s [id=pilot-landing-zone-f99a89b9-ingest/pilot-landing-zone-f99a89b9-ingest-work-item][0m
+[0m[1maws_route_table.public: Creation complete after 0s [id=rtb-762247cd9a0923ffb][0m
+[0m[1maws_security_group.rds: Creation complete after 1s [id=sg-aa615ec79ab442a64][0m
 [0m[1maws_cloudwatch_metric_alarm.rds_cpu: Creating...[0m[0m
 [0m[1maws_lambda_function.worker: Creating...[0m[0m
-[0m[1maws_cloudwatch_metric_alarm.rds_cpu: Creation complete after 0s [id=pilot-landing-zone-1b09c407-rds-cpu][0m
-[0m[1maws_sqs_queue.dead_letter: Still creating... [10s elapsed][0m[0m
-[0m[1maws_subnet.public_a: Still creating... [10s elapsed][0m[0m
-[0m[1maws_subnet.public_a: Creation complete after 10s [id=subnet-2f373c0daae0995c5][0m
-[0m[1maws_route_table_association.public_a: Creating...[0m[0m
-[0m[1maws_nat_gateway.public_a: Creating...[0m[0m
-[0m[1maws_route_table_association.public_a: Creation complete after 0s [id=rtbassoc-e55ead807c0432b7a][0m
-[0m[1maws_nat_gateway.public_a: Creation complete after 0s [id=nat-d84b173f98e924338][0m
-[0m[1maws_route_table.private: Creating...[0m[0m
-[0m[1maws_route_table.private: Creation complete after 0s [id=rtb-9793ed8729666479a][0m
-[0m[1maws_route_table_association.private_a: Creating...[0m[0m
-[0m[1maws_route_table_association.private_b: Creating...[0m[0m
-[0m[1maws_vpc_endpoint.s3: Creating...[0m[0m
-[0m[1maws_route_table_association.private_a: Creation complete after 1s [id=rtbassoc-ac894ce5106837d2e][0m
-[0m[1maws_route_table_association.private_b: Creation complete after 1s [id=rtbassoc-f1db58f827d47f01e][0m
-[0m[1maws_subnet.public_b: Still creating... [10s elapsed][0m[0m
-[0m[1maws_subnet.public_b: Creation complete after 10s [id=subnet-b1d2004537aa62935][0m
-[0m[1maws_route_table_association.public_b: Creating...[0m[0m
-[0m[1maws_route_table_association.public_b: Creation complete after 0s [id=rtbassoc-79304fef7f0001918][0m
-[0m[1maws_lambda_function.worker: Still creating... [10s elapsed][0m[0m
-[0m[1maws_lambda_function.worker: Creation complete after 12s [id=pilot-landing-zone-worker-1b09c407][0m
+[0m[1maws_cloudwatch_metric_alarm.rds_cpu: Creation complete after 0s [id=pilot-landing-zone-f99a89b9-rds-cpu][0m
+[0m[1maws_lambda_function.worker: Creation complete after 5s [id=pilot-landing-zone-worker-f99a89b9][0m
 [0m[1maws_iam_role_policy.step_functions_execution: Creating...[0m[0m
 [0m[1maws_cloudwatch_metric_alarm.lambda_errors: Creating...[0m[0m
-[0m[1maws_iam_role_policy.step_functions_execution: Creation complete after 0s [id=pilot-landing-zone-1b09c407-step-functions-role:pilot-landing-zone-step-functions-execution][0m
-[0m[1maws_cloudwatch_metric_alarm.lambda_errors: Creation complete after 0s [id=pilot-landing-zone-1b09c407-lambda-errors][0m
+[0m[1maws_iam_role_policy.step_functions_execution: Creation complete after 0s [id=pilot-landing-zone-f99a89b9-step-functions-role:pilot-landing-zone-step-functions-execution][0m
+[0m[1maws_cloudwatch_metric_alarm.lambda_errors: Creation complete after 0s [id=pilot-landing-zone-f99a89b9-lambda-errors][0m
 [0m[1maws_sfn_state_machine.worker: Creating...[0m[0m
-[0m[1maws_sfn_state_machine.worker: Creation complete after 0s [id=arn:aws:states:us-east-1:000000000000:stateMachine:pilot-landing-zone-worker-1b09c407][0m
+[0m[1maws_sfn_state_machine.worker: Creation complete after 0s [id=arn:aws:states:us-east-1:000000000000:stateMachine:pilot-landing-zone-worker-f99a89b9][0m
 [0m[1maws_cloudwatch_metric_alarm.step_functions_failures: Creating...[0m[0m
-[0m[1maws_cloudwatch_metric_alarm.step_functions_failures: Creation complete after 0s [id=pilot-landing-zone-1b09c407-step-functions-failures][0m
-[0m[1maws_vpc_endpoint.s3: Creation complete after 6s [id=vpce-561b076dc5d040b6b][0m
+[0m[1maws_cloudwatch_metric_alarm.step_functions_failures: Creation complete after 0s [id=pilot-landing-zone-f99a89b9-step-functions-failures][0m
+[0m[1maws_subnet.public_b: Still creating... [10s elapsed][0m[0m
+[0m[1maws_subnet.public_a: Still creating... [10s elapsed][0m[0m
+[0m[1maws_sqs_queue.dead_letter: Still creating... [10s elapsed][0m[0m
+[0m[1maws_subnet.public_b: Creation complete after 10s [id=subnet-7daa735c6d247c9d4][0m
+[0m[1maws_subnet.public_a: Creation complete after 10s [id=subnet-c326641a5cfea4659][0m
+[0m[1maws_route_table_association.public_b: Creating...[0m[0m
+[0m[1maws_route_table_association.public_a: Creating...[0m[0m
+[0m[1maws_nat_gateway.public_a: Creating...[0m[0m
+[0m[1maws_route_table_association.public_b: Creation complete after 0s [id=rtbassoc-27a942bbceb218cb2][0m
+[0m[1maws_route_table_association.public_a: Creation complete after 0s [id=rtbassoc-8838db25590086024][0m
+[0m[1maws_nat_gateway.public_a: Creation complete after 0s [id=nat-0f981bd73d9721c58][0m
+[0m[1maws_route_table.private: Creating...[0m[0m
+[0m[1maws_route_table.private: Creation complete after 0s [id=rtb-394652cb539cc504a][0m
+[0m[1maws_route_table_association.private_b: Creating...[0m[0m
+[0m[1maws_route_table_association.private_a: Creating...[0m[0m
+[0m[1maws_vpc_endpoint.s3: Creating...[0m[0m
+[0m[1maws_route_table_association.private_b: Creation complete after 0s [id=rtbassoc-6ea00a616ce7bc297][0m
+[0m[1maws_route_table_association.private_a: Creation complete after 0s [id=rtbassoc-f65a798595eb7cc79][0m
+[0m[1maws_vpc_endpoint.s3: Creation complete after 5s [id=vpce-f193eb0e8a329b0c1][0m
 [0m[1maws_sqs_queue.dead_letter: Still creating... [20s elapsed][0m[0m
-[0m[1maws_sqs_queue.dead_letter: Creation complete after 26s [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-1b09c407-work-dlq][0m
+[0m[1maws_sqs_queue.dead_letter: Creation complete after 25s [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-f99a89b9-work-dlq][0m
 [0m[1maws_sqs_queue.primary: Creating...[0m[0m
 [0m[1maws_sqs_queue.primary: Still creating... [10s elapsed][0m[0m
 [0m[1maws_sqs_queue.primary: Still creating... [20s elapsed][0m[0m
-[0m[1maws_sqs_queue.primary: Creation complete after 25s [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-1b09c407-work][0m
-[0m[1maws_sqs_queue_policy.allow_eventbridge_ingest_rule: Creating...[0m[0m
+[0m[1maws_sqs_queue.primary: Creation complete after 25s [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-f99a89b9-work][0m
 [0m[1maws_iam_role_policy.pipes_execution: Creating...[0m[0m
+[0m[1maws_sqs_queue_policy.allow_eventbridge_ingest_rule: Creating...[0m[0m
 [0m[1maws_cloudwatch_event_target.primary_queue: Creating...[0m[0m
-[0m[1maws_iam_role_policy.pipes_execution: Creation complete after 0s [id=pilot-landing-zone-1b09c407-pipes-role:pilot-landing-zone-pipes-execution][0m
-[0m[1maws_cloudwatch_event_target.primary_queue: Creation complete after 0s [id=pilot-landing-zone-1b09c407-ingest-pilot-landing-zone-1b09c407-ingest-work-item-primary-work-queue][0m
+[0m[1maws_iam_role_policy.pipes_execution: Creation complete after 0s [id=pilot-landing-zone-f99a89b9-pipes-role:pilot-landing-zone-pipes-execution][0m
+[0m[1maws_cloudwatch_event_target.primary_queue: Creation complete after 0s [id=pilot-landing-zone-f99a89b9-ingest-pilot-landing-zone-f99a89b9-ingest-work-item-primary-work-queue][0m
 [0m[1maws_sqs_queue_policy.allow_eventbridge_ingest_rule: Still creating... [10s elapsed][0m[0m
 [0m[1maws_sqs_queue_policy.allow_eventbridge_ingest_rule: Still creating... [20s elapsed][0m[0m
-[0m[1maws_sqs_queue_policy.allow_eventbridge_ingest_rule: Creation complete after 25s [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-1b09c407-work][0m
+[0m[1maws_sqs_queue_policy.allow_eventbridge_ingest_rule: Creation complete after 26s [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-f99a89b9-work][0m
 [0m[1m[32m
 Apply complete! Resources: 45 added, 0 changed, 0 destroyed.
 [0mGenerating state.json for integration tests...
@@ -2176,15 +2152,17 @@ platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/p
 cachedir: .pytest_cache
 rootdir: /work
 configfile: pytest.ini
-collecting ... collected 5 items
+collecting ... collected 7 items
 
-tests/integration_tests.py::test_network_foundation_and_security_groups_are_live PASSED [ 20%]
-tests/integration_tests.py::test_storage_and_messaging_resources_are_live PASSED [ 40%]
-tests/integration_tests.py::test_eventbridge_rule_and_queue_target_are_live PASSED [ 60%]
-tests/integration_tests.py::test_lambda_secret_state_machine_and_optional_pipe_are_live PASSED [ 80%]
-tests/integration_tests.py::test_observability_and_notifications_are_live PASSED [100%]
+tests/integration_tests.py::test_network_foundation_and_security_groups_are_live PASSED [ 14%]
+tests/integration_tests.py::test_storage_and_queue_protection_are_live PASSED [ 28%]
+tests/integration_tests.py::test_eventbridge_rule_and_queue_permissions_are_live PASSED [ 42%]
+tests/integration_tests.py::test_iam_roles_and_inline_policies_are_live_and_scoped PASSED [ 57%]
+tests/integration_tests.py::test_compute_workflow_observability_and_notifications_are_live PASSED [ 71%]
+tests/integration_tests.py::test_rds_attributes_are_live_when_supported PASSED [ 85%]
+tests/integration_tests.py::test_end_to_end_event_flow_archives_payload_and_persists_database_row PASSED [100%]
 
-============================== 5 passed in 0.63s ===============================
+============================== 7 passed in 0.55s ===============================
 [32m✅ Step passed: Integration tests[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -2194,50 +2172,50 @@ Running terraform destroy...
 [0m[1mrandom_password.db_password: Refreshing state... [id=none][0m
 [0m[1mdata.archive_file.worker_zip: Reading...[0m[0m
 [0m[1mdata.archive_file.worker_zip: Read complete after 0s [id=470310a91ee8f6a65e49a1eff1fe0fe5b995873a][0m
-[0m[1maws_eip.nat: Refreshing state... [id=eipalloc-f896e9a4540e621b2][0m
-[0m[1maws_vpc.connectivity_mesh: Refreshing state... [id=vpc-c92584b843cc0b8b4][0m
-[0m[1maws_s3_bucket.event_archive: Refreshing state... [id=event-payload-archive-20260409145916116300000001][0m
-[0m[1maws_subnet.private_a: Refreshing state... [id=subnet-45ffcee08918ac052][0m
-[0m[1maws_subnet.public_a: Refreshing state... [id=subnet-2f373c0daae0995c5][0m
-[0m[1maws_security_group.lambda: Refreshing state... [id=sg-2ee1f14e4906247c2][0m
-[0m[1maws_internet_gateway.connectivity_mesh: Refreshing state... [id=igw-c62f7f4d8f356f231][0m
-[0m[1maws_subnet.private_b: Refreshing state... [id=subnet-ef8e2c0d4f0cd4bee][0m
-[0m[1maws_subnet.public_b: Refreshing state... [id=subnet-b1d2004537aa62935][0m
-[0m[1maws_route_table.public: Refreshing state... [id=rtb-ae61a6cfb66f230ae][0m
-[0m[1maws_nat_gateway.public_a: Refreshing state... [id=nat-d84b173f98e924338][0m
-[0m[1maws_security_group.rds: Refreshing state... [id=sg-a90508739d6a26f5e][0m
-[0m[1maws_route_table_association.public_b: Refreshing state... [id=rtbassoc-79304fef7f0001918][0m
-[0m[1maws_route_table_association.public_a: Refreshing state... [id=rtbassoc-e55ead807c0432b7a][0m
-[0m[1maws_route_table.private: Refreshing state... [id=rtb-9793ed8729666479a][0m
-[0m[1maws_iam_role.lambda: Refreshing state... [id=pilot-landing-zone-1b09c407-lambda-role][0m
-[0m[1maws_secretsmanager_secret.db_credentials: Refreshing state... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-1b09c407-db-credentials-OkCxlu][0m
-[0m[1maws_sqs_queue.dead_letter: Refreshing state... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-1b09c407-work-dlq][0m
-[0m[1maws_iam_role.pipes: Refreshing state... [id=pilot-landing-zone-1b09c407-pipes-role][0m
-[0m[1maws_iam_role.step_functions: Refreshing state... [id=pilot-landing-zone-1b09c407-step-functions-role][0m
-[0m[1maws_s3_bucket_server_side_encryption_configuration.event_archive: Refreshing state... [id=event-payload-archive-20260409145916116300000001][0m
-[0m[1maws_sns_topic.alarms: Refreshing state... [id=arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-1b09c407-alarms][0m
-[0m[1maws_cloudwatch_event_bus.ingest: Refreshing state... [id=pilot-landing-zone-1b09c407-ingest][0m
-[0m[1maws_s3_bucket_public_access_block.event_archive: Refreshing state... [id=event-payload-archive-20260409145916116300000001][0m
-[0m[1maws_cloudwatch_log_group.lambda: Refreshing state... [id=/aws/lambda/pilot-landing-zone-worker-1b09c407][0m
-[0m[1maws_cloudwatch_log_group.step_functions: Refreshing state... [id=/aws/vendedlogs/states/pilot-landing-zone-worker-1b09c407][0m
-[0m[1maws_route_table_association.private_a: Refreshing state... [id=rtbassoc-ac894ce5106837d2e][0m
-[0m[1maws_vpc_endpoint.s3: Refreshing state... [id=vpce-561b076dc5d040b6b][0m
-[0m[1maws_route_table_association.private_b: Refreshing state... [id=rtbassoc-f1db58f827d47f01e][0m
-[0m[1maws_secretsmanager_secret_version.db_credentials: Refreshing state... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-1b09c407-db-credentials-OkCxlu|terraform-20260409145917760000000003][0m
-[0m[1maws_s3_bucket_policy.event_archive_tls: Refreshing state... [id=event-payload-archive-20260409145916116300000001][0m
-[0m[1maws_sqs_queue.primary: Refreshing state... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-1b09c407-work][0m
-[0m[1maws_iam_role_policy.lambda_execution: Refreshing state... [id=pilot-landing-zone-1b09c407-lambda-role:pilot-landing-zone-lambda-execution][0m
-[0m[1maws_cloudwatch_event_rule.ingest_work_item: Refreshing state... [id=pilot-landing-zone-1b09c407-ingest/pilot-landing-zone-1b09c407-ingest-work-item][0m
-[0m[1maws_sns_topic_subscription.email: Refreshing state... [id=arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-1b09c407-alarms:a6a5c364-884a-4f57-bdb3-06584c641eb5][0m
-[0m[1maws_cloudwatch_metric_alarm.rds_cpu: Refreshing state... [id=pilot-landing-zone-1b09c407-rds-cpu][0m
-[0m[1maws_lambda_function.worker: Refreshing state... [id=pilot-landing-zone-worker-1b09c407][0m
-[0m[1maws_sqs_queue_policy.allow_eventbridge_ingest_rule: Refreshing state... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-1b09c407-work][0m
-[0m[1maws_cloudwatch_event_target.primary_queue: Refreshing state... [id=pilot-landing-zone-1b09c407-ingest-pilot-landing-zone-1b09c407-ingest-work-item-primary-work-queue][0m
-[0m[1maws_iam_role_policy.step_functions_execution: Refreshing state... [id=pilot-landing-zone-1b09c407-step-functions-role:pilot-landing-zone-step-functions-execution][0m
-[0m[1maws_cloudwatch_metric_alarm.lambda_errors: Refreshing state... [id=pilot-landing-zone-1b09c407-lambda-errors][0m
-[0m[1maws_sfn_state_machine.worker: Refreshing state... [id=arn:aws:states:us-east-1:000000000000:stateMachine:pilot-landing-zone-worker-1b09c407][0m
-[0m[1maws_iam_role_policy.pipes_execution: Refreshing state... [id=pilot-landing-zone-1b09c407-pipes-role:pilot-landing-zone-pipes-execution][0m
-[0m[1maws_cloudwatch_metric_alarm.step_functions_failures: Refreshing state... [id=pilot-landing-zone-1b09c407-step-functions-failures][0m
+[0m[1maws_vpc.connectivity_mesh: Refreshing state... [id=vpc-14566af703ad6a7af][0m
+[0m[1maws_eip.nat: Refreshing state... [id=eipalloc-94746781c502a8bb4][0m
+[0m[1maws_s3_bucket.event_archive: Refreshing state... [id=event-payload-archive-20260410203733483300000001][0m
+[0m[1maws_internet_gateway.connectivity_mesh: Refreshing state... [id=igw-1a4da045b5e314232][0m
+[0m[1maws_subnet.public_b: Refreshing state... [id=subnet-7daa735c6d247c9d4][0m
+[0m[1maws_subnet.private_a: Refreshing state... [id=subnet-5300d8ac5bc6fae9a][0m
+[0m[1maws_security_group.lambda: Refreshing state... [id=sg-7b9a8a5cc595be8c9][0m
+[0m[1maws_subnet.public_a: Refreshing state... [id=subnet-c326641a5cfea4659][0m
+[0m[1maws_subnet.private_b: Refreshing state... [id=subnet-222d4795f7c62db5b][0m
+[0m[1maws_route_table.public: Refreshing state... [id=rtb-762247cd9a0923ffb][0m
+[0m[1maws_nat_gateway.public_a: Refreshing state... [id=nat-0f981bd73d9721c58][0m
+[0m[1maws_route_table_association.public_a: Refreshing state... [id=rtbassoc-8838db25590086024][0m
+[0m[1maws_route_table_association.public_b: Refreshing state... [id=rtbassoc-27a942bbceb218cb2][0m
+[0m[1maws_security_group.rds: Refreshing state... [id=sg-aa615ec79ab442a64][0m
+[0m[1maws_sns_topic.alarms: Refreshing state... [id=arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-f99a89b9-alarms][0m
+[0m[1maws_s3_bucket_public_access_block.event_archive: Refreshing state... [id=event-payload-archive-20260410203733483300000001][0m
+[0m[1maws_iam_role.lambda: Refreshing state... [id=pilot-landing-zone-f99a89b9-lambda-role][0m
+[0m[1maws_cloudwatch_event_bus.ingest: Refreshing state... [id=pilot-landing-zone-f99a89b9-ingest][0m
+[0m[1maws_iam_role.step_functions: Refreshing state... [id=pilot-landing-zone-f99a89b9-step-functions-role][0m
+[0m[1maws_iam_role.pipes: Refreshing state... [id=pilot-landing-zone-f99a89b9-pipes-role][0m
+[0m[1maws_sqs_queue.dead_letter: Refreshing state... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-f99a89b9-work-dlq][0m
+[0m[1maws_cloudwatch_log_group.step_functions: Refreshing state... [id=/aws/vendedlogs/states/pilot-landing-zone-worker-f99a89b9][0m
+[0m[1maws_cloudwatch_log_group.lambda: Refreshing state... [id=/aws/lambda/pilot-landing-zone-worker-f99a89b9][0m
+[0m[1maws_secretsmanager_secret.db_credentials: Refreshing state... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-f99a89b9-db-credentials-XuPsUm][0m
+[0m[1maws_s3_bucket_server_side_encryption_configuration.event_archive: Refreshing state... [id=event-payload-archive-20260410203733483300000001][0m
+[0m[1maws_route_table.private: Refreshing state... [id=rtb-394652cb539cc504a][0m
+[0m[1maws_s3_bucket_policy.event_archive_tls: Refreshing state... [id=event-payload-archive-20260410203733483300000001][0m
+[0m[1maws_route_table_association.private_a: Refreshing state... [id=rtbassoc-f65a798595eb7cc79][0m
+[0m[1maws_route_table_association.private_b: Refreshing state... [id=rtbassoc-6ea00a616ce7bc297][0m
+[0m[1maws_vpc_endpoint.s3: Refreshing state... [id=vpce-f193eb0e8a329b0c1][0m
+[0m[1maws_sns_topic_subscription.email: Refreshing state... [id=arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-f99a89b9-alarms:52f174e8-6137-4c5a-83d4-5d14972e00eb][0m
+[0m[1maws_cloudwatch_event_rule.ingest_work_item: Refreshing state... [id=pilot-landing-zone-f99a89b9-ingest/pilot-landing-zone-f99a89b9-ingest-work-item][0m
+[0m[1maws_sqs_queue.primary: Refreshing state... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-f99a89b9-work][0m
+[0m[1maws_secretsmanager_secret_version.db_credentials: Refreshing state... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-f99a89b9-db-credentials-XuPsUm|terraform-20260410203735261000000004][0m
+[0m[1maws_iam_role_policy.lambda_execution: Refreshing state... [id=pilot-landing-zone-f99a89b9-lambda-role:pilot-landing-zone-lambda-execution][0m
+[0m[1maws_sqs_queue_policy.allow_eventbridge_ingest_rule: Refreshing state... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-f99a89b9-work][0m
+[0m[1maws_cloudwatch_event_target.primary_queue: Refreshing state... [id=pilot-landing-zone-f99a89b9-ingest-pilot-landing-zone-f99a89b9-ingest-work-item-primary-work-queue][0m
+[0m[1maws_cloudwatch_metric_alarm.rds_cpu: Refreshing state... [id=pilot-landing-zone-f99a89b9-rds-cpu][0m
+[0m[1maws_lambda_function.worker: Refreshing state... [id=pilot-landing-zone-worker-f99a89b9][0m
+[0m[1maws_iam_role_policy.step_functions_execution: Refreshing state... [id=pilot-landing-zone-f99a89b9-step-functions-role:pilot-landing-zone-step-functions-execution][0m
+[0m[1maws_cloudwatch_metric_alarm.lambda_errors: Refreshing state... [id=pilot-landing-zone-f99a89b9-lambda-errors][0m
+[0m[1maws_sfn_state_machine.worker: Refreshing state... [id=arn:aws:states:us-east-1:000000000000:stateMachine:pilot-landing-zone-worker-f99a89b9][0m
+[0m[1maws_iam_role_policy.pipes_execution: Refreshing state... [id=pilot-landing-zone-f99a89b9-pipes-role:pilot-landing-zone-pipes-execution][0m
+[0m[1maws_cloudwatch_metric_alarm.step_functions_failures: Refreshing state... [id=pilot-landing-zone-f99a89b9-step-functions-failures][0m
 
 Terraform used the selected providers to generate the following execution
 plan. Resource actions are indicated with the following symbols:
@@ -2247,9 +2225,9 @@ Terraform will perform the following actions:
 
 [1m  # aws_cloudwatch_event_bus.ingest[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_cloudwatch_event_bus" "ingest" {
-      [31m-[0m[0m arn                = "arn:aws:events:us-east-1:000000000000:event-bus/pilot-landing-zone-1b09c407-ingest" [90m-> null[0m[0m
-      [31m-[0m[0m id                 = "pilot-landing-zone-1b09c407-ingest" [90m-> null[0m[0m
-      [31m-[0m[0m name               = "pilot-landing-zone-1b09c407-ingest" [90m-> null[0m[0m
+      [31m-[0m[0m arn                = "arn:aws:events:us-east-1:000000000000:event-bus/pilot-landing-zone-f99a89b9-ingest" [90m-> null[0m[0m
+      [31m-[0m[0m id                 = "pilot-landing-zone-f99a89b9-ingest" [90m-> null[0m[0m
+      [31m-[0m[0m name               = "pilot-landing-zone-f99a89b9-ingest" [90m-> null[0m[0m
       [31m-[0m[0m region             = "us-east-1" [90m-> null[0m[0m
       [31m-[0m[0m tags               = {} [90m-> null[0m[0m
       [31m-[0m[0m tags_all           = {} [90m-> null[0m[0m
@@ -2258,8 +2236,8 @@ Terraform will perform the following actions:
 
 [1m  # aws_cloudwatch_event_rule.ingest_work_item[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_cloudwatch_event_rule" "ingest_work_item" {
-      [31m-[0m[0m arn                 = "arn:aws:events:us-east-1:000000000000:rule/pilot-landing-zone-1b09c407-ingest/pilot-landing-zone-1b09c407-ingest-work-item" [90m-> null[0m[0m
-      [31m-[0m[0m event_bus_name      = "pilot-landing-zone-1b09c407-ingest" [90m-> null[0m[0m
+      [31m-[0m[0m arn                 = "arn:aws:events:us-east-1:000000000000:rule/pilot-landing-zone-f99a89b9-ingest/pilot-landing-zone-f99a89b9-ingest-work-item" [90m-> null[0m[0m
+      [31m-[0m[0m event_bus_name      = "pilot-landing-zone-f99a89b9-ingest" [90m-> null[0m[0m
       [31m-[0m[0m event_pattern       = jsonencode(
             {
               [31m-[0m[0m detail-type = [
@@ -2271,9 +2249,9 @@ Terraform will perform the following actions:
             }
         ) [90m-> null[0m[0m
       [31m-[0m[0m force_destroy       = false [90m-> null[0m[0m
-      [31m-[0m[0m id                  = "pilot-landing-zone-1b09c407-ingest/pilot-landing-zone-1b09c407-ingest-work-item" [90m-> null[0m[0m
+      [31m-[0m[0m id                  = "pilot-landing-zone-f99a89b9-ingest/pilot-landing-zone-f99a89b9-ingest-work-item" [90m-> null[0m[0m
       [31m-[0m[0m is_enabled          = true [90m-> null[0m[0m
-      [31m-[0m[0m name                = "pilot-landing-zone-1b09c407-ingest-work-item" [90m-> null[0m[0m
+      [31m-[0m[0m name                = "pilot-landing-zone-f99a89b9-ingest-work-item" [90m-> null[0m[0m
       [31m-[0m[0m region              = "us-east-1" [90m-> null[0m[0m
       [31m-[0m[0m state               = "ENABLED" [90m-> null[0m[0m
       [31m-[0m[0m tags                = {} [90m-> null[0m[0m
@@ -2283,23 +2261,23 @@ Terraform will perform the following actions:
 
 [1m  # aws_cloudwatch_event_target.primary_queue[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_cloudwatch_event_target" "primary_queue" {
-      [31m-[0m[0m arn            = "arn:aws:sqs:us-east-1:000000000000:pilot-landing-zone-1b09c407-work" [90m-> null[0m[0m
-      [31m-[0m[0m event_bus_name = "pilot-landing-zone-1b09c407-ingest" [90m-> null[0m[0m
+      [31m-[0m[0m arn            = "arn:aws:sqs:us-east-1:000000000000:pilot-landing-zone-f99a89b9-work" [90m-> null[0m[0m
+      [31m-[0m[0m event_bus_name = "pilot-landing-zone-f99a89b9-ingest" [90m-> null[0m[0m
       [31m-[0m[0m force_destroy  = false [90m-> null[0m[0m
-      [31m-[0m[0m id             = "pilot-landing-zone-1b09c407-ingest-pilot-landing-zone-1b09c407-ingest-work-item-primary-work-queue" [90m-> null[0m[0m
+      [31m-[0m[0m id             = "pilot-landing-zone-f99a89b9-ingest-pilot-landing-zone-f99a89b9-ingest-work-item-primary-work-queue" [90m-> null[0m[0m
       [31m-[0m[0m region         = "us-east-1" [90m-> null[0m[0m
-      [31m-[0m[0m rule           = "pilot-landing-zone-1b09c407-ingest-work-item" [90m-> null[0m[0m
+      [31m-[0m[0m rule           = "pilot-landing-zone-f99a89b9-ingest-work-item" [90m-> null[0m[0m
       [31m-[0m[0m target_id      = "primary-work-queue" [90m-> null[0m[0m
         [90m# (3 unchanged attributes hidden)[0m[0m
     }
 
 [1m  # aws_cloudwatch_log_group.lambda[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_cloudwatch_log_group" "lambda" {
-      [31m-[0m[0m arn                         = "arn:aws:logs:us-east-1:000000000000:log-group:/aws/lambda/pilot-landing-zone-worker-1b09c407" [90m-> null[0m[0m
+      [31m-[0m[0m arn                         = "arn:aws:logs:us-east-1:000000000000:log-group:/aws/lambda/pilot-landing-zone-worker-f99a89b9" [90m-> null[0m[0m
       [31m-[0m[0m deletion_protection_enabled = false [90m-> null[0m[0m
-      [31m-[0m[0m id                          = "/aws/lambda/pilot-landing-zone-worker-1b09c407" [90m-> null[0m[0m
+      [31m-[0m[0m id                          = "/aws/lambda/pilot-landing-zone-worker-f99a89b9" [90m-> null[0m[0m
       [31m-[0m[0m log_group_class             = "STANDARD" [90m-> null[0m[0m
-      [31m-[0m[0m name                        = "/aws/lambda/pilot-landing-zone-worker-1b09c407" [90m-> null[0m[0m
+      [31m-[0m[0m name                        = "/aws/lambda/pilot-landing-zone-worker-f99a89b9" [90m-> null[0m[0m
       [31m-[0m[0m region                      = "us-east-1" [90m-> null[0m[0m
       [31m-[0m[0m retention_in_days           = 14 [90m-> null[0m[0m
       [31m-[0m[0m skip_destroy                = false [90m-> null[0m[0m
@@ -2310,11 +2288,11 @@ Terraform will perform the following actions:
 
 [1m  # aws_cloudwatch_log_group.step_functions[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_cloudwatch_log_group" "step_functions" {
-      [31m-[0m[0m arn                         = "arn:aws:logs:us-east-1:000000000000:log-group:/aws/vendedlogs/states/pilot-landing-zone-worker-1b09c407" [90m-> null[0m[0m
+      [31m-[0m[0m arn                         = "arn:aws:logs:us-east-1:000000000000:log-group:/aws/vendedlogs/states/pilot-landing-zone-worker-f99a89b9" [90m-> null[0m[0m
       [31m-[0m[0m deletion_protection_enabled = false [90m-> null[0m[0m
-      [31m-[0m[0m id                          = "/aws/vendedlogs/states/pilot-landing-zone-worker-1b09c407" [90m-> null[0m[0m
+      [31m-[0m[0m id                          = "/aws/vendedlogs/states/pilot-landing-zone-worker-f99a89b9" [90m-> null[0m[0m
       [31m-[0m[0m log_group_class             = "STANDARD" [90m-> null[0m[0m
-      [31m-[0m[0m name                        = "/aws/vendedlogs/states/pilot-landing-zone-worker-1b09c407" [90m-> null[0m[0m
+      [31m-[0m[0m name                        = "/aws/vendedlogs/states/pilot-landing-zone-worker-f99a89b9" [90m-> null[0m[0m
       [31m-[0m[0m region                      = "us-east-1" [90m-> null[0m[0m
       [31m-[0m[0m retention_in_days           = 14 [90m-> null[0m[0m
       [31m-[0m[0m skip_destroy                = false [90m-> null[0m[0m
@@ -2327,17 +2305,17 @@ Terraform will perform the following actions:
 [0m  [31m-[0m[0m resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
       [31m-[0m[0m actions_enabled                       = true [90m-> null[0m[0m
       [31m-[0m[0m alarm_actions                         = [
-          [31m-[0m[0m "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-1b09c407-alarms",
+          [31m-[0m[0m "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-f99a89b9-alarms",
         ] [90m-> null[0m[0m
-      [31m-[0m[0m alarm_name                            = "pilot-landing-zone-1b09c407-lambda-errors" [90m-> null[0m[0m
-      [31m-[0m[0m arn                                   = "arn:aws:cloudwatch:us-east-1:000000000000:alarm:pilot-landing-zone-1b09c407-lambda-errors" [90m-> null[0m[0m
+      [31m-[0m[0m alarm_name                            = "pilot-landing-zone-f99a89b9-lambda-errors" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                   = "arn:aws:cloudwatch:us-east-1:000000000000:alarm:pilot-landing-zone-f99a89b9-lambda-errors" [90m-> null[0m[0m
       [31m-[0m[0m comparison_operator                   = "GreaterThanOrEqualToThreshold" [90m-> null[0m[0m
       [31m-[0m[0m datapoints_to_alarm                   = 0 [90m-> null[0m[0m
       [31m-[0m[0m dimensions                            = {
-          [31m-[0m[0m "FunctionName" = "pilot-landing-zone-worker-1b09c407"
+          [31m-[0m[0m "FunctionName" = "pilot-landing-zone-worker-f99a89b9"
         } [90m-> null[0m[0m
       [31m-[0m[0m evaluation_periods                    = 1 [90m-> null[0m[0m
-      [31m-[0m[0m id                                    = "pilot-landing-zone-1b09c407-lambda-errors" [90m-> null[0m[0m
+      [31m-[0m[0m id                                    = "pilot-landing-zone-f99a89b9-lambda-errors" [90m-> null[0m[0m
       [31m-[0m[0m insufficient_data_actions             = [] [90m-> null[0m[0m
       [31m-[0m[0m metric_name                           = "Errors" [90m-> null[0m[0m
       [31m-[0m[0m namespace                             = "AWS/Lambda" [90m-> null[0m[0m
@@ -2356,17 +2334,17 @@ Terraform will perform the following actions:
 [0m  [31m-[0m[0m resource "aws_cloudwatch_metric_alarm" "rds_cpu" {
       [31m-[0m[0m actions_enabled                       = true [90m-> null[0m[0m
       [31m-[0m[0m alarm_actions                         = [
-          [31m-[0m[0m "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-1b09c407-alarms",
+          [31m-[0m[0m "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-f99a89b9-alarms",
         ] [90m-> null[0m[0m
-      [31m-[0m[0m alarm_name                            = "pilot-landing-zone-1b09c407-rds-cpu" [90m-> null[0m[0m
-      [31m-[0m[0m arn                                   = "arn:aws:cloudwatch:us-east-1:000000000000:alarm:pilot-landing-zone-1b09c407-rds-cpu" [90m-> null[0m[0m
+      [31m-[0m[0m alarm_name                            = "pilot-landing-zone-f99a89b9-rds-cpu" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                   = "arn:aws:cloudwatch:us-east-1:000000000000:alarm:pilot-landing-zone-f99a89b9-rds-cpu" [90m-> null[0m[0m
       [31m-[0m[0m comparison_operator                   = "GreaterThanOrEqualToThreshold" [90m-> null[0m[0m
       [31m-[0m[0m datapoints_to_alarm                   = 0 [90m-> null[0m[0m
       [31m-[0m[0m dimensions                            = {
           [31m-[0m[0m "DBInstanceIdentifier" = "pilot-landing-zone-postgres"
         } [90m-> null[0m[0m
       [31m-[0m[0m evaluation_periods                    = 1 [90m-> null[0m[0m
-      [31m-[0m[0m id                                    = "pilot-landing-zone-1b09c407-rds-cpu" [90m-> null[0m[0m
+      [31m-[0m[0m id                                    = "pilot-landing-zone-f99a89b9-rds-cpu" [90m-> null[0m[0m
       [31m-[0m[0m insufficient_data_actions             = [] [90m-> null[0m[0m
       [31m-[0m[0m metric_name                           = "CPUUtilization" [90m-> null[0m[0m
       [31m-[0m[0m namespace                             = "AWS/RDS" [90m-> null[0m[0m
@@ -2385,17 +2363,17 @@ Terraform will perform the following actions:
 [0m  [31m-[0m[0m resource "aws_cloudwatch_metric_alarm" "step_functions_failures" {
       [31m-[0m[0m actions_enabled                       = true [90m-> null[0m[0m
       [31m-[0m[0m alarm_actions                         = [
-          [31m-[0m[0m "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-1b09c407-alarms",
+          [31m-[0m[0m "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-f99a89b9-alarms",
         ] [90m-> null[0m[0m
-      [31m-[0m[0m alarm_name                            = "pilot-landing-zone-1b09c407-step-functions-failures" [90m-> null[0m[0m
-      [31m-[0m[0m arn                                   = "arn:aws:cloudwatch:us-east-1:000000000000:alarm:pilot-landing-zone-1b09c407-step-functions-failures" [90m-> null[0m[0m
+      [31m-[0m[0m alarm_name                            = "pilot-landing-zone-f99a89b9-step-functions-failures" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                   = "arn:aws:cloudwatch:us-east-1:000000000000:alarm:pilot-landing-zone-f99a89b9-step-functions-failures" [90m-> null[0m[0m
       [31m-[0m[0m comparison_operator                   = "GreaterThanOrEqualToThreshold" [90m-> null[0m[0m
       [31m-[0m[0m datapoints_to_alarm                   = 0 [90m-> null[0m[0m
       [31m-[0m[0m dimensions                            = {
-          [31m-[0m[0m "StateMachineArn" = "arn:aws:states:us-east-1:000000000000:stateMachine:pilot-landing-zone-worker-1b09c407"
+          [31m-[0m[0m "StateMachineArn" = "arn:aws:states:us-east-1:000000000000:stateMachine:pilot-landing-zone-worker-f99a89b9"
         } [90m-> null[0m[0m
       [31m-[0m[0m evaluation_periods                    = 1 [90m-> null[0m[0m
-      [31m-[0m[0m id                                    = "pilot-landing-zone-1b09c407-step-functions-failures" [90m-> null[0m[0m
+      [31m-[0m[0m id                                    = "pilot-landing-zone-f99a89b9-step-functions-failures" [90m-> null[0m[0m
       [31m-[0m[0m insufficient_data_actions             = [] [90m-> null[0m[0m
       [31m-[0m[0m metric_name                           = "ExecutionsFailed" [90m-> null[0m[0m
       [31m-[0m[0m namespace                             = "AWS/States" [90m-> null[0m[0m
@@ -2412,16 +2390,16 @@ Terraform will perform the following actions:
 
 [1m  # aws_eip.nat[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_eip" "nat" {
-      [31m-[0m[0m allocation_id            = "eipalloc-f896e9a4540e621b2" [90m-> null[0m[0m
-      [31m-[0m[0m arn                      = "arn:aws:ec2:us-east-1::elastic-ip/eipalloc-f896e9a4540e621b2" [90m-> null[0m[0m
-      [31m-[0m[0m association_id           = "eipassoc-c384f96782868350f" [90m-> null[0m[0m
+      [31m-[0m[0m allocation_id            = "eipalloc-94746781c502a8bb4" [90m-> null[0m[0m
+      [31m-[0m[0m arn                      = "arn:aws:ec2:us-east-1::elastic-ip/eipalloc-94746781c502a8bb4" [90m-> null[0m[0m
+      [31m-[0m[0m association_id           = "eipassoc-d3e1231a7480061f0" [90m-> null[0m[0m
       [31m-[0m[0m domain                   = "vpc" [90m-> null[0m[0m
-      [31m-[0m[0m id                       = "eipalloc-f896e9a4540e621b2" [90m-> null[0m[0m
-      [31m-[0m[0m network_interface        = "eni-9ae105e9f61fd8826" [90m-> null[0m[0m
-      [31m-[0m[0m private_dns              = "ip-10-141-184-114.ec2.internal" [90m-> null[0m[0m
-      [31m-[0m[0m private_ip               = "10.141.184.114" [90m-> null[0m[0m
-      [31m-[0m[0m public_dns               = "ec2-127-62-168-29.compute-1.amazonaws.com" [90m-> null[0m[0m
-      [31m-[0m[0m public_ip                = "127.62.168.29" [90m-> null[0m[0m
+      [31m-[0m[0m id                       = "eipalloc-94746781c502a8bb4" [90m-> null[0m[0m
+      [31m-[0m[0m network_interface        = "eni-07deb256a9948b3d4" [90m-> null[0m[0m
+      [31m-[0m[0m private_dns              = "ip-10-153-8-84.ec2.internal" [90m-> null[0m[0m
+      [31m-[0m[0m private_ip               = "10.153.8.84" [90m-> null[0m[0m
+      [31m-[0m[0m public_dns               = "ec2-127-9-178-50.compute-1.amazonaws.com" [90m-> null[0m[0m
+      [31m-[0m[0m public_ip                = "127.9.178.50" [90m-> null[0m[0m
       [31m-[0m[0m region                   = "us-east-1" [90m-> null[0m[0m
       [31m-[0m[0m tags                     = {
           [31m-[0m[0m "Name" = "pilot-landing-zone-nat-eip"
@@ -2434,7 +2412,7 @@ Terraform will perform the following actions:
 
 [1m  # aws_iam_role.lambda[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_iam_role" "lambda" {
-      [31m-[0m[0m arn                   = "arn:aws:iam::000000000000:role/pilot-landing-zone-1b09c407-lambda-role" [90m-> null[0m[0m
+      [31m-[0m[0m arn                   = "arn:aws:iam::000000000000:role/pilot-landing-zone-f99a89b9-lambda-role" [90m-> null[0m[0m
       [31m-[0m[0m assume_role_policy    = jsonencode(
             {
               [31m-[0m[0m Statement = [
@@ -2449,16 +2427,16 @@ Terraform will perform the following actions:
               [31m-[0m[0m Version   = "2012-10-17"
             }
         ) [90m-> null[0m[0m
-      [31m-[0m[0m create_date           = "2026-04-09T14:59:17Z" [90m-> null[0m[0m
+      [31m-[0m[0m create_date           = "2026-04-10T20:37:35Z" [90m-> null[0m[0m
       [31m-[0m[0m force_detach_policies = false [90m-> null[0m[0m
-      [31m-[0m[0m id                    = "pilot-landing-zone-1b09c407-lambda-role" [90m-> null[0m[0m
+      [31m-[0m[0m id                    = "pilot-landing-zone-f99a89b9-lambda-role" [90m-> null[0m[0m
       [31m-[0m[0m managed_policy_arns   = [] [90m-> null[0m[0m
       [31m-[0m[0m max_session_duration  = 3600 [90m-> null[0m[0m
-      [31m-[0m[0m name                  = "pilot-landing-zone-1b09c407-lambda-role" [90m-> null[0m[0m
+      [31m-[0m[0m name                  = "pilot-landing-zone-f99a89b9-lambda-role" [90m-> null[0m[0m
       [31m-[0m[0m path                  = "/" [90m-> null[0m[0m
       [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
       [31m-[0m[0m tags_all              = {} [90m-> null[0m[0m
-      [31m-[0m[0m unique_id             = "AROAQAAAAAAAHI35DHDP6" [90m-> null[0m[0m
+      [31m-[0m[0m unique_id             = "AROAQAAAAAAAB3I4HPKRY" [90m-> null[0m[0m
         [90m# (3 unchanged attributes hidden)[0m[0m
 
       [31m-[0m[0m inline_policy {
@@ -2472,19 +2450,19 @@ Terraform will perform the following actions:
                               [31m-[0m[0m "logs:PutLogEvents",
                             ]
                           [31m-[0m[0m Effect   = "Allow"
-                          [31m-[0m[0m Resource = "arn:aws:logs:us-east-1:000000000000:log-group:/aws/lambda/pilot-landing-zone-worker-1b09c407:*"
+                          [31m-[0m[0m Resource = "arn:aws:logs:us-east-1:000000000000:log-group:/aws/lambda/pilot-landing-zone-worker-f99a89b9:*"
                           [31m-[0m[0m Sid      = "WriteOwnLogs"
                         },
                       [31m-[0m[0m {
                           [31m-[0m[0m Action   = "s3:PutObject"
                           [31m-[0m[0m Effect   = "Allow"
-                          [31m-[0m[0m Resource = "arn:aws:s3:::event-payload-archive-20260409145916116300000001/*"
+                          [31m-[0m[0m Resource = "arn:aws:s3:::event-payload-archive-20260410203733483300000001/*"
                           [31m-[0m[0m Sid      = "ArchivePayloads"
                         },
                       [31m-[0m[0m {
                           [31m-[0m[0m Action   = "secretsmanager:GetSecretValue"
                           [31m-[0m[0m Effect   = "Allow"
-                          [31m-[0m[0m Resource = "arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-1b09c407-db-credentials-OkCxlu"
+                          [31m-[0m[0m Resource = "arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-f99a89b9-db-credentials-XuPsUm"
                           [31m-[0m[0m Sid      = "ReadDatabaseSecret"
                         },
                       [31m-[0m[0m {
@@ -2508,7 +2486,7 @@ Terraform will perform the following actions:
 
 [1m  # aws_iam_role.pipes[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_iam_role" "pipes" {
-      [31m-[0m[0m arn                   = "arn:aws:iam::000000000000:role/pilot-landing-zone-1b09c407-pipes-role" [90m-> null[0m[0m
+      [31m-[0m[0m arn                   = "arn:aws:iam::000000000000:role/pilot-landing-zone-f99a89b9-pipes-role" [90m-> null[0m[0m
       [31m-[0m[0m assume_role_policy    = jsonencode(
             {
               [31m-[0m[0m Statement = [
@@ -2523,16 +2501,16 @@ Terraform will perform the following actions:
               [31m-[0m[0m Version   = "2012-10-17"
             }
         ) [90m-> null[0m[0m
-      [31m-[0m[0m create_date           = "2026-04-09T14:59:17Z" [90m-> null[0m[0m
+      [31m-[0m[0m create_date           = "2026-04-10T20:37:35Z" [90m-> null[0m[0m
       [31m-[0m[0m force_detach_policies = false [90m-> null[0m[0m
-      [31m-[0m[0m id                    = "pilot-landing-zone-1b09c407-pipes-role" [90m-> null[0m[0m
+      [31m-[0m[0m id                    = "pilot-landing-zone-f99a89b9-pipes-role" [90m-> null[0m[0m
       [31m-[0m[0m managed_policy_arns   = [] [90m-> null[0m[0m
       [31m-[0m[0m max_session_duration  = 3600 [90m-> null[0m[0m
-      [31m-[0m[0m name                  = "pilot-landing-zone-1b09c407-pipes-role" [90m-> null[0m[0m
+      [31m-[0m[0m name                  = "pilot-landing-zone-f99a89b9-pipes-role" [90m-> null[0m[0m
       [31m-[0m[0m path                  = "/" [90m-> null[0m[0m
       [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
       [31m-[0m[0m tags_all              = {} [90m-> null[0m[0m
-      [31m-[0m[0m unique_id             = "AROAQAAAAAAAE2Y24HXJA" [90m-> null[0m[0m
+      [31m-[0m[0m unique_id             = "AROAQAAAAAAAOWHGYL2KF" [90m-> null[0m[0m
         [90m# (3 unchanged attributes hidden)[0m[0m
 
       [31m-[0m[0m inline_policy {
@@ -2547,19 +2525,19 @@ Terraform will perform the following actions:
                               [31m-[0m[0m "sqs:GetQueueAttributes",
                             ]
                           [31m-[0m[0m Effect   = "Allow"
-                          [31m-[0m[0m Resource = "arn:aws:sqs:us-east-1:000000000000:pilot-landing-zone-1b09c407-work"
+                          [31m-[0m[0m Resource = "arn:aws:sqs:us-east-1:000000000000:pilot-landing-zone-f99a89b9-work"
                           [31m-[0m[0m Sid      = "ReadPrimaryQueue"
                         },
                       [31m-[0m[0m {
                           [31m-[0m[0m Action   = "lambda:InvokeFunction"
                           [31m-[0m[0m Effect   = "Allow"
-                          [31m-[0m[0m Resource = "arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-1b09c407"
+                          [31m-[0m[0m Resource = "arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-f99a89b9"
                           [31m-[0m[0m Sid      = "InvokeEnrichmentLambda"
                         },
                       [31m-[0m[0m {
                           [31m-[0m[0m Action   = "states:StartExecution"
                           [31m-[0m[0m Effect   = "Allow"
-                          [31m-[0m[0m Resource = "arn:aws:states:us-east-1:000000000000:stateMachine:pilot-landing-zone-worker-1b09c407"
+                          [31m-[0m[0m Resource = "arn:aws:states:us-east-1:000000000000:stateMachine:pilot-landing-zone-worker-f99a89b9"
                           [31m-[0m[0m Sid      = "StartWorkerStateMachine"
                         },
                     ]
@@ -2571,7 +2549,7 @@ Terraform will perform the following actions:
 
 [1m  # aws_iam_role.step_functions[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_iam_role" "step_functions" {
-      [31m-[0m[0m arn                   = "arn:aws:iam::000000000000:role/pilot-landing-zone-1b09c407-step-functions-role" [90m-> null[0m[0m
+      [31m-[0m[0m arn                   = "arn:aws:iam::000000000000:role/pilot-landing-zone-f99a89b9-step-functions-role" [90m-> null[0m[0m
       [31m-[0m[0m assume_role_policy    = jsonencode(
             {
               [31m-[0m[0m Statement = [
@@ -2586,16 +2564,16 @@ Terraform will perform the following actions:
               [31m-[0m[0m Version   = "2012-10-17"
             }
         ) [90m-> null[0m[0m
-      [31m-[0m[0m create_date           = "2026-04-09T14:59:17Z" [90m-> null[0m[0m
+      [31m-[0m[0m create_date           = "2026-04-10T20:37:35Z" [90m-> null[0m[0m
       [31m-[0m[0m force_detach_policies = false [90m-> null[0m[0m
-      [31m-[0m[0m id                    = "pilot-landing-zone-1b09c407-step-functions-role" [90m-> null[0m[0m
+      [31m-[0m[0m id                    = "pilot-landing-zone-f99a89b9-step-functions-role" [90m-> null[0m[0m
       [31m-[0m[0m managed_policy_arns   = [] [90m-> null[0m[0m
       [31m-[0m[0m max_session_duration  = 3600 [90m-> null[0m[0m
-      [31m-[0m[0m name                  = "pilot-landing-zone-1b09c407-step-functions-role" [90m-> null[0m[0m
+      [31m-[0m[0m name                  = "pilot-landing-zone-f99a89b9-step-functions-role" [90m-> null[0m[0m
       [31m-[0m[0m path                  = "/" [90m-> null[0m[0m
       [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
       [31m-[0m[0m tags_all              = {} [90m-> null[0m[0m
-      [31m-[0m[0m unique_id             = "AROAQAAAAAAAIEMHNXX7H" [90m-> null[0m[0m
+      [31m-[0m[0m unique_id             = "AROAQAAAAAAAICLRKTZVO" [90m-> null[0m[0m
         [90m# (3 unchanged attributes hidden)[0m[0m
 
       [31m-[0m[0m inline_policy {
@@ -2606,7 +2584,7 @@ Terraform will perform the following actions:
                       [31m-[0m[0m {
                           [31m-[0m[0m Action   = "lambda:InvokeFunction"
                           [31m-[0m[0m Effect   = "Allow"
-                          [31m-[0m[0m Resource = "arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-1b09c407"
+                          [31m-[0m[0m Resource = "arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-f99a89b9"
                           [31m-[0m[0m Sid      = "InvokeWorkerLambda"
                         },
                       [31m-[0m[0m {
@@ -2633,7 +2611,7 @@ Terraform will perform the following actions:
 
 [1m  # aws_iam_role_policy.lambda_execution[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_iam_role_policy" "lambda_execution" {
-      [31m-[0m[0m id          = "pilot-landing-zone-1b09c407-lambda-role:pilot-landing-zone-lambda-execution" [90m-> null[0m[0m
+      [31m-[0m[0m id          = "pilot-landing-zone-f99a89b9-lambda-role:pilot-landing-zone-lambda-execution" [90m-> null[0m[0m
       [31m-[0m[0m name        = "pilot-landing-zone-lambda-execution" [90m-> null[0m[0m
       [31m-[0m[0m policy      = jsonencode(
             {
@@ -2644,19 +2622,19 @@ Terraform will perform the following actions:
                           [31m-[0m[0m "logs:PutLogEvents",
                         ]
                       [31m-[0m[0m Effect   = "Allow"
-                      [31m-[0m[0m Resource = "arn:aws:logs:us-east-1:000000000000:log-group:/aws/lambda/pilot-landing-zone-worker-1b09c407:*"
+                      [31m-[0m[0m Resource = "arn:aws:logs:us-east-1:000000000000:log-group:/aws/lambda/pilot-landing-zone-worker-f99a89b9:*"
                       [31m-[0m[0m Sid      = "WriteOwnLogs"
                     },
                   [31m-[0m[0m {
                       [31m-[0m[0m Action   = "s3:PutObject"
                       [31m-[0m[0m Effect   = "Allow"
-                      [31m-[0m[0m Resource = "arn:aws:s3:::event-payload-archive-20260409145916116300000001/*"
+                      [31m-[0m[0m Resource = "arn:aws:s3:::event-payload-archive-20260410203733483300000001/*"
                       [31m-[0m[0m Sid      = "ArchivePayloads"
                     },
                   [31m-[0m[0m {
                       [31m-[0m[0m Action   = "secretsmanager:GetSecretValue"
                       [31m-[0m[0m Effect   = "Allow"
-                      [31m-[0m[0m Resource = "arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-1b09c407-db-credentials-OkCxlu"
+                      [31m-[0m[0m Resource = "arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-f99a89b9-db-credentials-XuPsUm"
                       [31m-[0m[0m Sid      = "ReadDatabaseSecret"
                     },
                   [31m-[0m[0m {
@@ -2675,13 +2653,13 @@ Terraform will perform the following actions:
               [31m-[0m[0m Version   = "2012-10-17"
             }
         ) [90m-> null[0m[0m
-      [31m-[0m[0m role        = "pilot-landing-zone-1b09c407-lambda-role" [90m-> null[0m[0m
+      [31m-[0m[0m role        = "pilot-landing-zone-f99a89b9-lambda-role" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_iam_role_policy.pipes_execution[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_iam_role_policy" "pipes_execution" {
-      [31m-[0m[0m id          = "pilot-landing-zone-1b09c407-pipes-role:pilot-landing-zone-pipes-execution" [90m-> null[0m[0m
+      [31m-[0m[0m id          = "pilot-landing-zone-f99a89b9-pipes-role:pilot-landing-zone-pipes-execution" [90m-> null[0m[0m
       [31m-[0m[0m name        = "pilot-landing-zone-pipes-execution" [90m-> null[0m[0m
       [31m-[0m[0m policy      = jsonencode(
             {
@@ -2693,32 +2671,32 @@ Terraform will perform the following actions:
                           [31m-[0m[0m "sqs:GetQueueAttributes",
                         ]
                       [31m-[0m[0m Effect   = "Allow"
-                      [31m-[0m[0m Resource = "arn:aws:sqs:us-east-1:000000000000:pilot-landing-zone-1b09c407-work"
+                      [31m-[0m[0m Resource = "arn:aws:sqs:us-east-1:000000000000:pilot-landing-zone-f99a89b9-work"
                       [31m-[0m[0m Sid      = "ReadPrimaryQueue"
                     },
                   [31m-[0m[0m {
                       [31m-[0m[0m Action   = "lambda:InvokeFunction"
                       [31m-[0m[0m Effect   = "Allow"
-                      [31m-[0m[0m Resource = "arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-1b09c407"
+                      [31m-[0m[0m Resource = "arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-f99a89b9"
                       [31m-[0m[0m Sid      = "InvokeEnrichmentLambda"
                     },
                   [31m-[0m[0m {
                       [31m-[0m[0m Action   = "states:StartExecution"
                       [31m-[0m[0m Effect   = "Allow"
-                      [31m-[0m[0m Resource = "arn:aws:states:us-east-1:000000000000:stateMachine:pilot-landing-zone-worker-1b09c407"
+                      [31m-[0m[0m Resource = "arn:aws:states:us-east-1:000000000000:stateMachine:pilot-landing-zone-worker-f99a89b9"
                       [31m-[0m[0m Sid      = "StartWorkerStateMachine"
                     },
                 ]
               [31m-[0m[0m Version   = "2012-10-17"
             }
         ) [90m-> null[0m[0m
-      [31m-[0m[0m role        = "pilot-landing-zone-1b09c407-pipes-role" [90m-> null[0m[0m
+      [31m-[0m[0m role        = "pilot-landing-zone-f99a89b9-pipes-role" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_iam_role_policy.step_functions_execution[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_iam_role_policy" "step_functions_execution" {
-      [31m-[0m[0m id          = "pilot-landing-zone-1b09c407-step-functions-role:pilot-landing-zone-step-functions-execution" [90m-> null[0m[0m
+      [31m-[0m[0m id          = "pilot-landing-zone-f99a89b9-step-functions-role:pilot-landing-zone-step-functions-execution" [90m-> null[0m[0m
       [31m-[0m[0m name        = "pilot-landing-zone-step-functions-execution" [90m-> null[0m[0m
       [31m-[0m[0m policy      = jsonencode(
             {
@@ -2726,7 +2704,7 @@ Terraform will perform the following actions:
                   [31m-[0m[0m {
                       [31m-[0m[0m Action   = "lambda:InvokeFunction"
                       [31m-[0m[0m Effect   = "Allow"
-                      [31m-[0m[0m Resource = "arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-1b09c407"
+                      [31m-[0m[0m Resource = "arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-f99a89b9"
                       [31m-[0m[0m Sid      = "InvokeWorkerLambda"
                     },
                   [31m-[0m[0m {
@@ -2748,14 +2726,14 @@ Terraform will perform the following actions:
               [31m-[0m[0m Version   = "2012-10-17"
             }
         ) [90m-> null[0m[0m
-      [31m-[0m[0m role        = "pilot-landing-zone-1b09c407-step-functions-role" [90m-> null[0m[0m
+      [31m-[0m[0m role        = "pilot-landing-zone-f99a89b9-step-functions-role" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_internet_gateway.connectivity_mesh[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_internet_gateway" "connectivity_mesh" {
-      [31m-[0m[0m arn      = "arn:aws:ec2:us-east-1:000000000000:internet-gateway/igw-c62f7f4d8f356f231" [90m-> null[0m[0m
-      [31m-[0m[0m id       = "igw-c62f7f4d8f356f231" [90m-> null[0m[0m
+      [31m-[0m[0m arn      = "arn:aws:ec2:us-east-1:000000000000:internet-gateway/igw-1a4da045b5e314232" [90m-> null[0m[0m
+      [31m-[0m[0m id       = "igw-1a4da045b5e314232" [90m-> null[0m[0m
       [31m-[0m[0m owner_id = "000000000000" [90m-> null[0m[0m
       [31m-[0m[0m region   = "us-east-1" [90m-> null[0m[0m
       [31m-[0m[0m tags     = {
@@ -2764,7 +2742,7 @@ Terraform will perform the following actions:
       [31m-[0m[0m tags_all = {
           [31m-[0m[0m "Name" = "pilot-landing-zone-igw"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id   = "vpc-c92584b843cc0b8b4" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id   = "vpc-14566af703ad6a7af" [90m-> null[0m[0m
     }
 
 [1m  # aws_lambda_function.worker[0m will be [1m[31mdestroyed[0m
@@ -2772,24 +2750,24 @@ Terraform will perform the following actions:
       [31m-[0m[0m architectures                  = [
           [31m-[0m[0m "x86_64",
         ] [90m-> null[0m[0m
-      [31m-[0m[0m arn                            = "arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-1b09c407" [90m-> null[0m[0m
+      [31m-[0m[0m arn                            = "arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-f99a89b9" [90m-> null[0m[0m
       [31m-[0m[0m code_sha256                    = "pTlEf3QVOOtJfgdgNTfxfYTvPvWtMLayrHbJgg5bfhU=" [90m-> null[0m[0m
       [31m-[0m[0m filename                       = "./worker_lambda.zip" [90m-> null[0m[0m
-      [31m-[0m[0m function_name                  = "pilot-landing-zone-worker-1b09c407" [90m-> null[0m[0m
+      [31m-[0m[0m function_name                  = "pilot-landing-zone-worker-f99a89b9" [90m-> null[0m[0m
       [31m-[0m[0m handler                        = "lambda_function.handler" [90m-> null[0m[0m
-      [31m-[0m[0m id                             = "pilot-landing-zone-worker-1b09c407" [90m-> null[0m[0m
-      [31m-[0m[0m invoke_arn                     = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-1b09c407/invocations" [90m-> null[0m[0m
-      [31m-[0m[0m last_modified                  = "2026-04-09T14:59:18.671289+0000" [90m-> null[0m[0m
+      [31m-[0m[0m id                             = "pilot-landing-zone-worker-f99a89b9" [90m-> null[0m[0m
+      [31m-[0m[0m invoke_arn                     = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-f99a89b9/invocations" [90m-> null[0m[0m
+      [31m-[0m[0m last_modified                  = "2026-04-10T20:37:35.975682+0000" [90m-> null[0m[0m
       [31m-[0m[0m layers                         = [] [90m-> null[0m[0m
       [31m-[0m[0m memory_size                    = 256 [90m-> null[0m[0m
       [31m-[0m[0m package_type                   = "Zip" [90m-> null[0m[0m
       [31m-[0m[0m publish                        = false [90m-> null[0m[0m
-      [31m-[0m[0m qualified_arn                  = "arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-1b09c407:$LATEST" [90m-> null[0m[0m
-      [31m-[0m[0m qualified_invoke_arn           = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-1b09c407:$LATEST/invocations" [90m-> null[0m[0m
+      [31m-[0m[0m qualified_arn                  = "arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-f99a89b9:$LATEST" [90m-> null[0m[0m
+      [31m-[0m[0m qualified_invoke_arn           = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-f99a89b9:$LATEST/invocations" [90m-> null[0m[0m
       [31m-[0m[0m region                         = "us-east-1" [90m-> null[0m[0m
       [31m-[0m[0m reserved_concurrent_executions = -1 [90m-> null[0m[0m
-      [31m-[0m[0m response_streaming_invoke_arn  = "arn:aws:apigateway:us-east-1:lambda:path/2021-11-15/functions/arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-1b09c407/response-streaming-invocations" [90m-> null[0m[0m
-      [31m-[0m[0m role                           = "arn:aws:iam::000000000000:role/pilot-landing-zone-1b09c407-lambda-role" [90m-> null[0m[0m
+      [31m-[0m[0m response_streaming_invoke_arn  = "arn:aws:apigateway:us-east-1:lambda:path/2021-11-15/functions/arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-f99a89b9/response-streaming-invocations" [90m-> null[0m[0m
+      [31m-[0m[0m role                           = "arn:aws:iam::000000000000:role/pilot-landing-zone-f99a89b9-lambda-role" [90m-> null[0m[0m
       [31m-[0m[0m runtime                        = "python3.11" [90m-> null[0m[0m
       [31m-[0m[0m skip_destroy                   = false [90m-> null[0m[0m
       [31m-[0m[0m source_code_hash               = "pTlEf3QVOOtJfgdgNTfxfYTvPvWtMLayrHbJgg5bfhU=" [90m-> null[0m[0m
@@ -2802,10 +2780,10 @@ Terraform will perform the following actions:
 
       [31m-[0m[0m environment {
           [31m-[0m[0m variables = {
-              [31m-[0m[0m "BUCKET_NAME"   = "event-payload-archive-20260409145916116300000001"
+              [31m-[0m[0m "BUCKET_NAME"   = "event-payload-archive-20260410203733483300000001"
               [31m-[0m[0m "DB_HOST"       = "db-disabled"
               [31m-[0m[0m "DB_NAME"       = "appdb"
-              [31m-[0m[0m "DB_SECRET_ARN" = "arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-1b09c407-db-credentials-OkCxlu"
+              [31m-[0m[0m "DB_SECRET_ARN" = "arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-f99a89b9-db-credentials-XuPsUm"
               [31m-[0m[0m "DB_WRITE_MODE" = "disabled"
             } [90m-> null[0m[0m
         }
@@ -2816,7 +2794,7 @@ Terraform will perform the following actions:
 
       [31m-[0m[0m logging_config {
           [31m-[0m[0m log_format            = "Text" [90m-> null[0m[0m
-          [31m-[0m[0m log_group             = "/aws/lambda/pilot-landing-zone-worker-1b09c407" [90m-> null[0m[0m
+          [31m-[0m[0m log_group             = "/aws/lambda/pilot-landing-zone-worker-f99a89b9" [90m-> null[0m[0m
             [90m# (2 unchanged attributes hidden)[0m[0m
         }
 
@@ -2827,47 +2805,47 @@ Terraform will perform the following actions:
       [31m-[0m[0m vpc_config {
           [31m-[0m[0m ipv6_allowed_for_dual_stack = false [90m-> null[0m[0m
           [31m-[0m[0m security_group_ids          = [
-              [31m-[0m[0m "sg-2ee1f14e4906247c2",
+              [31m-[0m[0m "sg-7b9a8a5cc595be8c9",
             ] [90m-> null[0m[0m
           [31m-[0m[0m subnet_ids                  = [
-              [31m-[0m[0m "subnet-45ffcee08918ac052",
-              [31m-[0m[0m "subnet-ef8e2c0d4f0cd4bee",
+              [31m-[0m[0m "subnet-222d4795f7c62db5b",
+              [31m-[0m[0m "subnet-5300d8ac5bc6fae9a",
             ] [90m-> null[0m[0m
-          [31m-[0m[0m vpc_id                      = "vpc-c92584b843cc0b8b4" [90m-> null[0m[0m
+          [31m-[0m[0m vpc_id                      = "vpc-14566af703ad6a7af" [90m-> null[0m[0m
         }
     }
 
 [1m  # aws_nat_gateway.public_a[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_nat_gateway" "public_a" {
-      [31m-[0m[0m allocation_id                  = "eipalloc-f896e9a4540e621b2" [90m-> null[0m[0m
+      [31m-[0m[0m allocation_id                  = "eipalloc-94746781c502a8bb4" [90m-> null[0m[0m
       [31m-[0m[0m connectivity_type              = "public" [90m-> null[0m[0m
-      [31m-[0m[0m id                             = "nat-d84b173f98e924338" [90m-> null[0m[0m
+      [31m-[0m[0m id                             = "nat-0f981bd73d9721c58" [90m-> null[0m[0m
       [31m-[0m[0m region                         = "us-east-1" [90m-> null[0m[0m
       [31m-[0m[0m regional_nat_gateway_address   = [] [90m-> null[0m[0m
       [31m-[0m[0m secondary_allocation_ids       = [] [90m-> null[0m[0m
       [31m-[0m[0m secondary_private_ip_addresses = [] [90m-> null[0m[0m
-      [31m-[0m[0m subnet_id                      = "subnet-2f373c0daae0995c5" [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id                      = "subnet-c326641a5cfea4659" [90m-> null[0m[0m
       [31m-[0m[0m tags                           = {
           [31m-[0m[0m "Name" = "pilot-landing-zone-nat"
         } [90m-> null[0m[0m
       [31m-[0m[0m tags_all                       = {
           [31m-[0m[0m "Name" = "pilot-landing-zone-nat"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id                         = "vpc-c92584b843cc0b8b4" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                         = "vpc-14566af703ad6a7af" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_route_table.private[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_route_table" "private" {
-      [31m-[0m[0m arn              = "arn:aws:ec2:us-east-1:000000000000:route-table/rtb-9793ed8729666479a" [90m-> null[0m[0m
-      [31m-[0m[0m id               = "rtb-9793ed8729666479a" [90m-> null[0m[0m
+      [31m-[0m[0m arn              = "arn:aws:ec2:us-east-1:000000000000:route-table/rtb-394652cb539cc504a" [90m-> null[0m[0m
+      [31m-[0m[0m id               = "rtb-394652cb539cc504a" [90m-> null[0m[0m
       [31m-[0m[0m owner_id         = "000000000000" [90m-> null[0m[0m
       [31m-[0m[0m propagating_vgws = [] [90m-> null[0m[0m
       [31m-[0m[0m region           = "us-east-1" [90m-> null[0m[0m
       [31m-[0m[0m route            = [
           [31m-[0m[0m {
               [31m-[0m[0m cidr_block                 = "0.0.0.0/0"
-              [31m-[0m[0m nat_gateway_id             = "nat-d84b173f98e924338"
+              [31m-[0m[0m nat_gateway_id             = "nat-0f981bd73d9721c58"
                 [90m# (11 unchanged attributes hidden)[0m[0m
             },
         ] [90m-> null[0m[0m
@@ -2877,20 +2855,20 @@ Terraform will perform the following actions:
       [31m-[0m[0m tags_all         = {
           [31m-[0m[0m "Name" = "pilot-landing-zone-private-rt"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id           = "vpc-c92584b843cc0b8b4" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id           = "vpc-14566af703ad6a7af" [90m-> null[0m[0m
     }
 
 [1m  # aws_route_table.public[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_route_table" "public" {
-      [31m-[0m[0m arn              = "arn:aws:ec2:us-east-1:000000000000:route-table/rtb-ae61a6cfb66f230ae" [90m-> null[0m[0m
-      [31m-[0m[0m id               = "rtb-ae61a6cfb66f230ae" [90m-> null[0m[0m
+      [31m-[0m[0m arn              = "arn:aws:ec2:us-east-1:000000000000:route-table/rtb-762247cd9a0923ffb" [90m-> null[0m[0m
+      [31m-[0m[0m id               = "rtb-762247cd9a0923ffb" [90m-> null[0m[0m
       [31m-[0m[0m owner_id         = "000000000000" [90m-> null[0m[0m
       [31m-[0m[0m propagating_vgws = [] [90m-> null[0m[0m
       [31m-[0m[0m region           = "us-east-1" [90m-> null[0m[0m
       [31m-[0m[0m route            = [
           [31m-[0m[0m {
               [31m-[0m[0m cidr_block                 = "0.0.0.0/0"
-              [31m-[0m[0m gateway_id                 = "igw-c62f7f4d8f356f231"
+              [31m-[0m[0m gateway_id                 = "igw-1a4da045b5e314232"
                 [90m# (11 unchanged attributes hidden)[0m[0m
             },
         ] [90m-> null[0m[0m
@@ -2900,57 +2878,57 @@ Terraform will perform the following actions:
       [31m-[0m[0m tags_all         = {
           [31m-[0m[0m "Name" = "pilot-landing-zone-public-rt"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id           = "vpc-c92584b843cc0b8b4" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id           = "vpc-14566af703ad6a7af" [90m-> null[0m[0m
     }
 
 [1m  # aws_route_table_association.private_a[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_route_table_association" "private_a" {
-      [31m-[0m[0m id             = "rtbassoc-ac894ce5106837d2e" [90m-> null[0m[0m
+      [31m-[0m[0m id             = "rtbassoc-f65a798595eb7cc79" [90m-> null[0m[0m
       [31m-[0m[0m region         = "us-east-1" [90m-> null[0m[0m
-      [31m-[0m[0m route_table_id = "rtb-9793ed8729666479a" [90m-> null[0m[0m
-      [31m-[0m[0m subnet_id      = "subnet-45ffcee08918ac052" [90m-> null[0m[0m
+      [31m-[0m[0m route_table_id = "rtb-394652cb539cc504a" [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id      = "subnet-5300d8ac5bc6fae9a" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_route_table_association.private_b[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_route_table_association" "private_b" {
-      [31m-[0m[0m id             = "rtbassoc-f1db58f827d47f01e" [90m-> null[0m[0m
+      [31m-[0m[0m id             = "rtbassoc-6ea00a616ce7bc297" [90m-> null[0m[0m
       [31m-[0m[0m region         = "us-east-1" [90m-> null[0m[0m
-      [31m-[0m[0m route_table_id = "rtb-9793ed8729666479a" [90m-> null[0m[0m
-      [31m-[0m[0m subnet_id      = "subnet-ef8e2c0d4f0cd4bee" [90m-> null[0m[0m
+      [31m-[0m[0m route_table_id = "rtb-394652cb539cc504a" [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id      = "subnet-222d4795f7c62db5b" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_route_table_association.public_a[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_route_table_association" "public_a" {
-      [31m-[0m[0m id             = "rtbassoc-e55ead807c0432b7a" [90m-> null[0m[0m
+      [31m-[0m[0m id             = "rtbassoc-8838db25590086024" [90m-> null[0m[0m
       [31m-[0m[0m region         = "us-east-1" [90m-> null[0m[0m
-      [31m-[0m[0m route_table_id = "rtb-ae61a6cfb66f230ae" [90m-> null[0m[0m
-      [31m-[0m[0m subnet_id      = "subnet-2f373c0daae0995c5" [90m-> null[0m[0m
+      [31m-[0m[0m route_table_id = "rtb-762247cd9a0923ffb" [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id      = "subnet-c326641a5cfea4659" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_route_table_association.public_b[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_route_table_association" "public_b" {
-      [31m-[0m[0m id             = "rtbassoc-79304fef7f0001918" [90m-> null[0m[0m
+      [31m-[0m[0m id             = "rtbassoc-27a942bbceb218cb2" [90m-> null[0m[0m
       [31m-[0m[0m region         = "us-east-1" [90m-> null[0m[0m
-      [31m-[0m[0m route_table_id = "rtb-ae61a6cfb66f230ae" [90m-> null[0m[0m
-      [31m-[0m[0m subnet_id      = "subnet-b1d2004537aa62935" [90m-> null[0m[0m
+      [31m-[0m[0m route_table_id = "rtb-762247cd9a0923ffb" [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id      = "subnet-7daa735c6d247c9d4" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_s3_bucket.event_archive[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_s3_bucket" "event_archive" {
-      [31m-[0m[0m arn                         = "arn:aws:s3:::event-payload-archive-20260409145916116300000001" [90m-> null[0m[0m
-      [31m-[0m[0m bucket                      = "event-payload-archive-20260409145916116300000001" [90m-> null[0m[0m
-      [31m-[0m[0m bucket_domain_name          = "event-payload-archive-20260409145916116300000001.s3.amazonaws.com" [90m-> null[0m[0m
+      [31m-[0m[0m arn                         = "arn:aws:s3:::event-payload-archive-20260410203733483300000001" [90m-> null[0m[0m
+      [31m-[0m[0m bucket                      = "event-payload-archive-20260410203733483300000001" [90m-> null[0m[0m
+      [31m-[0m[0m bucket_domain_name          = "event-payload-archive-20260410203733483300000001.s3.amazonaws.com" [90m-> null[0m[0m
       [31m-[0m[0m bucket_namespace            = "global" [90m-> null[0m[0m
       [31m-[0m[0m bucket_prefix               = "event-payload-archive-" [90m-> null[0m[0m
       [31m-[0m[0m bucket_region               = "us-east-1" [90m-> null[0m[0m
-      [31m-[0m[0m bucket_regional_domain_name = "event-payload-archive-20260409145916116300000001.s3.us-east-1.amazonaws.com" [90m-> null[0m[0m
+      [31m-[0m[0m bucket_regional_domain_name = "event-payload-archive-20260410203733483300000001.s3.us-east-1.amazonaws.com" [90m-> null[0m[0m
       [31m-[0m[0m force_destroy               = true [90m-> null[0m[0m
       [31m-[0m[0m hosted_zone_id              = "Z3AQBSTGFYJSTF" [90m-> null[0m[0m
-      [31m-[0m[0m id                          = "event-payload-archive-20260409145916116300000001" [90m-> null[0m[0m
+      [31m-[0m[0m id                          = "event-payload-archive-20260410203733483300000001" [90m-> null[0m[0m
       [31m-[0m[0m object_lock_enabled         = false [90m-> null[0m[0m
       [31m-[0m[0m policy                      = jsonencode(
             {
@@ -2965,8 +2943,8 @@ Terraform will perform the following actions:
                       [31m-[0m[0m Effect    = "Deny"
                       [31m-[0m[0m Principal = "*"
                       [31m-[0m[0m Resource  = [
-                          [31m-[0m[0m "arn:aws:s3:::event-payload-archive-20260409145916116300000001",
-                          [31m-[0m[0m "arn:aws:s3:::event-payload-archive-20260409145916116300000001/*",
+                          [31m-[0m[0m "arn:aws:s3:::event-payload-archive-20260410203733483300000001",
+                          [31m-[0m[0m "arn:aws:s3:::event-payload-archive-20260410203733483300000001/*",
                         ]
                       [31m-[0m[0m Sid       = "DenyInsecureTransport"
                     },
@@ -3012,8 +2990,8 @@ Terraform will perform the following actions:
 
 [1m  # aws_s3_bucket_policy.event_archive_tls[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_s3_bucket_policy" "event_archive_tls" {
-      [31m-[0m[0m bucket = "event-payload-archive-20260409145916116300000001" [90m-> null[0m[0m
-      [31m-[0m[0m id     = "event-payload-archive-20260409145916116300000001" [90m-> null[0m[0m
+      [31m-[0m[0m bucket = "event-payload-archive-20260410203733483300000001" [90m-> null[0m[0m
+      [31m-[0m[0m id     = "event-payload-archive-20260410203733483300000001" [90m-> null[0m[0m
       [31m-[0m[0m policy = jsonencode(
             {
               [31m-[0m[0m Statement = [
@@ -3027,8 +3005,8 @@ Terraform will perform the following actions:
                       [31m-[0m[0m Effect    = "Deny"
                       [31m-[0m[0m Principal = "*"
                       [31m-[0m[0m Resource  = [
-                          [31m-[0m[0m "arn:aws:s3:::event-payload-archive-20260409145916116300000001",
-                          [31m-[0m[0m "arn:aws:s3:::event-payload-archive-20260409145916116300000001/*",
+                          [31m-[0m[0m "arn:aws:s3:::event-payload-archive-20260410203733483300000001",
+                          [31m-[0m[0m "arn:aws:s3:::event-payload-archive-20260410203733483300000001/*",
                         ]
                       [31m-[0m[0m Sid       = "DenyInsecureTransport"
                     },
@@ -3043,8 +3021,8 @@ Terraform will perform the following actions:
 [0m  [31m-[0m[0m resource "aws_s3_bucket_public_access_block" "event_archive" {
       [31m-[0m[0m block_public_acls       = true [90m-> null[0m[0m
       [31m-[0m[0m block_public_policy     = true [90m-> null[0m[0m
-      [31m-[0m[0m bucket                  = "event-payload-archive-20260409145916116300000001" [90m-> null[0m[0m
-      [31m-[0m[0m id                      = "event-payload-archive-20260409145916116300000001" [90m-> null[0m[0m
+      [31m-[0m[0m bucket                  = "event-payload-archive-20260410203733483300000001" [90m-> null[0m[0m
+      [31m-[0m[0m id                      = "event-payload-archive-20260410203733483300000001" [90m-> null[0m[0m
       [31m-[0m[0m ignore_public_acls      = true [90m-> null[0m[0m
       [31m-[0m[0m region                  = "us-east-1" [90m-> null[0m[0m
       [31m-[0m[0m restrict_public_buckets = true [90m-> null[0m[0m
@@ -3052,8 +3030,8 @@ Terraform will perform the following actions:
 
 [1m  # aws_s3_bucket_server_side_encryption_configuration.event_archive[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_s3_bucket_server_side_encryption_configuration" "event_archive" {
-      [31m-[0m[0m bucket                = "event-payload-archive-20260409145916116300000001" [90m-> null[0m[0m
-      [31m-[0m[0m id                    = "event-payload-archive-20260409145916116300000001" [90m-> null[0m[0m
+      [31m-[0m[0m bucket                = "event-payload-archive-20260410203733483300000001" [90m-> null[0m[0m
+      [31m-[0m[0m id                    = "event-payload-archive-20260410203733483300000001" [90m-> null[0m[0m
       [31m-[0m[0m region                = "us-east-1" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
 
@@ -3070,10 +3048,10 @@ Terraform will perform the following actions:
 
 [1m  # aws_secretsmanager_secret.db_credentials[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_secretsmanager_secret" "db_credentials" {
-      [31m-[0m[0m arn                            = "arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-1b09c407-db-credentials-OkCxlu" [90m-> null[0m[0m
+      [31m-[0m[0m arn                            = "arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-f99a89b9-db-credentials-XuPsUm" [90m-> null[0m[0m
       [31m-[0m[0m force_overwrite_replica_secret = false [90m-> null[0m[0m
-      [31m-[0m[0m id                             = "arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-1b09c407-db-credentials-OkCxlu" [90m-> null[0m[0m
-      [31m-[0m[0m name                           = "pilot-landing-zone-1b09c407-db-credentials" [90m-> null[0m[0m
+      [31m-[0m[0m id                             = "arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-f99a89b9-db-credentials-XuPsUm" [90m-> null[0m[0m
+      [31m-[0m[0m name                           = "pilot-landing-zone-f99a89b9-db-credentials" [90m-> null[0m[0m
       [31m-[0m[0m recovery_window_in_days        = 0 [90m-> null[0m[0m
       [31m-[0m[0m region                         = "us-east-1" [90m-> null[0m[0m
       [31m-[0m[0m tags                           = {} [90m-> null[0m[0m
@@ -3083,12 +3061,12 @@ Terraform will perform the following actions:
 
 [1m  # aws_secretsmanager_secret_version.db_credentials[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_secretsmanager_secret_version" "db_credentials" {
-      [31m-[0m[0m arn            = "arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-1b09c407-db-credentials-OkCxlu" [90m-> null[0m[0m
-      [31m-[0m[0m id             = "arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-1b09c407-db-credentials-OkCxlu|terraform-20260409145917760000000003" [90m-> null[0m[0m
+      [31m-[0m[0m arn            = "arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-f99a89b9-db-credentials-XuPsUm" [90m-> null[0m[0m
+      [31m-[0m[0m id             = "arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-f99a89b9-db-credentials-XuPsUm|terraform-20260410203735261000000004" [90m-> null[0m[0m
       [31m-[0m[0m region         = "us-east-1" [90m-> null[0m[0m
-      [31m-[0m[0m secret_id      = "arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-1b09c407-db-credentials-OkCxlu" [90m-> null[0m[0m
+      [31m-[0m[0m secret_id      = "arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-f99a89b9-db-credentials-XuPsUm" [90m-> null[0m[0m
       [31m-[0m[0m secret_string  = (sensitive value) [90m-> null[0m[0m
-      [31m-[0m[0m version_id     = "terraform-20260409145917760000000003" [90m-> null[0m[0m
+      [31m-[0m[0m version_id     = "terraform-20260410203735261000000004" [90m-> null[0m[0m
       [31m-[0m[0m version_stages = [
           [31m-[0m[0m "AWSCURRENT",
         ] [90m-> null[0m[0m
@@ -3097,7 +3075,7 @@ Terraform will perform the following actions:
 
 [1m  # aws_security_group.lambda[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_security_group" "lambda" {
-      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-1:000000000000:security-group/sg-2ee1f14e4906247c2" [90m-> null[0m[0m
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-1:000000000000:security-group/sg-7b9a8a5cc595be8c9" [90m-> null[0m[0m
       [31m-[0m[0m description            = "Execution Environment outbound access" [90m-> null[0m[0m
       [31m-[0m[0m egress                 = [
           [31m-[0m[0m {
@@ -3114,7 +3092,7 @@ Terraform will perform the following actions:
               [31m-[0m[0m to_port          = 0
             },
         ] [90m-> null[0m[0m
-      [31m-[0m[0m id                     = "sg-2ee1f14e4906247c2" [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sg-7b9a8a5cc595be8c9" [90m-> null[0m[0m
       [31m-[0m[0m ingress                = [] [90m-> null[0m[0m
       [31m-[0m[0m name                   = "pilot-landing-zone-lambda-sg" [90m-> null[0m[0m
       [31m-[0m[0m owner_id               = "000000000000" [90m-> null[0m[0m
@@ -3126,13 +3104,13 @@ Terraform will perform the following actions:
       [31m-[0m[0m tags_all               = {
           [31m-[0m[0m "Name" = "pilot-landing-zone-lambda-sg"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id                 = "vpc-c92584b843cc0b8b4" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                 = "vpc-14566af703ad6a7af" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_security_group.rds[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_security_group" "rds" {
-      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-1:000000000000:security-group/sg-a90508739d6a26f5e" [90m-> null[0m[0m
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-1:000000000000:security-group/sg-aa615ec79ab442a64" [90m-> null[0m[0m
       [31m-[0m[0m description            = "Relational Backbone access from Lambda only" [90m-> null[0m[0m
       [31m-[0m[0m egress                 = [
           [31m-[0m[0m {
@@ -3149,7 +3127,7 @@ Terraform will perform the following actions:
               [31m-[0m[0m to_port          = 0
             },
         ] [90m-> null[0m[0m
-      [31m-[0m[0m id                     = "sg-a90508739d6a26f5e" [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sg-aa615ec79ab442a64" [90m-> null[0m[0m
       [31m-[0m[0m ingress                = [
           [31m-[0m[0m {
               [31m-[0m[0m cidr_blocks      = []
@@ -3159,7 +3137,7 @@ Terraform will perform the following actions:
               [31m-[0m[0m prefix_list_ids  = []
               [31m-[0m[0m protocol         = "tcp"
               [31m-[0m[0m security_groups  = [
-                  [31m-[0m[0m "sg-2ee1f14e4906247c2",
+                  [31m-[0m[0m "sg-7b9a8a5cc595be8c9",
                 ]
               [31m-[0m[0m self             = false
               [31m-[0m[0m to_port          = 5432
@@ -3175,14 +3153,14 @@ Terraform will perform the following actions:
       [31m-[0m[0m tags_all               = {
           [31m-[0m[0m "Name" = "pilot-landing-zone-rds-sg"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id                 = "vpc-c92584b843cc0b8b4" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                 = "vpc-14566af703ad6a7af" [90m-> null[0m[0m
         [90m# (1 unchanged attribute hidden)[0m[0m
     }
 
 [1m  # aws_sfn_state_machine.worker[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_sfn_state_machine" "worker" {
-      [31m-[0m[0m arn                       = "arn:aws:states:us-east-1:000000000000:stateMachine:pilot-landing-zone-worker-1b09c407" [90m-> null[0m[0m
-      [31m-[0m[0m creation_date             = "2026-04-09T14:59:30Z" [90m-> null[0m[0m
+      [31m-[0m[0m arn                       = "arn:aws:states:us-east-1:000000000000:stateMachine:pilot-landing-zone-worker-f99a89b9" [90m-> null[0m[0m
+      [31m-[0m[0m creation_date             = "2026-04-10T20:37:41Z" [90m-> null[0m[0m
       [31m-[0m[0m definition                = jsonencode(
             {
               [31m-[0m[0m Comment = "Invoke the worker Lambda with the incoming pipe payload."
@@ -3192,7 +3170,7 @@ Terraform will perform the following actions:
                       [31m-[0m[0m End        = true
                       [31m-[0m[0m OutputPath = "$.Payload"
                       [31m-[0m[0m Parameters = {
-                          [31m-[0m[0m FunctionName = "arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-1b09c407"
+                          [31m-[0m[0m FunctionName = "arn:aws:lambda:us-east-1:000000000000:function:pilot-landing-zone-worker-f99a89b9"
                           [31m-[0m[0m Payload      = {
                               [31m-[0m[0m "execution_id.$" = "$$.Execution.Id"
                               [31m-[0m[0m "payload.$"      = "$"
@@ -3205,11 +3183,11 @@ Terraform will perform the following actions:
                 }
             }
         ) [90m-> null[0m[0m
-      [31m-[0m[0m id                        = "arn:aws:states:us-east-1:000000000000:stateMachine:pilot-landing-zone-worker-1b09c407" [90m-> null[0m[0m
-      [31m-[0m[0m name                      = "pilot-landing-zone-worker-1b09c407" [90m-> null[0m[0m
+      [31m-[0m[0m id                        = "arn:aws:states:us-east-1:000000000000:stateMachine:pilot-landing-zone-worker-f99a89b9" [90m-> null[0m[0m
+      [31m-[0m[0m name                      = "pilot-landing-zone-worker-f99a89b9" [90m-> null[0m[0m
       [31m-[0m[0m publish                   = false [90m-> null[0m[0m
       [31m-[0m[0m region                    = "us-east-1" [90m-> null[0m[0m
-      [31m-[0m[0m role_arn                  = "arn:aws:iam::000000000000:role/pilot-landing-zone-1b09c407-step-functions-role" [90m-> null[0m[0m
+      [31m-[0m[0m role_arn                  = "arn:aws:iam::000000000000:role/pilot-landing-zone-f99a89b9-step-functions-role" [90m-> null[0m[0m
       [31m-[0m[0m status                    = "ACTIVE" [90m-> null[0m[0m
       [31m-[0m[0m tags                      = {} [90m-> null[0m[0m
       [31m-[0m[0m tags_all                  = {} [90m-> null[0m[0m
@@ -3219,21 +3197,21 @@ Terraform will perform the following actions:
       [31m-[0m[0m logging_configuration {
           [31m-[0m[0m include_execution_data = true [90m-> null[0m[0m
           [31m-[0m[0m level                  = "ERROR" [90m-> null[0m[0m
-          [31m-[0m[0m log_destination        = "arn:aws:logs:us-east-1:000000000000:log-group:/aws/vendedlogs/states/pilot-landing-zone-worker-1b09c407:*" [90m-> null[0m[0m
+          [31m-[0m[0m log_destination        = "arn:aws:logs:us-east-1:000000000000:log-group:/aws/vendedlogs/states/pilot-landing-zone-worker-f99a89b9:*" [90m-> null[0m[0m
         }
     }
 
 [1m  # aws_sns_topic.alarms[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_sns_topic" "alarms" {
       [31m-[0m[0m application_success_feedback_sample_rate = 0 [90m-> null[0m[0m
-      [31m-[0m[0m arn                                      = "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-1b09c407-alarms" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                      = "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-f99a89b9-alarms" [90m-> null[0m[0m
       [31m-[0m[0m content_based_deduplication              = false [90m-> null[0m[0m
       [31m-[0m[0m fifo_topic                               = false [90m-> null[0m[0m
       [31m-[0m[0m firehose_success_feedback_sample_rate    = 0 [90m-> null[0m[0m
       [31m-[0m[0m http_success_feedback_sample_rate        = 0 [90m-> null[0m[0m
-      [31m-[0m[0m id                                       = "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-1b09c407-alarms" [90m-> null[0m[0m
+      [31m-[0m[0m id                                       = "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-f99a89b9-alarms" [90m-> null[0m[0m
       [31m-[0m[0m lambda_success_feedback_sample_rate      = 0 [90m-> null[0m[0m
-      [31m-[0m[0m name                                     = "pilot-landing-zone-1b09c407-alarms" [90m-> null[0m[0m
+      [31m-[0m[0m name                                     = "pilot-landing-zone-f99a89b9-alarms" [90m-> null[0m[0m
       [31m-[0m[0m owner                                    = "000000000000" [90m-> null[0m[0m
       [31m-[0m[0m policy                                   = jsonencode(
             {
@@ -3259,7 +3237,7 @@ Terraform will perform the following actions:
                       [31m-[0m[0m Principal = {
                           [31m-[0m[0m AWS = "*"
                         }
-                      [31m-[0m[0m Resource  = "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-1b09c407-alarms"
+                      [31m-[0m[0m Resource  = "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-f99a89b9-alarms"
                       [31m-[0m[0m Sid       = "__default_statement_ID"
                     },
                 ]
@@ -3276,53 +3254,53 @@ Terraform will perform the following actions:
 
 [1m  # aws_sns_topic_subscription.email[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_sns_topic_subscription" "email" {
-      [31m-[0m[0m arn                             = "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-1b09c407-alarms:a6a5c364-884a-4f57-bdb3-06584c641eb5" [90m-> null[0m[0m
+      [31m-[0m[0m arn                             = "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-f99a89b9-alarms:52f174e8-6137-4c5a-83d4-5d14972e00eb" [90m-> null[0m[0m
       [31m-[0m[0m confirmation_timeout_in_minutes = 1 [90m-> null[0m[0m
       [31m-[0m[0m confirmation_was_authenticated  = false [90m-> null[0m[0m
       [31m-[0m[0m endpoint                        = "alerts@example.com" [90m-> null[0m[0m
       [31m-[0m[0m endpoint_auto_confirms          = false [90m-> null[0m[0m
-      [31m-[0m[0m id                              = "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-1b09c407-alarms:a6a5c364-884a-4f57-bdb3-06584c641eb5" [90m-> null[0m[0m
+      [31m-[0m[0m id                              = "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-f99a89b9-alarms:52f174e8-6137-4c5a-83d4-5d14972e00eb" [90m-> null[0m[0m
       [31m-[0m[0m owner_id                        = "000000000000" [90m-> null[0m[0m
       [31m-[0m[0m pending_confirmation            = true [90m-> null[0m[0m
       [31m-[0m[0m protocol                        = "email" [90m-> null[0m[0m
       [31m-[0m[0m raw_message_delivery            = false [90m-> null[0m[0m
       [31m-[0m[0m region                          = "us-east-1" [90m-> null[0m[0m
-      [31m-[0m[0m topic_arn                       = "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-1b09c407-alarms" [90m-> null[0m[0m
+      [31m-[0m[0m topic_arn                       = "arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-f99a89b9-alarms" [90m-> null[0m[0m
         [90m# (6 unchanged attributes hidden)[0m[0m
     }
 
 [1m  # aws_sqs_queue.dead_letter[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_sqs_queue" "dead_letter" {
-      [31m-[0m[0m arn                               = "arn:aws:sqs:us-east-1:000000000000:pilot-landing-zone-1b09c407-work-dlq" [90m-> null[0m[0m
+      [31m-[0m[0m arn                               = "arn:aws:sqs:us-east-1:000000000000:pilot-landing-zone-f99a89b9-work-dlq" [90m-> null[0m[0m
       [31m-[0m[0m content_based_deduplication       = false [90m-> null[0m[0m
       [31m-[0m[0m delay_seconds                     = 0 [90m-> null[0m[0m
       [31m-[0m[0m fifo_queue                        = false [90m-> null[0m[0m
-      [31m-[0m[0m id                                = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-1b09c407-work-dlq" [90m-> null[0m[0m
+      [31m-[0m[0m id                                = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-f99a89b9-work-dlq" [90m-> null[0m[0m
       [31m-[0m[0m kms_data_key_reuse_period_seconds = 300 [90m-> null[0m[0m
       [31m-[0m[0m max_message_size                  = 262144 [90m-> null[0m[0m
       [31m-[0m[0m message_retention_seconds         = 1209600 [90m-> null[0m[0m
-      [31m-[0m[0m name                              = "pilot-landing-zone-1b09c407-work-dlq" [90m-> null[0m[0m
+      [31m-[0m[0m name                              = "pilot-landing-zone-f99a89b9-work-dlq" [90m-> null[0m[0m
       [31m-[0m[0m receive_wait_time_seconds         = 0 [90m-> null[0m[0m
       [31m-[0m[0m region                            = "us-east-1" [90m-> null[0m[0m
       [31m-[0m[0m sqs_managed_sse_enabled           = true [90m-> null[0m[0m
       [31m-[0m[0m tags                              = {} [90m-> null[0m[0m
       [31m-[0m[0m tags_all                          = {} [90m-> null[0m[0m
-      [31m-[0m[0m url                               = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-1b09c407-work-dlq" [90m-> null[0m[0m
+      [31m-[0m[0m url                               = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-f99a89b9-work-dlq" [90m-> null[0m[0m
       [31m-[0m[0m visibility_timeout_seconds        = 30 [90m-> null[0m[0m
         [90m# (7 unchanged attributes hidden)[0m[0m
     }
 
 [1m  # aws_sqs_queue.primary[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_sqs_queue" "primary" {
-      [31m-[0m[0m arn                               = "arn:aws:sqs:us-east-1:000000000000:pilot-landing-zone-1b09c407-work" [90m-> null[0m[0m
+      [31m-[0m[0m arn                               = "arn:aws:sqs:us-east-1:000000000000:pilot-landing-zone-f99a89b9-work" [90m-> null[0m[0m
       [31m-[0m[0m content_based_deduplication       = false [90m-> null[0m[0m
       [31m-[0m[0m delay_seconds                     = 0 [90m-> null[0m[0m
       [31m-[0m[0m fifo_queue                        = false [90m-> null[0m[0m
-      [31m-[0m[0m id                                = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-1b09c407-work" [90m-> null[0m[0m
+      [31m-[0m[0m id                                = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-f99a89b9-work" [90m-> null[0m[0m
       [31m-[0m[0m kms_data_key_reuse_period_seconds = 300 [90m-> null[0m[0m
       [31m-[0m[0m max_message_size                  = 262144 [90m-> null[0m[0m
       [31m-[0m[0m message_retention_seconds         = 345600 [90m-> null[0m[0m
-      [31m-[0m[0m name                              = "pilot-landing-zone-1b09c407-work" [90m-> null[0m[0m
+      [31m-[0m[0m name                              = "pilot-landing-zone-f99a89b9-work" [90m-> null[0m[0m
       [31m-[0m[0m policy                            = jsonencode(
             {
               [31m-[0m[0m Statement = [
@@ -3330,14 +3308,14 @@ Terraform will perform the following actions:
                       [31m-[0m[0m Action    = "sqs:SendMessage"
                       [31m-[0m[0m Condition = {
                           [31m-[0m[0m ArnEquals = {
-                              [31m-[0m[0m "aws:SourceArn" = "arn:aws:events:us-east-1:000000000000:rule/pilot-landing-zone-1b09c407-ingest/pilot-landing-zone-1b09c407-ingest-work-item"
+                              [31m-[0m[0m "aws:SourceArn" = "arn:aws:events:us-east-1:000000000000:rule/pilot-landing-zone-f99a89b9-ingest/pilot-landing-zone-f99a89b9-ingest-work-item"
                             }
                         }
                       [31m-[0m[0m Effect    = "Allow"
                       [31m-[0m[0m Principal = {
                           [31m-[0m[0m Service = "events.amazonaws.com"
                         }
-                      [31m-[0m[0m Resource  = "arn:aws:sqs:us-east-1:000000000000:pilot-landing-zone-1b09c407-work"
+                      [31m-[0m[0m Resource  = "arn:aws:sqs:us-east-1:000000000000:pilot-landing-zone-f99a89b9-work"
                       [31m-[0m[0m Sid       = "AllowEventBridgeRuleToSendOnlyToPrimaryQueue"
                     },
                 ]
@@ -3347,7 +3325,7 @@ Terraform will perform the following actions:
       [31m-[0m[0m receive_wait_time_seconds         = 0 [90m-> null[0m[0m
       [31m-[0m[0m redrive_policy                    = jsonencode(
             {
-              [31m-[0m[0m deadLetterTargetArn = "arn:aws:sqs:us-east-1:000000000000:pilot-landing-zone-1b09c407-work-dlq"
+              [31m-[0m[0m deadLetterTargetArn = "arn:aws:sqs:us-east-1:000000000000:pilot-landing-zone-f99a89b9-work-dlq"
               [31m-[0m[0m maxReceiveCount     = 3
             }
         ) [90m-> null[0m[0m
@@ -3355,14 +3333,14 @@ Terraform will perform the following actions:
       [31m-[0m[0m sqs_managed_sse_enabled           = true [90m-> null[0m[0m
       [31m-[0m[0m tags                              = {} [90m-> null[0m[0m
       [31m-[0m[0m tags_all                          = {} [90m-> null[0m[0m
-      [31m-[0m[0m url                               = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-1b09c407-work" [90m-> null[0m[0m
+      [31m-[0m[0m url                               = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-f99a89b9-work" [90m-> null[0m[0m
       [31m-[0m[0m visibility_timeout_seconds        = 60 [90m-> null[0m[0m
         [90m# (5 unchanged attributes hidden)[0m[0m
     }
 
 [1m  # aws_sqs_queue_policy.allow_eventbridge_ingest_rule[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_sqs_queue_policy" "allow_eventbridge_ingest_rule" {
-      [31m-[0m[0m id        = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-1b09c407-work" [90m-> null[0m[0m
+      [31m-[0m[0m id        = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-f99a89b9-work" [90m-> null[0m[0m
       [31m-[0m[0m policy    = jsonencode(
             {
               [31m-[0m[0m Statement = [
@@ -3370,27 +3348,27 @@ Terraform will perform the following actions:
                       [31m-[0m[0m Action    = "sqs:SendMessage"
                       [31m-[0m[0m Condition = {
                           [31m-[0m[0m ArnEquals = {
-                              [31m-[0m[0m "aws:SourceArn" = "arn:aws:events:us-east-1:000000000000:rule/pilot-landing-zone-1b09c407-ingest/pilot-landing-zone-1b09c407-ingest-work-item"
+                              [31m-[0m[0m "aws:SourceArn" = "arn:aws:events:us-east-1:000000000000:rule/pilot-landing-zone-f99a89b9-ingest/pilot-landing-zone-f99a89b9-ingest-work-item"
                             }
                         }
                       [31m-[0m[0m Effect    = "Allow"
                       [31m-[0m[0m Principal = {
                           [31m-[0m[0m Service = "events.amazonaws.com"
                         }
-                      [31m-[0m[0m Resource  = "arn:aws:sqs:us-east-1:000000000000:pilot-landing-zone-1b09c407-work"
+                      [31m-[0m[0m Resource  = "arn:aws:sqs:us-east-1:000000000000:pilot-landing-zone-f99a89b9-work"
                       [31m-[0m[0m Sid       = "AllowEventBridgeRuleToSendOnlyToPrimaryQueue"
                     },
                 ]
               [31m-[0m[0m Version   = "2012-10-17"
             }
         ) [90m-> null[0m[0m
-      [31m-[0m[0m queue_url = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-1b09c407-work" [90m-> null[0m[0m
+      [31m-[0m[0m queue_url = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-f99a89b9-work" [90m-> null[0m[0m
       [31m-[0m[0m region    = "us-east-1" [90m-> null[0m[0m
     }
 
 [1m  # aws_subnet.private_a[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_subnet" "private_a" {
-      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-45ffcee08918ac052" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-5300d8ac5bc6fae9a" [90m-> null[0m[0m
       [31m-[0m[0m assign_ipv6_address_on_creation                = false [90m-> null[0m[0m
       [31m-[0m[0m availability_zone                              = "us-east-1a" [90m-> null[0m[0m
       [31m-[0m[0m availability_zone_id                           = "use1-az6" [90m-> null[0m[0m
@@ -3399,7 +3377,7 @@ Terraform will perform the following actions:
       [31m-[0m[0m enable_lni_at_device_index                     = 0 [90m-> null[0m[0m
       [31m-[0m[0m enable_resource_name_dns_a_record_on_launch    = false [90m-> null[0m[0m
       [31m-[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false [90m-> null[0m[0m
-      [31m-[0m[0m id                                             = "subnet-45ffcee08918ac052" [90m-> null[0m[0m
+      [31m-[0m[0m id                                             = "subnet-5300d8ac5bc6fae9a" [90m-> null[0m[0m
       [31m-[0m[0m ipv6_native                                    = false [90m-> null[0m[0m
       [31m-[0m[0m map_customer_owned_ip_on_launch                = false [90m-> null[0m[0m
       [31m-[0m[0m map_public_ip_on_launch                        = false [90m-> null[0m[0m
@@ -3414,13 +3392,13 @@ Terraform will perform the following actions:
           [31m-[0m[0m "Name" = "pilot-landing-zone-private-a"
           [31m-[0m[0m "Tier" = "private"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id                                         = "vpc-c92584b843cc0b8b4" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                                         = "vpc-14566af703ad6a7af" [90m-> null[0m[0m
         [90m# (4 unchanged attributes hidden)[0m[0m
     }
 
 [1m  # aws_subnet.private_b[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_subnet" "private_b" {
-      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-ef8e2c0d4f0cd4bee" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-222d4795f7c62db5b" [90m-> null[0m[0m
       [31m-[0m[0m assign_ipv6_address_on_creation                = false [90m-> null[0m[0m
       [31m-[0m[0m availability_zone                              = "us-east-1b" [90m-> null[0m[0m
       [31m-[0m[0m availability_zone_id                           = "use1-az1" [90m-> null[0m[0m
@@ -3429,7 +3407,7 @@ Terraform will perform the following actions:
       [31m-[0m[0m enable_lni_at_device_index                     = 0 [90m-> null[0m[0m
       [31m-[0m[0m enable_resource_name_dns_a_record_on_launch    = false [90m-> null[0m[0m
       [31m-[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false [90m-> null[0m[0m
-      [31m-[0m[0m id                                             = "subnet-ef8e2c0d4f0cd4bee" [90m-> null[0m[0m
+      [31m-[0m[0m id                                             = "subnet-222d4795f7c62db5b" [90m-> null[0m[0m
       [31m-[0m[0m ipv6_native                                    = false [90m-> null[0m[0m
       [31m-[0m[0m map_customer_owned_ip_on_launch                = false [90m-> null[0m[0m
       [31m-[0m[0m map_public_ip_on_launch                        = false [90m-> null[0m[0m
@@ -3444,13 +3422,13 @@ Terraform will perform the following actions:
           [31m-[0m[0m "Name" = "pilot-landing-zone-private-b"
           [31m-[0m[0m "Tier" = "private"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id                                         = "vpc-c92584b843cc0b8b4" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                                         = "vpc-14566af703ad6a7af" [90m-> null[0m[0m
         [90m# (4 unchanged attributes hidden)[0m[0m
     }
 
 [1m  # aws_subnet.public_a[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_subnet" "public_a" {
-      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-2f373c0daae0995c5" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-c326641a5cfea4659" [90m-> null[0m[0m
       [31m-[0m[0m assign_ipv6_address_on_creation                = false [90m-> null[0m[0m
       [31m-[0m[0m availability_zone                              = "us-east-1a" [90m-> null[0m[0m
       [31m-[0m[0m availability_zone_id                           = "use1-az6" [90m-> null[0m[0m
@@ -3459,7 +3437,7 @@ Terraform will perform the following actions:
       [31m-[0m[0m enable_lni_at_device_index                     = 0 [90m-> null[0m[0m
       [31m-[0m[0m enable_resource_name_dns_a_record_on_launch    = false [90m-> null[0m[0m
       [31m-[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false [90m-> null[0m[0m
-      [31m-[0m[0m id                                             = "subnet-2f373c0daae0995c5" [90m-> null[0m[0m
+      [31m-[0m[0m id                                             = "subnet-c326641a5cfea4659" [90m-> null[0m[0m
       [31m-[0m[0m ipv6_native                                    = false [90m-> null[0m[0m
       [31m-[0m[0m map_customer_owned_ip_on_launch                = false [90m-> null[0m[0m
       [31m-[0m[0m map_public_ip_on_launch                        = true [90m-> null[0m[0m
@@ -3474,13 +3452,13 @@ Terraform will perform the following actions:
           [31m-[0m[0m "Name" = "pilot-landing-zone-public-a"
           [31m-[0m[0m "Tier" = "public"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id                                         = "vpc-c92584b843cc0b8b4" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                                         = "vpc-14566af703ad6a7af" [90m-> null[0m[0m
         [90m# (4 unchanged attributes hidden)[0m[0m
     }
 
 [1m  # aws_subnet.public_b[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_subnet" "public_b" {
-      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-b1d2004537aa62935" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-1:000000000000:subnet/subnet-7daa735c6d247c9d4" [90m-> null[0m[0m
       [31m-[0m[0m assign_ipv6_address_on_creation                = false [90m-> null[0m[0m
       [31m-[0m[0m availability_zone                              = "us-east-1b" [90m-> null[0m[0m
       [31m-[0m[0m availability_zone_id                           = "use1-az1" [90m-> null[0m[0m
@@ -3489,7 +3467,7 @@ Terraform will perform the following actions:
       [31m-[0m[0m enable_lni_at_device_index                     = 0 [90m-> null[0m[0m
       [31m-[0m[0m enable_resource_name_dns_a_record_on_launch    = false [90m-> null[0m[0m
       [31m-[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false [90m-> null[0m[0m
-      [31m-[0m[0m id                                             = "subnet-b1d2004537aa62935" [90m-> null[0m[0m
+      [31m-[0m[0m id                                             = "subnet-7daa735c6d247c9d4" [90m-> null[0m[0m
       [31m-[0m[0m ipv6_native                                    = false [90m-> null[0m[0m
       [31m-[0m[0m map_customer_owned_ip_on_launch                = false [90m-> null[0m[0m
       [31m-[0m[0m map_public_ip_on_launch                        = true [90m-> null[0m[0m
@@ -3504,26 +3482,26 @@ Terraform will perform the following actions:
           [31m-[0m[0m "Name" = "pilot-landing-zone-public-b"
           [31m-[0m[0m "Tier" = "public"
         } [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id                                         = "vpc-c92584b843cc0b8b4" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                                         = "vpc-14566af703ad6a7af" [90m-> null[0m[0m
         [90m# (4 unchanged attributes hidden)[0m[0m
     }
 
 [1m  # aws_vpc.connectivity_mesh[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_vpc" "connectivity_mesh" {
-      [31m-[0m[0m arn                                  = "arn:aws:ec2:us-east-1:000000000000:vpc/vpc-c92584b843cc0b8b4" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                  = "arn:aws:ec2:us-east-1:000000000000:vpc/vpc-14566af703ad6a7af" [90m-> null[0m[0m
       [31m-[0m[0m assign_generated_ipv6_cidr_block     = false [90m-> null[0m[0m
       [31m-[0m[0m cidr_block                           = "10.42.0.0/16" [90m-> null[0m[0m
-      [31m-[0m[0m default_network_acl_id               = "acl-58c41d542a391172e" [90m-> null[0m[0m
-      [31m-[0m[0m default_route_table_id               = "rtb-789c9d8c413d37863" [90m-> null[0m[0m
-      [31m-[0m[0m default_security_group_id            = "sg-1318f6eb0f084e1c2" [90m-> null[0m[0m
+      [31m-[0m[0m default_network_acl_id               = "acl-c94a264eb4a260d49" [90m-> null[0m[0m
+      [31m-[0m[0m default_route_table_id               = "rtb-73511d98741941a4c" [90m-> null[0m[0m
+      [31m-[0m[0m default_security_group_id            = "sg-44c02b9e62170e58f" [90m-> null[0m[0m
       [31m-[0m[0m dhcp_options_id                      = "default" [90m-> null[0m[0m
       [31m-[0m[0m enable_dns_hostnames                 = true [90m-> null[0m[0m
       [31m-[0m[0m enable_dns_support                   = true [90m-> null[0m[0m
       [31m-[0m[0m enable_network_address_usage_metrics = false [90m-> null[0m[0m
-      [31m-[0m[0m id                                   = "vpc-c92584b843cc0b8b4" [90m-> null[0m[0m
+      [31m-[0m[0m id                                   = "vpc-14566af703ad6a7af" [90m-> null[0m[0m
       [31m-[0m[0m instance_tenancy                     = "default" [90m-> null[0m[0m
       [31m-[0m[0m ipv6_netmask_length                  = 0 [90m-> null[0m[0m
-      [31m-[0m[0m main_route_table_id                  = "rtb-789c9d8c413d37863" [90m-> null[0m[0m
+      [31m-[0m[0m main_route_table_id                  = "rtb-73511d98741941a4c" [90m-> null[0m[0m
       [31m-[0m[0m owner_id                             = "000000000000" [90m-> null[0m[0m
       [31m-[0m[0m region                               = "us-east-1" [90m-> null[0m[0m
       [31m-[0m[0m tags                                 = {
@@ -3537,10 +3515,10 @@ Terraform will perform the following actions:
 
 [1m  # aws_vpc_endpoint.s3[0m will be [1m[31mdestroyed[0m
 [0m  [31m-[0m[0m resource "aws_vpc_endpoint" "s3" {
-      [31m-[0m[0m arn                        = "arn:aws:ec2:us-east-1:000000000000:vpc-endpoint/vpce-561b076dc5d040b6b" [90m-> null[0m[0m
+      [31m-[0m[0m arn                        = "arn:aws:ec2:us-east-1:000000000000:vpc-endpoint/vpce-f193eb0e8a329b0c1" [90m-> null[0m[0m
       [31m-[0m[0m cidr_blocks                = [] [90m-> null[0m[0m
       [31m-[0m[0m dns_entry                  = [] [90m-> null[0m[0m
-      [31m-[0m[0m id                         = "vpce-561b076dc5d040b6b" [90m-> null[0m[0m
+      [31m-[0m[0m id                         = "vpce-f193eb0e8a329b0c1" [90m-> null[0m[0m
       [31m-[0m[0m ip_address_type            = "ipv4" [90m-> null[0m[0m
       [31m-[0m[0m network_interface_ids      = [] [90m-> null[0m[0m
       [31m-[0m[0m owner_id                   = "000000000000" [90m-> null[0m[0m
@@ -3556,13 +3534,13 @@ Terraform will perform the following actions:
                 ]
             }
         ) [90m-> null[0m[0m
-      [31m-[0m[0m prefix_list_id             = "pl-a3d3210311da9b730" [90m-> null[0m[0m
+      [31m-[0m[0m prefix_list_id             = "pl-f028488cc9ca2d802" [90m-> null[0m[0m
       [31m-[0m[0m private_dns_enabled        = false [90m-> null[0m[0m
       [31m-[0m[0m region                     = "us-east-1" [90m-> null[0m[0m
       [31m-[0m[0m requester_managed          = false [90m-> null[0m[0m
       [31m-[0m[0m route_table_ids            = [
-          [31m-[0m[0m "rtb-9793ed8729666479a",
-          [31m-[0m[0m "rtb-ae61a6cfb66f230ae",
+          [31m-[0m[0m "rtb-394652cb539cc504a",
+          [31m-[0m[0m "rtb-762247cd9a0923ffb",
         ] [90m-> null[0m[0m
       [31m-[0m[0m security_group_ids         = [] [90m-> null[0m[0m
       [31m-[0m[0m service_name               = "com.amazonaws.us-east-1.s3" [90m-> null[0m[0m
@@ -3575,7 +3553,7 @@ Terraform will perform the following actions:
           [31m-[0m[0m "Name" = "pilot-landing-zone-s3-endpoint"
         } [90m-> null[0m[0m
       [31m-[0m[0m vpc_endpoint_type          = "Gateway" [90m-> null[0m[0m
-      [31m-[0m[0m vpc_id                     = "vpc-c92584b843cc0b8b4" [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                     = "vpc-14566af703ad6a7af" [90m-> null[0m[0m
         [90m# (3 unchanged attributes hidden)[0m[0m
 
       [31m-[0m[0m dns_options {
@@ -3605,127 +3583,121 @@ Terraform will perform the following actions:
     }
 
 [1mPlan:[0m 0 to add, 0 to change, 45 to destroy.
-[0m[0m[1maws_route_table_association.public_b: Destroying... [id=rtbassoc-79304fef7f0001918][0m[0m
-[0m[1maws_sqs_queue_policy.allow_eventbridge_ingest_rule: Destroying... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-1b09c407-work][0m[0m
-[0m[1maws_route_table_association.public_a: Destroying... [id=rtbassoc-e55ead807c0432b7a][0m[0m
-[0m[1maws_cloudwatch_event_target.primary_queue: Destroying... [id=pilot-landing-zone-1b09c407-ingest-pilot-landing-zone-1b09c407-ingest-work-item-primary-work-queue][0m[0m
-[0m[1maws_s3_bucket_policy.event_archive_tls: Destroying... [id=event-payload-archive-20260409145916116300000001][0m[0m
-[0m[1maws_sns_topic_subscription.email: Destroying... [id=arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-1b09c407-alarms:a6a5c364-884a-4f57-bdb3-06584c641eb5][0m[0m
-[0m[1maws_iam_role_policy.pipes_execution: Destroying... [id=pilot-landing-zone-1b09c407-pipes-role:pilot-landing-zone-pipes-execution][0m[0m
-[0m[1maws_cloudwatch_metric_alarm.lambda_errors: Destroying... [id=pilot-landing-zone-1b09c407-lambda-errors][0m[0m
-[0m[1maws_s3_bucket_server_side_encryption_configuration.event_archive: Destroying... [id=event-payload-archive-20260409145916116300000001][0m[0m
-[0m[1maws_cloudwatch_metric_alarm.step_functions_failures: Destroying... [id=pilot-landing-zone-1b09c407-step-functions-failures][0m[0m
+[0m[0m[1maws_iam_role_policy.pipes_execution: Destroying... [id=pilot-landing-zone-f99a89b9-pipes-role:pilot-landing-zone-pipes-execution][0m[0m
+[0m[1maws_route_table_association.public_a: Destroying... [id=rtbassoc-8838db25590086024][0m[0m
+[0m[1maws_cloudwatch_event_target.primary_queue: Destroying... [id=pilot-landing-zone-f99a89b9-ingest-pilot-landing-zone-f99a89b9-ingest-work-item-primary-work-queue][0m[0m
+[0m[1maws_route_table_association.private_a: Destroying... [id=rtbassoc-f65a798595eb7cc79][0m[0m
+[0m[1maws_sqs_queue_policy.allow_eventbridge_ingest_rule: Destroying... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-f99a89b9-work][0m[0m
+[0m[1maws_sns_topic_subscription.email: Destroying... [id=arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-f99a89b9-alarms:52f174e8-6137-4c5a-83d4-5d14972e00eb][0m[0m
+[0m[1maws_s3_bucket_server_side_encryption_configuration.event_archive: Destroying... [id=event-payload-archive-20260410203733483300000001][0m[0m
+[0m[1maws_vpc_endpoint.s3: Destroying... [id=vpce-f193eb0e8a329b0c1][0m[0m
+[0m[1maws_cloudwatch_metric_alarm.step_functions_failures: Destroying... [id=pilot-landing-zone-f99a89b9-step-functions-failures][0m[0m
+[0m[1maws_cloudwatch_metric_alarm.rds_cpu: Destroying... [id=pilot-landing-zone-f99a89b9-rds-cpu][0m[0m
 [0m[1maws_s3_bucket_server_side_encryption_configuration.event_archive: Destruction complete after 0s[0m
-[0m[1maws_iam_role_policy.pipes_execution: Destruction complete after 0s[0m
-[0m[1maws_cloudwatch_event_target.primary_queue: Destruction complete after 0s[0m
-[0m[1maws_cloudwatch_metric_alarm.step_functions_failures: Destruction complete after 0s[0m
-[0m[1maws_cloudwatch_metric_alarm.lambda_errors: Destruction complete after 0s[0m
-[0m[1maws_route_table_association.private_b: Destroying... [id=rtbassoc-f1db58f827d47f01e][0m[0m
-[0m[1maws_cloudwatch_metric_alarm.rds_cpu: Destroying... [id=pilot-landing-zone-1b09c407-rds-cpu][0m[0m
-[0m[1maws_vpc_endpoint.s3: Destroying... [id=vpce-561b076dc5d040b6b][0m[0m
-[0m[1maws_s3_bucket_policy.event_archive_tls: Destruction complete after 0s[0m
-[0m[1maws_route_table_association.private_a: Destroying... [id=rtbassoc-ac894ce5106837d2e][0m[0m
-[0m[1maws_sns_topic_subscription.email: Destruction complete after 0s[0m
-[0m[1maws_iam_role.pipes: Destroying... [id=pilot-landing-zone-1b09c407-pipes-role][0m[0m
+[0m[1maws_cloudwatch_metric_alarm.step_functions_failures: Destruction complete after 1s[0m
+[0m[1maws_cloudwatch_metric_alarm.rds_cpu: Destruction complete after 1s[0m
+[0m[1maws_iam_role_policy.pipes_execution: Destruction complete after 1s[0m
+[0m[1maws_route_table_association.public_b: Destroying... [id=rtbassoc-27a942bbceb218cb2][0m[0m
+[0m[1maws_cloudwatch_event_target.primary_queue: Destruction complete after 1s[0m
+[0m[1maws_s3_bucket_policy.event_archive_tls: Destroying... [id=event-payload-archive-20260410203733483300000001][0m[0m
+[0m[1maws_route_table_association.private_b: Destroying... [id=rtbassoc-6ea00a616ce7bc297][0m[0m
+[0m[1maws_sns_topic_subscription.email: Destruction complete after 1s[0m
 [0m[1maws_route_table_association.private_b: Destruction complete after 0s[0m
-[0m[1maws_sfn_state_machine.worker: Destroying... [id=arn:aws:states:us-east-1:000000000000:stateMachine:pilot-landing-zone-worker-1b09c407][0m[0m
-[0m[1maws_cloudwatch_metric_alarm.rds_cpu: Destruction complete after 0s[0m
+[0m[1maws_route_table_association.public_a: Destruction complete after 1s[0m
 [0m[1maws_route_table_association.public_b: Destruction complete after 0s[0m
-[0m[1maws_route_table_association.public_a: Destruction complete after 0s[0m
-[0m[1maws_s3_bucket_public_access_block.event_archive: Destroying... [id=event-payload-archive-20260409145916116300000001][0m[0m
-[0m[1maws_sns_topic.alarms: Destroying... [id=arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-1b09c407-alarms][0m[0m
-[0m[1maws_route_table_association.private_a: Destruction complete after 0s[0m
-[0m[1maws_subnet.public_b: Destroying... [id=subnet-b1d2004537aa62935][0m[0m
+[0m[1maws_route_table_association.private_a: Destruction complete after 1s[0m
+[0m[1maws_cloudwatch_metric_alarm.lambda_errors: Destroying... [id=pilot-landing-zone-f99a89b9-lambda-errors][0m[0m
+[0m[1maws_iam_role.pipes: Destroying... [id=pilot-landing-zone-f99a89b9-pipes-role][0m[0m
+[0m[1maws_sfn_state_machine.worker: Destroying... [id=arn:aws:states:us-east-1:000000000000:stateMachine:pilot-landing-zone-worker-f99a89b9][0m[0m
+[0m[1maws_s3_bucket_policy.event_archive_tls: Destruction complete after 0s[0m
+[0m[1maws_subnet.public_b: Destroying... [id=subnet-7daa735c6d247c9d4][0m[0m
+[0m[1maws_sfn_state_machine.worker: Destruction complete after 0s[0m
+[0m[1maws_cloudwatch_metric_alarm.lambda_errors: Destruction complete after 0s[0m
+[0m[1maws_iam_role.pipes: Destruction complete after 0s[0m
+[0m[1maws_s3_bucket_public_access_block.event_archive: Destroying... [id=event-payload-archive-20260410203733483300000001][0m[0m
+[0m[1maws_subnet.public_b: Destruction complete after 0s[0m
+[0m[1maws_cloudwatch_log_group.step_functions: Destroying... [id=/aws/vendedlogs/states/pilot-landing-zone-worker-f99a89b9][0m[0m
+[0m[1maws_iam_role_policy.step_functions_execution: Destroying... [id=pilot-landing-zone-f99a89b9-step-functions-role:pilot-landing-zone-step-functions-execution][0m[0m
+[0m[1maws_sns_topic.alarms: Destroying... [id=arn:aws:sns:us-east-1:000000000000:pilot-landing-zone-f99a89b9-alarms][0m[0m
 [0m[1maws_s3_bucket_public_access_block.event_archive: Destruction complete after 0s[0m
 [0m[1maws_sns_topic.alarms: Destruction complete after 0s[0m
-[0m[1maws_sfn_state_machine.worker: Destruction complete after 0s[0m
-[0m[1maws_iam_role.pipes: Destruction complete after 0s[0m
-[0m[1maws_subnet.public_b: Destruction complete after 0s[0m
-[0m[1maws_iam_role_policy.step_functions_execution: Destroying... [id=pilot-landing-zone-1b09c407-step-functions-role:pilot-landing-zone-step-functions-execution][0m[0m
-[0m[1maws_cloudwatch_log_group.step_functions: Destroying... [id=/aws/vendedlogs/states/pilot-landing-zone-worker-1b09c407][0m[0m
 [0m[1maws_iam_role_policy.step_functions_execution: Destruction complete after 0s[0m
 [0m[1maws_cloudwatch_log_group.step_functions: Destruction complete after 0s[0m
-[0m[1maws_iam_role.step_functions: Destroying... [id=pilot-landing-zone-1b09c407-step-functions-role][0m[0m
-[0m[1maws_lambda_function.worker: Destroying... [id=pilot-landing-zone-worker-1b09c407][0m[0m
+[0m[1maws_iam_role.step_functions: Destroying... [id=pilot-landing-zone-f99a89b9-step-functions-role][0m[0m
+[0m[1maws_lambda_function.worker: Destroying... [id=pilot-landing-zone-worker-f99a89b9][0m[0m
 [0m[1maws_iam_role.step_functions: Destruction complete after 0s[0m
-[0m[1maws_vpc_endpoint.s3: Destruction complete after 5s[0m
-[0m[1maws_route_table.public: Destroying... [id=rtb-ae61a6cfb66f230ae][0m[0m
-[0m[1maws_route_table.private: Destroying... [id=rtb-9793ed8729666479a][0m[0m
+[0m[1maws_vpc_endpoint.s3: Destruction complete after 6s[0m
+[0m[1maws_route_table.private: Destroying... [id=rtb-394652cb539cc504a][0m[0m
+[0m[1maws_route_table.public: Destroying... [id=rtb-762247cd9a0923ffb][0m[0m
 [0m[1maws_lambda_function.worker: Destruction complete after 5s[0m
-[0m[1maws_iam_role_policy.lambda_execution: Destroying... [id=pilot-landing-zone-1b09c407-lambda-role:pilot-landing-zone-lambda-execution][0m[0m
-[0m[1maws_security_group.rds: Destroying... [id=sg-a90508739d6a26f5e][0m[0m
+[0m[1maws_secretsmanager_secret_version.db_credentials: Destroying... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-f99a89b9-db-credentials-XuPsUm|terraform-20260410203735261000000004][0m[0m
+[0m[1maws_security_group.rds: Destroying... [id=sg-aa615ec79ab442a64][0m[0m
+[0m[1maws_iam_role_policy.lambda_execution: Destroying... [id=pilot-landing-zone-f99a89b9-lambda-role:pilot-landing-zone-lambda-execution][0m[0m
+[0m[1maws_subnet.private_a: Destroying... [id=subnet-5300d8ac5bc6fae9a][0m[0m
+[0m[1maws_subnet.private_b: Destroying... [id=subnet-222d4795f7c62db5b][0m[0m
 [0m[1maws_iam_role_policy.lambda_execution: Destruction complete after 0s[0m
-[0m[1maws_subnet.private_b: Destroying... [id=subnet-ef8e2c0d4f0cd4bee][0m[0m
-[0m[1maws_secretsmanager_secret_version.db_credentials: Destroying... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-1b09c407-db-credentials-OkCxlu|terraform-20260409145917760000000003][0m[0m
-[0m[1maws_subnet.private_a: Destroying... [id=subnet-45ffcee08918ac052][0m[0m
-[0m[1maws_cloudwatch_log_group.lambda: Destroying... [id=/aws/lambda/pilot-landing-zone-worker-1b09c407][0m[0m
-[0m[1maws_iam_role.lambda: Destroying... [id=pilot-landing-zone-1b09c407-lambda-role][0m[0m
-[0m[1maws_cloudwatch_log_group.lambda: Destruction complete after 1s[0m
-[0m[1maws_subnet.private_a: Destruction complete after 1s[0m
-[0m[1maws_secretsmanager_secret_version.db_credentials: Destruction complete after 1s[0m
-[0m[1maws_iam_role.lambda: Destruction complete after 1s[0m
-[0m[1maws_subnet.private_b: Destruction complete after 1s[0m
-[0m[1maws_secretsmanager_secret.db_credentials: Destroying... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-1b09c407-db-credentials-OkCxlu][0m[0m
-[0m[1maws_secretsmanager_secret.db_credentials: Destruction complete after 0s[0m
-[0m[1maws_security_group.rds: Destruction complete after 1s[0m
+[0m[1maws_cloudwatch_log_group.lambda: Destroying... [id=/aws/lambda/pilot-landing-zone-worker-f99a89b9][0m[0m
+[0m[1maws_iam_role.lambda: Destroying... [id=pilot-landing-zone-f99a89b9-lambda-role][0m[0m
+[0m[1maws_subnet.private_a: Destruction complete after 0s[0m
+[0m[1maws_subnet.private_b: Destruction complete after 0s[0m
+[0m[1maws_secretsmanager_secret_version.db_credentials: Destruction complete after 0s[0m
+[0m[1maws_cloudwatch_log_group.lambda: Destruction complete after 0s[0m
+[0m[1maws_iam_role.lambda: Destruction complete after 0s[0m
+[0m[1maws_secretsmanager_secret.db_credentials: Destroying... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:pilot-landing-zone-f99a89b9-db-credentials-XuPsUm][0m[0m
 [0m[1mrandom_password.db_password: Destroying... [id=none][0m[0m
-[0m[1maws_security_group.lambda: Destroying... [id=sg-2ee1f14e4906247c2][0m[0m
 [0m[1mrandom_password.db_password: Destruction complete after 0s[0m
+[0m[1maws_secretsmanager_secret.db_credentials: Destruction complete after 0s[0m
+[0m[1maws_security_group.rds: Destruction complete after 0s[0m
+[0m[1maws_security_group.lambda: Destroying... [id=sg-7b9a8a5cc595be8c9][0m[0m
 [0m[1maws_security_group.lambda: Destruction complete after 0s[0m
-[0m[1maws_route_table.public: Destruction complete after 1s[0m
-[0m[1maws_route_table.private: Destruction complete after 1s[0m
-[0m[1maws_nat_gateway.public_a: Destroying... [id=nat-d84b173f98e924338][0m[0m
-[0m[1maws_sqs_queue_policy.allow_eventbridge_ingest_rule: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-1b09c407-work, 10s elapsed][0m[0m
-[0m[1maws_nat_gateway.public_a: Still destroying... [id=nat-d84b173f98e924338, 10s elapsed][0m[0m
-[0m[1maws_sqs_queue_policy.allow_eventbridge_ingest_rule: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-1b09c407-work, 20s elapsed][0m[0m
-[0m[1maws_sqs_queue_policy.allow_eventbridge_ingest_rule: Destruction complete after 25s[0m
-[0m[1maws_cloudwatch_event_rule.ingest_work_item: Destroying... [id=pilot-landing-zone-1b09c407-ingest/pilot-landing-zone-1b09c407-ingest-work-item][0m[0m
-[0m[1maws_sqs_queue.primary: Destroying... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-1b09c407-work][0m[0m
+[0m[1maws_route_table.public: Destruction complete after 0s[0m
+[0m[1maws_route_table.private: Destruction complete after 0s[0m
+[0m[1maws_nat_gateway.public_a: Destroying... [id=nat-0f981bd73d9721c58][0m[0m
+[0m[1maws_sqs_queue_policy.allow_eventbridge_ingest_rule: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-f99a89b9-work, 10s elapsed][0m[0m
+[0m[1maws_nat_gateway.public_a: Still destroying... [id=nat-0f981bd73d9721c58, 10s elapsed][0m[0m
+[0m[1maws_sqs_queue_policy.allow_eventbridge_ingest_rule: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-f99a89b9-work, 20s elapsed][0m[0m
+[0m[1maws_sqs_queue_policy.allow_eventbridge_ingest_rule: Destruction complete after 26s[0m
+[0m[1maws_cloudwatch_event_rule.ingest_work_item: Destroying... [id=pilot-landing-zone-f99a89b9-ingest/pilot-landing-zone-f99a89b9-ingest-work-item][0m[0m
+[0m[1maws_sqs_queue.primary: Destroying... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-f99a89b9-work][0m[0m
 [0m[1maws_cloudwatch_event_rule.ingest_work_item: Destruction complete after 0s[0m
-[0m[1maws_cloudwatch_event_bus.ingest: Destroying... [id=pilot-landing-zone-1b09c407-ingest][0m[0m
+[0m[1maws_cloudwatch_event_bus.ingest: Destroying... [id=pilot-landing-zone-f99a89b9-ingest][0m[0m
 [0m[1maws_cloudwatch_event_bus.ingest: Destruction complete after 0s[0m
-[0m[1maws_nat_gateway.public_a: Still destroying... [id=nat-d84b173f98e924338, 20s elapsed][0m[0m
+[0m[1maws_nat_gateway.public_a: Still destroying... [id=nat-0f981bd73d9721c58, 20s elapsed][0m[0m
 [0m[1maws_nat_gateway.public_a: Destruction complete after 20s[0m
-[0m[1maws_internet_gateway.connectivity_mesh: Destroying... [id=igw-c62f7f4d8f356f231][0m[0m
-[0m[1maws_eip.nat: Destroying... [id=eipalloc-f896e9a4540e621b2][0m[0m
-[0m[1maws_subnet.public_a: Destroying... [id=subnet-2f373c0daae0995c5][0m[0m
+[0m[1maws_internet_gateway.connectivity_mesh: Destroying... [id=igw-1a4da045b5e314232][0m[0m
+[0m[1maws_subnet.public_a: Destroying... [id=subnet-c326641a5cfea4659][0m[0m
+[0m[1maws_eip.nat: Destroying... [id=eipalloc-94746781c502a8bb4][0m[0m
 [0m[1maws_eip.nat: Destruction complete after 0s[0m
 [0m[1maws_subnet.public_a: Destruction complete after 0s[0m
 [0m[1maws_internet_gateway.connectivity_mesh: Destruction complete after 0s[0m
-[0m[1maws_vpc.connectivity_mesh: Destroying... [id=vpc-c92584b843cc0b8b4][0m[0m
+[0m[1maws_vpc.connectivity_mesh: Destroying... [id=vpc-14566af703ad6a7af][0m[0m
 [0m[1maws_vpc.connectivity_mesh: Destruction complete after 0s[0m
-[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-1b09c407-work, 10s elapsed][0m[0m
-[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-1b09c407-work, 20s elapsed][0m[0m
-[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-1b09c407-work, 30s elapsed][0m[0m
-[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-1b09c407-work, 40s elapsed][0m[0m
-[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-1b09c407-work, 50s elapsed][0m[0m
-[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-1b09c407-work, 1m0s elapsed][0m[0m
-[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-1b09c407-work, 1m10s elapsed][0m[0m
-[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-1b09c407-work, 1m20s elapsed][0m[0m
-[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-1b09c407-work, 1m30s elapsed][0m[0m
-[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-1b09c407-work, 1m40s elapsed][0m[0m
-[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-1b09c407-work, 1m50s elapsed][0m[0m
-[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-1b09c407-work, 2m0s elapsed][0m[0m
-[0m[1maws_sqs_queue.primary: Destruction complete after 2m10s[0m
-[0m[1maws_sqs_queue.dead_letter: Destroying... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-1b09c407-work-dlq][0m[0m
-[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-1b09c407-work-dlq, 10s elapsed][0m[0m
-[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-1b09c407-work-dlq, 20s elapsed][0m[0m
-[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-1b09c407-work-dlq, 30s elapsed][0m[0m
-[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-1b09c407-work-dlq, 40s elapsed][0m[0m
-[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-1b09c407-work-dlq, 50s elapsed][0m[0m
-[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-1b09c407-work-dlq, 1m0s elapsed][0m[0m
-[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-1b09c407-work-dlq, 1m10s elapsed][0m[0m
-[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-1b09c407-work-dlq, 1m20s elapsed][0m[0m
-[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-1b09c407-work-dlq, 1m30s elapsed][0m[0m
-[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-1b09c407-work-dlq, 1m40s elapsed][0m[0m
-[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-1b09c407-work-dlq, 1m50s elapsed][0m[0m
-[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-1b09c407-work-dlq, 2m0s elapsed][0m[0m
-[0m[1maws_sqs_queue.dead_letter: Destruction complete after 2m9s[0m
-[0m[1maws_s3_bucket.event_archive: Destroying... [id=event-payload-archive-20260409145916116300000001][0m[0m
-[0m[1maws_s3_bucket.event_archive: Destruction complete after 0s[0m
-[0m[1m[32m
-Destroy complete! Resources: 45 destroyed.
-[0mCleaning up worker container: harness-worker-10034
+[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-f99a89b9-work, 10s elapsed][0m[0m
+[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-f99a89b9-work, 20s elapsed][0m[0m
+[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-f99a89b9-work, 30s elapsed][0m[0m
+[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-f99a89b9-work, 40s elapsed][0m[0m
+[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-f99a89b9-work, 50s elapsed][0m[0m
+[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-f99a89b9-work, 1m0s elapsed][0m[0m
+[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-f99a89b9-work, 1m10s elapsed][0m[0m
+[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-f99a89b9-work, 1m20s elapsed][0m[0m
+[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-f99a89b9-work, 1m30s elapsed][0m[0m
+[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-f99a89b9-work, 1m40s elapsed][0m[0m
+[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-f99a89b9-work, 1m50s elapsed][0m[0m
+[0m[1maws_sqs_queue.primary: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...00000/pilot-landing-zone-f99a89b9-work, 2m0s elapsed][0m[0m
+[0m[1maws_sqs_queue.primary: Destruction complete after 2m9s[0m
+[0m[1maws_sqs_queue.dead_letter: Destroying... [id=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/pilot-landing-zone-f99a89b9-work-dlq][0m[0m
+[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-f99a89b9-work-dlq, 10s elapsed][0m[0m
+[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-f99a89b9-work-dlq, 20s elapsed][0m[0m
+[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-f99a89b9-work-dlq, 30s elapsed][0m[0m
+[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-f99a89b9-work-dlq, 40s elapsed][0m[0m
+[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-f99a89b9-work-dlq, 50s elapsed][0m[0m
+[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-f99a89b9-work-dlq, 1m0s elapsed][0m[0m
+[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-f99a89b9-work-dlq, 1m10s elapsed][0m[0m
+[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-f99a89b9-work-dlq, 1m20s elapsed][0m[0m
+[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-f99a89b9-work-dlq, 1m30s elapsed][0m[0m
+[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-f99a89b9-work-dlq, 1m40s elapsed][0m[0m
+[0m[1maws_sqs_queue.dead_letter: Still destroying... [id=http://sqs.us-east-1.localhost.localsta...0/pilot-landing-zone-f99a89b9-work-dlq, 1m50s elapsed][0m[0m
+Cleaning up worker container: harness-worker-18543
 [32m✅ Step passed: Destroy / Cleanup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -3744,9 +3716,8 @@ Log saved to: /Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 
 Stopping LocalStack...
- Container localstack-harness  Stopping
- Container localstack-harness  Stopped
- Container localstack-harness  Removing
- Container localstack-harness  Removed
- Network iac-harness-network  Removing
- Network iac-harness-network  Removed
+unknown shorthand flag: 'f' in -f
+
+Usage:  docker [OPTIONS] COMMAND [ARG...]
+
+Run 'docker --help' for more information

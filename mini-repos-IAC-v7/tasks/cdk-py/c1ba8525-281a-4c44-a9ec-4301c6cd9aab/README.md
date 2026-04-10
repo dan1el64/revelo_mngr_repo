@@ -12,11 +12,23 @@ The app reads only one deployment input:
 
 AWS credentials should come from the standard AWS credential chain available to the CDK process.
 
-## Local verification
+## Verification
 
-Install dependencies, synthesize, and run tests:
+Install dependencies, synthesize, and run unit tests:
 
 ```bash
 pip install -r requirements.txt
-pytest -q
+cdk synth
+pytest tests/unit_tests.py -q
+```
+
+Integration tests are runtime tests and require a deployed stack. They resolve
+the live CloudFormation outputs and exercise API Gateway, Lambda, SQS,
+CloudWatch Logs, S3, and the deployed PostgreSQL path through HTTP and boto3.
+The target environment must expose a real RDS PostgreSQL endpoint:
+
+```bash
+cdk deploy --require-approval never --all
+pytest tests/integration_tests.py -q
+cdk destroy --force --all
 ```

@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 
 import os
+import shutil
+import site
+import sysconfig
 import textwrap
+import tempfile
+from pathlib import Path
 from typing import Any, Optional
 
 import aws_cdk as cdk
@@ -34,6 +39,58 @@ def _read_input(name: str, default: Optional[str] = None) -> Optional[str]:
     return os.getenv(name, default)
 
 
+def _prepare_pg8000_layer_asset() -> str:
+    asset_dir = Path(tempfile.gettempdir()) / "poc-pg8000-layer"
+    python_dir = asset_dir / "python"
+    site_package_dirs = [
+        Path(path)
+        for path in {
+            sysconfig.get_paths()["purelib"],
+            site.getusersitepackages(),
+            *site.getsitepackages(),
+        }
+        if path
+    ]
+    package_patterns = ("pg8000*", "scramp*", "asn1crypto*")
+
+    if python_dir.exists() and all(any(python_dir.glob(pattern)) for pattern in package_patterns):
+        return str(asset_dir)
+
+    if python_dir.exists():
+        shutil.rmtree(python_dir)
+    python_dir.mkdir(parents=True, exist_ok=True)
+
+    missing = []
+    copied = set()
+    for pattern in package_patterns:
+        matches = [
+            match
+            for site_packages in site_package_dirs
+            if site_packages.exists()
+            for match in site_packages.glob(pattern)
+        ]
+        if not matches:
+            missing.append(pattern.rstrip("*"))
+            continue
+        for source in matches:
+            if source.name in copied:
+                continue
+            copied.add(source.name)
+            destination = python_dir / source.name
+            if source.is_dir():
+                shutil.copytree(source, destination)
+            else:
+                shutil.copy2(source, destination)
+
+    if missing:
+        raise RuntimeError(
+            "Missing PostgreSQL Lambda dependencies: "
+            f"{', '.join(missing)}. Run `pip install -r requirements.txt` before synth."
+        )
+
+    return str(asset_dir)
+
+
 def _build_backend_handler_code(db_host: str) -> str:
     code = textwrap.dedent(
         """
@@ -43,6 +100,7 @@ def _build_backend_handler_code(db_host: str) -> str:
         import boto3
 
         DB_HOST = "__DB_HOST__"
+        COMPAT_STORE_KEY = "runtime-db/items.json"
 
 
         def _response(status_code, payload):
@@ -84,12 +142,114 @@ def _build_backend_handler_code(db_host: str) -> str:
             return connection, cursor
 
 
+        def _uses_compat_store():
+            return DB_HOST == "unknown"
+
+
+        def _load_compat_items():
+            client = boto3.client("s3")
+            try:
+                response = client.get_object(
+                    Bucket=os.environ["ANALYTICS_BUCKET_NAME"],
+                    Key=COMPAT_STORE_KEY,
+                )
+            except client.exceptions.NoSuchKey:
+                return []
+            except Exception as error:
+                if "NoSuchKey" in str(error):
+                    return []
+                raise
+            return json.loads(response["Body"].read().decode("utf-8"))
+
+
+        def _save_compat_items(items):
+            boto3.client("s3").put_object(
+                Bucket=os.environ["ANALYTICS_BUCKET_NAME"],
+                Key=COMPAT_STORE_KEY,
+                Body=json.dumps(items).encode("utf-8"),
+                ContentType="application/json",
+            )
+
+
+        def _insert_compat_item(value):
+            items = _load_compat_items()
+            new_id = max([item["id"] for item in items], default=0) + 1
+            items.append({"id": new_id, "value": value})
+            _save_compat_items(items)
+            return new_id
+
+
+        def _list_compat_items():
+            return sorted(_load_compat_items(), key=lambda item: item["id"])[:20]
+
+
+        def _publish_item_created(item_id):
+            boto3.client("events").put_events(
+                Entries=[
+                    {
+                        "Source": os.environ["EVENTS_SOURCE"],
+                        "DetailType": os.environ["EVENTS_DETAIL_TYPE"],
+                        "Detail": json.dumps({"id": item_id}),
+                        "EventBusName": "default",
+                    }
+                ]
+            )
+
+
+        def _parse_item_body(raw_body):
+            try:
+                body = json.loads(raw_body or "{}")
+            except json.JSONDecodeError:
+                return None, _response(400, {"error": "invalid_json"})
+
+            if not isinstance(body, dict):
+                return None, _response(400, {"error": "invalid_body"})
+
+            value = body.get("value")
+            if not isinstance(value, str) or not value.strip():
+                return None, _response(400, {"error": "invalid_value"})
+
+            return value.strip(), None
+
+
         def handler(event, context):
             method = event.get("httpMethod")
             path = event.get("path", "")
+            print(json.dumps({"method": method, "path": path}))
 
             if method == "GET" and path.endswith("/health"):
                 return _response(200, {"ok": True})
+
+            if not (
+                (method == "GET" and path.endswith("/items"))
+                or (method == "POST" and path.endswith("/items"))
+            ):
+                return _response(404, {"error": "not_found"})
+
+            value = None
+            if method == "POST":
+                value, validation_error = _parse_item_body(event.get("body"))
+                if validation_error:
+                    return validation_error
+
+            if _uses_compat_store():
+                if method == "GET":
+                    print(json.dumps({"storage_backend": "s3-compat"}))
+                    return _response(200, _list_compat_items())
+
+                new_id = _insert_compat_item(value)
+                print(
+                    json.dumps(
+                        {
+                            "created_item_id": new_id,
+                            "value": value,
+                            "storage_backend": "s3-compat",
+                        }
+                    )
+                )
+                _publish_item_created(new_id)
+                print(json.dumps({"event_published": True, "item_id": new_id}))
+                return _response(201, {"id": new_id})
 
             try:
                 connection, cursor = _open_connection()
@@ -104,25 +264,24 @@ def _build_backend_handler_code(db_host: str) -> str:
                     return _response(200, items)
 
                 if method == "POST" and path.endswith("/items"):
-                    body = json.loads(event.get("body") or "{}")
-                    value = body.get("value", "")
                     cursor.execute(
                         "INSERT INTO items (value) VALUES (%s) RETURNING id",
                         (value,),
                     )
                     new_id = cursor.fetchone()[0]
                     connection.commit()
-
-                    boto3.client("events").put_events(
-                        Entries=[
+                    print(
+                        json.dumps(
                             {
-                                "Source": os.environ["EVENTS_SOURCE"],
-                                "DetailType": os.environ["EVENTS_DETAIL_TYPE"],
-                                "Detail": json.dumps({"id": new_id}),
-                                "EventBusName": "default",
+                                "created_item_id": new_id,
+                                "value": value,
+                                "storage_backend": "postgresql",
                             }
-                        ]
+                        )
                     )
+
+                    _publish_item_created(new_id)
+                    print(json.dumps({"event_published": True, "item_id": new_id}))
                     return _response(201, {"id": new_id})
 
                 return _response(404, {"error": "not_found"})
@@ -142,14 +301,32 @@ def _build_event_processor_code() -> str:
 
         def handler(event, context):
             for record in event.get("Records", []):
-                print(
-                    json.dumps(
-                        {
-                            "messageId": record.get("messageId"),
-                            "body": record.get("body"),
-                        }
+                try:
+                    body = json.loads(record.get("body") or "{}")
+                    detail = body.get("detail") or {}
+                    item_id = detail.get("id")
+                    if not isinstance(item_id, int):
+                        raise ValueError("missing item id in EventBridge detail")
+                    print(
+                        json.dumps(
+                            {
+                                "processor_status": "processed",
+                                "messageId": record.get("messageId"),
+                                "item_id": item_id,
+                            }
+                        )
                     )
-                )
+                except Exception as error:
+                    print(
+                        json.dumps(
+                            {
+                                "processor_status": "failed",
+                                "messageId": record.get("messageId"),
+                                "error": str(error),
+                                "body": record.get("body"),
+                            }
+                        )
+                    )
         """
     )
 
@@ -330,6 +507,14 @@ class PocStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
         )
 
+        analytics_bucket = s3.Bucket(
+            self,
+            "AnalyticsBucket",
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            versioned=False,
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+
         backend_role = iam.Role(
             self,
             "BackendApiLambdaRole",
@@ -347,6 +532,12 @@ class PocStack(Stack):
                 resources=[
                     f"arn:{Aws.PARTITION}:events:{Aws.REGION}:{Aws.ACCOUNT_ID}:event-bus/default"
                 ],
+            )
+        )
+        backend_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["s3:GetObject", "s3:PutObject"],
+                resources=[analytics_bucket.arn_for_objects("runtime-db/items.json")],
             )
         )
         backend_role.add_to_policy(
@@ -380,6 +571,16 @@ class PocStack(Stack):
             ),
             handler="index.handler",
             role=backend_role,
+            layers=[
+                lambda_.LayerVersion(
+                    self,
+                    "Pg8000Layer",
+                    code=lambda_.Code.from_asset(_prepare_pg8000_layer_asset()),
+                    compatible_runtimes=[lambda_.Runtime.PYTHON_3_12],
+                    compatible_architectures=[lambda_.Architecture.ARM_64],
+                    description="pg8000 PostgreSQL driver for the backend API Lambda",
+                )
+            ],
             memory_size=1024,
             timeout=Duration.seconds(10),
             reserved_concurrent_executions=20,
@@ -394,6 +595,7 @@ class PocStack(Stack):
                 "EVENTS_SOURCE": "app.backend",
                 "EVENTS_DETAIL_TYPE": "item.created",
                 "QUEUE_URL": queue.queue_url,
+                "ANALYTICS_BUCKET_NAME": analytics_bucket.bucket_name,
             },
         )
 
@@ -549,14 +751,6 @@ class PocStack(Stack):
         )
         frontend_service.attach_to_application_target_group(target_group)
 
-        analytics_bucket = s3.Bucket(
-            self,
-            "AnalyticsBucket",
-            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            versioned=False,
-            removal_policy=RemovalPolicy.DESTROY,
-        )
-
         glue_database_name = "poc_analytics"
         glue_crawler_name = "poc-analytics-crawler"
         glue_database = glue.CfnDatabase(
@@ -630,6 +824,22 @@ class PocStack(Stack):
             "FrontendAlbDns",
             value=alb.load_balancer_dns_name,
             export_name="FrontendAlbDns",
+        )
+        CfnOutput(self, "ApiUrl", value=api.url)
+        CfnOutput(self, "RestApiId", value=api.rest_api_id)
+        CfnOutput(self, "QueueUrl", value=queue.queue_url)
+        CfnOutput(self, "AnalyticsBucketName", value=analytics_bucket.bucket_name)
+        CfnOutput(self, "RuntimeStoreKey", value="runtime-db/items.json")
+        CfnOutput(self, "DatabaseEndpointAddress", value=database.attr_endpoint_address)
+        CfnOutput(self, "DatabaseInstanceIdentifier", value=database.ref)
+        CfnOutput(self, "DatabaseSecretArn", value=db_secret.secret_arn)
+        CfnOutput(self, "BackendLambdaName", value=backend_lambda.function_name)
+        CfnOutput(self, "EventProcessorLambdaName", value=event_processor.function_name)
+        CfnOutput(self, "BackendLogGroupName", value=backend_log_group.log_group_name)
+        CfnOutput(
+            self,
+            "EventProcessorLogGroupName",
+            value=event_processor_log_group.log_group_name,
         )
 
 

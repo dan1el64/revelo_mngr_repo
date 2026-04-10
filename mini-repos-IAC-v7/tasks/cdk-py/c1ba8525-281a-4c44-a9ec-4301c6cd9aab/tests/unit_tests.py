@@ -12,6 +12,8 @@ from aws_cdk.assertions import Template
 
 APP_PATH = Path(__file__).resolve().parents[1] / "app.py"
 APP_SOURCE = APP_PATH.read_text()
+INTEGRATION_TEST_PATH = APP_PATH.parent / "tests" / "integration_tests.py"
+INTEGRATION_TEST_SOURCE = INTEGRATION_TEST_PATH.read_text()
 APP_SPEC = spec_from_file_location("app", APP_PATH)
 APP_MODULE = module_from_spec(APP_SPEC)
 sys.modules["app"] = APP_MODULE
@@ -256,6 +258,25 @@ def test_only_declared_inputs_are_read_by_the_app():
     )
 
 
+def test_integration_tests_use_live_runtime_interfaces_only():
+    forbidden_tokens = [
+        "aws_cdk",
+        "Template",
+        "Template.from_stack",
+        "synth_template",
+        "spec_from_file_location",
+        "module_from_spec",
+        "get_template",
+        "template.json",
+        "Code[\"ZipFile\"]",
+        "APP_PATH",
+    ]
+    assert all(token not in INTEGRATION_TEST_SOURCE for token in forbidden_tokens)
+    assert "boto3" in INTEGRATION_TEST_SOURCE
+    assert "urlopen" in INTEGRATION_TEST_SOURCE
+    assert "describe_stacks" in INTEGRATION_TEST_SOURCE
+
+
 # ── Negative path tests ───────────────────────────────────────────────────────
 
 
@@ -479,9 +500,24 @@ def test_cluster_and_output_contract():
 
     assert len(resources_by_type(template, "AWS::ECS::Cluster")) == 1
     outputs = template["Outputs"]
-    assert "FrontendAlbDns" in outputs
+    assert {
+        "FrontendAlbDns",
+        "ApiUrl",
+        "RestApiId",
+        "QueueUrl",
+        "AnalyticsBucketName",
+        "RuntimeStoreKey",
+        "DatabaseEndpointAddress",
+        "DatabaseInstanceIdentifier",
+        "DatabaseSecretArn",
+        "BackendLambdaName",
+        "EventProcessorLambdaName",
+        "BackendLogGroupName",
+        "EventProcessorLogGroupName",
+    } <= outputs.keys()
     assert outputs["FrontendAlbDns"]["Export"]["Name"] == "FrontendAlbDns"
     assert outputs["FrontendAlbDns"]["Value"]["Fn::GetAtt"][1] == "DNSName"
+    assert outputs["RuntimeStoreKey"]["Value"] == "runtime-db/items.json"
 
 
 def test_single_app_file_and_inline_delivery_shape():
@@ -635,6 +671,8 @@ def test_backend_lambda_code_and_vpc_configuration():
     sg_refs = sg_refs_by_description(template)
     secret_logical_id, _ = single_resource(template, "AWS::SecretsManager::Secret")
     queue_logical_id, _ = single_resource(template, "AWS::SQS::Queue")
+    bucket_logical_id, _ = single_resource(template, "AWS::S3::Bucket")
+    layer_logical_id, layer = single_resource(template, "AWS::Lambda::LayerVersion")
 
     backend = lambdas["backend"]
     code = str(backend["Properties"]["Code"]["ZipFile"])
@@ -646,6 +684,10 @@ def test_backend_lambda_code_and_vpc_configuration():
     assert backend["Properties"]["MemorySize"] == 1024
     assert backend["Properties"]["Timeout"] == 10
     assert backend["Properties"]["ReservedConcurrentExecutions"] == 20
+    assert backend["Properties"]["Layers"] == [{"Ref": layer_logical_id}]
+    assert "pg8000 PostgreSQL driver" in layer["Properties"]["Description"]
+    assert layer["Properties"]["CompatibleRuntimes"] == ["python3.12"]
+    assert layer["Properties"]["CompatibleArchitectures"] == ["arm64"]
     assert backend["Properties"]["VpcConfig"]["SecurityGroupIds"] == [
         sg_refs["Backend service security group"]
     ]
@@ -661,6 +703,7 @@ def test_backend_lambda_code_and_vpc_configuration():
     assert env_vars["EVENTS_DETAIL_TYPE"] == "item.created"
     assert env_vars["DB_SECRET_ARN"] == {"Ref": secret_logical_id}
     assert env_vars["QUEUE_URL"] == {"Ref": queue_logical_id}
+    assert env_vars["ANALYTICS_BUCKET_NAME"] == {"Ref": bucket_logical_id}
 
     assert 'path.endswith("/health")' in code
     assert '{"ok": True}' in code
@@ -677,6 +720,11 @@ def test_backend_lambda_code_and_vpc_configuration():
     assert '"Source": os.environ["EVENTS_SOURCE"]' in code
     assert '"DetailType": os.environ["EVENTS_DETAIL_TYPE"]' in code
     assert re.search(r'"Detail"\s*:\s*json\.dumps\(\{\s*"id"\s*:', code)
+    assert '"event_published": True' in code
+    assert "storage_backend" in code
+    assert "postgresql" in code
+    assert "s3-compat" in code
+    assert "runtime-db/items.json" in code
 
 
 # ── Persistence / eventing / Glue ─────────────────────────────────────────────
