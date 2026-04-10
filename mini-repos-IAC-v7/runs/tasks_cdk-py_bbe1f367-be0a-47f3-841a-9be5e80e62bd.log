@@ -1,0 +1,262 @@
+Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/tasks/cdk-py/bbe1f367-be0a-47f3-841a-9be5e80e62bd FRAMEWORK=cdk-py
+
+
+Starting LocalStack (harness environment)...
+ Network iac-harness-network  Creating
+ Network iac-harness-network  Created
+ Container localstack-harness  Creating
+ Container localstack-harness  Created
+ Container localstack-harness  Starting
+ Container localstack-harness  Started
+Waiting for LocalStack health endpoint: http://localhost:4566/_localstack/health
+LocalStack is healthy.
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Setup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Starting worker container: harness-worker-24034
+e81475b6bd08c1c6da5a66d08f4d2f044bbb43631c5bccaec73a3aee48ca04f9
+Installing dependencies (pip install -r requirements.txt)...
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/c2b0417e-6dd3-456e-b6b1-958fbf5500be
+[32m✅ Step passed: Setup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Syntax / Synth[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Checking for LocalStack references...
+Running cdklocal synth...
+Generating template.json for unit tests...
+[32m✅ Step passed: Syntax / Synth[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Unit tests (pytest)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest unit tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+plugins: cov-7.1.0, typeguard-2.13.3
+collecting ... collected 8 items
+
+tests/unit_tests.py::test_environment_helpers_use_expected_inputs PASSED [ 12%]
+tests/unit_tests.py::test_environment_helpers_honor_explicit_values PASSED [ 25%]
+tests/unit_tests.py::test_inline_lambda_code_declares_metrics_and_sdk_configuration PASSED [ 37%]
+tests/unit_tests.py::test_only_allowed_inputs_are_used_and_no_inline_secret_literals_exist PASSED [ 50%]
+tests/unit_tests.py::test_physical_resource_names_are_not_hardcoded_in_source PASSED [ 62%]
+tests/unit_tests.py::test_stack_is_implemented_only_in_app_py PASSED     [ 75%]
+tests/unit_tests.py::test_build_app_registers_the_stack PASSED           [ 87%]
+tests/unit_tests.py::test_main_synthesizes_the_app PASSED                [100%]
+
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.13-final-0 _______________
+
+Name     Stmts   Miss Branch BrPart  Cover   Missing
+----------------------------------------------------
+app.py      67      0      0      0   100%
+----------------------------------------------------
+TOTAL       67      0      0      0   100%
+Required test coverage of 100% reached. Total coverage: 100.00%
+============================== 8 passed in 44.83s ==============================
+[32m✅ Step passed: Unit tests (pytest)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Deploy (LocalStack)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Bootstrapping (if needed)...
+Running cdklocal deploy...
+
+✨  Synthesis time: 5.64s
+
+SecurityBaselineStack: start: Building e69f08d275cdea64c25388051c5b1afbda97e953ab8476ae41435b6300af5ffb
+SecurityBaselineStack: success: Built e69f08d275cdea64c25388051c5b1afbda97e953ab8476ae41435b6300af5ffb
+SecurityBaselineStack: start: Publishing e69f08d275cdea64c25388051c5b1afbda97e953ab8476ae41435b6300af5ffb:current_account-us-east-1
+SecurityBaselineStack: success: Published e69f08d275cdea64c25388051c5b1afbda97e953ab8476ae41435b6300af5ffb:current_account-us-east-1
+SecurityBaselineStack: deploying... [1/1]
+SecurityBaselineStack: creating CloudFormation changeset...
+SecurityBaselineStack |  0/55 | 6:16:38 PM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack            | SecurityBaselineStack User Initiated
+SecurityBaselineStack |  0/55 | 6:16:38 PM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack            | SecurityBaselineStack 
+SecurityBaselineStack |  0/55 | 6:16:38 PM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                       | CrawlerBucket (CrawlerBucketC8CF2ECB) 
+SecurityBaselineStack |  1/55 | 6:16:38 PM | CREATE_COMPLETE      | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+SecurityBaselineStack |  1/55 | 6:16:38 PM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+SecurityBaselineStack |  1/55 | 6:16:38 PM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret           | DatabaseSecret (DatabaseSecret86DBB7B3) 
+SecurityBaselineStack |  2/55 | 6:16:38 PM | CREATE_COMPLETE      | AWS::Glue::Database                   | CrawlerCatalogDatabase Resource type AWS::Glue::Database is not supported but was deployed as a fallback
+SecurityBaselineStack |  2/55 | 6:16:38 PM | CREATE_IN_PROGRESS   | AWS::Glue::Database                   | CrawlerCatalogDatabase 
+SecurityBaselineStack |  3/55 | 6:16:38 PM | CREATE_COMPLETE      | AWS::S3::Bucket                       | CrawlerBucket (CrawlerBucketC8CF2ECB) 
+SecurityBaselineStack |  3/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | EventBridgePipeRole (EventBridgePipeRoleA69B6AD2) 
+SecurityBaselineStack |  4/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::SecretsManager::Secret           | DatabaseSecret (DatabaseSecret86DBB7B3) 
+SecurityBaselineStack |  4/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                       | IngestQueue (IngestQueue2280FF4E) 
+SecurityBaselineStack |  5/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | EventBridgePipeRole (EventBridgePipeRoleA69B6AD2) 
+SecurityBaselineStack |  6/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::SQS::Queue                       | IngestQueue (IngestQueue2280FF4E) 
+SecurityBaselineStack |  6/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | IngestHandlerLogGroup (IngestHandlerLogGroup0A9D295D) 
+SecurityBaselineStack |  6/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | IngestHandlerRole (IngestHandlerRoleED235F68) 
+SecurityBaselineStack |  7/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | IngestHandlerLogGroup (IngestHandlerLogGroup0A9D295D) 
+SecurityBaselineStack |  7/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | IngestHandlerRole/DefaultPolicy (IngestHandlerRoleDefaultPolicy65C4067A) 
+SecurityBaselineStack |  8/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | IngestHandlerRole (IngestHandlerRoleED235F68) 
+SecurityBaselineStack |  9/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | IngestHandlerRole/DefaultPolicy (IngestHandlerRoleDefaultPolicy65C4067A) 
+SecurityBaselineStack |  9/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway             | SecurityBaselineVpc/IGW (SecurityBaselineVpcIGWF15E932E) 
+SecurityBaselineStack |  9/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                         | SecurityBaselineVpc (SecurityBaselineVpc2493F8D2) 
+SecurityBaselineStack | 10/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::InternetGateway             | SecurityBaselineVpc/IGW (SecurityBaselineVpcIGWF15E932E) 
+SecurityBaselineStack | 10/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment        | SecurityBaselineVpc/VPCGW (SecurityBaselineVpcVPCGW0342CB1F) 
+SecurityBaselineStack | 11/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::VPC                         | SecurityBaselineVpc (SecurityBaselineVpc2493F8D2) 
+SecurityBaselineStack | 12/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment        | SecurityBaselineVpc/VPCGW (SecurityBaselineVpcVPCGW0342CB1F) 
+SecurityBaselineStack | 12/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | SecurityBaselineVpc/PublicSubnet1/RouteTable (SecurityBaselineVpcPublicSubnet1RouteTableCF245328) 
+SecurityBaselineStack | 12/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | SecurityBaselineVpc/PublicSubnet1/DefaultRoute (SecurityBaselineVpcPublicSubnet1DefaultRoute42041090) 
+SecurityBaselineStack | 13/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | SecurityBaselineVpc/PublicSubnet1/RouteTable (SecurityBaselineVpcPublicSubnet1RouteTableCF245328) 
+SecurityBaselineStack | 14/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | SecurityBaselineVpc/PublicSubnet1/DefaultRoute (SecurityBaselineVpcPublicSubnet1DefaultRoute42041090) 
+SecurityBaselineStack | 14/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | SecurityBaselineVpc/PublicSubnet1/Subnet (SecurityBaselineVpcPublicSubnet1SubnetC940F970) 
+SecurityBaselineStack | 14/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | SecurityBaselineVpc/PublicSubnet1/RouteTableAssociation (SecurityBaselineVpcPublicSubnet1RouteTableAssociation9687F79C) 
+SecurityBaselineStack | 15/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | SecurityBaselineVpc/PublicSubnet1/Subnet (SecurityBaselineVpcPublicSubnet1SubnetC940F970) 
+SecurityBaselineStack | 15/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                         | SecurityBaselineVpc/PublicSubnet1/EIP (SecurityBaselineVpcPublicSubnet1EIP202DA3AD) 
+SecurityBaselineStack | 16/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | SecurityBaselineVpc/PublicSubnet1/RouteTableAssociation (SecurityBaselineVpcPublicSubnet1RouteTableAssociation9687F79C) 
+SecurityBaselineStack | 16/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                  | SecurityBaselineVpc/PublicSubnet1/NATGateway (SecurityBaselineVpcPublicSubnet1NATGateway052AF89F) 
+SecurityBaselineStack | 17/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::EIP                         | SecurityBaselineVpc/PublicSubnet1/EIP (SecurityBaselineVpcPublicSubnet1EIP202DA3AD) 
+SecurityBaselineStack | 17/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | SecurityBaselineVpc/PrivateSubnet2/RouteTable (SecurityBaselineVpcPrivateSubnet2RouteTable586D9A0C) 
+SecurityBaselineStack | 18/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::NatGateway                  | SecurityBaselineVpc/PublicSubnet1/NATGateway (SecurityBaselineVpcPublicSubnet1NATGateway052AF89F) 
+SecurityBaselineStack | 18/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | SecurityBaselineVpc/PrivateSubnet2/DefaultRoute (SecurityBaselineVpcPrivateSubnet2DefaultRouteEB2B2C8F) 
+SecurityBaselineStack | 19/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | SecurityBaselineVpc/PrivateSubnet2/RouteTable (SecurityBaselineVpcPrivateSubnet2RouteTable586D9A0C) 
+SecurityBaselineStack | 20/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | SecurityBaselineVpc/PrivateSubnet2/DefaultRoute (SecurityBaselineVpcPrivateSubnet2DefaultRouteEB2B2C8F) 
+SecurityBaselineStack | 20/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | SecurityBaselineVpc/PrivateSubnet2/Subnet (SecurityBaselineVpcPrivateSubnet2SubnetD8A062D5) 
+SecurityBaselineStack | 20/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | SecurityBaselineVpc/PrivateSubnet2/RouteTableAssociation (SecurityBaselineVpcPrivateSubnet2RouteTableAssociation5FD0C434) 
+SecurityBaselineStack | 21/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | SecurityBaselineVpc/PrivateSubnet2/Subnet (SecurityBaselineVpcPrivateSubnet2SubnetD8A062D5) 
+SecurityBaselineStack | 21/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | SecurityBaselineVpc/PrivateSubnet1/RouteTable (SecurityBaselineVpcPrivateSubnet1RouteTable24200CFB) 
+SecurityBaselineStack | 22/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | SecurityBaselineVpc/PrivateSubnet2/RouteTableAssociation (SecurityBaselineVpcPrivateSubnet2RouteTableAssociation5FD0C434) 
+SecurityBaselineStack | 23/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | SecurityBaselineVpc/PrivateSubnet1/RouteTable (SecurityBaselineVpcPrivateSubnet1RouteTable24200CFB) 
+SecurityBaselineStack | 23/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | SecurityBaselineVpc/PrivateSubnet1/Subnet (SecurityBaselineVpcPrivateSubnet1Subnet6556DE54) 
+SecurityBaselineStack | 23/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | SecurityBaselineVpc/PrivateSubnet1/RouteTableAssociation (SecurityBaselineVpcPrivateSubnet1RouteTableAssociation224E8AD5) 
+SecurityBaselineStack | 24/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | SecurityBaselineVpc/PrivateSubnet1/Subnet (SecurityBaselineVpcPrivateSubnet1Subnet6556DE54) 
+SecurityBaselineStack | 25/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | SecurityBaselineVpc/PrivateSubnet1/RouteTableAssociation (SecurityBaselineVpcPrivateSubnet1RouteTableAssociation224E8AD5) 
+SecurityBaselineStack | 25/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | SecurityBaselineVpc/PrivateSubnet1/DefaultRoute (SecurityBaselineVpcPrivateSubnet1DefaultRoute7CDDA53E) 
+SecurityBaselineStack | 25/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | LambdaSecurityGroup (LambdaSecurityGroup0BD9FC99) 
+SecurityBaselineStack | 26/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | SecurityBaselineVpc/PrivateSubnet1/DefaultRoute (SecurityBaselineVpcPrivateSubnet1DefaultRoute7CDDA53E) 
+SecurityBaselineStack | 26/55 | 6:16:39 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | IngestHandler (IngestHandler6F5F26C7) 
+SecurityBaselineStack | 27/55 | 6:16:39 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | LambdaSecurityGroup (LambdaSecurityGroup0BD9FC99) 
+SecurityBaselineStack | 27/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | WorkflowWorkerRole (WorkflowWorkerRoleBF2CA6DD) 
+SecurityBaselineStack | 28/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | IngestHandler (IngestHandler6F5F26C7) 
+SecurityBaselineStack | 28/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | WorkflowWorkerLogGroup (WorkflowWorkerLogGroup04E4F3EC) 
+SecurityBaselineStack | 29/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | WorkflowWorkerRole (WorkflowWorkerRoleBF2CA6DD) 
+SecurityBaselineStack | 29/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | WorkflowWorkerRole/DefaultPolicy (WorkflowWorkerRoleDefaultPolicyDE04ADC0) 
+SecurityBaselineStack | 30/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | WorkflowWorkerLogGroup (WorkflowWorkerLogGroup04E4F3EC) 
+SecurityBaselineStack | 31/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | WorkflowWorkerRole/DefaultPolicy (WorkflowWorkerRoleDefaultPolicyDE04ADC0) 
+SecurityBaselineStack | 32/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::RDS::DBSubnetGroup               | StatefulStoreSubnetGroup Resource type AWS::RDS::DBSubnetGroup is not supported but was deployed as a fallback
+SecurityBaselineStack | 32/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::RDS::DBSubnetGroup               | StatefulStoreSubnetGroup 
+SecurityBaselineStack | 32/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | StatefulStoreSecurityGroup (StatefulStoreSecurityGroupFA39A4C4) 
+SecurityBaselineStack | 32/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | WorkflowWorker (WorkflowWorker475B735B) 
+SecurityBaselineStack | 33/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::RDS::DBInstance                  | StatefulStore Resource type AWS::RDS::DBInstance is not supported but was deployed as a fallback
+SecurityBaselineStack | 33/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::RDS::DBInstance                  | StatefulStore 
+SecurityBaselineStack | 34/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | StatefulStoreSecurityGroup (StatefulStoreSecurityGroupFA39A4C4) 
+SecurityBaselineStack | 34/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | WorkflowStateMachineRole (WorkflowStateMachineRole7A14CB20) 
+SecurityBaselineStack | 35/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | WorkflowWorker (WorkflowWorker475B735B) 
+SecurityBaselineStack | 35/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | WorkflowStateMachineRole/DefaultPolicy (WorkflowStateMachineRoleDefaultPolicyDF3D6D17) 
+SecurityBaselineStack | 36/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | WorkflowStateMachineRole (WorkflowStateMachineRole7A14CB20) 
+SecurityBaselineStack | 36/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine      | WorkflowStateMachine (WorkflowStateMachine67D94DDA) 
+SecurityBaselineStack | 37/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | WorkflowStateMachineRole/DefaultPolicy (WorkflowStateMachineRoleDefaultPolicyDF3D6D17) 
+SecurityBaselineStack | 37/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | EventBridgePipeRole/DefaultPolicy (EventBridgePipeRoleDefaultPolicyEB7EB750) 
+SecurityBaselineStack | 38/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine      | WorkflowStateMachine (WorkflowStateMachine67D94DDA) 
+SecurityBaselineStack | 38/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+SecurityBaselineStack | 39/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | EventBridgePipeRole/DefaultPolicy (EventBridgePipeRoleDefaultPolicyEB7EB750) 
+SecurityBaselineStack | 39/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
+SecurityBaselineStack | 40/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+SecurityBaselineStack | 40/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | IngestHandler/AllowApiGatewayInvoke (IngestHandlerAllowApiGatewayInvoke21E16EA6) 
+SecurityBaselineStack | 41/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::ApiGatewayV2::Api                | IngressHttpApi (IngressHttpApi296E5CE9) Resource type AWS::ApiGatewayV2::Api is not supported but was deployed as a fallback
+SecurityBaselineStack | 41/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Api                | IngressHttpApi (IngressHttpApi296E5CE9) 
+SecurityBaselineStack | 42/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
+SecurityBaselineStack | 43/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | IngestHandler/AllowApiGatewayInvoke (IngestHandlerAllowApiGatewayInvoke21E16EA6) 
+SecurityBaselineStack | 43/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupEgress         | LambdaSecurityGroup/to SecurityBaselineStackStatefulStoreSecurityGroup087D5554:5432 (LambdaSecurityGrouptoSecurityBaselineStackStatefulStoreSecurityGroup087D55545432EBB29CEC) 
+SecurityBaselineStack | 44/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::ApiGatewayV2::Stage              | IngressDefaultStage Resource type AWS::ApiGatewayV2::Stage is not supported but was deployed as a fallback
+SecurityBaselineStack | 44/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Stage              | IngressDefaultStage 
+SecurityBaselineStack | 45/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::ApiGatewayV2::Route              | IngestRoute Resource type AWS::ApiGatewayV2::Route is not supported but was deployed as a fallback
+SecurityBaselineStack | 45/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Route              | IngestRoute 
+SecurityBaselineStack | 46/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::Pipes::Pipe                      | IngestPipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
+SecurityBaselineStack | 46/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                      | IngestPipe 
+SecurityBaselineStack | 47/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::ApiGatewayV2::Integration        | IngestLambdaIntegration Resource type AWS::ApiGatewayV2::Integration is not supported but was deployed as a fallback
+SecurityBaselineStack | 47/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Integration        | IngestLambdaIntegration 
+SecurityBaselineStack | 47/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | SecurityBaselineVpc/PublicSubnet2/RouteTable (SecurityBaselineVpcPublicSubnet2RouteTableCC114DB9) 
+SecurityBaselineStack | 48/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupEgress         | LambdaSecurityGroup/to SecurityBaselineStackStatefulStoreSecurityGroup087D5554:5432 (LambdaSecurityGrouptoSecurityBaselineStackStatefulStoreSecurityGroup087D55545432EBB29CEC) 
+SecurityBaselineStack | 48/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | SecurityBaselineVpc/PublicSubnet2/DefaultRoute (SecurityBaselineVpcPublicSubnet2DefaultRoute66FAA610) 
+SecurityBaselineStack | 49/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | SecurityBaselineVpc/PublicSubnet2/RouteTable (SecurityBaselineVpcPublicSubnet2RouteTableCC114DB9) 
+SecurityBaselineStack | 50/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | SecurityBaselineVpc/PublicSubnet2/DefaultRoute (SecurityBaselineVpcPublicSubnet2DefaultRoute66FAA610) 
+SecurityBaselineStack | 50/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | SecurityBaselineVpc/PublicSubnet2/Subnet (SecurityBaselineVpcPublicSubnet2Subnet0EDE9EDE) 
+SecurityBaselineStack | 50/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | SecurityBaselineVpc/PublicSubnet2/RouteTableAssociation (SecurityBaselineVpcPublicSubnet2RouteTableAssociationA3FF8B61) 
+SecurityBaselineStack | 51/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | SecurityBaselineVpc/PublicSubnet2/Subnet (SecurityBaselineVpcPublicSubnet2Subnet0EDE9EDE) 
+SecurityBaselineStack | 51/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress        | StatefulStoreSecurityGroup/from SecurityBaselineStackLambdaSecurityGroup5584F2D1:5432 (StatefulStoreSecurityGroupfromSecurityBaselineStackLambdaSecurityGroup5584F2D1543258685DDD) 
+SecurityBaselineStack | 52/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::Glue::Crawler                    | SecurityInventoryCrawler Resource type AWS::Glue::Crawler is not supported but was deployed as a fallback
+SecurityBaselineStack | 52/55 | 6:16:41 PM | CREATE_IN_PROGRESS   | AWS::Glue::Crawler                    | SecurityInventoryCrawler 
+SecurityBaselineStack | 53/55 | 6:16:41 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | SecurityBaselineVpc/PublicSubnet2/RouteTableAssociation (SecurityBaselineVpcPublicSubnet2RouteTableAssociationA3FF8B61) 
+SecurityBaselineStack | 54/55 | 6:16:42 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress        | StatefulStoreSecurityGroup/from SecurityBaselineStackLambdaSecurityGroup5584F2D1:5432 (StatefulStoreSecurityGroupfromSecurityBaselineStackLambdaSecurityGroup5584F2D1543258685DDD) 
+SecurityBaselineStack | 55/55 | 6:16:42 PM | CREATE_COMPLETE      | AWS::CloudFormation::Stack            | SecurityBaselineStack 
+
+ ✅  SecurityBaselineStack
+
+✨  Deployment time: 5.42s
+
+Stack ARN:
+arn:aws:cloudformation:us-east-1:000000000000:stack/SecurityBaselineStack/a3bf6bae-81d6-4596-8845-9ab660bcd16d
+
+✨  Total time: 11.07s
+
+[32m✅ Step passed: Deploy (LocalStack)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Integration tests[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest integration tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+plugins: cov-7.1.0, typeguard-2.13.3
+collecting ... collected 8 items
+
+tests/integration_tests.py::test_acceptance_resource_counts PASSED       [ 12%]
+tests/integration_tests.py::test_lambda_runspaces_use_zip_runtime_and_only_required_wiring PASSED [ 25%]
+tests/integration_tests.py::test_log_groups_match_the_two_lambda_runspaces_and_api_logs_are_explicit PASSED [ 37%]
+tests/integration_tests.py::test_api_gateway_pipe_and_state_machine_wiring_are_exact PASSED [ 50%]
+tests/integration_tests.py::test_network_topology_and_security_group_isolation PASSED [ 62%]
+tests/integration_tests.py::test_rds_secret_and_crawler_target_configuration PASSED [ 75%]
+tests/integration_tests.py::test_iam_permissions_are_scoped_to_each_runspace PASSED [ 87%]
+tests/integration_tests.py::test_state_machine_definition_and_no_retain_behaviour PASSED [100%]
+
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.13-final-0 _______________
+
+Name     Stmts   Miss Branch BrPart  Cover   Missing
+----------------------------------------------------
+app.py      67      0      0      0   100%
+----------------------------------------------------
+TOTAL       67      0      0      0   100%
+Required test coverage of 100% reached. Total coverage: 100.00%
+============================== 8 passed in 46.80s ==============================
+[32m✅ Step passed: Integration tests[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Destroy / Cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running cdklocal destroy...
+Cleaning up worker container: harness-worker-24034
+[32m✅ Step passed: Destroy / Cleanup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  HARNESS SUMMARY[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ setup[0m
+[32m✅ syntax/plan[0m
+[32m✅ unit tests[0m
+[32m✅ deploy (localstack)[0m
+[32m✅ integration tests[0m
+[32m✅ destroy/cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ All steps passed.[0m
+
+Log saved to: /Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/runs/tasks_cdk-py_bbe1f367-be0a-47f3-841a-9be5e80e62bd.log
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+Stopping LocalStack...
+ Container localstack-harness  Stopping
+ Container localstack-harness  Stopped
+ Container localstack-harness  Removing
+ Container localstack-harness  Removed
+ Network iac-harness-network  Removing
+ Network iac-harness-network  Removed
