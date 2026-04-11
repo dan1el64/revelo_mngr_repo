@@ -1,0 +1,244 @@
+Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/tasks/cdk-py/cdee2246-5298-49f0-bab2-85bd532f454d FRAMEWORK=cdk-py
+
+
+Starting LocalStack (harness environment)...
+ Network iac-harness-network  Creating
+ Network iac-harness-network  Created
+ Container localstack-harness  Creating
+ Container localstack-harness  Created
+ Container localstack-harness  Starting
+ Container localstack-harness  Started
+Waiting for LocalStack health endpoint: http://localhost:4566/_localstack/health
+LocalStack is healthy.
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Setup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Starting worker container: harness-worker-55708
+1d14de426423862192387e45eded2a0ed073b9fa6fad600a488770f98d5b1c80
+Installing dependencies (pip install -r requirements.txt)...
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/f4891fa8-d93d-43ba-9325-52f1b1f45225
+[32m✅ Step passed: Setup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Syntax / Synth[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Checking for LocalStack references...
+Running cdklocal synth...
+Generating template.json for unit tests...
+[32m✅ Step passed: Syntax / Synth[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Unit tests (pytest)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest unit tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+plugins: typeguard-2.13.3
+collecting ... collected 14 items
+
+tests/unit_tests.py::test_vpc_subnets_nat_and_endpoints_are_exact PASSED [  7%]
+tests/unit_tests.py::test_frontend_bucket_cloudfront_oac_and_policy PASSED [ 14%]
+tests/unit_tests.py::test_backend_lambda_api_gateway_and_logs PASSED     [ 21%]
+tests/unit_tests.py::test_database_secret_and_initializer PASSED         [ 28%]
+tests/unit_tests.py::test_security_groups_are_least_privilege_for_database_path PASSED [ 35%]
+tests/unit_tests.py::test_region_and_endpoint_defaults_and_overrides_are_reflected_in_lambda_environment PASSED [ 42%]
+tests/unit_tests.py::test_aws_credentials_inputs_are_supported_without_lambda_leakage PASSED [ 50%]
+tests/unit_tests.py::test_template_has_no_resource_retention_policies PASSED [ 57%]
+tests/unit_tests.py::test_stack_termination_protection_is_disabled PASSED [ 64%]
+tests/unit_tests.py::test_lambda_deployments_are_zip_assets PASSED       [ 71%]
+tests/unit_tests.py::test_lambda_asset_bundling_includes_postgres_dependency PASSED [ 78%]
+tests/unit_tests.py::test_enrichment_lambda_asset_bundling_produces_zip_source PASSED [ 85%]
+tests/unit_tests.py::test_resource_names_are_deterministic PASSED        [ 92%]
+tests/unit_tests.py::test_single_file_infrastructure_constraint PASSED   [100%]
+
+============================= 14 passed in 15.44s ==============================
+[32m✅ Step passed: Unit tests (pytest)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Deploy (LocalStack)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Bootstrapping (if needed)...
+Running cdklocal deploy...
+
+✨  Synthesis time: 6.83s
+
+ThreeTierStack: start: Building 694296efd6634ba860eb23fb67cdc9c0793fb400005d067d98e15975c41d5a81
+ThreeTierStack: success: Built 694296efd6634ba860eb23fb67cdc9c0793fb400005d067d98e15975c41d5a81
+ThreeTierStack: start: Building 6595c655836aacbf30f1e8cfc68fd4d34178f6eddbd93ee042999d88e879e0fa
+ThreeTierStack: success: Built 6595c655836aacbf30f1e8cfc68fd4d34178f6eddbd93ee042999d88e879e0fa
+ThreeTierStack: start: Building 06072ca8a0fcbeae5ffc23f7bd7655dcbf021412fb7032bf5d04d1dc0098dc40
+ThreeTierStack: success: Built 06072ca8a0fcbeae5ffc23f7bd7655dcbf021412fb7032bf5d04d1dc0098dc40
+ThreeTierStack: start: Publishing 694296efd6634ba860eb23fb67cdc9c0793fb400005d067d98e15975c41d5a81:000000000000-us-east-1
+ThreeTierStack: start: Building 1548a8004362a204bc8e510e41154724676a16a6ee1c91529d09055db019a55c
+ThreeTierStack: success: Built 1548a8004362a204bc8e510e41154724676a16a6ee1c91529d09055db019a55c
+ThreeTierStack: start: Publishing 1548a8004362a204bc8e510e41154724676a16a6ee1c91529d09055db019a55c:000000000000-us-east-1
+ThreeTierStack: start: Publishing 6595c655836aacbf30f1e8cfc68fd4d34178f6eddbd93ee042999d88e879e0fa:000000000000-us-east-1
+ThreeTierStack: start: Publishing 06072ca8a0fcbeae5ffc23f7bd7655dcbf021412fb7032bf5d04d1dc0098dc40:000000000000-us-east-1
+ThreeTierStack: success: Published 1548a8004362a204bc8e510e41154724676a16a6ee1c91529d09055db019a55c:000000000000-us-east-1
+ThreeTierStack: success: Published 6595c655836aacbf30f1e8cfc68fd4d34178f6eddbd93ee042999d88e879e0fa:000000000000-us-east-1
+ThreeTierStack: success: Published 694296efd6634ba860eb23fb67cdc9c0793fb400005d067d98e15975c41d5a81:000000000000-us-east-1
+ThreeTierStack: success: Published 06072ca8a0fcbeae5ffc23f7bd7655dcbf021412fb7032bf5d04d1dc0098dc40:000000000000-us-east-1
+ThreeTierStack: deploying... [1/1]
+ThreeTierStack: creating CloudFormation changeset...
+ThreeTierStack |  0/78 | 3:46:12 AM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack                | ThreeTierStack User Initiated
+ThreeTierStack |  0/78 | 3:46:12 AM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack                | ThreeTierStack 
+ThreeTierStack |  0/78 | 3:46:12 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                             | Vpc 
+ThreeTierStack |  0/78 | 3:46:12 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                          | PrivateSubnetA 
+ThreeTierStack |  1/78 | 3:46:12 AM | CREATE_COMPLETE      | AWS::EC2::VPC                             | Vpc 
+ThreeTierStack |  2/78 | 3:46:12 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                          | PrivateSubnetA 
+ThreeTierStack |  2/78 | 3:46:12 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                          | PrivateSubnetB 
+ThreeTierStack |  2/78 | 3:46:12 AM | CREATE_IN_PROGRESS   | AWS::RDS::DBSubnetGroup                   | DatabaseSubnetGroup 
+ThreeTierStack |  3/78 | 3:46:12 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                          | PrivateSubnetB 
+ThreeTierStack |  3/78 | 3:46:12 AM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret               | DatabaseCredentialsSecret 
+ThreeTierStack |  4/78 | 3:46:12 AM | CREATE_COMPLETE      | AWS::RDS::DBSubnetGroup                   | DatabaseSubnetGroup Resource type AWS::RDS::DBSubnetGroup is not supported but was deployed as a fallback
+ThreeTierStack |  5/78 | 3:46:12 AM | CREATE_COMPLETE      | AWS::SecretsManager::Secret               | DatabaseCredentialsSecret 
+ThreeTierStack |  5/78 | 3:46:12 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                   | DatabaseSecurityGroup 
+ThreeTierStack |  5/78 | 3:46:12 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                       | BackendLambdaLogGroup 
+ThreeTierStack |  6/78 | 3:46:12 AM | CREATE_COMPLETE      | AWS::RDS::DBInstance                      | DatabaseInstance Resource type AWS::RDS::DBInstance is not supported but was deployed as a fallback
+ThreeTierStack |  6/78 | 3:46:12 AM | CREATE_IN_PROGRESS   | AWS::RDS::DBInstance                      | DatabaseInstance 
+ThreeTierStack |  7/78 | 3:46:12 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                   | DatabaseSecurityGroup 
+ThreeTierStack |  7/78 | 3:46:12 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | BackendLambdaRole 
+ThreeTierStack |  8/78 | 3:46:12 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                       | BackendLambdaLogGroup 
+ThreeTierStack |  8/78 | 3:46:12 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                   | BackendLambdaSecurityGroup 
+ThreeTierStack |  9/78 | 3:46:12 AM | CREATE_COMPLETE      | AWS::IAM::Role                            | BackendLambdaRole 
+ThreeTierStack |  9/78 | 3:46:12 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                     | BackendApiLambda 
+ThreeTierStack | 10/78 | 3:46:12 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                   | BackendLambdaSecurityGroup 
+ThreeTierStack | 10/78 | 3:46:14 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                   | AlbSecurityGroup 
+ThreeTierStack | 11/78 | 3:46:14 AM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::TargetGroup  | BackendLambdaTargetGroup Resource type AWS::ElasticLoadBalancingV2::TargetGroup is not supported but was deployed as a fallback
+ThreeTierStack | 11/78 | 3:46:14 AM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::TargetGroup  | BackendLambdaTargetGroup 
+ThreeTierStack | 12/78 | 3:46:14 AM | CREATE_COMPLETE      | AWS::Lambda::Function                     | BackendApiLambda 
+ThreeTierStack | 13/78 | 3:46:14 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                   | AlbSecurityGroup 
+ThreeTierStack | 13/78 | 3:46:14 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                          | PublicSubnetA 
+ThreeTierStack | 14/78 | 3:46:14 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                          | PublicSubnetA 
+ThreeTierStack | 14/78 | 3:46:14 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                          | PublicSubnetB 
+ThreeTierStack | 14/78 | 3:46:14 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission                   | AlbInvokeBackendPermission 
+ThreeTierStack | 15/78 | 3:46:14 AM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::ListenerRule | AlbBackendListenerRule Resource type AWS::ElasticLoadBalancingV2::ListenerRule is not supported but was deployed as a fallback
+ThreeTierStack | 15/78 | 3:46:14 AM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::ListenerRule | AlbBackendListenerRule 
+ThreeTierStack | 16/78 | 3:46:14 AM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::Listener     | AlbHttpListener Resource type AWS::ElasticLoadBalancingV2::Listener is not supported but was deployed as a fallback
+ThreeTierStack | 16/78 | 3:46:14 AM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::Listener     | AlbHttpListener 
+ThreeTierStack | 17/78 | 3:46:14 AM | CREATE_COMPLETE      | AWS::ElasticLoadBalancingV2::LoadBalancer | ApplicationLoadBalancer Resource type AWS::ElasticLoadBalancingV2::LoadBalancer is not supported but was deployed as a fallback
+ThreeTierStack | 17/78 | 3:46:14 AM | CREATE_IN_PROGRESS   | AWS::ElasticLoadBalancingV2::LoadBalancer | ApplicationLoadBalancer 
+ThreeTierStack | 18/78 | 3:46:14 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                          | PublicSubnetB 
+ThreeTierStack | 18/78 | 3:46:14 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                       | ApiGatewayAccessLogGroup 
+ThreeTierStack | 19/78 | 3:46:14 AM | CREATE_COMPLETE      | AWS::Lambda::Permission                   | AlbInvokeBackendPermission 
+ThreeTierStack | 19/78 | 3:46:14 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | ApiGatewayLogsRole 
+ThreeTierStack | 20/78 | 3:46:14 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                       | ApiGatewayAccessLogGroup 
+ThreeTierStack | 20/78 | 3:46:14 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Account                  | ApiGatewayAccount 
+ThreeTierStack | 21/78 | 3:46:14 AM | CREATE_COMPLETE      | AWS::IAM::Role                            | ApiGatewayLogsRole 
+ThreeTierStack | 21/78 | 3:46:14 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi                  | BackendRestApi 
+ThreeTierStack | 22/78 | 3:46:14 AM | CREATE_COMPLETE      | AWS::ApiGateway::Account                  | ApiGatewayAccount 
+ThreeTierStack | 22/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission                   | ApiGatewayInvokeBackendPermission 
+ThreeTierStack | 23/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi                  | BackendRestApi 
+ThreeTierStack | 23/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource                 | HealthResource 
+ThreeTierStack | 24/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::Lambda::Permission                   | ApiGatewayInvokeBackendPermission 
+ThreeTierStack | 24/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method                   | HealthGetMethod 
+ThreeTierStack | 25/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::ApiGateway::Resource                 | HealthResource 
+ThreeTierStack | 25/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource                 | ItemsResource 
+ThreeTierStack | 26/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::ApiGateway::Method                   | HealthGetMethod 
+ThreeTierStack | 26/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method                   | ItemsPostMethod 
+ThreeTierStack | 27/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::ApiGateway::Resource                 | ItemsResource 
+ThreeTierStack | 27/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment               | BackendApiDeployment 
+ThreeTierStack | 28/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::ApiGateway::Method                   | ItemsPostMethod 
+ThreeTierStack | 28/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage                    | BackendApiProdStage 
+ThreeTierStack | 29/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment               | BackendApiDeployment 
+ThreeTierStack | 29/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupEgress             | BackendHttpsEgress 
+ThreeTierStack | 30/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::ApiGateway::Stage                    | BackendApiProdStage 
+ThreeTierStack | 30/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupEgress             | BackendToDatabaseEgress 
+ThreeTierStack | 31/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupEgress             | BackendHttpsEgress 
+ThreeTierStack | 31/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                           | CloudTrailDeliveryBucket 
+ThreeTierStack | 32/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::CDK::Metadata                        | CDKMetadata/Default (CDKMetadata) 
+ThreeTierStack | 32/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                        | CDKMetadata/Default (CDKMetadata) 
+ThreeTierStack | 33/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupEgress             | BackendToDatabaseEgress 
+ThreeTierStack | 33/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::S3::BucketPolicy                     | CloudTrailDeliveryBucketPolicy 
+ThreeTierStack | 34/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::S3::Bucket                           | CloudTrailDeliveryBucket 
+ThreeTierStack | 34/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                       | CloudTrailLogGroup 
+ThreeTierStack | 35/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::S3::BucketPolicy                     | CloudTrailDeliveryBucketPolicy 
+ThreeTierStack | 35/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | CloudTrailLogsRole 
+ThreeTierStack | 36/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                       | CloudTrailLogGroup 
+ThreeTierStack | 36/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPCEndpoint                     | CloudWatchLogsEndpoint 
+ThreeTierStack | 37/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::Config::ConfigRule                   | CloudTrailEnabledRule Resource type AWS::Config::ConfigRule is not supported but was deployed as a fallback
+ThreeTierStack | 37/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::Config::ConfigRule                   | CloudTrailEnabledRule 
+ThreeTierStack | 38/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::CloudTrail::Trail                    | ManagementTrail Resource type AWS::CloudTrail::Trail is not supported but was deployed as a fallback
+ThreeTierStack | 38/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::CloudTrail::Trail                    | ManagementTrail 
+ThreeTierStack | 39/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::IAM::Role                            | CloudTrailLogsRole 
+ThreeTierStack | 39/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                           | ConfigDeliveryBucket 
+ThreeTierStack | 40/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::EC2::VPCEndpoint                     | CloudWatchLogsEndpoint 
+ThreeTierStack | 40/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | ConfigRecorderRole 
+ThreeTierStack | 41/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::S3::Bucket                           | ConfigDeliveryBucket 
+ThreeTierStack | 41/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress            | DatabaseFromBackendIngress 
+ThreeTierStack | 42/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::Config::DeliveryChannel              | ConfigDeliveryChannel Resource type AWS::Config::DeliveryChannel is not supported but was deployed as a fallback
+ThreeTierStack | 42/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::Config::DeliveryChannel              | ConfigDeliveryChannel 
+ThreeTierStack | 43/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::Config::ConfigurationRecorder        | ConfigurationRecorder Resource type AWS::Config::ConfigurationRecorder is not supported but was deployed as a fallback
+ThreeTierStack | 43/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::Config::ConfigurationRecorder        | ConfigurationRecorder 
+ThreeTierStack | 44/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::IAM::Role                            | ConfigRecorderRole 
+ThreeTierStack | 44/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                            | DatabaseInitLambdaRole 
+ThreeTierStack | 45/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress            | DatabaseFromBackendIngress 
+ThreeTierStack | 45/78 | 3:46:15 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                     | DatabaseInitLambda 
+ThreeTierStack | 46/78 | 3:46:15 AM | CREATE_COMPLETE      | AWS::IAM::Role                            | DatabaseInitLambdaRole 
+ThreeTierStack | 46/78 | 3:46:16 AM | CREATE_IN_PROGRESS   | AWS::CloudFormation::CustomResource       | DatabaseInitializer 
+ThreeTierStack | 47/78 | 3:46:16 AM | CREATE_COMPLETE      | AWS::Lambda::Function                     | DatabaseInitLambda 
+ThreeTierStack | 48/78 | 3:46:25 AM | ROLLBACK_COMPLETE    | AWS::CloudFormation::Stack                | ThreeTierStack 
+ThreeTierStack | 48/78 | 3:46:25 AM | CREATE_FAILED        | AWS::CloudFormation::Stack                | ThreeTierStack 
+ThreeTierStack | 48/78 | 3:46:25 AM | CREATE_FAILED        | AWS::CloudFormation::CustomResource       | DatabaseInitializer See CloudWatch Logs for details
+
+Failed resources:
+ThreeTierStack | 3:46:25 AM | CREATE_FAILED        | AWS::CloudFormation::CustomResource       | DatabaseInitializer See CloudWatch Logs for details
+❌  ThreeTierStack failed: ToolkitError: The stack named ThreeTierStack failed creation, it may need to be manually deleted from the AWS console: ROLLBACK_COMPLETE: See CloudWatch Logs for details
+[31m❌ Step failed: Deploy (LocalStack)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Integration tests[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest integration tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+plugins: typeguard-2.13.3
+collecting ... collected 7 items
+
+tests/integration_tests.py::test_observability_config_and_cloudtrail_wiring PASSED [ 14%]
+tests/integration_tests.py::test_async_workflow_queue_pipe_and_state_machine_are_connected PASSED [ 28%]
+tests/integration_tests.py::test_pipe_role_permissions_are_scoped_to_queue_enrichment_and_state_machine PASSED [ 42%]
+tests/integration_tests.py::test_alb_http_listener_forwards_to_backend_lambda_target PASSED [ 57%]
+tests/integration_tests.py::test_no_vpc_link_or_alb_certificate_resources_are_defined PASSED [ 71%]
+tests/integration_tests.py::test_api_gateway_and_alb_have_lambda_invoke_permissions PASSED [ 85%]
+tests/integration_tests.py::test_database_initializer_role_is_dedicated_and_scoped PASSED [100%]
+
+============================== 7 passed in 9.60s ===============================
+[32m✅ Step passed: Integration tests[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Destroy / Cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running cdklocal destroy...
+Cleaning up worker container: harness-worker-55708
+[32m✅ Step passed: Destroy / Cleanup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  HARNESS SUMMARY[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ setup[0m
+[32m✅ syntax/plan[0m
+[32m✅ unit tests[0m
+[31m❌ deploy (localstack)[0m
+[32m✅ integration tests[0m
+[32m✅ destroy/cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[31m❌ 1 step(s) failed.[0m
+
+Log saved to: ../../../runs/tasks_cdk-py_cdee2246-5298-49f0-bab2-85bd532f454d-rerun4.log
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+Stopping LocalStack...
+ Container localstack-harness  Stopping
+ Container localstack-harness  Stopped
+ Container localstack-harness  Removing
+ Container localstack-harness  Removed
+ Network iac-harness-network  Removing
+ Network iac-harness-network  Removed

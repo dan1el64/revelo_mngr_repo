@@ -1,0 +1,106 @@
+Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/tasks/cdk-py/cdee2246-5298-49f0-bab2-85bd532f454d FRAMEWORK=cdk-py
+
+
+Starting LocalStack (harness environment)...
+ Container localstack-harness  Creating
+ Container localstack-harness  Created
+ Container localstack-harness  Starting
+ Container localstack-harness  Started
+Waiting for LocalStack health endpoint: http://localhost:4566/_localstack/health
+LocalStack is healthy.
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Setup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Starting worker container: harness-worker-49531
+47aef9f0a8112095e8c99915af2cc09fba371c98393ab2bb25d487a484d70b59
+Installing dependencies (pip install -r requirements.txt)...
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/b038bde7-8687-4d8f-a819-638365a2b487
+[32m✅ Step passed: Setup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Syntax / Synth[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Checking for LocalStack references...
+Running cdklocal synth...
+Generating template.json for unit tests...
+[32m✅ Step passed: Syntax / Synth[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Unit tests (pytest)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest unit tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+plugins: typeguard-2.13.3
+collecting ... collected 14 items
+
+tests/unit_tests.py::test_vpc_subnets_nat_and_endpoints_are_exact PASSED [  7%]
+tests/unit_tests.py::test_frontend_bucket_cloudfront_oac_and_policy PASSED [ 14%]
+tests/unit_tests.py::test_backend_lambda_api_gateway_and_logs PASSED     [ 21%]
+tests/unit_tests.py::test_database_secret_and_initializer PASSED         [ 28%]
+tests/unit_tests.py::test_security_groups_are_least_privilege_for_database_path PASSED [ 35%]
+tests/unit_tests.py::test_region_and_endpoint_defaults_and_overrides_are_reflected_in_lambda_environment PASSED [ 42%]
+tests/unit_tests.py::test_aws_credentials_inputs_are_supported_without_lambda_leakage PASSED [ 50%]
+tests/unit_tests.py::test_template_has_no_resource_retention_policies PASSED [ 57%]
+tests/unit_tests.py::test_stack_termination_protection_is_disabled PASSED [ 64%]
+tests/unit_tests.py::test_lambda_deployments_are_zip_assets PASSED       [ 71%]
+tests/unit_tests.py::test_lambda_asset_bundling_includes_postgres_dependency PASSED [ 78%]
+tests/unit_tests.py::test_enrichment_lambda_asset_bundling_produces_zip_source PASSED [ 85%]
+tests/unit_tests.py::test_resource_names_are_deterministic PASSED        [ 92%]
+tests/unit_tests.py::test_single_file_infrastructure_constraint PASSED   [100%]
+
+============================== 14 passed in 8.25s ==============================
+[32m✅ Step passed: Unit tests (pytest)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Deploy (LocalStack)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Bootstrapping (if needed)...
+Running cdklocal deploy...
+
+✨  Synthesis time: 6.88s
+
+current credentials could not be used to assume 'arn:aws:iam::000000000000:role/cdk-hnb659fds-deploy-role-000000000000-us-east-1', but are for the right account. Proceeding anyway.
+ThreeTierStack: connect EHOSTUNREACH 10.0.2.20:4566
+[31m❌ Step failed: Deploy (LocalStack)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Integration tests[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest integration tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+plugins: typeguard-2.13.3
+collecting ... collected 7 items
+
+tests/integration_tests.py::test_observability_config_and_cloudtrail_wiring PASSED [ 14%]
+tests/integration_tests.py::test_async_workflow_queue_pipe_and_state_machine_are_connected PASSED [ 28%]
+tests/integration_tests.py::test_pipe_role_permissions_are_scoped_to_queue_enrichment_and_state_machine PASSED [ 42%]
+tests/integration_tests.py::test_alb_http_listener_forwards_to_backend_lambda_target PASSED [ 57%]
+tests/integration_tests.py::test_no_vpc_link_or_alb_certificate_resources_are_defined PASSED [ 71%]
+tests/integration_tests.py::test_api_gateway_and_alb_have_lambda_invoke_permissions PASSED [ 85%]
+tests/integration_tests.py::test_database_initializer_role_is_dedicated_and_scoped PASSED [100%]
+
+============================== 7 passed in 6.76s ===============================
+[32m✅ Step passed: Integration tests[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Destroy / Cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running cdklocal destroy...
+
+Removing worker container: harness-worker-49531
+Cleaning up worker container: harness-worker-49531
+harness-worker-49531
+
+Stopping LocalStack...
+ Network iac-harness-network  Removing
+[32m✅ Step passed: Destroy / Cleanup[0m
+ Network iac-harness-network  Removed
