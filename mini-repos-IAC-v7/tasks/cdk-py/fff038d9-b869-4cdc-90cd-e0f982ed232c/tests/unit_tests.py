@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import sys
 import types
+from decimal import Decimal
 
 import aws_cdk as cdk
 from aws_cdk.assertions import Template
@@ -421,7 +422,13 @@ def test_worker_and_enricher_lambda_logic(monkeypatch):
 
         def get_item(self, **kwargs):
             self.get_requests.append(kwargs)
-            return {"Item": {"pk": kwargs["Key"]["pk"], "status": "RECEIVED"}}
+            return {
+                "Item": {
+                    "pk": kwargs["Key"]["pk"],
+                    "status": "RECEIVED",
+                    "ttl": Decimal("123"),
+                }
+            }
 
         def update_item(self, **kwargs):
             self.updates.append(kwargs)
@@ -502,6 +509,7 @@ def test_worker_and_enricher_lambda_logic(monkeypatch):
     payload = json.loads(stored_object["Body"].decode("utf-8"))
     assert payload["requestId"] == "req-123"
     assert payload["audit"]["status"] == "RECEIVED"
+    assert payload["audit"]["ttl"] == 123
     assert payload["payload"] == {"a": 1}
 
     assert len(fake_boto3.events.entries) == 1

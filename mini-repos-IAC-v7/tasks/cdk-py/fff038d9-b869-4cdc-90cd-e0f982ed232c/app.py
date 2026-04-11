@@ -97,6 +97,7 @@ def handler(event, _context):
 WORKER_LAMBDA_CODE = """
 import json
 import os
+from decimal import Decimal
 from datetime import datetime, timezone
 
 import boto3
@@ -112,6 +113,12 @@ def _resource(service_name):
     endpoint = os.environ.get("AWS_ENDPOINT")
     kwargs = {"endpoint_url": endpoint} if endpoint else {}
     return boto3.resource(service_name, **kwargs)
+
+
+def _json_default(value):
+    if isinstance(value, Decimal):
+        return int(value) if value % 1 == 0 else float(value)
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
 
 
 def handler(event, _context):
@@ -138,7 +145,7 @@ def handler(event, _context):
         s3_client.put_object(
             Bucket=os.environ["PROCESSED_BUCKET_NAME"],
             Key=object_key,
-            Body=json.dumps(processed_record).encode("utf-8"),
+            Body=json.dumps(processed_record, default=_json_default).encode("utf-8"),
             ContentType="application/json",
         )
 
