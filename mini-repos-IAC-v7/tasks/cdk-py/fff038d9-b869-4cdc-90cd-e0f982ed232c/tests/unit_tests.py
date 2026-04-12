@@ -314,6 +314,7 @@ def test_lambda_resource_contract(monkeypatch):
     _, event_source_mapping = find_single_resource(template_json, "AWS::Lambda::EventSourceMapping")
     assert event_source_mapping["Properties"]["BatchSize"] == 10
     assert event_source_mapping["Properties"]["MaximumBatchingWindowInSeconds"] == 5
+    assert event_source_mapping["Properties"]["Enabled"] is False
     assert event_source_mapping["Properties"]["FunctionName"] == {"Ref": worker_lambda_id}
 
     assert lambda_permissions
@@ -391,6 +392,9 @@ def test_ingest_lambda_logic(monkeypatch):
 
     invalid = handler({"body": "not-json"}, None)
     assert invalid["statusCode"] == 400
+
+    oversized = handler({"body": json.dumps("x" * 262145)}, None)
+    assert oversized["statusCode"] == 413
 
     response = handler({"body": json.dumps({"hello": "world"})}, None)
     body = json.loads(response["body"])
@@ -532,19 +536,28 @@ def test_worker_and_enricher_lambda_logic(monkeypatch):
 
     enricher_handler = load_inline_handler(app_module.ENRICHER_LAMBDA_CODE, NoopBoto3())
     enriched = enricher_handler({"body": json.dumps({"requestId": "req-123"})}, None)
-    assert enriched["requestId"] == "req-123"
-    assert enriched["enriched"] is True
-    assert "timestamp" in enriched
+    assert enriched["detail"]["requestId"] == "req-123"
+    assert enriched["detail"]["enriched"] is True
+    assert "timestamp" in enriched["detail"]
+
+    eventbridge_event = enricher_handler(
+        {"body": json.dumps({"detail": {"requestId": "req-456"}})}, None
+    )
+    assert eventbridge_event["detail"]["requestId"] == "req-456"
+    assert eventbridge_event["detail"]["enriched"] is True
+
+    pipe_batch_event = enricher_handler(
+        [{"body": json.dumps({"detail": {"requestId": "req-789"}})}], None
+    )
+    assert pipe_batch_event["detail"]["requestId"] == "req-789"
+    assert pipe_batch_event["detail"]["enriched"] is True
 
 
 def test_eventing_and_state_machine_contract(monkeypatch):
     _app_module, _app, _stack, template_json = synthesize(monkeypatch)
     queue_resources = resources_by_type(template_json, "AWS::SQS::Queue")
-    queue_id, _ = find_single_resource(
-        template_json,
-        "AWS::SQS::Queue",
-        lambda _id, res: res.get("Properties", {}).get("VisibilityTimeout") == 60,
-    )
+    _, event_source_mapping = find_single_resource(template_json, "AWS::Lambda::EventSourceMapping")
+    ingestion_queue_id = event_source_mapping["Properties"]["EventSourceArn"]["Fn::GetAtt"][0]
     enricher_lambda_id, _ = find_single_resource(
         template_json,
         "AWS::Lambda::Function",
@@ -558,9 +571,13 @@ def test_eventing_and_state_machine_contract(monkeypatch):
     _, pipe = find_single_resource(template_json, "AWS::Pipes::Pipe")
     _, subscription = find_single_resource(template_json, "AWS::SNS::Subscription")
     notifications_topic_id, _ = find_single_resource(template_json, "AWS::SNS::Topic")
+    processing_queue_id = pipe["Properties"]["Source"]["Fn::GetAtt"][0]
 
-    assert len(queue_resources) == 2
-    notifications_queue_ids = set(queue_resources) - {queue_id}
+    assert len(queue_resources) == 3
+    assert ingestion_queue_id in queue_resources
+    assert processing_queue_id in queue_resources
+    assert processing_queue_id != ingestion_queue_id
+    notifications_queue_ids = set(queue_resources) - {ingestion_queue_id, processing_queue_id}
     assert len(notifications_queue_ids) == 1
 
     assert bus["Properties"]["Name"] != "default"
@@ -569,7 +586,7 @@ def test_eventing_and_state_machine_contract(monkeypatch):
         "detail-type": ["ProcessingComplete"],
     }
     assert len(rule["Properties"]["Targets"]) == 1
-    assert rule["Properties"]["Targets"][0]["Arn"] == {"Fn::GetAtt": [state_machine_id, "Arn"]}
+    assert rule["Properties"]["Targets"][0]["Arn"] == {"Fn::GetAtt": [processing_queue_id, "Arn"]}
 
     definition = json.loads(state_machine["Properties"]["DefinitionString"])
     assert state_machine["Properties"]["StateMachineType"] == "STANDARD"
@@ -584,7 +601,7 @@ def test_eventing_and_state_machine_contract(monkeypatch):
         "Ref": notifications_topic_id
     }
 
-    assert pipe["Properties"]["Source"] == {"Fn::GetAtt": [queue_id, "Arn"]}
+    assert pipe["Properties"]["Source"] == {"Fn::GetAtt": [processing_queue_id, "Arn"]}
     assert pipe["Properties"]["Enrichment"] == {"Fn::GetAtt": [enricher_lambda_id, "Arn"]}
     assert pipe["Properties"]["Target"] == {"Fn::GetAtt": [state_machine_id, "Arn"]}
     assert pipe["Properties"]["TargetParameters"]["StepFunctionStateMachineParameters"]["InvocationType"] == "FIRE_AND_FORGET"
@@ -624,12 +641,10 @@ def test_persistence_analytics_outputs_and_destroyability(monkeypatch):
     _, crawler = find_single_resource(template_json, "AWS::Glue::Crawler")
 
     assert stack.termination_protection is False
-    assert len(queue_resources) == 2
-    ingestion_queue_id, ingestion_queue = find_single_resource(
-        template_json,
-        "AWS::SQS::Queue",
-        lambda _id, res: res.get("Properties", {}).get("VisibilityTimeout") == 60,
-    )
+    assert len(queue_resources) == 3
+    _, event_source_mapping = find_single_resource(template_json, "AWS::Lambda::EventSourceMapping")
+    ingestion_queue_id = event_source_mapping["Properties"]["EventSourceArn"]["Fn::GetAtt"][0]
+    ingestion_queue = queue_resources[ingestion_queue_id]
     assert ingestion_queue["Properties"]["MessageRetentionPeriod"] == 345600
     assert "FifoQueue" not in ingestion_queue["Properties"]
 
@@ -732,16 +747,12 @@ def test_persistence_analytics_outputs_and_destroyability(monkeypatch):
 def test_iam_scoping_contract(monkeypatch):
     _app_module, _app, _stack, template_json = synthesize(monkeypatch)
     notifications_topic_id, _ = find_single_resource(template_json, "AWS::SNS::Topic")
-    ingestion_queue_id, _ = find_single_resource(
-        template_json,
-        "AWS::SQS::Queue",
-        lambda _id, res: res.get("Properties", {}).get("VisibilityTimeout") == 60,
-    )
-    notifications_queue_id = next(
-        queue_id
-        for queue_id in resources_by_type(template_json, "AWS::SQS::Queue")
-        if queue_id != ingestion_queue_id
-    )
+    _, event_source_mapping = find_single_resource(template_json, "AWS::Lambda::EventSourceMapping")
+    _, pipe = find_single_resource(template_json, "AWS::Pipes::Pipe")
+    _, subscription = find_single_resource(template_json, "AWS::SNS::Subscription")
+    ingestion_queue_id = event_source_mapping["Properties"]["EventSourceArn"]["Fn::GetAtt"][0]
+    processing_queue_id = pipe["Properties"]["Source"]["Fn::GetAtt"][0]
+    notifications_queue_id = subscription["Properties"]["Endpoint"]["Fn::GetAtt"][0]
     audit_table_id, _ = find_single_resource(
         template_json,
         "AWS::DynamoDB::Table",
@@ -760,7 +771,16 @@ def test_iam_scoping_contract(monkeypatch):
         "AWS::Lambda::Function",
         lambda _id, res: res["Properties"]["FunctionName"] == "event-ingestion-enricher",
     )
-    _, queue_policy = find_single_resource(template_json, "AWS::SQS::QueuePolicy")
+    _, notifications_queue_policy = find_single_resource(
+        template_json,
+        "AWS::SQS::QueuePolicy",
+        lambda _id, res: res["Properties"]["Queues"] == [{"Ref": notifications_queue_id}],
+    )
+    _, processing_queue_policy = find_single_resource(
+        template_json,
+        "AWS::SQS::QueuePolicy",
+        lambda _id, res: res["Properties"]["Queues"] == [{"Ref": processing_queue_id}],
+    )
     ingest_role_id, ingest_role = role_with_policy(template_json, "IngestPermissions")
     worker_role_id, worker_role = role_with_policy(template_json, "WorkerPermissions")
     state_machine_role_id, state_machine_role = role_with_policy(template_json, "StateMachinePermissions")
@@ -811,7 +831,7 @@ def test_iam_scoping_contract(monkeypatch):
     assert {"sqs:ReceiveMessage", "lambda:InvokeFunction", "states:StartExecution"} <= pipe_actions
     pipe_statements = policy_statements(pipe_role, "PipePermissions")
     assert find_statement_with_action(pipe_statements, "sqs:ReceiveMessage")["Resource"] == {
-        "Fn::GetAtt": [ingestion_queue_id, "Arn"]
+        "Fn::GetAtt": [processing_queue_id, "Arn"]
     }
     assert find_statement_with_action(pipe_statements, "lambda:InvokeFunction")["Resource"] == {
         "Fn::GetAtt": [enricher_lambda_id, "Arn"]
@@ -835,8 +855,13 @@ def test_iam_scoping_contract(monkeypatch):
     glue_actions = flatten_actions(glue_role)
     assert {"s3:GetObject", "s3:ListBucket", "glue:GetDatabase", "glue:CreateTable"} <= glue_actions
 
-    statement = queue_policy["Properties"]["PolicyDocument"]["Statement"][0]
+    statement = notifications_queue_policy["Properties"]["PolicyDocument"]["Statement"][0]
     assert statement["Principal"] == {"Service": "sns.amazonaws.com"}
     assert statement["Action"] == "sqs:SendMessage"
     assert statement["Condition"]["ArnEquals"]["aws:SourceArn"] == {"Ref": notifications_topic_id}
     assert statement["Resource"] == {"Fn::GetAtt": [notifications_queue_id, "Arn"]}
+
+    eventbridge_statement = processing_queue_policy["Properties"]["PolicyDocument"]["Statement"][0]
+    assert eventbridge_statement["Principal"] == {"Service": "events.amazonaws.com"}
+    assert eventbridge_statement["Action"] == "sqs:SendMessage"
+    assert eventbridge_statement["Resource"] == {"Fn::GetAtt": [processing_queue_id, "Arn"]}

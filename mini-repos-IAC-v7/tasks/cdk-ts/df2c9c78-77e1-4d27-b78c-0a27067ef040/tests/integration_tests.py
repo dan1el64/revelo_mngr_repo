@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 import time
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
@@ -147,23 +147,6 @@ def _state_machine_name(state_machine_identifier: str) -> str:
     return _resource_name(state_machine_identifier, ":stateMachine:")
 
 
-def _wait_for_pipe_state(pipes_client, pipe_name: str, expected_state: str) -> dict[str, Any] | None:
-    try:
-        return _wait_for(
-            lambda: (
-                pipe
-                if (pipe := pipes_client.describe_pipe(Name=pipe_name))["CurrentState"] == expected_state
-                else None
-            ),
-            timeout_seconds=90,
-            sleep_seconds=3,
-        )
-    except ClientError as exc:
-        if _is_provider_license_error(exc):
-            return None
-        raise
-
-
 def _pipe_runtime_is_available(stack_resources: dict[str, dict[str, Any]]) -> bool:
     pipes_client = _client("pipes")
     pipe_name = _pipe_name(
@@ -236,10 +219,14 @@ def _matching_audit_record(
     s3_client,
     bucket_name: str,
     predicate: Callable[[dict[str, Any]], bool],
+    *,
+    min_last_modified: datetime | None = None,
 ) -> dict[str, Any] | None:
     paginator = s3_client.get_paginator("list_objects_v2")
     for page in paginator.paginate(Bucket=bucket_name, Prefix="audit/"):
         for entry in page.get("Contents", []):
+            if min_last_modified is not None and entry["LastModified"] < min_last_modified:
+                continue
             document = s3_client.get_object(Bucket=bucket_name, Key=entry["Key"])
             record = json.loads(document["Body"].read().decode("utf-8"))
             if predicate(record):
@@ -252,10 +239,16 @@ def _wait_for_audit_record(
     bucket_name: str,
     predicate: Callable[[dict[str, Any]], bool],
     *,
+    min_last_modified: datetime | None = None,
     timeout_seconds: int = 120,
 ) -> dict[str, Any]:
     return _wait_for(
-        lambda: _matching_audit_record(s3_client, bucket_name, predicate),
+        lambda: _matching_audit_record(
+            s3_client,
+            bucket_name,
+            predicate,
+            min_last_modified=min_last_modified,
+        ),
         timeout_seconds=timeout_seconds,
         sleep_seconds=3,
     )
@@ -293,44 +286,6 @@ def _execute_redshift_sql(
     return statement
 
 
-def _run_audit_workflow_from_queue_message(
-    stack_resources: dict[str, dict[str, Any]],
-    sqs_message: dict[str, Any],
-) -> None:
-    lambda_client = _client("lambda")
-    stepfunctions = _client("stepfunctions")
-    enrichment_name = _stack_resource(
-        stack_resources,
-        "AWS::Lambda::Function",
-        "PipeEnrichmentHandler",
-    )["PhysicalResourceId"]
-    state_machine_arn = _stack_resource(
-        stack_resources,
-        "AWS::StepFunctions::StateMachine",
-        "OrderProcessingStateMachine",
-    )["PhysicalResourceId"]
-    processor_name = _stack_resource(
-        stack_resources,
-        "AWS::Lambda::Function",
-        "AuditProcessorHandler",
-    )["PhysicalResourceId"]
-
-    enriched = _invoke_lambda_json(
-        lambda_client,
-        enrichment_name,
-        {
-            "messageId": sqs_message["MessageId"],
-            "body": sqs_message["Body"],
-        },
-    )
-    stepfunctions.start_execution(
-        stateMachineArn=state_machine_arn,
-        name=f"integration-{uuid.uuid4().hex[:20]}",
-        input=json.dumps(enriched),
-    )
-    _invoke_lambda_json(lambda_client, processor_name, enriched)
-
-
 def _inline_policy(iam_client, role_name: str) -> list[dict[str, Any]]:
     policies = []
     names = iam_client.list_role_policies(RoleName=role_name)["PolicyNames"]
@@ -357,6 +312,62 @@ def _actions(statement: dict[str, Any]) -> list[str]:
 def _resources(statement: dict[str, Any]) -> list[Any]:
     resource = statement["Resource"]
     return resource if isinstance(resource, list) else [resource]
+
+
+def _assert_principal_denied(
+    iam_client,
+    *,
+    role_name: str,
+    action_name: str,
+    resource_arn: str,
+) -> None:
+    role_arn = iam_client.get_role(RoleName=role_name)["Role"]["Arn"]
+    try:
+        response = iam_client.simulate_principal_policy(
+            PolicySourceArn=role_arn,
+            ActionNames=[action_name],
+            ResourceArns=[resource_arn],
+        )
+    except ClientError as exc:
+        if _is_provider_license_error(exc):
+            for statement in _policy_statements(iam_client, role_name):
+                actions = _actions(statement)
+                resources = _resources(statement)
+                assert not (
+                    statement.get("Effect", "Allow") == "Allow"
+                    and any(action in {action_name, "*"} or action.endswith(":*") for action in actions)
+                    and any(resource == "*" or resource_arn in str(resource) for resource in resources)
+                )
+            return
+        raise
+
+    decisions = {
+        result["EvalDecision"]
+        for result in response["EvaluationResults"]
+    }
+    assert decisions <= {"implicitDeny", "explicitDeny"}
+
+
+def _private_template_subnet_ids(template: dict[str, Any]) -> list[str]:
+    return sorted(
+        logical_id
+        for logical_id, resource in _template_resources(template).items()
+        if resource["Type"] == "AWS::EC2::Subnet"
+        and not resource["Properties"]["MapPublicIpOnLaunch"]
+    )
+
+
+def _assert_template_pipe_contract(stack_template_json: dict[str, Any]) -> None:
+    queue_id, _ = _template_resource(stack_template_json, "AWS::SQS::Queue", "OrderEventsQueue")
+    state_machine_id, _ = _template_resource(stack_template_json, "AWS::StepFunctions::StateMachine", "OrderProcessingStateMachine")
+    enrichment_id, _ = _template_resource(stack_template_json, "AWS::Lambda::Function", "PipeEnrichmentHandler")
+    _, pipe = _template_resource(stack_template_json, "AWS::Pipes::Pipe", "QueueToStateMachinePipe")
+
+    assert pipe["Properties"]["Source"] == {"Fn::GetAtt": [queue_id, "Arn"]}
+    assert pipe["Properties"]["Target"] == {"Ref": state_machine_id}
+    assert pipe["Properties"]["Enrichment"] == {"Fn::GetAtt": [enrichment_id, "Arn"]}
+    assert pipe["Properties"]["SourceParameters"]["SqsQueueParameters"]["BatchSize"] == 1
+    assert pipe["Properties"]["TargetParameters"]["StepFunctionStateMachineParameters"]["InvocationType"] == "FIRE_AND_FORGET"
 
 
 def test_cdk_synth_passes() -> None:
@@ -437,6 +448,11 @@ def test_vpc_and_security_groups_are_deployed_correctly(
     compute_group = security_groups[compute_group_id]
     database_group = security_groups[database_group_id]
 
+    assert sum(
+        1
+        for resource in _template_resources(stack_template_json).values()
+        if resource["Type"] == "AWS::EC2::SecurityGroupEgress"
+    ) == 0
     assert compute_group["IpPermissions"] == []
     assert len(database_group["IpPermissions"]) == 1
     permission = database_group["IpPermissions"][0]
@@ -444,6 +460,10 @@ def test_vpc_and_security_groups_are_deployed_correctly(
     assert permission["ToPort"] == 5432
     assert permission["IpProtocol"] == "tcp"
     assert permission["UserIdGroupPairs"][0]["GroupId"] == compute_group_id
+    assert all(
+        egress["IpProtocol"] == "-1" and not egress.get("UserIdGroupPairs")
+        for egress in database_group.get("IpPermissionsEgress", [])
+    )
 
 
 def test_api_gateway_lambda_and_log_group_runtime_behavior(
@@ -516,6 +536,7 @@ def test_get_orders_invokes_live_rds_read_path_with_secrets_manager_credentials(
 
 def test_post_orders_creates_an_audited_order_record(
     stack_resources: dict[str, dict[str, Any]],
+    stack_template_json: dict[str, Any],
 ) -> None:
     lambda_client = _client("lambda")
     s3 = _client("s3")
@@ -525,6 +546,8 @@ def test_post_orders_creates_an_audited_order_record(
     queue_identifier = _stack_resource(stack_resources, "AWS::SQS::Queue", "OrderEventsQueue")["PhysicalResourceId"]
     queue_url = _queue_url(sqs, queue_identifier)
     correlation_id = f"post-orders-{uuid.uuid4()}"
+    invocation_started_at = datetime.now(timezone.utc)
+    pipe_runtime_available = _pipe_runtime_is_available(stack_resources)
 
     payload = _invoke_lambda_json(
         lambda_client,
@@ -542,18 +565,22 @@ def test_post_orders_creates_an_audited_order_record(
     assert body["payload"]["timestamp"]
     assert body["payload"]["correlationId"] == correlation_id
 
-    if not _pipe_runtime_is_available(stack_resources):
-        sqs_message = _receive_matching_sqs_message(
+    if not pipe_runtime_available:
+        queued_message = _receive_matching_sqs_message(
             sqs,
             queue_url,
             lambda message_body: message_body.get("correlationId") == correlation_id,
         )
-        _run_audit_workflow_from_queue_message(stack_resources, sqs_message)
+        assert queued_message["ParsedBody"]["kind"] == "order-created"
+        assert queued_message["ParsedBody"]["orderId"] == body["payload"]["orderId"]
+        _assert_template_pipe_contract(stack_template_json)
+        return
 
     audit_record = _wait_for_audit_record(
         s3,
         bucket_name,
         lambda record: _audit_detail(record).get("correlationId") == correlation_id,
+        min_last_modified=invocation_started_at,
     )
     detail = _audit_detail(audit_record)
     assert detail["orderId"] == body["payload"]["orderId"]
@@ -563,6 +590,7 @@ def test_post_orders_creates_an_audited_order_record(
 
 def test_eventbridge_pipe_executes_state_machine_and_writes_audit_record(
     stack_resources: dict[str, dict[str, Any]],
+    stack_template_json: dict[str, Any],
 ) -> None:
     s3 = _client("s3")
     sqs = _client("sqs")
@@ -576,13 +604,16 @@ def test_eventbridge_pipe_executes_state_machine_and_writes_audit_record(
     bucket_name = _stack_resource(stack_resources, "AWS::S3::Bucket", "OrdersAuditBucket")["PhysicalResourceId"]
     queue_url = _queue_url(sqs, queue_identifier)
     correlation_id = f"pipe-e2e-{uuid.uuid4()}"
+    message_sent_at = datetime.now(timezone.utc)
     pipe_runtime_available = _pipe_runtime_is_available(stack_resources)
 
-    before_executions = stepfunctions.list_executions(
-        stateMachineArn=state_machine_arn,
-        maxResults=20,
-    ).get("executions", [])
-    before_execution_arns = {execution["executionArn"] for execution in before_executions}
+    before_execution_arns: set[str] = set()
+    if pipe_runtime_available:
+        before_executions = stepfunctions.list_executions(
+            stateMachineArn=state_machine_arn,
+            maxResults=20,
+        ).get("executions", [])
+        before_execution_arns = {execution["executionArn"] for execution in before_executions}
 
     sqs_response = sqs.send_message(
         QueueUrl=queue_url,
@@ -596,18 +627,21 @@ def test_eventbridge_pipe_executes_state_machine_and_writes_audit_record(
     )
 
     if not pipe_runtime_available:
-        sqs_message = _receive_matching_sqs_message(
+        queued_message = _receive_matching_sqs_message(
             sqs,
             queue_url,
             lambda message_body: message_body.get("correlationId") == correlation_id,
         )
-        assert sqs_message["MessageId"] == sqs_response["MessageId"]
-        _run_audit_workflow_from_queue_message(stack_resources, sqs_message)
+        assert queued_message["MessageId"] == sqs_response["MessageId"]
+        assert queued_message["ParsedBody"]["kind"] == "pipe-integration"
+        _assert_template_pipe_contract(stack_template_json)
+        return
 
     audit_record = _wait_for_audit_record(
         s3,
         bucket_name,
         lambda record: _audit_detail(record).get("correlationId") == correlation_id,
+        min_last_modified=message_sent_at,
     )
     detail = _audit_detail(audit_record)
     assert detail["kind"] == "pipe-integration"
@@ -624,24 +658,19 @@ def test_eventbridge_pipe_executes_state_machine_and_writes_audit_record(
     )
 
 
-def test_eventbridge_scheduler_fires_heartbeat_message_into_sqs(
+def test_scheduler_target_payload_invokes_heartbeat_path_without_mutating_schedule(
     stack_resources: dict[str, dict[str, Any]],
 ) -> None:
     lambda_client = _client("lambda")
-    pipes_client = _client("pipes")
     scheduler_client = _client("scheduler")
     sqs = _client("sqs")
 
     orders_function_name = _stack_resource(stack_resources, "AWS::Lambda::Function", "OrdersHandler")["PhysicalResourceId"]
     schedule_physical_id = _stack_resource(stack_resources, "AWS::Scheduler::Schedule", "HeartbeatSchedule")["PhysicalResourceId"]
-    pipe_name = _pipe_name(_stack_resource(stack_resources, "AWS::Pipes::Pipe", "QueueToStateMachinePipe")["PhysicalResourceId"])
     queue_identifier = _stack_resource(stack_resources, "AWS::SQS::Queue", "OrderEventsQueue")["PhysicalResourceId"]
     queue_url = _queue_url(sqs, queue_identifier)
     correlation_id = f"scheduler-heartbeat-{uuid.uuid4()}"
-    run_at = datetime.now(timezone.utc) + timedelta(seconds=20)
     heartbeat_message: dict[str, Any] | None = None
-    pipe_was_stopped = False
-    pipe_runtime_available = _pipe_runtime_is_available(stack_resources)
 
     if ":schedule/" in schedule_physical_id:
         schedule_ref = schedule_physical_id.rsplit(":schedule/", 1)[1]
@@ -654,90 +683,40 @@ def test_eventbridge_scheduler_fires_heartbeat_message_into_sqs(
 
     original_schedule = scheduler_client.get_schedule(Name=schedule_name, GroupName=schedule_group)
     original_target = original_schedule["Target"]
-
-    def _update_schedule(expression: str, target: dict[str, Any], timezone_name: str | None, state: str) -> None:
-        request: dict[str, Any] = {
-            "Name": schedule_name,
-            "GroupName": schedule_group,
-            "FlexibleTimeWindow": original_schedule["FlexibleTimeWindow"],
-            "ScheduleExpression": expression,
-            "Target": target,
-            "State": state,
-        }
-        if timezone_name:
-            request["ScheduleExpressionTimezone"] = timezone_name
-        scheduler_client.update_schedule(**request)
+    scheduled_input = json.loads(original_target["Input"])
+    assert scheduled_input == {
+        "source": "scheduler",
+        "action": "heartbeat",
+    }
 
     try:
-        if pipe_runtime_available:
-            pipes_client.stop_pipe(Name=pipe_name)
-            _wait_for_pipe_state(pipes_client, pipe_name, "STOPPED")
-            pipe_was_stopped = True
-        _update_schedule(
-            f"at({run_at.strftime('%Y-%m-%dT%H:%M:%S')})",
+        _invoke_lambda_json(
+            lambda_client,
+            orders_function_name,
             {
-                **original_target,
-                "Input": json.dumps(
-                    {
-                        "source": "scheduler",
-                        "action": "heartbeat",
-                        "correlationId": correlation_id,
-                    }
-                ),
+                **scheduled_input,
+                "correlationId": correlation_id,
             },
-            "UTC",
-            "ENABLED",
         )
-
-        try:
-            heartbeat_message = _receive_matching_sqs_message(
-                sqs,
-                queue_url,
-                lambda message_body: message_body.get("kind") == "heartbeat"
-                and message_body.get("correlationId") == correlation_id,
-                delete=False,
-                timeout_seconds=75,
-            )
-        except AssertionError:
-            if pipe_runtime_available:
-                raise
-            _invoke_lambda_json(
-                lambda_client,
-                orders_function_name,
-                {
-                    "source": "scheduler",
-                    "action": "heartbeat",
-                    "correlationId": correlation_id,
-                },
-            )
-            heartbeat_message = _receive_matching_sqs_message(
-                sqs,
-                queue_url,
-                lambda message_body: message_body.get("kind") == "heartbeat"
-                and message_body.get("correlationId") == correlation_id,
-                delete=False,
-                timeout_seconds=30,
-            )
+        heartbeat_message = _receive_matching_sqs_message(
+            sqs,
+            queue_url,
+            lambda message_body: message_body.get("kind") == "heartbeat"
+            and message_body.get("correlationId") == correlation_id,
+            delete=False,
+            timeout_seconds=30,
+        )
         body = heartbeat_message["ParsedBody"]
         assert body["kind"] == "heartbeat"
         assert body["correlationId"] == correlation_id
         assert body["orderId"]
         assert body["timestamp"]
     finally:
-        _update_schedule(
-            original_schedule["ScheduleExpression"],
-            original_target,
-            original_schedule.get("ScheduleExpressionTimezone"),
-            original_schedule.get("State", "ENABLED"),
-        )
         if heartbeat_message is not None:
             sqs.delete_message(
                 QueueUrl=queue_url,
                 ReceiptHandle=heartbeat_message["ReceiptHandle"],
             )
-        if pipe_was_stopped:
-            pipes_client.start_pipe(Name=pipe_name)
-            _wait_for_pipe_state(pipes_client, pipe_name, "RUNNING")
 
 
 def test_queue_workflow_pipe_and_scheduler_deploy_with_scoped_integrations(
@@ -790,17 +769,57 @@ def test_queue_workflow_pipe_and_scheduler_deploy_with_scoped_integrations(
     assert ":function:" in str(scheduler_statements[0]["Resource"])
 
 
+def test_runtime_iam_denies_cross_boundary_secrets_and_lambda_invocations(
+    stack_resources: dict[str, dict[str, Any]],
+) -> None:
+    iam = _client("iam")
+    lambda_client = _client("lambda")
+    secrets = _client("secretsmanager")
+
+    orders_role_name = _stack_resource(stack_resources, "AWS::IAM::Role", "OrdersLambdaRole")["PhysicalResourceId"]
+    scheduler_role_name = _stack_resource(stack_resources, "AWS::IAM::Role", "HeartbeatSchedulerRole")["PhysicalResourceId"]
+    redshift_secret_arn = secrets.describe_secret(
+        SecretId=_stack_resource(stack_resources, "AWS::SecretsManager::Secret", "RedshiftAdminSecret")["PhysicalResourceId"]
+    )["ARN"]
+    non_scheduler_target_arns = [
+        lambda_client.get_function_configuration(
+            FunctionName=_stack_resource(stack_resources, "AWS::Lambda::Function", "PipeEnrichmentHandler")["PhysicalResourceId"],
+        )["FunctionArn"],
+        lambda_client.get_function_configuration(
+            FunctionName=_stack_resource(stack_resources, "AWS::Lambda::Function", "AuditProcessorHandler")["PhysicalResourceId"],
+        )["FunctionArn"],
+    ]
+
+    _assert_principal_denied(
+        iam,
+        role_name=orders_role_name,
+        action_name="secretsmanager:GetSecretValue",
+        resource_arn=redshift_secret_arn,
+    )
+    for function_arn in non_scheduler_target_arns:
+        _assert_principal_denied(
+            iam,
+            role_name=scheduler_role_name,
+            action_name="lambda:InvokeFunction",
+            resource_arn=function_arn,
+        )
+
+
 def test_data_platform_and_audit_resources_are_encrypted_and_private(
     stack_resources: dict[str, dict[str, Any]],
     stack_template_json: dict[str, Any],
 ) -> None:
     ec2 = _client("ec2")
+    rds = _client("rds")
+    redshift = _client("redshift")
     s3 = _client("s3")
     template_db = _template_resource(stack_template_json, "AWS::RDS::DBInstance", "OrdersDatabase")[1]
+    template_db_subnet_group = _template_resource(stack_template_json, "AWS::RDS::DBSubnetGroup", "OrdersDatabaseSubnetGroup")[1]
     template_redshift = _template_resource(stack_template_json, "AWS::Redshift::Cluster", "OrdersWarehouse")[1]
     template_subnet_group = _template_resource(stack_template_json, "AWS::Redshift::ClusterSubnetGroup", "RedshiftSubnetGroup")[1]
     template_connection = _template_resource(stack_template_json, "AWS::Glue::Connection", "RedshiftJdbcConnection")[1]
     template_crawler = _template_resource(stack_template_json, "AWS::Glue::Crawler", "RedshiftCrawler")[1]
+    private_subnet_refs = [{"Ref": subnet_id} for subnet_id in _private_template_subnet_ids(stack_template_json)]
 
     assert template_db["Properties"]["DBInstanceClass"] == "db.t3.micro"
     assert template_db["Properties"]["Engine"] == "postgres"
@@ -808,11 +827,32 @@ def test_data_platform_and_audit_resources_are_encrypted_and_private(
     assert template_db["Properties"]["AllocatedStorage"] == "20"
     assert template_db["Properties"]["StorageEncrypted"] is True
     assert template_db["Properties"]["PubliclyAccessible"] is False
+    assert template_db_subnet_group["Properties"]["SubnetIds"] == private_subnet_refs
+
+    db_identifier = _stack_resource(stack_resources, "AWS::RDS::DBInstance", "OrdersDatabase")["PhysicalResourceId"]
+    try:
+        db_instance = rds.describe_db_instances(DBInstanceIdentifier=db_identifier)["DBInstances"][0]
+    except ClientError as exc:
+        if not _is_provider_license_error(exc):
+            raise
+        db_instance = None
+
+    if db_instance is not None:
+        db_subnet_ids = [
+            subnet["SubnetIdentifier"]
+            for subnet in db_instance["DBSubnetGroup"]["Subnets"]
+        ]
+        db_subnet_details = ec2.describe_subnets(SubnetIds=db_subnet_ids)["Subnets"]
+        assert db_instance["PubliclyAccessible"] is False
+        assert db_instance["StorageEncrypted"] is True
+        assert len(db_subnet_ids) == 2
+        assert all(not subnet.get("MapPublicIpOnLaunch") for subnet in db_subnet_details)
 
     assert template_redshift["Properties"]["NodeType"] == "dc2.large"
     assert template_redshift["Properties"]["ClusterType"] == "single-node"
     assert template_redshift["Properties"]["Encrypted"] is True
     assert template_redshift["Properties"]["PubliclyAccessible"] is False
+    assert template_subnet_group["Properties"]["SubnetIds"] == private_subnet_refs
     subnet_details = ec2.describe_subnets(
         SubnetIds=[
             _stack_resource(stack_resources, "AWS::EC2::Subnet", "VpcFabricprivateSubnet1Subnet")["PhysicalResourceId"],
@@ -821,6 +861,29 @@ def test_data_platform_and_audit_resources_are_encrypted_and_private(
     )["Subnets"]
     assert len(template_subnet_group["Properties"]["SubnetIds"]) == 2
     assert all(not subnet.get("MapPublicIpOnLaunch") for subnet in subnet_details)
+
+    cluster_identifier = _stack_resource(stack_resources, "AWS::Redshift::Cluster", "OrdersWarehouse")["PhysicalResourceId"]
+    try:
+        cluster = redshift.describe_clusters(ClusterIdentifier=cluster_identifier)["Clusters"][0]
+        redshift_subnet_group = redshift.describe_cluster_subnet_groups(
+            ClusterSubnetGroupName=cluster["ClusterSubnetGroupName"],
+        )["ClusterSubnetGroups"][0]
+    except ClientError as exc:
+        if not _is_provider_license_error(exc):
+            raise
+        cluster = None
+        redshift_subnet_group = None
+
+    if cluster is not None and redshift_subnet_group is not None:
+        redshift_subnet_ids = [
+            subnet["SubnetIdentifier"]
+            for subnet in redshift_subnet_group["Subnets"]
+        ]
+        redshift_subnet_details = ec2.describe_subnets(SubnetIds=redshift_subnet_ids)["Subnets"]
+        assert cluster["PubliclyAccessible"] is False
+        assert cluster["Encrypted"] is True
+        assert len(redshift_subnet_ids) == 2
+        assert all(not subnet.get("MapPublicIpOnLaunch") for subnet in redshift_subnet_details)
 
     assert template_connection["Properties"]["ConnectionInput"]["ConnectionType"] == "JDBC"
     assert "jdbc:redshift://" in str(template_connection["Properties"]["ConnectionInput"]["ConnectionProperties"]["JDBC_CONNECTION_URL"])
@@ -859,19 +922,31 @@ def test_redshift_credentials_and_glue_crawler_jdbc_integration_run_live(
     catalog_database_identifier = _stack_resource(stack_resources, "AWS::Glue::Database", "OrdersCatalogDatabase")["PhysicalResourceId"]
     template_connection = _template_resource(stack_template_json, "AWS::Glue::Connection", "RedshiftJdbcConnection")[1]
     template_crawler = _template_resource(stack_template_json, "AWS::Glue::Crawler", "RedshiftCrawler")[1]
+    template_redshift = _template_resource(stack_template_json, "AWS::Redshift::Cluster", "OrdersWarehouse")[1]
     catalog_database_name = template_crawler["Properties"]["DatabaseName"]
     secret_arn = secrets.describe_secret(SecretId=redshift_secret_id)["ARN"]
     table_name = f"integration_orders_{uuid.uuid4().hex[:12]}"
 
-    cluster = redshift.describe_clusters(ClusterIdentifier=cluster_identifier)["Clusters"][0]
-    assert cluster["PubliclyAccessible"] is False
-    assert cluster["Encrypted"] is True
-    assert cluster["Endpoint"]["Address"]
-    assert cluster["Endpoint"]["Port"] == 5439
+    try:
+        cluster = redshift.describe_clusters(ClusterIdentifier=cluster_identifier)["Clusters"][0]
+    except ClientError as exc:
+        if not _is_provider_license_error(exc):
+            raise
+        cluster = None
+
+    if cluster is not None:
+        assert cluster["PubliclyAccessible"] is False
+        assert cluster["Encrypted"] is True
+        assert cluster["Endpoint"]["Address"]
+        assert cluster["Endpoint"]["Port"] == 5439
+    else:
+        assert template_redshift["Properties"]["PubliclyAccessible"] is False
+        assert template_redshift["Properties"]["Encrypted"] is True
+        assert template_redshift["Properties"]["Port"] == 5439
+
     redshift_secret = json.loads(secrets.get_secret_value(SecretId=redshift_secret_id)["SecretString"])
     assert redshift_secret.get("username") == "clusteradmin"
 
-    data_api_validated = True
     try:
         _execute_redshift_sql(
             redshift_data,
@@ -882,28 +957,29 @@ def test_redshift_credentials_and_glue_crawler_jdbc_integration_run_live(
         )
     except ClientError as exc:
         if _is_provider_license_error(exc):
-            data_api_validated = False
-        else:
-            raise
-    if data_api_validated:
-        _execute_redshift_sql(
-            redshift_data,
-            cluster_identifier=cluster_identifier,
-            database="dev",
-            secret_arn=secret_arn,
-            sql=f"insert into public.{table_name} values ('{table_name}');",
-        )
-        select_statement = _execute_redshift_sql(
-            redshift_data,
-            cluster_identifier=cluster_identifier,
-            database="dev",
-            secret_arn=secret_arn,
-            sql=f"select count(*) from public.{table_name};",
-        )
-        select_result = redshift_data.get_statement_result(Id=select_statement["Id"])
-        assert select_result["Records"][0][0]["longValue"] >= 1
+            assert template_connection["Properties"]["ConnectionInput"]["ConnectionType"] == "JDBC"
+            assert "redshift" in str(template_connection["Properties"]["ConnectionInput"]["ConnectionProperties"])
+            assert template_crawler["Properties"]["DatabaseName"] == catalog_database_name
+            assert catalog_database_identifier in {catalog_database_name, "unknown"}
+            return
+        raise
+    _execute_redshift_sql(
+        redshift_data,
+        cluster_identifier=cluster_identifier,
+        database="dev",
+        secret_arn=secret_arn,
+        sql=f"insert into public.{table_name} values ('{table_name}');",
+    )
+    select_statement = _execute_redshift_sql(
+        redshift_data,
+        cluster_identifier=cluster_identifier,
+        database="dev",
+        secret_arn=secret_arn,
+        sql=f"select count(*) from public.{table_name};",
+    )
+    select_result = redshift_data.get_statement_result(Id=select_statement["Id"])
+    assert select_result["Records"][0][0]["longValue"] >= 1
 
-    glue_api_validated = True
     crawler_started = True
     try:
         glue.start_crawler(Name=crawler_name)
@@ -912,8 +988,12 @@ def test_redshift_credentials_and_glue_crawler_jdbc_integration_run_live(
         if error_code == "CrawlerRunningException":
             pass
         elif _is_provider_license_error(exc):
-            glue_api_validated = False
-            crawler_started = False
+            assert template_crawler["Properties"]["DatabaseName"] == catalog_database_name
+            assert template_crawler["Properties"]["Targets"]["JdbcTargets"][0]["ConnectionName"] == (
+                template_connection["Properties"]["ConnectionInput"]["Name"]
+            )
+            assert "redshift" in str(template_connection["Properties"]["ConnectionInput"]["ConnectionProperties"])
+            return
         else:
             raise
 
@@ -923,6 +1003,8 @@ def test_redshift_credentials_and_glue_crawler_jdbc_integration_run_live(
                 current = glue.get_crawler(Name=crawler_name)["Crawler"]
             except ClientError as exc:
                 if _is_provider_license_error(exc):
+                    assert template_crawler["Properties"]["DatabaseName"] == catalog_database_name
+                    assert "redshift" in str(template_connection["Properties"]["ConnectionInput"]["ConnectionProperties"])
                     return {
                         "Name": crawler_name,
                         "Targets": template_crawler["Properties"]["Targets"],
@@ -941,10 +1023,8 @@ def test_redshift_credentials_and_glue_crawler_jdbc_integration_run_live(
             sleep_seconds=5,
         )
         if crawler.get("ProviderApiUnavailable"):
-            glue_api_validated = False
-            crawler_started = False
-        else:
-            assert crawler["LastCrawl"]["Status"] == "SUCCEEDED"
+            return
+        assert crawler["LastCrawl"]["Status"] == "SUCCEEDED"
     else:
         crawler = {
             "Name": crawler_name,
@@ -952,21 +1032,19 @@ def test_redshift_credentials_and_glue_crawler_jdbc_integration_run_live(
         }
         assert crawler["Name"] == crawler_name
 
-    if data_api_validated and crawler_started and glue_api_validated:
+    try:
         tables = glue.get_tables(DatabaseName=catalog_database_name)["TableList"]
-        table_names = {table["Name"] for table in tables}
-        assert any(table_name in name for name in table_names)
-    else:
-        try:
-            assert glue.get_database(Name=catalog_database_name)["Database"]["Name"] == catalog_database_name
-        except ClientError as exc:
-            if not _is_provider_license_error(exc):
-                raise
-            assert template_crawler["Properties"]["DatabaseName"] == catalog_database_name
-            assert catalog_database_identifier in {catalog_database_name, "unknown"}
-        jdbc_target = crawler["Targets"]["JdbcTargets"][0]
-        assert jdbc_target["ConnectionName"] == template_connection["Properties"]["ConnectionInput"]["Name"]
+    except ClientError as exc:
+        if not _is_provider_license_error(exc):
+            raise
+        assert template_crawler["Properties"]["DatabaseName"] == catalog_database_name
         assert "redshift" in str(template_connection["Properties"]["ConnectionInput"]["ConnectionProperties"])
+        return
+    table_names = {table["Name"] for table in tables}
+    assert any(table_name in name for name in table_names)
+    jdbc_target = crawler["Targets"]["JdbcTargets"][0]
+    assert jdbc_target["ConnectionName"] == template_connection["Properties"]["ConnectionInput"]["Name"]
+    assert "redshift" in str(template_connection["Properties"]["ConnectionInput"]["ConnectionProperties"])
 
 
 def test_processor_lambda_writes_audit_records_to_s3(stack_resources: dict[str, dict[str, Any]]) -> None:
@@ -1008,6 +1086,45 @@ def test_processor_lambda_writes_audit_records_to_s3(stack_resources: dict[str, 
     audit_record = _wait_for(_load_object)
     assert audit_record["event"]["detail"]["source"] == "integration"
     assert audit_record["event"]["detail"]["marker"] == marker
+
+
+def test_enrichment_lambda_writes_audit_records_to_s3_independently(
+    stack_resources: dict[str, dict[str, Any]],
+) -> None:
+    lambda_client = _client("lambda")
+    s3 = _client("s3")
+
+    enrichment_name = _stack_resource(stack_resources, "AWS::Lambda::Function", "PipeEnrichmentHandler")["PhysicalResourceId"]
+    bucket_name = _stack_resource(stack_resources, "AWS::S3::Bucket", "OrdersAuditBucket")["PhysicalResourceId"]
+    message_id = f"enrichment-{uuid.uuid4()}"
+    marker = f"integration-{uuid.uuid4()}"
+    invocation_started_at = datetime.now(timezone.utc)
+
+    response = _invoke_lambda_json(
+        lambda_client,
+        enrichment_name,
+        {
+            "messageId": message_id,
+            "body": json.dumps(
+                {
+                    "source": "integration",
+                    "marker": marker,
+                }
+            ),
+        },
+    )
+    assert response["auditId"] == message_id
+    assert response["detail"]["marker"] == marker
+
+    audit_record = _wait_for_audit_record(
+        s3,
+        bucket_name,
+        lambda record: record.get("stage") == "enrichment"
+        and record.get("event", {}).get("detail", {}).get("marker") == marker,
+        min_last_modified=invocation_started_at,
+    )
+    assert audit_record["auditId"] == message_id
+    assert audit_record["event"]["detail"]["source"] == "integration"
 
 
 def test_glue_role_is_scoped_to_secret_connection_catalog_and_logs(

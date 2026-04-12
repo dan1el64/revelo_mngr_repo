@@ -61,6 +61,13 @@ def _resource(service_name):
 
 def handler(event, _context):
     body = event.get("body") or ""
+    if len(body.encode("utf-8")) > 262144:
+        return {
+            "statusCode": 413,
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps({"message": "payload exceeds 256 KB"}),
+        }
+
     try:
         payload = json.loads(body)
     except (TypeError, json.JSONDecodeError):
@@ -184,16 +191,29 @@ import json
 from datetime import datetime, timezone
 
 
+def _decode_body(record):
+    body = record.get("body")
+    if body is None:
+        return record
+    return json.loads(body)
+
+
 def handler(event, _context):
     payload = event
+    if isinstance(event, list) and event:
+        payload = _decode_body(event[0])
+    elif isinstance(event, dict) and "Records" in event and event["Records"]:
+        payload = _decode_body(event["Records"][0])
     if isinstance(event, dict) and "body" in event:
-        payload = json.loads(event["body"])
+        payload = _decode_body(event)
 
     if not isinstance(payload, dict):
         payload = {"payload": payload}
 
-    payload["enriched"] = True
-    payload["timestamp"] = datetime.now(timezone.utc).isoformat()
+    detail = payload.get("detail") if isinstance(payload.get("detail"), dict) else payload
+    detail["enriched"] = True
+    detail["timestamp"] = datetime.now(timezone.utc).isoformat()
+    payload["detail"] = detail
     return payload
 """
 
@@ -274,6 +294,13 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
     ingestion_queue = sqs.Queue(
         stack,
         "IngestionQueue",
+        visibility_timeout=Duration.seconds(60),
+        retention_period=Duration.days(4),
+    )
+
+    processing_events_queue = sqs.Queue(
+        stack,
+        "ProcessingEventsQueue",
         visibility_timeout=Duration.seconds(60),
         retention_period=Duration.days(4),
     )
@@ -529,6 +556,7 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
         event_source_arn=ingestion_queue.queue_arn,
         batch_size=10,
         max_batching_window=Duration.seconds(5),
+        enabled=False,
     )
     worker_event_source_mapping.node.add_dependency(ingestion_queue)
 
@@ -647,23 +675,7 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
         },
     )
 
-    events_rule_role = iam.Role(
-        stack,
-        "EventRuleRole",
-        assumed_by=iam.ServicePrincipal("events.amazonaws.com"),
-        inline_policies={
-            "EventRulePermissions": iam.PolicyDocument(
-                statements=[
-                    iam.PolicyStatement(
-                        actions=["states:StartExecution"],
-                        resources=[state_machine.attr_arn],
-                    )
-                ]
-            )
-        },
-    )
-
-    events.CfnRule(
+    processing_event_rule = events.CfnRule(
         stack,
         "ApplicationEventRule",
         event_bus_name=application_bus.event_bus_name,
@@ -673,11 +685,26 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
         },
         targets=[
             events.CfnRule.TargetProperty(
-                arn=state_machine.attr_arn,
-                id="ProcessingStateMachineTarget",
-                role_arn=events_rule_role.role_arn,
+                arn=processing_events_queue.queue_arn,
+                id="ProcessingEventsQueueTarget",
             )
         ],
+    )
+
+    processing_events_queue_policy = sqs.QueuePolicy(
+        stack,
+        "ProcessingEventsQueuePolicy",
+        queues=[processing_events_queue],
+    )
+    processing_events_queue_policy.document.add_statements(
+        iam.PolicyStatement(
+            sid="AllowEventBridgeDelivery",
+            effect=iam.Effect.ALLOW,
+            principals=[iam.ServicePrincipal("events.amazonaws.com")],
+            actions=["sqs:SendMessage"],
+            resources=[processing_events_queue.queue_arn],
+            conditions={"ArnEquals": {"aws:SourceArn": processing_event_rule.attr_arn}},
+        )
     )
 
     pipe_role = iam.Role(
@@ -694,7 +721,7 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
                             "sqs:GetQueueAttributes",
                             "sqs:ChangeMessageVisibility",
                         ],
-                        resources=[ingestion_queue.queue_arn],
+                        resources=[processing_events_queue.queue_arn],
                     ),
                     iam.PolicyStatement(
                         actions=["lambda:InvokeFunction"],
@@ -713,9 +740,11 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
         stack,
         "ProcessingPipe",
         role_arn=pipe_role.role_arn,
-        source=ingestion_queue.queue_arn,
+        source=processing_events_queue.queue_arn,
         source_parameters=pipes.CfnPipe.PipeSourceParametersProperty(
-            sqs_queue_parameters=pipes.CfnPipe.PipeSourceSqsQueueParametersProperty()
+            sqs_queue_parameters=pipes.CfnPipe.PipeSourceSqsQueueParametersProperty(
+                batch_size=1
+            )
         ),
         enrichment=enricher_lambda.function_arn,
         target=state_machine.attr_arn,

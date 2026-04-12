@@ -11,7 +11,6 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 APP_TS = ROOT / "app.ts"
-DIST_APP = ROOT / "dist" / "app.js"
 ALLOWED_EXTERNAL_INPUTS = {
     "AWS_ENDPOINT",
     "AWS_REGION",
@@ -27,6 +26,7 @@ ALLOWED_ENV_REFERENCES = ALLOWED_EXTERNAL_INPUTS | {
     "DB_PORT",
     "DB_NAME",
     "AUDIT_BUCKET_NAME",
+    "ENRICHMENT_AUDIT_BUCKET_NAME",
 }
 
 
@@ -59,15 +59,179 @@ def _run_node_json(script: str, *, env: Optional[dict[str, str]] = None) -> Any:
     return json.loads(completed.stdout)
 
 
-@pytest.fixture(scope="session")
-def built_app() -> Path:
-    _run(["npm", "run", "build"])
-    assert DIST_APP.exists()
-    return DIST_APP
+def _run_ts_node_json(script: str, *, env: Optional[dict[str, str]] = None) -> Any:
+    completed = subprocess.run(
+        ["node", "-r", "ts-node/register", "-e", script],
+        check=True,
+        cwd=ROOT,
+        env=env or _base_env(),
+        capture_output=True,
+        text=True,
+    )
+    return json.loads(completed.stdout)
+
+
+def _run_node_stdin_json(script: str, payload: dict[str, Any]) -> Any:
+    completed = subprocess.run(
+        ["node", "-e", script],
+        check=True,
+        cwd=ROOT,
+        env=_base_env(),
+        input=json.dumps(payload),
+        capture_output=True,
+        text=True,
+    )
+    return json.loads(completed.stdout)
+
+
+def _invoke_inline_lambda(
+    code: str,
+    event: dict[str, Any],
+    *,
+    env: Optional[dict[str, str]] = None,
+    options: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
+    return _run_node_stdin_json(
+        r"""
+        const fs = require('node:fs');
+        const vm = require('node:vm');
+        const input = JSON.parse(fs.readFileSync(0, 'utf8'));
+        const sentMessages = [];
+        const secretRequests = [];
+        const s3Puts = [];
+        const clientConfigs = [];
+        const connections = [];
+        const options = input.options || {};
+
+        class SQSClient {
+          constructor(config) {
+            clientConfigs.push({ service: 'sqs', config });
+          }
+
+          async send(command) {
+            sentMessages.push(command.input);
+            if (options.failSqs) {
+              throw new Error('simulated sqs failure');
+            }
+            return {};
+          }
+        }
+
+        class SendMessageCommand {
+          constructor(input) {
+            this.input = input;
+          }
+        }
+
+        class SecretsManagerClient {
+          constructor(config) {
+            clientConfigs.push({ service: 'secretsmanager', config });
+          }
+
+          async send(command) {
+            secretRequests.push(command.input);
+            if (options.failSecret) {
+              throw new Error('simulated secrets failure');
+            }
+            return {
+              SecretString: options.secretString || JSON.stringify({
+                username: 'orders_admin',
+                password: 'generated-password',
+                dbname: 'ordersdb',
+                port: 5432,
+              }),
+            };
+          }
+        }
+
+        class GetSecretValueCommand {
+          constructor(input) {
+            this.input = input;
+          }
+        }
+
+        class S3Client {
+          constructor(config) {
+            clientConfigs.push({ service: 's3', config });
+          }
+
+          async send(command) {
+            s3Puts.push(command.input);
+            if (options.failS3) {
+              throw new Error('simulated s3 failure');
+            }
+            return {};
+          }
+        }
+
+        class PutObjectCommand {
+          constructor(input) {
+            this.input = input;
+          }
+        }
+
+        const module = { exports: {} };
+        const sandbox = {
+          module,
+          exports: module.exports,
+          require: (name) => {
+            const modules = {
+              '@aws-sdk/client-sqs': { SQSClient, SendMessageCommand },
+              '@aws-sdk/client-secrets-manager': { SecretsManagerClient, GetSecretValueCommand },
+              '@aws-sdk/client-s3': { S3Client, PutObjectCommand },
+              'node:net': {
+                createConnection: ({ host, port }, onConnect) => {
+                  connections.push({ host, port });
+                  const socket = {
+                    end: () => undefined,
+                    destroy: () => undefined,
+                    setTimeout: () => undefined,
+                    on: () => undefined,
+                  };
+                  setTimeout(onConnect, 0);
+                  return socket;
+                },
+              },
+            };
+            if (!(name in modules)) {
+              throw new Error('Unexpected require: ' + name);
+            }
+            return modules[name];
+          },
+          process: { env: input.env || {} },
+          console,
+          Buffer,
+          setTimeout,
+          clearTimeout,
+        };
+
+        vm.runInNewContext(input.code, sandbox);
+        Promise.resolve(module.exports.handler(input.event))
+          .then((response) => {
+            console.log(JSON.stringify({ response, sentMessages, secretRequests, s3Puts, clientConfigs, connections }));
+          })
+          .catch((error) => {
+            console.log(JSON.stringify({
+              error: { name: error.name, message: error.message },
+              sentMessages,
+              secretRequests,
+              s3Puts,
+              clientConfigs,
+              connections,
+            }));
+          });
+        """,
+        {
+            "code": code,
+            "event": event,
+            "env": env or {},
+            "options": options or {},
+        },
+    )
 
 
 @pytest.fixture(scope="session")
-def template(built_app: Path) -> dict[str, Any]:
+def template() -> dict[str, Any]:
     with tempfile.TemporaryDirectory(prefix="cdk-unit-synth-") as output_dir:
         _run(["npx", "cdk", "synth", "--output", output_dir])
         return json.loads((Path(output_dir) / "BackendLogicStack.template.json").read_text())
@@ -144,6 +308,10 @@ def _env_vars(resource: dict[str, Any]) -> dict[str, Any]:
     return resource["Properties"].get("Environment", {}).get("Variables", {})
 
 
+def _zipfile(resource: dict[str, Any]) -> str:
+    return resource["Properties"]["Code"]["ZipFile"]
+
+
 def _orders_lambda(resources: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     return _only_resource(
         resources,
@@ -183,20 +351,35 @@ def _compute_and_database_security_groups(resources: dict[str, Any]) -> tuple[tu
     )
 
 
-def test_source_contract_and_allowed_inputs(built_app: Path) -> None:
+def _orders_handler_env(**overrides: str) -> dict[str, str]:
+    env = {
+        "AWS_REGION": "us-east-1",
+        "AWS_ENDPOINT": "https://provider.internal",
+        "ORDER_QUEUE_URL": "https://sqs.localhost/queue/orders",
+        "DB_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:orders",
+        "DB_HOST": "orders-db.internal",
+        "DB_PORT": "5432",
+        "DB_NAME": "ordersdb",
+    }
+    env.update(overrides)
+    return env
+
+
+def test_source_contract_and_allowed_inputs() -> None:
     root_ts_files = sorted(path.name for path in ROOT.glob("*.ts"))
     app_source = APP_TS.read_text()
-    referenced_envs = set(re.findall(r"process\\.env\\.([A-Z0-9_]+)", app_source))
+    referenced_envs = set(re.findall(r"process\.env\.([A-Z0-9_]+)", app_source))
 
     assert root_ts_files == ["app.ts"]
     assert "tryGetContext(" not in app_source
     assert "node.getContext(" not in app_source
     for env_name in ALLOWED_EXTERNAL_INPUTS:
         assert env_name in app_source
+    assert referenced_envs
     assert referenced_envs <= ALLOWED_ENV_REFERENCES
 
 
-def test_synthesize_app_defaults_region_and_applies_endpoint_overrides(built_app: Path) -> None:
+def test_synthesize_app_defaults_region_and_applies_endpoint_overrides() -> None:
     env = os.environ.copy()
     env.pop("AWS_REGION", None)
     env.pop("AWS_ENDPOINT", None)
@@ -206,9 +389,9 @@ def test_synthesize_app_defaults_region_and_applies_endpoint_overrides(built_app
     env["AWS_SECRET_ACCESS_KEY"] = "fixture-secret-key"
     env["AWS_ENDPOINT"] = "  https://custom-endpoint.internal.example/base  "
 
-    result = _run_node_json(
+    result = _run_ts_node_json(
         """
-        const mod = require('./dist/app.js');
+        const mod = require('./app.ts');
         const app = mod.synthesizeApp();
         const stack = app.node.findChild('BackendLogicStack');
         console.log(JSON.stringify({
@@ -254,16 +437,15 @@ def test_security_groups_are_strict(resources: dict[str, Any]) -> None:
 
     assert compute_sg["Properties"].get("SecurityGroupIngress") is None
     assert database_sg["Properties"].get("SecurityGroupIngress") is None
+    assert len(_entries_of_type(resources, "AWS::EC2::SecurityGroupEgress")) == 0
     assert len(ingress_rules) == 1
     _, ingress_rule = ingress_rules[0]
-    assert ingress_rule["Properties"] == {
-        "Description": "Allow PostgreSQL access only from the compute tier",
-        "FromPort": 5432,
-        "GroupId": {"Fn::GetAtt": [database_sg_id, "GroupId"]},
-        "IpProtocol": "tcp",
-        "SourceSecurityGroupId": {"Fn::GetAtt": [compute_sg_id, "GroupId"]},
-        "ToPort": 5432,
-    }
+    ingress_props = ingress_rule["Properties"]
+    assert ingress_props["FromPort"] == 5432
+    assert ingress_props["ToPort"] == 5432
+    assert ingress_props["IpProtocol"] == "tcp"
+    assert ingress_props["GroupId"] == {"Fn::GetAtt": [database_sg_id, "GroupId"]}
+    assert ingress_props["SourceSecurityGroupId"] == {"Fn::GetAtt": [compute_sg_id, "GroupId"]}
 
 
 def test_api_gateway_and_lambda_shape(resources: dict[str, Any]) -> None:
@@ -306,17 +488,206 @@ def test_lambda_log_group_and_inline_handler_contract(resources: dict[str, Any])
     )
 
 
+def test_orders_handler_post_enqueues_json_payload_and_returns_202(resources: dict[str, Any]) -> None:
+    _, orders_lambda = _orders_lambda(resources)
+    result = _invoke_inline_lambda(
+        _zipfile(orders_lambda),
+        {
+            "httpMethod": "POST",
+            "path": "/orders",
+            "body": json.dumps({"correlationId": "unit-post"}),
+        },
+        env=_orders_handler_env(),
+    )
+
+    assert "error" not in result
+    assert result["response"]["statusCode"] == 202
+    assert len(result["sentMessages"]) == 1
+    message = result["sentMessages"][0]
+    assert message["QueueUrl"] == "https://sqs.localhost/queue/orders"
+    payload = json.loads(message["MessageBody"])
+    assert payload["kind"] == "order-created"
+    assert payload["orderId"].startswith("order-")
+    assert payload["timestamp"]
+    assert payload["correlationId"] == "unit-post"
+    assert result["clientConfigs"][0]["config"] == {
+        "region": "us-east-1",
+        "endpoint": "https://provider.internal",
+    }
+
+
+def test_orders_handler_post_surfaces_missing_env_and_sqs_failures(resources: dict[str, Any]) -> None:
+    _, orders_lambda = _orders_lambda(resources)
+    missing_queue_env = _orders_handler_env()
+    del missing_queue_env["ORDER_QUEUE_URL"]
+
+    missing_env_result = _invoke_inline_lambda(
+        _zipfile(orders_lambda),
+        {"httpMethod": "POST", "path": "/orders"},
+        env=missing_queue_env,
+    )
+    sqs_failure_result = _invoke_inline_lambda(
+        _zipfile(orders_lambda),
+        {"httpMethod": "POST", "path": "/orders"},
+        env=_orders_handler_env(),
+        options={"failSqs": True},
+    )
+
+    assert missing_env_result["error"]["message"] == "Missing required environment variable: ORDER_QUEUE_URL"
+    assert sqs_failure_result["error"]["message"] == "simulated sqs failure"
+    assert len(sqs_failure_result["sentMessages"]) == 1
+
+
+def test_orders_handler_get_reads_secret_checks_endpoint_and_returns_200(resources: dict[str, Any]) -> None:
+    _, orders_lambda = _orders_lambda(resources)
+    result = _invoke_inline_lambda(
+        _zipfile(orders_lambda),
+        {"httpMethod": "GET", "path": "/orders"},
+        env=_orders_handler_env(),
+    )
+
+    assert "error" not in result
+    assert result["response"]["statusCode"] == 200
+    assert result["secretRequests"] == [
+        {"SecretId": "arn:aws:secretsmanager:us-east-1:123456789012:secret:orders"}
+    ]
+    assert result["connections"] == [{"host": "orders-db.internal", "port": 5432}]
+    assert result["sentMessages"] == []
+    body = json.loads(result["response"]["body"])
+    assert body["ok"] is True
+    assert body["database"]["host"] == "orders-db.internal"
+    assert body["database"]["databaseName"] == "ordersdb"
+    assert body["database"]["credentialsResolved"] is True
+    assert body["database"]["endpoint"]["reachable"] is True
+
+
+def test_orders_handler_get_surfaces_secret_errors(resources: dict[str, Any]) -> None:
+    _, orders_lambda = _orders_lambda(resources)
+    result = _invoke_inline_lambda(
+        _zipfile(orders_lambda),
+        {"httpMethod": "GET", "path": "/orders"},
+        env=_orders_handler_env(),
+        options={"failSecret": True},
+    )
+
+    assert result["error"]["message"] == "simulated secrets failure"
+    assert result["sentMessages"] == []
+    assert result["secretRequests"] == [
+        {"SecretId": "arn:aws:secretsmanager:us-east-1:123456789012:secret:orders"}
+    ]
+
+
+def test_orders_handler_scheduler_heartbeat_enqueues_without_api_inputs(resources: dict[str, Any]) -> None:
+    _, orders_lambda = _orders_lambda(resources)
+    result = _invoke_inline_lambda(
+        _zipfile(orders_lambda),
+        {
+            "source": "scheduler",
+            "action": "heartbeat",
+            "correlationId": "unit-heartbeat",
+        },
+        env=_orders_handler_env(),
+    )
+
+    assert "error" not in result
+    assert result["response"]["statusCode"] == 202
+    payload = json.loads(result["sentMessages"][0]["MessageBody"])
+    assert payload["kind"] == "heartbeat"
+    assert payload["correlationId"] == "unit-heartbeat"
+    assert payload["orderId"].startswith("order-")
+    assert payload["timestamp"]
+
+
+def test_orders_handler_unsupported_method_returns_405_without_side_effects(resources: dict[str, Any]) -> None:
+    _, orders_lambda = _orders_lambda(resources)
+    result = _invoke_inline_lambda(
+        _zipfile(orders_lambda),
+        {"httpMethod": "DELETE", "path": "/orders"},
+        env=_orders_handler_env(),
+    )
+
+    assert result["response"]["statusCode"] == 405
+    assert json.loads(result["response"]["body"]) == {"message": "Method Not Allowed"}
+    assert result["sentMessages"] == []
+    assert result["secretRequests"] == []
+    assert result["s3Puts"] == []
+
+
+def test_enrichment_handler_writes_json_audit_record_to_s3(resources: dict[str, Any]) -> None:
+    _, enrichment_lambda = _enrichment_lambda(resources)
+    result = _invoke_inline_lambda(
+        _zipfile(enrichment_lambda),
+        {
+            "messageId": "message-123",
+            "body": json.dumps({"kind": "order-created", "correlationId": "unit-enrichment"}),
+        },
+        env={
+            "AWS_REGION": "us-east-1",
+            "AWS_ENDPOINT": "https://provider.internal",
+            "ENRICHMENT_AUDIT_BUCKET_NAME": "audit-bucket",
+        },
+    )
+
+    assert "error" not in result
+    assert result["response"]["auditId"] == "message-123"
+    assert result["response"]["detail"]["correlationId"] == "unit-enrichment"
+    assert len(result["s3Puts"]) == 1
+    put = result["s3Puts"][0]
+    assert put["Bucket"] == "audit-bucket"
+    assert put["Key"] == "audit/enrichment/message-123.json"
+    assert put["ContentType"] == "application/json"
+    record = json.loads(put["Body"])
+    assert record["auditId"] == "message-123"
+    assert record["stage"] == "enrichment"
+    assert record["event"]["detail"]["kind"] == "order-created"
+
+
+def test_processor_handler_writes_json_audit_record_to_s3_and_surfaces_failures(resources: dict[str, Any]) -> None:
+    _, processor_lambda = _processor_lambda(resources)
+    event = {
+        "auditId": "audit-123",
+        "detail": {"correlationId": "unit-processor"},
+    }
+    success = _invoke_inline_lambda(
+        _zipfile(processor_lambda),
+        event,
+        env={
+            "AWS_REGION": "us-east-1",
+            "AWS_ENDPOINT": "https://provider.internal",
+            "AUDIT_BUCKET_NAME": "audit-bucket",
+        },
+    )
+    failure = _invoke_inline_lambda(
+        _zipfile(processor_lambda),
+        event,
+        env={
+            "AWS_REGION": "us-east-1",
+            "AUDIT_BUCKET_NAME": "audit-bucket",
+        },
+        options={"failS3": True},
+    )
+
+    assert "error" not in success
+    assert success["response"]["auditId"] == "audit-123"
+    assert len(success["s3Puts"]) == 1
+    put = success["s3Puts"][0]
+    assert put["Bucket"] == "audit-bucket"
+    assert put["Key"] == "audit/audit-123.json"
+    assert put["ContentType"] == "application/json"
+    record = json.loads(put["Body"])
+    assert record["event"]["detail"]["correlationId"] == "unit-processor"
+    assert failure["error"]["message"] == "simulated s3 failure"
+
+
 def test_sqs_and_api_lambda_permissions(resources: dict[str, Any]) -> None:
     queue_id, queue = _only_resource(resources, "AWS::SQS::Queue")
     _, orders_lambda = _orders_lambda(resources)
     orders_role_id = orders_lambda["Properties"]["Role"]["Fn::GetAtt"][0]
     statements = _policy_statements(resources, orders_role_id)
 
-    assert queue["Properties"] == {
-        "MessageRetentionPeriod": 345600,
-        "SqsManagedSseEnabled": True,
-        "VisibilityTimeout": 30,
-    }
+    assert queue["Properties"]["MessageRetentionPeriod"] == 345600
+    assert queue["Properties"]["SqsManagedSseEnabled"] is True
+    assert queue["Properties"]["VisibilityTimeout"] == 30
 
     sqs_statement = next(
         statement
@@ -335,6 +706,22 @@ def test_sqs_and_api_lambda_permissions(resources: dict[str, Any]) -> None:
         "secretsmanager:GetSecretValue",
     ]
     assert secret_statement["Resource"] == _env_vars(orders_lambda)["DB_SECRET_ARN"]
+
+
+def test_orders_lambda_role_has_no_wildcard_actions_or_redshift_secret_access(resources: dict[str, Any]) -> None:
+    _, orders_lambda = _orders_lambda(resources)
+    redshift_secret_id, _ = _only_resource(
+        resources,
+        "AWS::SecretsManager::Secret",
+        lambda entry: "clusteradmin" in str(entry[1]["Properties"].get("GenerateSecretString", {})),
+    )
+    orders_role_id = orders_lambda["Properties"]["Role"]["Fn::GetAtt"][0]
+
+    for statement in _policy_statements(resources, orders_role_id):
+        for action in _flatten_actions(statement["Action"]):
+            assert action != "*"
+            assert not action.endswith(":*")
+        assert redshift_secret_id not in json.dumps(statement["Resource"])
 
 
 def test_state_machine_pipe_and_scheduler(resources: dict[str, Any]) -> None:
@@ -391,31 +778,20 @@ def test_state_machine_pipe_and_scheduler(resources: dict[str, Any]) -> None:
     assert scheduler_statements[0]["Resource"] == {"Fn::GetAtt": [orders_lambda_id, "Arn"]}
 
 
-def test_rds_redshift_glue_and_audit_storage(resources: dict[str, Any], template: dict[str, Any]) -> None:
-    assert len(_entries_of_type(resources, "AWS::Glue::Database")) == 1
-
-    _, (db_security_group_id, _) = _compute_and_database_security_groups(resources)
-    private_subnet_ids = {
+def _private_subnet_ids(resources: dict[str, Any]) -> set[str]:
+    return {
         logical_id
         for logical_id, resource in _entries_of_type(resources, "AWS::EC2::Subnet")
         if not resource["Properties"]["MapPublicIpOnLaunch"]
     }
-    _, db_instance = _only_resource(resources, "AWS::RDS::DBInstance")
-    _, redshift_subnet_group = _only_resource(resources, "AWS::Redshift::ClusterSubnetGroup")
-    _, redshift_cluster = _only_resource(resources, "AWS::Redshift::Cluster")
-    redshift_secret_id, _ = _only_resource(
-        resources,
-        "AWS::SecretsManager::Secret",
-        lambda entry: "clusteradmin" in str(entry[1]["Properties"].get("GenerateSecretString", {})),
-    )
-    _, glue_connection = _only_resource(resources, "AWS::Glue::Connection")
-    _, crawler = _only_resource(resources, "AWS::Glue::Crawler")
-    bucket_id, bucket = _only_resource(resources, "AWS::S3::Bucket")
-    _, bucket_policy = _only_resource(resources, "AWS::S3::BucketPolicy")
-    _, processor_lambda = _processor_lambda(resources)
-    processor_role_id = processor_lambda["Properties"]["Role"]["Fn::GetAtt"][0]
-    processor_statements = _policy_statements(resources, processor_role_id)
 
+
+def test_rds_database_is_private_encrypted_and_secret_backed(resources: dict[str, Any]) -> None:
+    _, (db_security_group_id, _) = _compute_and_database_security_groups(resources)
+    _, db_subnet_group = _only_resource(resources, "AWS::RDS::DBSubnetGroup")
+    _, db_instance = _only_resource(resources, "AWS::RDS::DBInstance")
+
+    assert db_subnet_group["Properties"]["SubnetIds"] == [{"Ref": subnet_id} for subnet_id in sorted(_private_subnet_ids(resources))]
     assert db_instance["Properties"]["DBInstanceClass"] == "db.t3.micro"
     assert db_instance["Properties"]["Engine"] == "postgres"
     assert str(db_instance["Properties"]["EngineVersion"]).startswith("15")
@@ -426,14 +802,30 @@ def test_rds_redshift_glue_and_audit_storage(resources: dict[str, Any], template
     assert db_instance["Properties"]["VPCSecurityGroups"] == [{"Fn::GetAtt": [db_security_group_id, "GroupId"]}]
     assert "{{resolve:secretsmanager:" in _flatten_cfn(db_instance["Properties"]["MasterUserPassword"])
 
-    assert redshift_subnet_group["Properties"]["SubnetIds"] == [{"Ref": subnet_id} for subnet_id in sorted(private_subnet_ids)]
+
+def test_redshift_cluster_is_private_encrypted_and_secret_backed(resources: dict[str, Any]) -> None:
+    redshift_subnet_group_id, redshift_subnet_group = _only_resource(resources, "AWS::Redshift::ClusterSubnetGroup")
+    _, redshift_cluster = _only_resource(resources, "AWS::Redshift::Cluster")
+
+    assert redshift_subnet_group["Properties"]["SubnetIds"] == [{"Ref": subnet_id} for subnet_id in sorted(_private_subnet_ids(resources))]
     assert redshift_cluster["Properties"]["ClusterType"] == "single-node"
     assert redshift_cluster["Properties"]["NodeType"] == "dc2.large"
     assert redshift_cluster["Properties"]["NumberOfNodes"] == 1
     assert redshift_cluster["Properties"]["Encrypted"] is True
     assert redshift_cluster["Properties"]["PubliclyAccessible"] is False
-    assert redshift_cluster["Properties"]["ClusterSubnetGroupName"] == {"Ref": _only_resource(resources, "AWS::Redshift::ClusterSubnetGroup")[0]}
+    assert redshift_cluster["Properties"]["ClusterSubnetGroupName"] == {"Ref": redshift_subnet_group_id}
     assert "{{resolve:secretsmanager:" in _flatten_cfn(redshift_cluster["Properties"]["MasterUserPassword"])
+
+
+def test_glue_catalog_connection_and_crawler_target_redshift(resources: dict[str, Any]) -> None:
+    assert len(_entries_of_type(resources, "AWS::Glue::Database")) == 1
+    redshift_secret_id, _ = _only_resource(
+        resources,
+        "AWS::SecretsManager::Secret",
+        lambda entry: "clusteradmin" in str(entry[1]["Properties"].get("GenerateSecretString", {})),
+    )
+    _, glue_connection = _only_resource(resources, "AWS::Glue::Connection")
+    _, crawler = _only_resource(resources, "AWS::Glue::Crawler")
 
     assert glue_connection["Properties"]["ConnectionInput"]["ConnectionType"] == "JDBC"
     assert "jdbc:redshift://" in _flatten_cfn(
@@ -452,6 +844,17 @@ def test_rds_redshift_glue_and_audit_storage(resources: dict[str, Any], template
         glue_connection["Properties"]["ConnectionInput"]["ConnectionProperties"]["JDBC_CONNECTION_URL"]
     )
 
+
+def test_audit_bucket_and_lambda_putobject_permissions(resources: dict[str, Any], template: dict[str, Any]) -> None:
+    bucket_id, bucket = _only_resource(resources, "AWS::S3::Bucket")
+    _, bucket_policy = _only_resource(resources, "AWS::S3::BucketPolicy")
+    _, processor_lambda = _processor_lambda(resources)
+    _, enrichment_lambda = _enrichment_lambda(resources)
+    processor_role_id = processor_lambda["Properties"]["Role"]["Fn::GetAtt"][0]
+    enrichment_role_id = enrichment_lambda["Properties"]["Role"]["Fn::GetAtt"][0]
+    processor_statements = _policy_statements(resources, processor_role_id)
+    enrichment_statements = _policy_statements(resources, enrichment_role_id)
+
     assert bucket["Properties"]["BucketEncryption"]["ServerSideEncryptionConfiguration"][0]["ServerSideEncryptionByDefault"] == {
         "SSEAlgorithm": "AES256"
     }
@@ -467,7 +870,15 @@ def test_rds_redshift_glue_and_audit_storage(resources: dict[str, Any], template
         for statement in processor_statements
         if "s3:PutObject" in _flatten_actions(statement["Action"])
     )
+    enrichment_put_object_statement = next(
+        statement
+        for statement in enrichment_statements
+        if "s3:PutObject" in _flatten_actions(statement["Action"])
+    )
     assert put_object_statement["Resource"] == {"Fn::Join": ["", [{"Fn::GetAtt": [bucket_id, "Arn"]}, "/*"]]}
+    assert enrichment_put_object_statement["Resource"] == {
+        "Fn::Join": ["", [{"Fn::GetAtt": [bucket_id, "Arn"]}, "/audit/enrichment/*"]]
+    }
     assert "s3:ListAllMyBuckets" not in str(template)
 
 

@@ -80,6 +80,14 @@ const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
 const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
 const net = require("node:net");
 
+const requireEnv = (name) => {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error("Missing required environment variable: " + name);
+  }
+  return value;
+};
+
 const clientConfig = () => {
   const config = { region: process.env.AWS_REGION || "us-east-1" };
   if (process.env.AWS_ENDPOINT) {
@@ -118,7 +126,7 @@ const sendOrderEvent = async (kind, metadata = {}) => {
     ...metadata,
   };
   await queue.send(new SendMessageCommand({
-    QueueUrl: process.env.ORDER_QUEUE_URL,
+    QueueUrl: requireEnv("ORDER_QUEUE_URL"),
     MessageBody: JSON.stringify(payload),
   }));
   return payload;
@@ -127,7 +135,7 @@ const sendOrderEvent = async (kind, metadata = {}) => {
 const loadDbSecret = async () => {
   const secrets = new SecretsManagerClient(clientConfig());
   const response = await secrets.send(new GetSecretValueCommand({
-    SecretId: process.env.DB_SECRET_ARN,
+    SecretId: requireEnv("DB_SECRET_ARN"),
   }));
   if (!response.SecretString) {
     throw new Error("Database secret is missing generated credentials");
@@ -185,14 +193,15 @@ exports.handler = async (event) => {
 
   if (method === "GET" && path === "/orders") {
     const secret = await loadDbSecret();
-    const endpoint = await checkDatabaseEndpoint(process.env.DB_HOST, normalizePort(process.env.DB_PORT, secret.port, 5432));
+    const dbHost = requireEnv("DB_HOST");
+    const endpoint = await checkDatabaseEndpoint(dbHost, normalizePort(process.env.DB_PORT, secret.port, 5432));
     const credentialKeys = ["username", "password"].filter((key) => Boolean(secret[key]));
     return {
       statusCode: 200,
       body: JSON.stringify({
         ok: true,
         database: {
-          host: process.env.DB_HOST,
+          host: dbHost,
           databaseName: process.env.DB_NAME || secret.dbname || null,
           credentialsResolved: credentialKeys.length > 0,
           endpoint,
@@ -211,13 +220,49 @@ exports.handler = async (event) => {
 
 function buildEnrichmentLambdaCode(): string {
   return `
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+
+const requireEnv = (name) => {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error("Missing required environment variable: " + name);
+  }
+  return value;
+};
+
+const clientConfig = () => {
+  const config = { region: process.env.AWS_REGION || "us-east-1" };
+  if (process.env.AWS_ENDPOINT) {
+    config.endpoint = process.env.AWS_ENDPOINT;
+  }
+  return config;
+};
+
 exports.handler = async (event) => {
   const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
-  return {
+  const auditId = event.messageId || "unknown-message";
+  const enriched = {
     auditId: event.messageId || "unknown-message",
     receivedAt: new Date().toISOString(),
     detail: body,
   };
+
+  const record = {
+    auditId,
+    processedAt: new Date().toISOString(),
+    stage: "enrichment",
+    event: enriched,
+  };
+
+  const s3 = new S3Client(clientConfig());
+  await s3.send(new PutObjectCommand({
+    Bucket: requireEnv("ENRICHMENT_AUDIT_BUCKET_NAME"),
+    Key: "audit/enrichment/" + auditId + ".json",
+    ContentType: "application/json",
+    Body: JSON.stringify(record),
+  }));
+
+  return enriched;
 };
 `.trim();
 }
@@ -225,6 +270,14 @@ exports.handler = async (event) => {
 function buildProcessorLambdaCode(): string {
   return `
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+
+const requireEnv = (name) => {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error("Missing required environment variable: " + name);
+  }
+  return value;
+};
 
 exports.handler = async (event) => {
   const clientConfig = { region: process.env.AWS_REGION || "us-east-1" };
@@ -241,7 +294,7 @@ exports.handler = async (event) => {
   };
 
   await s3.send(new PutObjectCommand({
-    Bucket: process.env.AUDIT_BUCKET_NAME,
+    Bucket: requireEnv("AUDIT_BUCKET_NAME"),
     Key: "audit/" + auditId + ".json",
     ContentType: "application/json",
     Body: JSON.stringify(record),
@@ -415,6 +468,10 @@ export class BackendLogicStack extends cdk.Stack {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
     enrichmentLambdaRole.addToPolicy(createSharedLambdaLogPolicy(this, sharedLogGroup.logGroupName));
+    enrichmentLambdaRole.addToPolicy(new iam.PolicyStatement({
+      actions: ['s3:PutObject'],
+      resources: [auditBucket.arnForObjects('audit/enrichment/*')],
+    }));
 
     const enrichmentLambda = new lambda.Function(this, 'PipeEnrichmentHandler', {
       functionName: enrichmentHandlerName,
@@ -427,6 +484,7 @@ export class BackendLogicStack extends cdk.Stack {
       logGroup: sharedLogGroup,
       environment: {
         ...lambdaBaseEnvironment,
+        ENRICHMENT_AUDIT_BUCKET_NAME: auditBucket.bucketName,
       },
     });
 
