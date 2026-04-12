@@ -1,0 +1,315 @@
+Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/tasks/cdk-ts/6b4843da-dd25-4179-826a-23bb9af38ad7 FRAMEWORK=cdk-ts
+
+
+Starting LocalStack (harness environment)...
+ Network iac-harness-network  Creating
+ Network iac-harness-network  Created
+ Container localstack-harness  Creating
+ Container localstack-harness  Created
+ Container localstack-harness  Starting
+ Container localstack-harness  Started
+Waiting for LocalStack health endpoint: http://localhost:4566/_localstack/health
+LocalStack is healthy.
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Setup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Starting worker container: harness-worker-39185
+2cdba08ea0333664f5ce5d41217746e1b97afd2afc4de5eee788ee005e4a48af
+Installing dependencies (npm install)...
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+
+added 405 packages, and audited 442 packages in 22s
+
+41 packages are looking for funding
+  run `npm fund` for details
+
+5 vulnerabilities (3 moderate, 2 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues, run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.12.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
+npm notice To update run: npm install -g npm@11.12.1
+npm notice
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/c8b81896-7a9c-420a-91c8-5ecfbd81de71
+[32m✅ Step passed: Setup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Syntax / Synth[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Checking for LocalStack references...
+Running cdklocal synth...
+Generating template.json for unit tests...
+[32m✅ Step passed: Syntax / Synth[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Unit tests (pytest)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest unit tests...
+============================= test session starts ==============================
+platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+collecting ... collected 11 items
+
+tests/unit_tests.py::test_network_topology_and_private_connectivity PASSED [  9%]
+tests/unit_tests.py::test_security_groups_are_tightly_scoped PASSED      [ 18%]
+tests/unit_tests.py::test_api_gateway_stage_routes_and_access_logging PASSED [ 27%]
+tests/unit_tests.py::test_lambda_runtime_sizing_network_and_environment PASSED [ 36%]
+tests/unit_tests.py::test_lambda_log_groups_are_configured PASSED        [ 45%]
+tests/unit_tests.py::test_sqs_eventbridge_and_queue_policy PASSED        [ 54%]
+tests/unit_tests.py::test_order_handler_permissions_are_resource_scoped PASSED [ 63%]
+tests/unit_tests.py::test_recovery_state_machine_pipe_and_helper_permissions PASSED [ 72%]
+tests/unit_tests.py::test_stateful_store_configuration PASSED            [ 81%]
+tests/unit_tests.py::test_analytics_snapshot_configuration PASSED        [ 90%]
+tests/unit_tests.py::test_no_wildcard_iam_actions_or_plaintext_passwords PASSED [100%]
+
+============================== 11 passed in 0.06s ==============================
+[32m✅ Step passed: Unit tests (pytest)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Deploy (LocalStack)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Bootstrapping (if needed)...
+Running cdklocal deploy...
+
+✨  Synthesis time: 11.34s
+
+StandbyRecoveryStack: start: Building 883c660c4dc4a181f5600173d31fa39b21eb750a96414832b95ca1057fcfb684
+StandbyRecoveryStack: success: Built 883c660c4dc4a181f5600173d31fa39b21eb750a96414832b95ca1057fcfb684
+StandbyRecoveryStack: start: Publishing 883c660c4dc4a181f5600173d31fa39b21eb750a96414832b95ca1057fcfb684:000000000000-us-east-1
+StandbyRecoveryStack: success: Published 883c660c4dc4a181f5600173d31fa39b21eb750a96414832b95ca1057fcfb684:000000000000-us-east-1
+StandbyRecoveryStack: deploying... [1/1]
+StandbyRecoveryStack: creating CloudFormation changeset...
+StandbyRecoveryStack |  0/76 | 11:47:38 PM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack            | StandbyRecoveryStack User Initiated
+StandbyRecoveryStack |  0/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | ApiAccessLogGroup (ApiAccessLogGroupCEA70788) 
+StandbyRecoveryStack |  0/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack            | StandbyRecoveryStack 
+StandbyRecoveryStack |  0/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret           | DatabaseSecret (DatabaseSecret86DBB7B3) 
+StandbyRecoveryStack |  1/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+StandbyRecoveryStack |  1/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+StandbyRecoveryStack |  2/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | ApiAccessLogGroup (ApiAccessLogGroupCEA70788) 
+StandbyRecoveryStack |  2/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                         | Vpc (Vpc8378EB38) 
+StandbyRecoveryStack |  3/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::SecretsManager::Secret           | DatabaseSecret (DatabaseSecret86DBB7B3) 
+StandbyRecoveryStack |  3/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
+StandbyRecoveryStack |  4/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::VPC                         | Vpc (Vpc8378EB38) 
+StandbyRecoveryStack |  4/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | LambdaRunspaceSecurityGroup (LambdaRunspaceSecurityGroup01A445FD) 
+StandbyRecoveryStack |  5/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
+StandbyRecoveryStack |  5/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress        | DatabaseSecurityGroup/from StandbyRecoveryStackLambdaRunspaceSecurityGroup30047D71:5432 (DatabaseSecurityGroupfromStandbyRecoveryStackLambdaRunspaceSecurityGroup30047D7154322150C49A) 
+StandbyRecoveryStack |  6/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | LambdaRunspaceSecurityGroup (LambdaRunspaceSecurityGroup01A445FD) 
+StandbyRecoveryStack |  6/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | Vpc/PrivateSubnet1/Subnet (VpcPrivateSubnet1Subnet536B997A) 
+StandbyRecoveryStack |  7/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress        | DatabaseSecurityGroup/from StandbyRecoveryStackLambdaRunspaceSecurityGroup30047D71:5432 (DatabaseSecurityGroupfromStandbyRecoveryStackLambdaRunspaceSecurityGroup30047D7154322150C49A) 
+StandbyRecoveryStack |  8/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | Vpc/PrivateSubnet1/Subnet (VpcPrivateSubnet1Subnet536B997A) 
+StandbyRecoveryStack |  8/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | Vpc/PrivateSubnet2/Subnet (VpcPrivateSubnet2Subnet3788AAA1) 
+StandbyRecoveryStack |  8/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::RDS::DBSubnetGroup               | DatabaseSubnetGroup/Default (DatabaseSubnetGroup) 
+StandbyRecoveryStack |  9/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | Vpc/PrivateSubnet2/Subnet (VpcPrivateSubnet2Subnet3788AAA1) 
+StandbyRecoveryStack |  9/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | FailureRecoveryStateMachine/Role (FailureRecoveryStateMachineRoleF90CA1A2) 
+StandbyRecoveryStack | 10/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::RDS::DBSubnetGroup               | DatabaseSubnetGroup/Default (DatabaseSubnetGroup) Resource type AWS::RDS::DBSubnetGroup is not supported but was deployed as a fallback
+StandbyRecoveryStack | 10/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | Vpc/PublicSubnet1/RouteTable (VpcPublicSubnet1RouteTable6C95E38E) 
+StandbyRecoveryStack | 11/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | FailureRecoveryStateMachine/Role (FailureRecoveryStateMachineRoleF90CA1A2) 
+StandbyRecoveryStack | 11/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | Vpc/PublicSubnet1/Subnet (VpcPublicSubnet1Subnet5C2D37C4) 
+StandbyRecoveryStack | 12/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | Vpc/PublicSubnet1/RouteTable (VpcPublicSubnet1RouteTable6C95E38E) 
+StandbyRecoveryStack | 12/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | Vpc/PublicSubnet1/RouteTableAssociation (VpcPublicSubnet1RouteTableAssociation97140677) 
+StandbyRecoveryStack | 13/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | Vpc/PublicSubnet1/Subnet (VpcPublicSubnet1Subnet5C2D37C4) 
+StandbyRecoveryStack | 13/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway             | Vpc/IGW (VpcIGWD7BA715C) 
+StandbyRecoveryStack | 14/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | Vpc/PublicSubnet1/RouteTableAssociation (VpcPublicSubnet1RouteTableAssociation97140677) 
+StandbyRecoveryStack | 14/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment        | Vpc/VPCGW (VpcVPCGWBF912B6E) 
+StandbyRecoveryStack | 15/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::InternetGateway             | Vpc/IGW (VpcIGWD7BA715C) 
+StandbyRecoveryStack | 15/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | Vpc/PublicSubnet1/DefaultRoute (VpcPublicSubnet1DefaultRoute3DA9E72A) 
+StandbyRecoveryStack | 16/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment        | Vpc/VPCGW (VpcVPCGWBF912B6E) 
+StandbyRecoveryStack | 16/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                         | Vpc/PublicSubnet1/EIP (VpcPublicSubnet1EIPD7E02669) 
+StandbyRecoveryStack | 17/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | Vpc/PublicSubnet1/DefaultRoute (VpcPublicSubnet1DefaultRoute3DA9E72A) 
+StandbyRecoveryStack | 18/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::EIP                         | Vpc/PublicSubnet1/EIP (VpcPublicSubnet1EIPD7E02669) 
+StandbyRecoveryStack | 18/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                  | Vpc/PublicSubnet1/NATGateway (VpcPublicSubnet1NATGateway4D7517AA) 
+StandbyRecoveryStack | 19/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::NatGateway                  | Vpc/PublicSubnet1/NATGateway (VpcPublicSubnet1NATGateway4D7517AA) 
+StandbyRecoveryStack | 19/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | Vpc/PrivateSubnet1/RouteTable (VpcPrivateSubnet1RouteTableB2C5B500) 
+StandbyRecoveryStack | 19/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | Vpc/PrivateSubnet1/DefaultRoute (VpcPrivateSubnet1DefaultRouteBE02A9ED) 
+StandbyRecoveryStack | 20/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | Vpc/PrivateSubnet1/RouteTable (VpcPrivateSubnet1RouteTableB2C5B500) 
+StandbyRecoveryStack | 20/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | Vpc/PrivateSubnet1/RouteTableAssociation (VpcPrivateSubnet1RouteTableAssociation70C59FA6) 
+StandbyRecoveryStack | 21/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | Vpc/PrivateSubnet1/DefaultRoute (VpcPrivateSubnet1DefaultRouteBE02A9ED) 
+StandbyRecoveryStack | 21/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | Vpc/PrivateSubnet2/RouteTable (VpcPrivateSubnet2RouteTableA678073B) 
+StandbyRecoveryStack | 22/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | Vpc/PrivateSubnet1/RouteTableAssociation (VpcPrivateSubnet1RouteTableAssociation70C59FA6) 
+StandbyRecoveryStack | 22/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | Vpc/PrivateSubnet2/RouteTableAssociation (VpcPrivateSubnet2RouteTableAssociationA89CAD56) 
+StandbyRecoveryStack | 23/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | Vpc/PrivateSubnet2/RouteTable (VpcPrivateSubnet2RouteTableA678073B) 
+StandbyRecoveryStack | 24/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | Vpc/PrivateSubnet2/RouteTableAssociation (VpcPrivateSubnet2RouteTableAssociationA89CAD56) 
+StandbyRecoveryStack | 24/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | Vpc/PrivateSubnet2/DefaultRoute (VpcPrivateSubnet2DefaultRoute060D2087) 
+StandbyRecoveryStack | 24/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | SecretsHelper/ServiceRole (SecretsHelperServiceRole5D82D2B4) 
+StandbyRecoveryStack | 25/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | Vpc/PrivateSubnet2/DefaultRoute (VpcPrivateSubnet2DefaultRoute060D2087) 
+StandbyRecoveryStack | 25/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | SecretsHelper/ServiceRole/DefaultPolicy (SecretsHelperServiceRoleDefaultPolicy222AEA71) 
+StandbyRecoveryStack | 26/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | SecretsHelper/ServiceRole (SecretsHelperServiceRole5D82D2B4) 
+StandbyRecoveryStack | 26/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | SecretsHelperLogGroup (SecretsHelperLogGroupD5A769F5) 
+StandbyRecoveryStack | 27/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | SecretsHelper/ServiceRole/DefaultPolicy (SecretsHelperServiceRoleDefaultPolicy222AEA71) 
+StandbyRecoveryStack | 27/76 | 11:47:38 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | SecretsHelper (SecretsHelper510F5C0D) 
+StandbyRecoveryStack | 28/76 | 11:47:38 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | SecretsHelperLogGroup (SecretsHelperLogGroupD5A769F5) 
+StandbyRecoveryStack | 28/76 | 11:47:41 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | FailureRecoveryStateMachine/Role/DefaultPolicy (FailureRecoveryStateMachineRoleDefaultPolicyEBEBF91F) 
+StandbyRecoveryStack | 29/76 | 11:47:41 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | SecretsHelper (SecretsHelper510F5C0D) 
+StandbyRecoveryStack | 29/76 | 11:47:41 PM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine      | FailureRecoveryStateMachine (FailureRecoveryStateMachineC7275857) 
+StandbyRecoveryStack | 30/76 | 11:47:41 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | FailureRecoveryStateMachine/Role/DefaultPolicy (FailureRecoveryStateMachineRoleDefaultPolicyEBEBF91F) 
+StandbyRecoveryStack | 30/76 | 11:47:41 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+StandbyRecoveryStack | 31/76 | 11:47:41 PM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine      | FailureRecoveryStateMachine (FailureRecoveryStateMachineC7275857) 
+StandbyRecoveryStack | 31/76 | 11:47:41 PM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                       | StandbyLogsBucket (StandbyLogsBucket25EF2340) 
+StandbyRecoveryStack | 32/76 | 11:47:41 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+StandbyRecoveryStack | 32/76 | 11:47:41 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
+StandbyRecoveryStack | 33/76 | 11:47:41 PM | CREATE_COMPLETE      | AWS::S3::Bucket                       | StandbyLogsBucket (StandbyLogsBucket25EF2340) 
+StandbyRecoveryStack | 33/76 | 11:47:41 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | HealthHandler/ServiceRole (HealthHandlerServiceRole2FE1C1C8) 
+StandbyRecoveryStack | 34/76 | 11:47:41 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | GlueCrawlerRole/DefaultPolicy (GlueCrawlerRoleDefaultPolicy44958AC9) 
+StandbyRecoveryStack | 35/76 | 11:47:41 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | HealthHandler/ServiceRole (HealthHandlerServiceRole2FE1C1C8) 
+StandbyRecoveryStack | 35/76 | 11:47:41 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | HealthHandlerLogGroup (HealthHandlerLogGroup7701F817) 
+StandbyRecoveryStack | 36/76 | 11:47:41 PM | CREATE_COMPLETE      | AWS::RDS::DBInstance                  | PostgresDatabase (PostgresDatabase0A8A7373) Resource type AWS::RDS::DBInstance is not supported but was deployed as a fallback
+StandbyRecoveryStack | 36/76 | 11:47:41 PM | CREATE_IN_PROGRESS   | AWS::RDS::DBInstance                  | PostgresDatabase (PostgresDatabase0A8A7373) 
+StandbyRecoveryStack | 36/76 | 11:47:41 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | HealthHandler (HealthHandler164742B2) 
+StandbyRecoveryStack | 37/76 | 11:47:41 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | HealthHandlerLogGroup (HealthHandlerLogGroup7701F817) 
+StandbyRecoveryStack | 37/76 | 11:47:41 PM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                       | OrderDeadLetterQueue (OrderDeadLetterQueueAD46CF6E) 
+StandbyRecoveryStack | 38/76 | 11:47:41 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | HealthHandler (HealthHandler164742B2) 
+StandbyRecoveryStack | 38/76 | 11:47:42 PM | CREATE_IN_PROGRESS   | AWS::Events::EventBus                 | OrderEventBus (OrderEventBus8DA2948A) 
+StandbyRecoveryStack | 39/76 | 11:47:42 PM | CREATE_COMPLETE      | AWS::SQS::Queue                       | OrderDeadLetterQueue (OrderDeadLetterQueueAD46CF6E) 
+StandbyRecoveryStack | 39/76 | 11:47:42 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | OrderHandler/ServiceRole (OrderHandlerServiceRoleB2B92D21) 
+StandbyRecoveryStack | 40/76 | 11:47:42 PM | CREATE_COMPLETE      | AWS::Events::EventBus                 | OrderEventBus (OrderEventBus8DA2948A) 
+StandbyRecoveryStack | 40/76 | 11:47:42 PM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                       | OrderQueue (OrderQueue39B99167) 
+StandbyRecoveryStack | 41/76 | 11:47:42 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | OrderHandler/ServiceRole (OrderHandlerServiceRoleB2B92D21) 
+StandbyRecoveryStack | 41/76 | 11:47:42 PM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                       | PipeSourceQueue (PipeSourceQueueA4478B01) 
+StandbyRecoveryStack | 42/76 | 11:47:42 PM | CREATE_COMPLETE      | AWS::SQS::Queue                       | OrderQueue (OrderQueue39B99167) 
+StandbyRecoveryStack | 43/76 | 11:47:42 PM | CREATE_COMPLETE      | AWS::SQS::Queue                       | PipeSourceQueue (PipeSourceQueueA4478B01) 
+StandbyRecoveryStack | 43/76 | 11:47:42 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | OrderHandler/ServiceRole/DefaultPolicy (OrderHandlerServiceRoleDefaultPolicyB29FED94) 
+StandbyRecoveryStack | 43/76 | 11:47:42 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | OrderHandlerLogGroup (OrderHandlerLogGroup6B661209) 
+StandbyRecoveryStack | 44/76 | 11:47:42 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | OrderHandler/ServiceRole/DefaultPolicy (OrderHandlerServiceRoleDefaultPolicyB29FED94) 
+StandbyRecoveryStack | 44/76 | 11:47:42 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | OrderHandler (OrderHandlerF9AFA565) 
+StandbyRecoveryStack | 45/76 | 11:47:42 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | OrderHandlerLogGroup (OrderHandlerLogGroup6B661209) 
+StandbyRecoveryStack | 45/76 | 11:47:42 PM | CREATE_IN_PROGRESS   | AWS::Events::Rule                     | OrderReceivedRule (OrderReceivedRuleBA14EB64) 
+StandbyRecoveryStack | 46/76 | 11:47:42 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | OrderHandler (OrderHandlerF9AFA565) 
+StandbyRecoveryStack | 46/76 | 11:47:42 PM | CREATE_IN_PROGRESS   | AWS::SQS::QueuePolicy                 | OrderQueue/Policy (OrderQueuePolicyA27111FC) 
+StandbyRecoveryStack | 47/76 | 11:47:42 PM | CREATE_COMPLETE      | AWS::Events::Rule                     | OrderReceivedRule (OrderReceivedRuleBA14EB64) 
+StandbyRecoveryStack | 47/76 | 11:47:42 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
+StandbyRecoveryStack | 48/76 | 11:47:42 PM | CREATE_COMPLETE      | AWS::SQS::QueuePolicy                 | OrderQueue/Policy (OrderQueuePolicyA27111FC) 
+StandbyRecoveryStack | 48/76 | 11:47:42 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
+StandbyRecoveryStack | 49/76 | 11:47:42 PM | CREATE_COMPLETE      | AWS::Pipes::Pipe                      | OrderRecoveryPipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
+StandbyRecoveryStack | 49/76 | 11:47:42 PM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                      | OrderRecoveryPipe 
+StandbyRecoveryStack | 50/76 | 11:47:42 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | PipeRole (PipeRole4D7B8476) 
+StandbyRecoveryStack | 50/76 | 11:47:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCEndpoint                 | S3GatewayEndpoint (S3GatewayEndpointE8BAF1BC) 
+StandbyRecoveryStack | 51/76 | 11:47:42 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | PipeRole/DefaultPolicy (PipeRoleDefaultPolicy84F54597) 
+StandbyRecoveryStack | 51/76 | 11:47:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | VpcEndpointSecurityGroup (VpcEndpointSecurityGroup02EA44AC) 
+StandbyRecoveryStack | 52/76 | 11:47:42 PM | CREATE_COMPLETE      | AWS::EC2::VPCEndpoint                 | S3GatewayEndpoint (S3GatewayEndpointE8BAF1BC) 
+StandbyRecoveryStack | 52/76 | 11:47:42 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCEndpoint                 | SecretsManagerInterfaceEndpoint (SecretsManagerInterfaceEndpointE27DCE69) 
+StandbyRecoveryStack | 53/76 | 11:47:42 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | VpcEndpointSecurityGroup (VpcEndpointSecurityGroup02EA44AC) 
+StandbyRecoveryStack | 53/76 | 11:47:42 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi              | StandbyApi (StandbyApi5EEA394B) 
+StandbyRecoveryStack | 54/76 | 11:47:42 PM | CREATE_COMPLETE      | AWS::EC2::VPCEndpoint                 | SecretsManagerInterfaceEndpoint (SecretsManagerInterfaceEndpointE27DCE69) 
+StandbyRecoveryStack | 54/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | StandbyApi/CloudWatchRole (StandbyApiCloudWatchRole7305ED40) 
+StandbyRecoveryStack | 55/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi              | StandbyApi (StandbyApi5EEA394B) 
+StandbyRecoveryStack | 55/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Account              | StandbyApi/Account (StandbyApiAccountE53280CE) 
+StandbyRecoveryStack | 56/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | StandbyApi/CloudWatchRole (StandbyApiCloudWatchRole7305ED40) 
+StandbyRecoveryStack | 56/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource             | StandbyApi/Default/orders (StandbyApiordersB33177F1) 
+StandbyRecoveryStack | 57/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::ApiGateway::Account              | StandbyApi/Account (StandbyApiAccountE53280CE) 
+StandbyRecoveryStack | 57/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource             | StandbyApi/Default/health (StandbyApihealth30DA51B6) 
+StandbyRecoveryStack | 58/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::ApiGateway::Resource             | StandbyApi/Default/orders (StandbyApiordersB33177F1) 
+StandbyRecoveryStack | 58/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method               | StandbyApi/Default/health/GET (StandbyApihealthGETFCE76D7D) 
+StandbyRecoveryStack | 59/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::ApiGateway::Resource             | StandbyApi/Default/health (StandbyApihealth30DA51B6) 
+StandbyRecoveryStack | 59/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method               | StandbyApi/Default/orders/POST (StandbyApiordersPOST6FD49FB6) 
+StandbyRecoveryStack | 60/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method               | StandbyApi/Default/health/GET (StandbyApihealthGETFCE76D7D) 
+StandbyRecoveryStack | 60/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment           | StandbyApi/Deployment (StandbyApiDeployment5DC799456885c4f52ac2e176a9800f1695f226e4) 
+StandbyRecoveryStack | 61/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method               | StandbyApi/Default/orders/POST (StandbyApiordersPOST6FD49FB6) 
+StandbyRecoveryStack | 61/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage                | StandbyApi/DeploymentStage.standby (StandbyApiDeploymentStagestandbyBA7C89AD) 
+StandbyRecoveryStack | 62/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment           | StandbyApi/Deployment (StandbyApiDeployment5DC799456885c4f52ac2e176a9800f1695f226e4) 
+StandbyRecoveryStack | 62/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | StandbyApi/Default/health/GET/ApiPermission.StandbyRecoveryStackStandbyApi8E5EC651.GET..health (StandbyApihealthGETApiPermissionStandbyRecoveryStackStandbyApi8E5EC651GEThealth0FB61BEE) 
+StandbyRecoveryStack | 63/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::ApiGateway::Stage                | StandbyApi/DeploymentStage.standby (StandbyApiDeploymentStagestandbyBA7C89AD) 
+StandbyRecoveryStack | 63/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | StandbyApi/Default/health/GET/ApiPermission.Test.StandbyRecoveryStackStandbyApi8E5EC651.GET..health (StandbyApihealthGETApiPermissionTestStandbyRecoveryStackStandbyApi8E5EC651GEThealthD1B5BCC7) 
+StandbyRecoveryStack | 64/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | StandbyApi/Default/health/GET/ApiPermission.StandbyRecoveryStackStandbyApi8E5EC651.GET..health (StandbyApihealthGETApiPermissionStandbyRecoveryStackStandbyApi8E5EC651GEThealth0FB61BEE) 
+StandbyRecoveryStack | 64/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | StandbyApi/Default/orders/POST/ApiPermission.StandbyRecoveryStackStandbyApi8E5EC651.POST..orders (StandbyApiordersPOSTApiPermissionStandbyRecoveryStackStandbyApi8E5EC651POSTorders1DE23B1A) 
+StandbyRecoveryStack | 65/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | StandbyApi/Default/health/GET/ApiPermission.Test.StandbyRecoveryStackStandbyApi8E5EC651.GET..health (StandbyApihealthGETApiPermissionTestStandbyRecoveryStackStandbyApi8E5EC651GEThealthD1B5BCC7) 
+StandbyRecoveryStack | 65/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | StandbyApi/Default/orders/POST/ApiPermission.Test.StandbyRecoveryStackStandbyApi8E5EC651.POST..orders (StandbyApiordersPOSTApiPermissionTestStandbyRecoveryStackStandbyApi8E5EC651POSTorders5AC4C3B3) 
+StandbyRecoveryStack | 66/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | StandbyApi/Default/orders/POST/ApiPermission.StandbyRecoveryStackStandbyApi8E5EC651.POST..orders (StandbyApiordersPOSTApiPermissionStandbyRecoveryStackStandbyApi8E5EC651POSTorders1DE23B1A) 
+StandbyRecoveryStack | 66/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::Athena::WorkGroup                | StandbyAthenaWorkgroup 
+StandbyRecoveryStack | 67/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | StandbyApi/Default/orders/POST/ApiPermission.Test.StandbyRecoveryStackStandbyApi8E5EC651.POST..orders (StandbyApiordersPOSTApiPermissionTestStandbyRecoveryStackStandbyApi8E5EC651POSTorders5AC4C3B3) 
+StandbyRecoveryStack | 67/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress        | VpcEndpointSecurityGroup/from StandbyRecoveryStackLambdaRunspaceSecurityGroup30047D71:443 (VpcEndpointSecurityGroupfromStandbyRecoveryStackLambdaRunspaceSecurityGroup30047D71443B617F8E5) 
+StandbyRecoveryStack | 68/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::Glue::Crawler                    | StandbyLogsCrawler Resource type AWS::Glue::Crawler is not supported but was deployed as a fallback
+StandbyRecoveryStack | 68/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::Glue::Crawler                    | StandbyLogsCrawler 
+StandbyRecoveryStack | 69/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::Glue::Database                   | StandbyGlueDatabase Resource type AWS::Glue::Database is not supported but was deployed as a fallback
+StandbyRecoveryStack | 69/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::Glue::Database                   | StandbyGlueDatabase 
+StandbyRecoveryStack | 70/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::Athena::WorkGroup                | StandbyAthenaWorkgroup Resource type AWS::Athena::WorkGroup is not supported but was deployed as a fallback
+StandbyRecoveryStack | 70/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | Vpc/PublicSubnet2/RouteTable (VpcPublicSubnet2RouteTable94F7E489) 
+StandbyRecoveryStack | 71/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress        | VpcEndpointSecurityGroup/from StandbyRecoveryStackLambdaRunspaceSecurityGroup30047D71:443 (VpcEndpointSecurityGroupfromStandbyRecoveryStackLambdaRunspaceSecurityGroup30047D71443B617F8E5) 
+StandbyRecoveryStack | 71/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | Vpc/PublicSubnet2/DefaultRoute (VpcPublicSubnet2DefaultRoute97F91067) 
+StandbyRecoveryStack | 72/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | Vpc/PublicSubnet2/RouteTable (VpcPublicSubnet2RouteTable94F7E489) 
+StandbyRecoveryStack | 72/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | Vpc/PublicSubnet2/Subnet (VpcPublicSubnet2Subnet691E08A3) 
+StandbyRecoveryStack | 73/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | Vpc/PublicSubnet2/DefaultRoute (VpcPublicSubnet2DefaultRoute97F91067) 
+StandbyRecoveryStack | 73/76 | 11:47:44 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | Vpc/PublicSubnet2/RouteTableAssociation (VpcPublicSubnet2RouteTableAssociationDD5762D8) 
+StandbyRecoveryStack | 74/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | Vpc/PublicSubnet2/Subnet (VpcPublicSubnet2Subnet691E08A3) 
+StandbyRecoveryStack | 75/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | Vpc/PublicSubnet2/RouteTableAssociation (VpcPublicSubnet2RouteTableAssociationDD5762D8) 
+StandbyRecoveryStack | 76/76 | 11:47:44 PM | CREATE_COMPLETE      | AWS::CloudFormation::Stack            | StandbyRecoveryStack 
+
+ ✅  StandbyRecoveryStack
+
+✨  Deployment time: 10.23s
+
+Outputs:
+StandbyRecoveryStack.ApiUrl = https://m9j1xci82k.execute-api.localhost.localstack.cloud:4566/standby/
+StandbyRecoveryStack.EventBusName = StandbyRecoveryStackOrderEventBus86D3C416
+StandbyRecoveryStack.LogsBucketName = standbyrecoverystack-standbylogsbucket25ef234-d9001850
+StandbyRecoveryStack.OrderQueueUrl = http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/StandbyRecoveryStack-OrderQueue39B99167-70720307
+StandbyRecoveryStack.StandbyApiEndpointB2476245 = https://m9j1xci82k.execute-api.localhost.localstack.cloud:4566/standby/
+StandbyRecoveryStack.StateMachineArn = arn:aws:states:us-east-1:000000000000:stateMachine:StandbyRecoveryStack-FailureRecoveryStateMach-38181c3e
+Stack ARN:
+arn:aws:cloudformation:us-east-1:000000000000:stack/StandbyRecoveryStack/81979db8-91f3-4047-84d9-a7714a649f7a
+
+✨  Total time: 21.57s
+
+[32m✅ Step passed: Deploy (LocalStack)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Integration tests[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest integration tests...
+============================= test session starts ==============================
+platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+collecting ... collected 7 items
+
+tests/integration_tests.py::test_stack_contains_required_resource_families PASSED [ 14%]
+tests/integration_tests.py::test_sqs_queues_are_live_and_dlq_is_configured PASSED [ 28%]
+tests/integration_tests.py::test_api_gateway_routes_and_lambdas_are_deployed PASSED [ 42%]
+tests/integration_tests.py::test_health_endpoint_returns_json PASSED     [ 57%]
+tests/integration_tests.py::test_post_orders_reaches_queues_and_event_bus PASSED [ 71%]
+tests/integration_tests.py::test_events_and_recovery_workflow_are_live PASSED [ 85%]
+tests/integration_tests.py::test_storage_and_snapshot_resources_are_declared PASSED [100%]
+
+============================== 7 passed in 7.58s ===============================
+[32m✅ Step passed: Integration tests[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Destroy / Cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running cdklocal destroy...
+Cleaning up worker container: harness-worker-39185
+[32m✅ Step passed: Destroy / Cleanup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  HARNESS SUMMARY[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ setup[0m
+[32m✅ syntax/plan[0m
+[32m✅ unit tests[0m
+[32m✅ deploy (localstack)[0m
+[32m✅ integration tests[0m
+[32m✅ destroy/cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ All steps passed.[0m
+
+Log saved to: /Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/runs/tasks_cdk-ts_6b4843da-dd25-4179-826a-23bb9af38ad7.log
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+Stopping LocalStack...
+ Container localstack-harness  Stopping
+ Container localstack-harness  Stopped
+ Container localstack-harness  Removing
+ Container localstack-harness  Removed
+ Network iac-harness-network  Removing
+ Network iac-harness-network  Removed

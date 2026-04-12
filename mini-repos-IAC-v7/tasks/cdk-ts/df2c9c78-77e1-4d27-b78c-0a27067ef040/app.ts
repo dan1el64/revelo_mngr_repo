@@ -88,12 +88,34 @@ const clientConfig = () => {
   return config;
 };
 
-const sendOrderEvent = async (kind) => {
+const parseBody = (event) => {
+  if (!event || !event.body) {
+    return {};
+  }
+  if (typeof event.body === "string") {
+    try {
+      return JSON.parse(event.body);
+    } catch (_) {
+      return {};
+    }
+  }
+  return event.body;
+};
+
+const correlationMetadata = (source) => {
+  if (!source || typeof source.correlationId !== "string" || source.correlationId.length === 0) {
+    return {};
+  }
+  return { correlationId: source.correlationId };
+};
+
+const sendOrderEvent = async (kind, metadata = {}) => {
   const queue = new SQSClient(clientConfig());
   const payload = {
     kind,
     orderId: "order-" + Date.now(),
     timestamp: new Date().toISOString(),
+    ...metadata,
   };
   await queue.send(new SendMessageCommand({
     QueueUrl: process.env.ORDER_QUEUE_URL,
@@ -104,28 +126,38 @@ const sendOrderEvent = async (kind) => {
 
 const loadDbSecret = async () => {
   const secrets = new SecretsManagerClient(clientConfig());
-  try {
-    const response = await secrets.send(new GetSecretValueCommand({
-      SecretId: process.env.DB_SECRET_ARN,
-    }));
-    return response.SecretString ? JSON.parse(response.SecretString) : {};
-  } catch (_) {
-    return {};
+  const response = await secrets.send(new GetSecretValueCommand({
+    SecretId: process.env.DB_SECRET_ARN,
+  }));
+  if (!response.SecretString) {
+    throw new Error("Database secret is missing generated credentials");
   }
+  return JSON.parse(response.SecretString);
+};
+
+const normalizePort = (...candidates) => {
+  for (const candidate of candidates) {
+    const port = Number(candidate);
+    if (Number.isInteger(port) && port >= 0 && port < 65536) {
+      return port;
+    }
+  }
+  return 5432;
 };
 
 const checkDatabaseEndpoint = async (host, port) => {
-  await new Promise((resolve) => {
-    const socket = net.createConnection({ host, port: Number(port) }, () => {
+  const normalizedPort = normalizePort(port);
+  return await new Promise((resolve) => {
+    const socket = net.createConnection({ host, port: normalizedPort }, () => {
       socket.end();
-      resolve(undefined);
+      resolve({ host, port: normalizedPort, reachable: true });
     });
     socket.setTimeout(1000, () => {
       socket.destroy();
-      resolve(undefined);
+      resolve({ host, port: normalizedPort, reachable: false });
     });
     socket.on("error", () => {
-      resolve(undefined);
+      resolve({ host, port: normalizedPort, reachable: false });
     });
   });
 };
@@ -136,7 +168,7 @@ exports.handler = async (event) => {
   const isSchedulerInvocation = !method && event && event.source === "scheduler" && event.action === "heartbeat";
 
   if (isSchedulerInvocation) {
-    const payload = await sendOrderEvent("heartbeat");
+    const payload = await sendOrderEvent("heartbeat", correlationMetadata(event));
     return {
       statusCode: 202,
       body: JSON.stringify({ accepted: true, source: "scheduler", payload }),
@@ -144,7 +176,7 @@ exports.handler = async (event) => {
   }
 
   if (method === "POST" && path === "/orders") {
-    const payload = await sendOrderEvent("order-created");
+    const payload = await sendOrderEvent("order-created", correlationMetadata(parseBody(event)));
     return {
       statusCode: 202,
       body: JSON.stringify({ accepted: true, payload }),
@@ -153,7 +185,8 @@ exports.handler = async (event) => {
 
   if (method === "GET" && path === "/orders") {
     const secret = await loadDbSecret();
-    await checkDatabaseEndpoint(process.env.DB_HOST, process.env.DB_PORT || secret.port || 5432);
+    const endpoint = await checkDatabaseEndpoint(process.env.DB_HOST, normalizePort(process.env.DB_PORT, secret.port, 5432));
+    const credentialKeys = ["username", "password"].filter((key) => Boolean(secret[key]));
     return {
       statusCode: 200,
       body: JSON.stringify({
@@ -161,6 +194,8 @@ exports.handler = async (event) => {
         database: {
           host: process.env.DB_HOST,
           databaseName: process.env.DB_NAME || secret.dbname || null,
+          credentialsResolved: credentialKeys.length > 0,
+          endpoint,
         },
       }),
     };
@@ -665,7 +700,7 @@ export class BackendLogicStack extends cdk.Stack {
         jdbcTargets: [
           {
             connectionName: glueConnectionName,
-            path: '/',
+            path: 'dev/public/%',
           },
         ],
       },
@@ -673,9 +708,6 @@ export class BackendLogicStack extends cdk.Stack {
     crawler.addDependency(catalogDatabase);
     crawler.addDependency(glueConnection);
 
-    new cdk.CfnOutput(this, 'OrdersApiUrl', {
-      value: api.url,
-    });
   }
 }
 

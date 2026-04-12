@@ -335,6 +335,8 @@ describe('lambda business logic', () => {
         secretRequests.push(command.input);
         return {
           SecretString: JSON.stringify({
+            username: 'orders_admin',
+            password: 'generated-password',
             dbname: 'ordersdb',
             port: 5432,
           }),
@@ -417,6 +419,7 @@ describe('lambda business logic', () => {
       database: {
         host: 'db.internal',
         databaseName: 'ordersdb',
+        credentialsResolved: true,
       },
     });
   });
@@ -626,7 +629,7 @@ describe('data, catalog, audit, and least privilege', () => {
       JdbcTargets: [
         {
           ConnectionName: glueConnection.Properties.ConnectionInput.Name,
-          Path: '/',
+          Path: 'dev/public/%',
         },
       ],
     });
