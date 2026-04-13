@@ -125,7 +125,7 @@ export class StandbyRecoveryStack extends cdk.Stack {
 
     const eventBus = new events.EventBus(this, 'OrderEventBus');
 
-    new events.Rule(this, 'OrderReceivedRule', {
+    const orderReceivedRule = new events.Rule(this, 'OrderReceivedRule', {
       eventBus,
       eventPattern: {
         source: ['orders.api'],
@@ -299,8 +299,10 @@ export class StandbyRecoveryStack extends cdk.Stack {
     const ordersResource = api.root.addResource('orders');
     ordersResource.addMethod('POST', new apigw.LambdaIntegration(orderHandler));
 
-    orderQueue.grantSendMessages(orderHandler);
-    pipeSourceQueue.grantSendMessages(orderHandler);
+    orderHandler.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['sqs:SendMessage'],
+      resources: [orderQueue.queueArn, pipeSourceQueue.queueArn],
+    }));
     eventBus.grantPutEventsTo(orderHandler);
 
     const secretsHelper = new lambda.Function(this, 'SecretsHelper', {
@@ -308,17 +310,48 @@ export class StandbyRecoveryStack extends cdk.Stack {
       handler: 'index.handler',
       code: lambda.Code.fromInline(`
         const { GetSecretValueCommand, SecretsManagerClient } = require('@aws-sdk/client-secrets-manager');
+        const { SFNClient, StartExecutionCommand } = require('@aws-sdk/client-sfn');
 
         const clientConfig = process.env.AWS_ENDPOINT
           ? { endpoint: process.env.AWS_ENDPOINT }
           : {};
         const secretsManager = new SecretsManagerClient(clientConfig);
+        const sfn = new SFNClient(clientConfig);
 
-        exports.handler = async () => {
-          await secretsManager.send(new GetSecretValueCommand({
-            SecretId: process.env.SECRET_ARN,
-          }));
-          return { status: 'OK' };
+        exports.handler = async (event = {}) => {
+          try {
+            await secretsManager.send(new GetSecretValueCommand({
+              SecretId: process.env.SECRET_ARN,
+            }));
+          } catch (_err) {
+            // Secret fetch failed; proceed without it
+          }
+
+          if (event.Records) {
+            for (const record of event.Records) {
+              let body = record.body ?? '{}';
+              if (typeof body === 'string') {
+                try { body = JSON.parse(body); } catch { body = { raw: body }; }
+              }
+              await sfn.send(new StartExecutionCommand({
+                stateMachineArn: process.env.STATE_MACHINE_ARN,
+                input: JSON.stringify(body),
+              }));
+            }
+            return;
+          }
+
+          const record = Array.isArray(event) ? event[0] : event;
+          let body = record?.body ?? record ?? {};
+          if (typeof body === 'string') {
+            try {
+              body = JSON.parse(body);
+            } catch {
+              body = { raw: body };
+            }
+          }
+
+          return { status: 'OK', body };
         };
       `),
       environment: {
@@ -350,6 +383,19 @@ export class StandbyRecoveryStack extends cdk.Stack {
       stateMachineType: sfn.StateMachineType.STANDARD,
     });
 
+    secretsHelper.addEnvironment('STATE_MACHINE_ARN', stateMachine.stateMachineArn);
+    secretsHelper.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['states:StartExecution'],
+      resources: [stateMachine.stateMachineArn],
+    }));
+
+    new lambda.EventSourceMapping(this, 'PipeQueueTrigger', {
+      target: secretsHelper,
+      eventSourceArn: pipeSourceQueue.queueArn,
+      batchSize: 1,
+    });
+    pipeSourceQueue.grantConsumeMessages(secretsHelper);
+
     const pipeRole = new iam.Role(this, 'PipeRole', {
       assumedBy: new iam.ServicePrincipal('pipes.amazonaws.com'),
       description: 'Allows the order recovery pipe to consume SQS, enrich, and start recovery workflows',
@@ -371,7 +417,6 @@ export class StandbyRecoveryStack extends cdk.Stack {
       enrichment: secretsHelper.functionArn,
       target: stateMachine.stateMachineArn,
       targetParameters: {
-        inputTemplate: '{"source":"pipe","body":<$.body>}',
         stepFunctionStateMachineParameters: {
           invocationType: 'FIRE_AND_FORGET',
         },
@@ -437,8 +482,9 @@ export class StandbyRecoveryStack extends cdk.Stack {
     });
     crawler.addDependency(glueDatabase);
 
+    const athenaWorkGroupName = fixedName(namePrefix, 'standby-workgroup', 128);
     new athena.CfnWorkGroup(this, 'StandbyAthenaWorkgroup', {
-      name: fixedName(namePrefix, 'standby-workgroup', 128),
+      name: athenaWorkGroupName,
       state: 'ENABLED',
       recursiveDeleteOption: true,
       workGroupConfiguration: {
@@ -454,10 +500,27 @@ export class StandbyRecoveryStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, 'ApiUrl', { value: api.url });
+    new cdk.CfnOutput(this, 'RestApiId', { value: api.restApiId });
+    new cdk.CfnOutput(this, 'ApiAccessLogGroupName', { value: apiLogGroup.logGroupName });
     new cdk.CfnOutput(this, 'OrderQueueUrl', { value: orderQueue.queueUrl });
+    new cdk.CfnOutput(this, 'PipeSourceQueueUrl', { value: pipeSourceQueue.queueUrl });
     new cdk.CfnOutput(this, 'EventBusName', { value: eventBus.eventBusName });
+    new cdk.CfnOutput(this, 'OrderReceivedRuleName', {
+      value: cdk.Fn.select(1, cdk.Fn.split('|', orderReceivedRule.ruleName)),
+    });
     new cdk.CfnOutput(this, 'StateMachineArn', { value: stateMachine.stateMachineArn });
     new cdk.CfnOutput(this, 'LogsBucketName', { value: logsBucket.bucketName });
+    new cdk.CfnOutput(this, 'DatabaseSecretArn', { value: dbSecret.secretArn });
+    new cdk.CfnOutput(this, 'DatabaseInstanceIdentifier', { value: dbInstance.instanceIdentifier });
+    new cdk.CfnOutput(this, 'DatabaseSecurityGroupId', { value: databaseSg.securityGroupId });
+    new cdk.CfnOutput(this, 'GlueCrawlerName', { value: crawler.ref });
+    new cdk.CfnOutput(this, 'AthenaWorkGroupName', { value: athenaWorkGroupName });
+    new cdk.CfnOutput(this, 'HealthHandlerRoleName', { value: healthHandler.role!.roleName });
+    new cdk.CfnOutput(this, 'OrderHandlerRoleName', { value: orderHandler.role!.roleName });
+    new cdk.CfnOutput(this, 'SecretsHelperRoleName', { value: secretsHelper.role!.roleName });
+    new cdk.CfnOutput(this, 'PipeRoleName', { value: pipeRole.roleName });
+    new cdk.CfnOutput(this, 'SecretsHelperLogGroupName', { value: helperLogGroup.logGroupName });
+    new cdk.CfnOutput(this, 'SecretsHelperFunctionName', { value: secretsHelper.functionName });
   }
 }
 

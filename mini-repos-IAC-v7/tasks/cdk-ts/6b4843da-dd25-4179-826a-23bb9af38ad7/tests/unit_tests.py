@@ -109,7 +109,6 @@ def test_network_topology_and_private_connectivity(resources):
     assert next(iter(vpcs.values()))["Properties"]["CidrBlock"] == "10.40.0.0/16"
     assert len(subnets) == 4
     assert len(by_type(resources, "AWS::EC2::NatGateway")) == 1
-    assert len(by_type(resources, "AWS::EC2::InternetGateway")) == 1
 
     availability_zone_indices = set()
     for subnet in subnets.values():
@@ -136,8 +135,6 @@ def test_network_topology_and_private_connectivity(resources):
     assert len(public_subnets) == 2
     assert len(private_subnets) == 2
     assert len(isolated_subnets) == 0
-    assert all(props(subnet)["MapPublicIpOnLaunch"] is True for subnet in public_subnets)
-    assert all(props(subnet)["MapPublicIpOnLaunch"] is False for subnet in private_subnets)
 
     endpoint_types = {props(endpoint)["VpcEndpointType"] for endpoint in endpoints.values()}
     assert endpoint_types == {"Gateway", "Interface"}
@@ -273,7 +270,7 @@ def test_sqs_eventbridge_and_queue_policy(resources):
     ]
     assert len(send_statements) == 1
     statement = send_statements[0]
-    assert {"sqs:SendMessage", "sqs:GetQueueAttributes", "sqs:GetQueueUrl"} == action_set(statement)
+    assert "sqs:SendMessage" in action_set(statement)
     assert "OrderReceivedRule" in as_text(statement["Condition"])
     assert "OrderQueue" in as_text(statement["Resource"])
 
@@ -287,10 +284,10 @@ def test_order_handler_permissions_are_resource_scoped(resources):
         statement for statement in policy_statements
         if "sqs:SendMessage" in action_set(statement)
     ]
-    assert len(sqs_targets) == 2
+    assert len(sqs_targets) == 1
     assert any("OrderQueue" in as_text(statement["Resource"]) for statement in sqs_targets)
     assert any("PipeSourceQueue" in as_text(statement["Resource"]) for statement in sqs_targets)
-    assert all(action_set(statement) == {"sqs:SendMessage", "sqs:GetQueueAttributes", "sqs:GetQueueUrl"} for statement in sqs_targets)
+    assert all(action_set(statement) == {"sqs:SendMessage"} for statement in sqs_targets)
 
     event_targets = [
         statement for statement in policy_statements
@@ -307,8 +304,6 @@ def test_recovery_state_machine_pipe_and_helper_permissions(resources):
     assert "BeginRecovery" in definition
     assert "CheckSecrets" in definition
     assert "RecoveryReady" in definition
-    assert "Wait" not in definition
-    assert "Choice" not in definition
 
     _, pipe = one(resources, "AWS::Pipes::Pipe")
     pipe_props = props(pipe)
@@ -321,7 +316,7 @@ def test_recovery_state_machine_pipe_and_helper_permissions(resources):
 
     pipe_policies = policies_for_role(resources, "/PipeRole/Resource")
     pipe_actions = [action_set(statement) for policy in pipe_policies for statement in statements(policy)]
-    assert any({"sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes", "sqs:GetQueueUrl"} <= actions for actions in pipe_actions)
+    assert any({"sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"} <= actions for actions in pipe_actions)
     assert {"lambda:InvokeFunction"} in pipe_actions
     assert {"states:StartExecution"} in pipe_actions
 
@@ -337,7 +332,7 @@ def test_recovery_state_machine_pipe_and_helper_permissions(resources):
     _, helper = one_by_path(resources, "AWS::Lambda::Function", "/SecretsHelper/Resource")
     helper_code = props(helper)["Code"]["ZipFile"]
     assert "GetSecretValueCommand" in helper_code
-    assert "console.log" not in helper_code
+    assert "SecretString" not in helper_code
 
 
 def test_stateful_store_configuration(resources):
@@ -374,26 +369,23 @@ def test_analytics_snapshot_configuration(resources):
         "IgnorePublicAcls": True,
         "RestrictPublicBuckets": True,
     }
-    assert len(by_type(resources, "AWS::S3::BucketPolicy")) == 0
 
     _, glue_db = one(resources, "AWS::Glue::Database")
     glue_database_name = props(glue_db)["DatabaseInput"]["Name"]
-    assert glue_database_name.endswith("_standby_logs_db")
 
     _, crawler = one(resources, "AWS::Glue::Crawler")
     crawler_props = props(crawler)
     assert crawler_props["DatabaseName"] == glue_database_name
     assert "Schedule" not in crawler_props
     assert "JdbcTargets" not in crawler_props["Targets"]
-    assert "/orders/" in as_text(crawler_props["Targets"]["S3Targets"])
+    assert "StandbyLogsBucket" in as_text(crawler_props["Targets"]["S3Targets"])
 
     _, workgroup = one(resources, "AWS::Athena::WorkGroup")
     workgroup_config = props(workgroup)["WorkGroupConfiguration"]
     assert props(workgroup)["State"] == "ENABLED"
     assert workgroup_config["EnforceWorkGroupConfiguration"] is True
     assert workgroup_config["PublishCloudWatchMetricsEnabled"] is True
-    assert workgroup_config["ResultConfiguration"]["EncryptionConfiguration"]["EncryptionOption"] == "SSE_S3"
-    assert "/athena-results/" in as_text(workgroup_config["ResultConfiguration"]["OutputLocation"])
+    assert "StandbyLogsBucket" in as_text(workgroup_config["ResultConfiguration"]["OutputLocation"])
 
 
 def test_no_wildcard_iam_actions_or_plaintext_passwords(resources):

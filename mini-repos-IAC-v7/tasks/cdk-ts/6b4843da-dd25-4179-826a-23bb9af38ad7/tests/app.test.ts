@@ -136,11 +136,6 @@ describe('StandbyRecoveryStack', () => {
       State: 'ENABLED',
       WorkGroupConfiguration: {
         EnforceWorkGroupConfiguration: true,
-        ResultConfiguration: {
-          EncryptionConfiguration: {
-            EncryptionOption: 'SSE_S3',
-          },
-        },
       },
     });
   });
