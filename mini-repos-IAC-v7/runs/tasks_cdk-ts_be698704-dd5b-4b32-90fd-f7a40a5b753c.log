@@ -1,0 +1,287 @@
+Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/tasks/cdk-ts/be698704-dd5b-4b32-90fd-f7a40a5b753c FRAMEWORK=cdk-ts
+
+
+Starting LocalStack (harness environment)...
+ Network iac-harness-network  Creating
+ Network iac-harness-network  Created
+ Container localstack-harness  Creating
+ Container localstack-harness  Created
+ Container localstack-harness  Starting
+ Container localstack-harness  Started
+Waiting for LocalStack health endpoint: http://localhost:4566/_localstack/health
+LocalStack is healthy.
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Setup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Starting worker container: harness-worker-13951
+7bbd5f4a548dd02ceb575152a7eb4cd3612e955b4179432aa5312dac8347a1fa
+Installing dependencies (npm install)...
+npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+
+added 379 packages, and audited 414 packages in 12s
+
+61 packages are looking for funding
+  run `npm fund` for details
+
+5 vulnerabilities (3 moderate, 2 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues, run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.12.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
+npm notice To update run: npm install -g npm@11.12.1
+npm notice
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/10a08931-7166-4d95-9a4d-bbd7613ab853
+[32m✅ Step passed: Setup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Syntax / Synth[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Checking for LocalStack references...
+Running cdklocal synth...
+Generating template.json for unit tests...
+[32m✅ Step passed: Syntax / Synth[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Unit tests (pytest)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest unit tests...
+============================= test session starts ==============================
+platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+collecting ... collected 15 items
+
+tests/unit_tests.py::test_resource_counts PASSED                         [  6%]
+tests/unit_tests.py::test_log_groups_association_and_retention_without_kms PASSED [ 13%]
+tests/unit_tests.py::test_api_stage_logging_metrics_without_access_log_group PASSED [ 20%]
+tests/unit_tests.py::test_primary_and_secondary_lambda_contract PASSED   [ 26%]
+tests/unit_tests.py::test_lambda_invocation_sources_are_constrained PASSED [ 33%]
+tests/unit_tests.py::test_connectivity_rule_queue_pipe_and_method PASSED [ 40%]
+tests/unit_tests.py::test_dynamodb_s3_and_rds_requirements PASSED        [ 46%]
+tests/unit_tests.py::test_rds_security_group_allows_only_primary_lambda_on_5432 PASSED [ 53%]
+tests/unit_tests.py::test_iam_scope_and_pipe_dedicated_role PASSED       [ 60%]
+tests/unit_tests.py::test_secondary_role_has_no_dynamodb_or_s3_write_actions PASSED [ 66%]
+tests/unit_tests.py::test_no_retain_or_termination_protection_patterns PASSED [ 73%]
+tests/unit_tests.py::test_output_contract PASSED                         [ 80%]
+tests/unit_tests.py::test_no_manual_resource_names PASSED                [ 86%]
+tests/unit_tests.py::test_no_unauthorized_parameters_or_hardcoded_accounts PASSED [ 93%]
+tests/unit_tests.py::test_primary_role_scoped_to_api_write_path PASSED   [100%]
+
+============================== 15 passed in 0.10s ==============================
+[32m✅ Step passed: Unit tests (pytest)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Deploy (LocalStack)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Bootstrapping (if needed)...
+Running cdklocal deploy...
+[WARNING] aws-cdk-lib.aws_stepfunctions.StateMachineProps#definition is deprecated.
+  use definitionBody: DefinitionBody.fromChainable()
+  This API will be removed in the next major release.
+[WARNING] aws-cdk-lib.aws_stepfunctions.StateMachineProps#definition is deprecated.
+  use definitionBody: DefinitionBody.fromChainable()
+  This API will be removed in the next major release.
+
+✨  Synthesis time: 10.25s
+
+AppStack: start: Building 352a0e5d3f85dbbe628aa3530a20b4b6d78dae00c02cded56cdbc76d198f83b3
+AppStack: success: Built 352a0e5d3f85dbbe628aa3530a20b4b6d78dae00c02cded56cdbc76d198f83b3
+AppStack: start: Publishing 352a0e5d3f85dbbe628aa3530a20b4b6d78dae00c02cded56cdbc76d198f83b3:current_account-us-east-1
+AppStack: success: Published 352a0e5d3f85dbbe628aa3530a20b4b6d78dae00c02cded56cdbc76d198f83b3:current_account-us-east-1
+AppStack: deploying... [1/1]
+AppStack: creating CloudFormation changeset...
+AppStack |  0/53 | 6:56:34 PM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack                  | AppStack User Initiated
+AppStack |  0/53 | 6:56:34 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi                    | Api (ApiF70053CD) 
+AppStack |  0/53 | 6:56:34 PM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack                  | AppStack 
+AppStack |  0/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource                   | Api/Default/order (Apiorder88C17B87) 
+AppStack |  1/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi                    | Api (ApiF70053CD) 
+AppStack |  1/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway                   | AppVpc/IGW (AppVpcIGW826A76F0) 
+AppStack |  2/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::ApiGateway::Resource                   | Api/Default/order (Apiorder88C17B87) 
+AppStack |  2/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                               | AppVpc (AppVpc80F1F7F9) 
+AppStack |  3/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::EC2::InternetGateway                   | AppVpc/IGW (AppVpcIGW826A76F0) 
+AppStack |  3/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment              | AppVpc/VPCGW (AppVpcVPCGW1D33210A) 
+AppStack |  4/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::EC2::VPC                               | AppVpc (AppVpc80F1F7F9) 
+AppStack |  4/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | AppVpc/publicSubnet1/RouteTable (AppVpcpublicSubnet1RouteTableF902084E) 
+AppStack |  5/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment              | AppVpc/VPCGW (AppVpcVPCGW1D33210A) 
+AppStack |  5/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | AppVpc/publicSubnet1/DefaultRoute (AppVpcpublicSubnet1DefaultRouteE576D94C) 
+AppStack |  6/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | AppVpc/publicSubnet1/RouteTable (AppVpcpublicSubnet1RouteTableF902084E) 
+AppStack |  7/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | AppVpc/publicSubnet1/DefaultRoute (AppVpcpublicSubnet1DefaultRouteE576D94C) 
+AppStack |  7/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | AppVpc/publicSubnet1/Subnet (AppVpcpublicSubnet1Subnet8772DAEA) 
+AppStack |  7/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | AppVpc/publicSubnet1/RouteTableAssociation (AppVpcpublicSubnet1RouteTableAssociation1AC5573B) 
+AppStack |  8/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | AppVpc/publicSubnet1/Subnet (AppVpcpublicSubnet1Subnet8772DAEA) 
+AppStack |  8/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                               | AppVpc/publicSubnet1/EIP (AppVpcpublicSubnet1EIP42F76984) 
+AppStack |  9/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | AppVpc/publicSubnet1/RouteTableAssociation (AppVpcpublicSubnet1RouteTableAssociation1AC5573B) 
+AppStack |  9/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                        | AppVpc/publicSubnet1/NATGateway (AppVpcpublicSubnet1NATGateway9E7EC93F) 
+AppStack | 10/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::EC2::EIP                               | AppVpc/publicSubnet1/EIP (AppVpcpublicSubnet1EIP42F76984) 
+AppStack | 10/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | AppVpc/privateSubnet2/RouteTable (AppVpcprivateSubnet2RouteTableC4E83AEF) 
+AppStack | 11/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::EC2::NatGateway                        | AppVpc/publicSubnet1/NATGateway (AppVpcpublicSubnet1NATGateway9E7EC93F) 
+AppStack | 11/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | AppVpc/privateSubnet2/DefaultRoute (AppVpcprivateSubnet2DefaultRoute4128D3F7) 
+AppStack | 12/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | AppVpc/privateSubnet2/RouteTable (AppVpcprivateSubnet2RouteTableC4E83AEF) 
+AppStack | 12/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | PrimaryWorkerRole (PrimaryWorkerRoleA3052315) 
+AppStack | 13/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | AppVpc/privateSubnet2/DefaultRoute (AppVpcprivateSubnet2DefaultRoute4128D3F7) 
+AppStack | 13/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | AppVpc/privateSubnet1/RouteTable (AppVpcprivateSubnet1RouteTable6494272F) 
+AppStack | 14/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | PrimaryWorkerRole (PrimaryWorkerRoleA3052315) 
+AppStack | 14/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | AppVpc/privateSubnet1/DefaultRoute (AppVpcprivateSubnet1DefaultRoute57A63F17) 
+AppStack | 15/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | AppVpc/privateSubnet1/RouteTable (AppVpcprivateSubnet1RouteTable6494272F) 
+AppStack | 16/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | AppVpc/privateSubnet1/DefaultRoute (AppVpcprivateSubnet1DefaultRoute57A63F17) 
+AppStack | 16/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | AppVpc/privateSubnet1/Subnet (AppVpcprivateSubnet1Subnet8CF47DFB) 
+AppStack | 16/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | AppVpc/privateSubnet1/RouteTableAssociation (AppVpcprivateSubnet1RouteTableAssociation4118B1BE) 
+AppStack | 17/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | AppVpc/privateSubnet1/Subnet (AppVpcprivateSubnet1Subnet8CF47DFB) 
+AppStack | 18/53 | 6:56:35 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | AppVpc/privateSubnet1/RouteTableAssociation (AppVpcprivateSubnet1RouteTableAssociation4118B1BE) 
+AppStack | 18/53 | 6:56:35 PM | CREATE_IN_PROGRESS   | AWS::DynamoDB::Table                        | OrdersTable (OrdersTable315BB997) 
+AppStack | 18/53 | 6:56:37 PM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                             | RawBucket (RawBucket0C3EE094) 
+AppStack | 19/53 | 6:56:37 PM | CREATE_COMPLETE      | AWS::DynamoDB::Table                        | OrdersTable (OrdersTable315BB997) 
+AppStack | 19/53 | 6:56:37 PM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                             | OrdersDlq (OrdersDlq16CD0DA3) 
+AppStack | 20/53 | 6:56:37 PM | CREATE_COMPLETE      | AWS::S3::Bucket                             | RawBucket (RawBucket0C3EE094) 
+AppStack | 20/53 | 6:56:37 PM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                             | OrdersQueue (OrdersQueue3DFA1D51) 
+AppStack | 21/53 | 6:56:37 PM | CREATE_COMPLETE      | AWS::SQS::Queue                             | OrdersDlq (OrdersDlq16CD0DA3) 
+AppStack | 21/53 | 6:56:37 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | PrimaryWorkerRole/DefaultPolicy (PrimaryWorkerRoleDefaultPolicy1B057949) 
+AppStack | 22/53 | 6:56:37 PM | CREATE_COMPLETE      | AWS::SQS::Queue                             | OrdersQueue (OrdersQueue3DFA1D51) 
+AppStack | 23/53 | 6:56:37 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | PrimaryWorkerRole/DefaultPolicy (PrimaryWorkerRoleDefaultPolicy1B057949) 
+AppStack | 23/53 | 6:56:37 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | AppVpc/privateSubnet2/Subnet (AppVpcprivateSubnet2Subnet2BB4B216) 
+AppStack | 23/53 | 6:56:37 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | AppVpc/privateSubnet2/RouteTableAssociation (AppVpcprivateSubnet2RouteTableAssociation35EA2B1E) 
+AppStack | 24/53 | 6:56:37 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | AppVpc/privateSubnet2/Subnet (AppVpcprivateSubnet2Subnet2BB4B216) 
+AppStack | 24/53 | 6:56:37 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                     | PrimaryWorkerSg (PrimaryWorkerSg0D16331F) 
+AppStack | 25/53 | 6:56:37 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | AppVpc/privateSubnet2/RouteTableAssociation (AppVpcprivateSubnet2RouteTableAssociation35EA2B1E) 
+AppStack | 25/53 | 6:56:37 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                       | PrimaryWorker (PrimaryWorker187A1DF0) 
+AppStack | 26/53 | 6:56:37 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                     | PrimaryWorkerSg (PrimaryWorkerSg0D16331F) 
+AppStack | 26/53 | 6:56:38 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method                     | Api/Default/order/POST (ApiorderPOSTB8B6992D) 
+AppStack | 27/53 | 6:56:38 PM | CREATE_COMPLETE      | AWS::Lambda::Function                       | PrimaryWorker (PrimaryWorker187A1DF0) 
+AppStack | 28/53 | 6:56:38 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method                     | Api/Default/order/POST (ApiorderPOSTB8B6992D) 
+AppStack | 28/53 | 6:56:38 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment                 | Api/Deployment (ApiDeploymentB17BE62Daa9227ae50eceed08ef532ae72a98288) 
+AppStack | 28/53 | 6:56:38 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage                      | Api/DeploymentStage.prod (ApiDeploymentStageprod3EB9684E) 
+AppStack | 29/53 | 6:56:38 PM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment                 | Api/Deployment (ApiDeploymentB17BE62Daa9227ae50eceed08ef532ae72a98288) 
+AppStack | 29/53 | 6:56:38 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission                     | Api/Default/order/POST/ApiPermission.AppStackApi0ADF27A1.POST..order (ApiorderPOSTApiPermissionAppStackApi0ADF27A1POSTorder6583BC23) 
+AppStack | 30/53 | 6:56:38 PM | CREATE_COMPLETE      | AWS::ApiGateway::Stage                      | Api/DeploymentStage.prod (ApiDeploymentStageprod3EB9684E) 
+AppStack | 30/53 | 6:56:38 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission                     | Api/Default/order/POST/ApiPermission.Test.AppStackApi0ADF27A1.POST..order (ApiorderPOSTApiPermissionTestAppStackApi0ADF27A1POSTorder0995C930) 
+AppStack | 31/53 | 6:56:38 PM | CREATE_COMPLETE      | AWS::Lambda::Permission                     | Api/Default/order/POST/ApiPermission.AppStackApi0ADF27A1.POST..order (ApiorderPOSTApiPermissionAppStackApi0ADF27A1POSTorder6583BC23) 
+AppStack | 31/53 | 6:56:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                        | AppVpc/publicSubnet2/RouteTable (AppVpcpublicSubnet2RouteTable82F17977) 
+AppStack | 32/53 | 6:56:38 PM | CREATE_COMPLETE      | AWS::Lambda::Permission                     | Api/Default/order/POST/ApiPermission.Test.AppStackApi0ADF27A1.POST..order (ApiorderPOSTApiPermissionTestAppStackApi0ADF27A1POSTorder0995C930) 
+AppStack | 32/53 | 6:56:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                             | AppVpc/publicSubnet2/DefaultRoute (AppVpcpublicSubnet2DefaultRouteBA859B08) 
+AppStack | 33/53 | 6:56:38 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                        | AppVpc/publicSubnet2/RouteTable (AppVpcpublicSubnet2RouteTable82F17977) 
+AppStack | 34/53 | 6:56:38 PM | CREATE_COMPLETE      | AWS::EC2::Route                             | AppVpc/publicSubnet2/DefaultRoute (AppVpcpublicSubnet2DefaultRouteBA859B08) 
+AppStack | 34/53 | 6:56:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                            | AppVpc/publicSubnet2/Subnet (AppVpcpublicSubnet2SubnetE41E6C0A) 
+AppStack | 34/53 | 6:56:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation       | AppVpc/publicSubnet2/RouteTableAssociation (AppVpcpublicSubnet2RouteTableAssociationAFB1BC14) 
+AppStack | 35/53 | 6:56:38 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                            | AppVpc/publicSubnet2/Subnet (AppVpcpublicSubnet2SubnetE41E6C0A) 
+AppStack | 35/53 | 6:56:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup                     | DbSg (DbSg495F8305) 
+AppStack | 36/53 | 6:56:38 PM | CREATE_COMPLETE      | AWS::CDK::Metadata                          | CDKMetadata/Default (CDKMetadata) 
+AppStack | 36/53 | 6:56:38 PM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                          | CDKMetadata/Default (CDKMetadata) 
+AppStack | 37/53 | 6:56:38 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation       | AppVpc/publicSubnet2/RouteTableAssociation (AppVpcpublicSubnet2RouteTableAssociationAFB1BC14) 
+AppStack | 37/53 | 6:56:38 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress              | DbSg/from AppStackPrimaryWorkerSg76B8C041:5432 (DbSgfromAppStackPrimaryWorkerSg76B8C04154325E031C8B) 
+AppStack | 38/53 | 6:56:38 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup                     | DbSg (DbSg495F8305) 
+AppStack | 38/53 | 6:56:38 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | OrderFlowRole (OrderFlowRole7421902B) 
+AppStack | 39/53 | 6:56:38 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress              | DbSg/from AppStackPrimaryWorkerSg76B8C041:5432 (DbSgfromAppStackPrimaryWorkerSg76B8C04154325E031C8B) 
+AppStack | 39/53 | 6:56:38 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | OrderFlowRole/DefaultPolicy (OrderFlowRoleDefaultPolicy4567B4D1) 
+AppStack | 40/53 | 6:56:38 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | OrderFlowRole (OrderFlowRole7421902B) 
+AppStack | 40/53 | 6:56:38 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                         | StepFunctionsLogGroup (StepFunctionsLogGroup8EBFF7CF) 
+AppStack | 41/53 | 6:56:38 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | OrderFlowRole/DefaultPolicy (OrderFlowRoleDefaultPolicy4567B4D1) 
+AppStack | 41/53 | 6:56:39 PM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine            | OrderFlow (OrderFlowA028A46E) 
+AppStack | 42/53 | 6:56:39 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                         | StepFunctionsLogGroup (StepFunctionsLogGroup8EBFF7CF) 
+AppStack | 42/53 | 6:56:39 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | SecondaryWorkerRole (SecondaryWorkerRole0CE1AB25) 
+AppStack | 43/53 | 6:56:39 PM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine            | OrderFlow (OrderFlowA028A46E) 
+AppStack | 43/53 | 6:56:39 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                       | SecondaryWorker (SecondaryWorker4C97787D) 
+AppStack | 44/53 | 6:56:39 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | SecondaryWorkerRole (SecondaryWorkerRole0CE1AB25) 
+AppStack | 44/53 | 6:56:40 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                              | OrdersPipeRole (OrdersPipeRole49D8C288) 
+AppStack | 45/53 | 6:56:40 PM | CREATE_COMPLETE      | AWS::Lambda::Function                       | SecondaryWorker (SecondaryWorker4C97787D) 
+AppStack | 46/53 | 6:56:40 PM | CREATE_COMPLETE      | AWS::Pipes::Pipe                            | OrdersPipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
+AppStack | 46/53 | 6:56:40 PM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                            | OrdersPipe 
+AppStack | 47/53 | 6:56:40 PM | CREATE_COMPLETE      | AWS::IAM::Role                              | OrdersPipeRole (OrdersPipeRole49D8C288) 
+AppStack | 47/53 | 6:56:40 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                            | OrdersPipeRole/DefaultPolicy (OrdersPipeRoleDefaultPolicyC715113F) 
+AppStack | 47/53 | 6:56:40 PM | CREATE_IN_PROGRESS   | AWS::Events::Rule                           | OrdersRule (OrdersRule251509FF) 
+AppStack | 48/53 | 6:56:40 PM | CREATE_COMPLETE      | AWS::IAM::Policy                            | OrdersPipeRole/DefaultPolicy (OrdersPipeRoleDefaultPolicyC715113F) 
+AppStack | 48/53 | 6:56:40 PM | CREATE_IN_PROGRESS   | AWS::SQS::QueuePolicy                       | OrdersQueue/Policy (OrdersQueuePolicy060934B1) 
+AppStack | 49/53 | 6:56:40 PM | CREATE_COMPLETE      | AWS::Events::Rule                           | OrdersRule (OrdersRule251509FF) 
+AppStack | 49/53 | 6:56:40 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                         | PrimaryWorkerLogGroup (PrimaryWorkerLogGroupD7D4645B) 
+AppStack | 50/53 | 6:56:40 PM | CREATE_COMPLETE      | AWS::SQS::QueuePolicy                       | OrdersQueue/Policy (OrdersQueuePolicy060934B1) 
+AppStack | 50/53 | 6:56:40 PM | CREATE_IN_PROGRESS   | AWS::S3::BucketPolicy                       | RawBucket/Policy (RawBucketPolicy61C50A52) 
+AppStack | 51/53 | 6:56:40 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                         | PrimaryWorkerLogGroup (PrimaryWorkerLogGroupD7D4645B) 
+AppStack | 52/53 | 6:56:40 PM | CREATE_COMPLETE      | AWS::S3::BucketPolicy                       | RawBucket/Policy (RawBucketPolicy61C50A52) 
+AppStack | 53/53 | 6:56:40 PM | CREATE_COMPLETE      | AWS::CloudFormation::Stack                  | AppStack 
+
+ ✅  AppStack
+
+✨  Deployment time: 10.54s
+
+Outputs:
+AppStack.ApiEndpoint4F160690 = https://hnrz3lavpw.execute-api.localhost.localstack.cloud:4566/prod/
+AppStack.ApiUrl = https://hnrz3lavpw.execute-api.localhost.localstack.cloud:4566/prod/
+AppStack.DynamoDbTableName = AppStack-OrdersTable315BB997-711cb496
+AppStack.EnrichmentLambdaArn = arn:aws:lambda:us-east-1:000000000000:function:AppStack-SecondaryWorker4C97787D-d793df47
+AppStack.PrimaryLambdaArn = arn:aws:lambda:us-east-1:000000000000:function:AppStack-PrimaryWorker187A1DF0-24fed5cf
+AppStack.QueueUrl = http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/AppStack-OrdersQueue3DFA1D51-bed9f7ba
+AppStack.RdsEndpoint = 
+AppStack.S3BucketName = appstack-rawbucket0c3ee094-2e47a636
+Stack ARN:
+arn:aws:cloudformation:us-east-1:000000000000:stack/AppStack/9076d317-3eba-4c00-aea8-a8936ac15a12
+
+✨  Total time: 20.79s
+
+[32m✅ Step passed: Deploy (LocalStack)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Integration tests[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest integration tests...
+============================= test session starts ==============================
+platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+collecting ... collected 9 items
+
+tests/integration_tests.py::test_outputs_exist PASSED                    [ 11%]
+tests/integration_tests.py::test_post_order_returns_success_response PASSED [ 22%]
+tests/integration_tests.py::test_queue_configuration_runtime_values PASSED [ 33%]
+tests/integration_tests.py::test_primary_and_secondary_lambda_runtime_contracts PASSED [ 44%]
+tests/integration_tests.py::test_event_rule_pattern_and_target PASSED    [ 55%]
+tests/integration_tests.py::test_pipe_contract_source_enrichment_target_and_invocation PASSED [ 66%]
+tests/integration_tests.py::test_state_machine_logging_is_enabled PASSED [ 77%]
+tests/integration_tests.py::test_rds_private_and_encrypted_contract PASSED [ 88%]
+tests/integration_tests.py::test_post_order_end_to_end_stores_to_s3_and_dynamodb PASSED [100%]
+
+============================== 9 passed in 3.39s ===============================
+[32m✅ Step passed: Integration tests[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Destroy / Cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running cdklocal destroy...
+Cleaning up worker container: harness-worker-13951
+[32m✅ Step passed: Destroy / Cleanup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  HARNESS SUMMARY[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ setup[0m
+[32m✅ syntax/plan[0m
+[32m✅ unit tests[0m
+[32m✅ deploy (localstack)[0m
+[32m✅ integration tests[0m
+[32m✅ destroy/cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ All steps passed.[0m
+
+Log saved to: /Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/runs/tasks_cdk-ts_be698704-dd5b-4b32-90fd-f7a40a5b753c.log
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+Stopping LocalStack...
+ Container localstack-harness  Stopping
+ Container localstack-harness  Stopped
+ Container localstack-harness  Removing
+ Container localstack-harness  Removed
+ Network iac-harness-network  Removing
+ Network iac-harness-network  Removed
