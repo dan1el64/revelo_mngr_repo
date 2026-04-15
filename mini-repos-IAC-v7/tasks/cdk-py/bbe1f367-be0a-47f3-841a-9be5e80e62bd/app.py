@@ -31,12 +31,11 @@ def get_aws_endpoint() -> str:
     return os.getenv("AWS_ENDPOINT", "")
 
 
-def build_lambda_environment(extra: dict[str, str]) -> dict[str, str]:  # pragma: no cover
+def build_lambda_environment(extra: dict[str, str]) -> dict[str, str]:
     environment = dict(extra)
     aws_endpoint = get_aws_endpoint()
     if aws_endpoint:
         environment["AWS_ENDPOINT"] = aws_endpoint
-    environment.update(extra)
     return environment
 
 
@@ -335,6 +334,7 @@ class SecurityBaselineStack(Stack):
             encryption=s3.BucketEncryption.S3_MANAGED,
             versioned=True,
             removal_policy=RemovalPolicy.DESTROY,
+            auto_delete_objects=True,
         )
 
         ingest_function_name = generated_name(self, "ingest-handler")

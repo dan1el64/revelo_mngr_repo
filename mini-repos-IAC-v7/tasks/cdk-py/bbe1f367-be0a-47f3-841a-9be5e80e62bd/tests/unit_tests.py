@@ -135,3 +135,132 @@ def test_main_synthesizes_the_app(monkeypatch):
     app.main()
 
     assert fake_app.synth_called is True
+
+
+# ---------------------------------------------------------------------------
+# Negative-path and boundary tests
+# ---------------------------------------------------------------------------
+
+
+def test_get_aws_endpoint_returns_empty_string_when_unset(monkeypatch):
+    monkeypatch.delenv("AWS_ENDPOINT", raising=False)
+    assert app.get_aws_endpoint() == ""
+
+
+def test_build_lambda_environment_with_empty_extra_and_no_endpoint(monkeypatch):
+    monkeypatch.delenv("AWS_ENDPOINT", raising=False)
+    assert app.build_lambda_environment({}) == {}
+
+
+def test_build_lambda_environment_env_endpoint_wins_over_extra_key(monkeypatch):
+    """Regression: double-update bug (app.py env update clobbering) must not exist.
+
+    Passing AWS_ENDPOINT inside *extra* must be overwritten by the env-var value,
+    not allowed to survive via a redundant environment.update(extra) call.
+    """
+    monkeypatch.setenv("AWS_ENDPOINT", "https://env.internal")
+    env = app.build_lambda_environment({"AWS_ENDPOINT": "https://caller.internal"})
+    assert env["AWS_ENDPOINT"] == "https://env.internal"
+
+
+def test_generated_name_truncates_at_max_length():
+    import aws_cdk as cdk
+
+    cdk_app = cdk.App()
+    stack = cdk.Stack(cdk_app, "TestStack")
+    name = app.generated_name(stack, "suffix", max_length=8)
+    assert len(name) <= 8
+
+
+def test_generated_name_result_is_lowercase_and_within_default_limit():
+    import aws_cdk as cdk
+
+    cdk_app = cdk.App()
+    stack = cdk.Stack(cdk_app, "TestStack")
+    name = app.generated_name(stack, "worker")
+    assert name == name.lower()
+    assert len(name) <= 64
+
+
+# ---------------------------------------------------------------------------
+# IAM helper function assertions
+# ---------------------------------------------------------------------------
+
+
+def _minimal_role(stack):
+    import aws_cdk as cdk
+    from aws_cdk import aws_iam as iam
+
+    return iam.Role(stack, "TestRole", assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"))
+
+
+def _synth_policies(stack):
+    import aws_cdk as cdk
+    from aws_cdk.assertions import Template
+
+    t = Template.from_stack(stack).to_json()
+    return [
+        r["Properties"]["PolicyDocument"]["Statement"]
+        for r in t["Resources"].values()
+        if r["Type"] == "AWS::IAM::Policy"
+    ]
+
+
+def _flatten_statements(stack):
+    result = []
+    for stmts in _synth_policies(stack):
+        if isinstance(stmts, list):
+            result.extend(stmts)
+        else:
+            result.append(stmts)
+    return result
+
+
+def test_add_lambda_vpc_permissions_grants_exactly_required_ec2_actions():
+    import aws_cdk as cdk
+
+    cdk_app = cdk.App()
+    stack = cdk.Stack(cdk_app, "TestStack")
+    role = _minimal_role(stack)
+    app.add_lambda_vpc_permissions(role)
+
+    statements = _flatten_statements(stack)
+    assert len(statements) == 1
+    stmt = statements[0]
+    assert stmt["Sid"] == "VpcNetworking"
+    actions = stmt["Action"] if isinstance(stmt["Action"], list) else [stmt["Action"]]
+    assert set(actions) == {
+        "ec2:CreateNetworkInterface",
+        "ec2:DeleteNetworkInterface",
+        "ec2:DescribeNetworkInterfaces",
+        "ec2:DescribeSecurityGroups",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeVpcs",
+        "ec2:AssignPrivateIpAddresses",
+        "ec2:UnassignPrivateIpAddresses",
+    }
+    # ec2 Describe actions require *, but verify resource is explicitly set
+    assert stmt["Resource"] == "*"
+
+
+def test_add_log_write_permissions_scopes_actions_to_log_group_arn():
+    import aws_cdk as cdk
+    from aws_cdk import aws_logs as logs
+
+    cdk_app = cdk.App()
+    stack = cdk.Stack(cdk_app, "TestStack")
+    role = _minimal_role(stack)
+    log_group = logs.LogGroup(stack, "TestLogGroup")
+    app.add_log_write_permissions(role, log_group, "WriteLogs")
+
+    statements = _flatten_statements(stack)
+    assert len(statements) == 1
+    stmt = statements[0]
+    assert stmt["Sid"] == "WriteLogs"
+    actions = stmt["Action"] if isinstance(stmt["Action"], list) else [stmt["Action"]]
+    assert set(actions) == {"logs:CreateLogStream", "logs:PutLogEvents"}
+    # resource must NOT be wildcard — scoped to the specific log group
+    resources = stmt["Resource"] if isinstance(stmt["Resource"], list) else [stmt["Resource"]]
+    assert len(resources) == 2  # log group ARN + ARN:* stream wildcard
+    resource_strs = [str(r) for r in resources]
+    assert any("*" not in r for r in resource_strs), "at least one resource should be the exact log group ARN"
