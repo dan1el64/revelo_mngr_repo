@@ -73,7 +73,15 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
-data "aws_caller_identity" "current" {}
+data "aws_secretsmanager_random_password" "rds" {
+  password_length     = 24
+  exclude_punctuation = true
+}
+
+data "aws_secretsmanager_random_password" "redshift" {
+  password_length     = 24
+  exclude_punctuation = true
+}
 
 locals {
   az_a = data.aws_availability_zones.available.names[0]
@@ -81,21 +89,22 @@ locals {
 
   app_name   = "three-tier-orders"
   vpc_cidr   = "10.0.0.0/16"
-  bucket_id  = lower("frontend-assets-${data.aws_caller_identity.current.account_id}-${var.aws_region}")
+  bucket_id  = "${local.app_name}-${var.aws_region}-frontend"
   local_mode = var.aws_endpoint != ""
 
-  api_handler_name        = "api-handler"
-  worker_processor_name   = "worker-processor"
-  enrichment_lambda_name  = "enrichment-lambda"
-  order_queue_name        = "orders-queue"
-  rds_username            = "dbadmin"
-  rds_password            = "Rds${substr(sha256("rds-${var.aws_region}-${local.app_name}"), 0, 16)}1"
-  redshift_username       = "analyticsadmin"
-  redshift_password       = "Red${substr(sha256("redshift-${var.aws_region}-${local.app_name}"), 0, 16)}1"
-  private_subnet_ids      = [aws_subnet.private_a.id, aws_subnet.private_b.id]
-  lambda_vpc_permissions  = ["ec2:CreateNetworkInterface", "ec2:DescribeNetworkInterfaces", "ec2:DeleteNetworkInterface"]
-  lambda_log_permissions  = ["logs:CreateLogStream", "logs:PutLogEvents"]
-  endpoint_services       = ["secretsmanager", "sqs", "logs"]
+  api_handler_name       = "api-handler"
+  worker_processor_name  = "worker-processor"
+  enrichment_lambda_name = "enrichment-lambda"
+  order_queue_name       = "orders-queue"
+
+  rds_username      = "dbadmin"
+  redshift_username = "analyticsadmin"
+
+  private_subnet_ids     = [aws_subnet.private_a.id, aws_subnet.private_b.id]
+  lambda_vpc_permissions = ["ec2:CreateNetworkInterface", "ec2:DescribeNetworkInterfaces", "ec2:DeleteNetworkInterface"]
+  lambda_log_permissions = ["logs:CreateLogStream", "logs:PutLogEvents"]
+  endpoint_services      = ["secretsmanager", "sqs", "logs"]
+
   rds_secret_payload      = jsondecode(aws_secretsmanager_secret_version.rds.secret_string)
   redshift_secret_payload = jsondecode(aws_secretsmanager_secret_version.redshift.secret_string)
 
@@ -105,11 +114,11 @@ locals {
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Orders</title>
+        <title>Orders Console</title>
       </head>
       <body>
         <main>
-          <h1>Orders</h1>
+          <h1>Orders Console</h1>
           <button id="create-order">Create order</button>
           <pre id="result"></pre>
         </main>
@@ -126,11 +135,18 @@ locals {
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ item: "sample-order", quantity: 1 }),
+        body: JSON.stringify({ item: "sample-order", quantity: 1 })
       });
 
       const payload = await response.json();
-      result.textContent = JSON.stringify(payload, null, 2);
+      result.textContent = JSON.stringify(
+        {
+          status: response.status,
+          payload
+        },
+        null,
+        2
+      );
     }
 
     button.addEventListener("click", createOrder);
@@ -138,75 +154,313 @@ locals {
 
   api_handler_source = <<-JS
     const crypto = require("crypto");
-    const AWS = require("aws-sdk");
+    const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
+
+    const sqs = new SQSClient({});
+
+    function jsonResponse(statusCode, payload) {
+      return {
+        statusCode,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      };
+    }
 
     exports.handler = async (event) => {
-      const body = event.body ? JSON.parse(event.body) : {};
+      let payload = {};
+
+      if (event && event.body) {
+        try {
+          payload = JSON.parse(event.body);
+        } catch (error) {
+          return jsonResponse(400, { error: "invalid-json" });
+        }
+      }
+
+      if (!payload || Array.isArray(payload) || typeof payload !== "object") {
+        return jsonResponse(400, { error: "invalid-payload" });
+      }
+
       const orderId = "order-" + crypto.randomUUID();
-      const sqs = new AWS.SQS();
-
-      await sqs.sendMessage({
-        QueueUrl: process.env.SQS_QUEUE_URL,
-        MessageBody: JSON.stringify({
-          orderId,
-          payload: body,
-          submittedAt: new Date().toISOString()
+      await sqs.send(
+        new SendMessageCommand({
+          QueueUrl: process.env.SQS_QUEUE_URL,
+          MessageBody: JSON.stringify({
+            orderId,
+            payload,
+            submittedAt: new Date().toISOString()
+          })
         })
-      }).promise();
+      );
 
-      return {
-        statusCode: 202,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId })
-      };
+      return jsonResponse(202, { orderId });
     };
   JS
 
   worker_processor_source = <<-JS
-    const AWS = require("aws-sdk");
+    const crypto = require("crypto");
+    const net = require("net");
+    const tls = require("tls");
+    const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
+
+    const secretsManager = new SecretsManagerClient({});
+
+    function int32(value) {
+      const buffer = Buffer.alloc(4);
+      buffer.writeInt32BE(value, 0);
+      return buffer;
+    }
+
+    function cString(value) {
+      return Buffer.concat([Buffer.from(value, "utf8"), Buffer.from([0])]);
+    }
+
+    function createReader(socket) {
+      let buffer = Buffer.alloc(0);
+      let error = null;
+      const waiters = [];
+
+      function flush() {
+        while (waiters.length > 0 && buffer.length >= 5) {
+          const length = buffer.readInt32BE(1);
+          if (buffer.length < length + 1) {
+            return;
+          }
+
+          const type = String.fromCharCode(buffer[0]);
+          const body = buffer.subarray(5, length + 1);
+          buffer = buffer.subarray(length + 1);
+          waiters.shift().resolve({ type, body });
+        }
+      }
+
+      socket.on("data", (chunk) => {
+        buffer = Buffer.concat([buffer, chunk]);
+        flush();
+      });
+
+      socket.on("error", (err) => {
+        error = err;
+        while (waiters.length > 0) {
+          waiters.shift().reject(err);
+        }
+      });
+
+      socket.on("close", () => {
+        if (!error) {
+          error = new Error("socket-closed");
+        }
+        while (waiters.length > 0) {
+          waiters.shift().reject(error);
+        }
+      });
+
+      return {
+        read() {
+          if (error) {
+            return Promise.reject(error);
+          }
+          return new Promise((resolve, reject) => {
+            waiters.push({ resolve, reject });
+            flush();
+          });
+        }
+      };
+    }
+
+    function buildStartupMessage(user, database) {
+      const body = Buffer.concat([
+        int32(196608),
+        cString("user"),
+        cString(user),
+        cString("database"),
+        cString(database),
+        cString("client_encoding"),
+        cString("UTF8"),
+        Buffer.from([0])
+      ]);
+      return Buffer.concat([int32(body.length + 4), body]);
+    }
+
+    function buildPasswordMessage(user, password, authType, salt) {
+      let encoded = password;
+
+      if (authType === 5) {
+        const inner = crypto.createHash("md5").update(password + user, "utf8").digest("hex");
+        const outer = crypto
+          .createHash("md5")
+          .update(Buffer.concat([Buffer.from(inner, "utf8"), salt]))
+          .digest("hex");
+        encoded = "md5" + outer;
+      }
+
+      const body = Buffer.concat([Buffer.from(encoded, "utf8"), Buffer.from([0])]);
+      return Buffer.concat([Buffer.from("p"), int32(body.length + 4), body]);
+    }
+
+    function buildQueryMessage(sql) {
+      const body = Buffer.concat([Buffer.from(sql, "utf8"), Buffer.from([0])]);
+      return Buffer.concat([Buffer.from("Q"), int32(body.length + 4), body]);
+    }
+
+    function buildTerminateMessage() {
+      return Buffer.concat([Buffer.from("X"), int32(4)]);
+    }
+
+    function parsePgError(body) {
+      return body.toString("utf8").replace(/\u0000/g, " ").trim();
+    }
+
+    async function connectPostgres(config) {
+      const socket = await new Promise((resolve, reject) => {
+        const candidate = net.createConnection(
+          {
+            host: config.host,
+            port: 5432
+          },
+          () => resolve(candidate)
+        );
+        candidate.on("error", reject);
+      });
+
+      const reader = createReader(socket);
+      socket.write(buildStartupMessage(config.user, config.database));
+
+      while (true) {
+        const message = await reader.read();
+
+        if (message.type === "R") {
+          const authType = message.body.readInt32BE(0);
+          if (authType === 0) {
+            continue;
+          }
+          if (authType === 3 || authType === 5) {
+            const salt = authType === 5 ? message.body.subarray(4, 8) : Buffer.alloc(0);
+            socket.write(buildPasswordMessage(config.user, config.password, authType, salt));
+            continue;
+          }
+          throw new Error("unsupported-postgres-auth-" + authType);
+        }
+
+        if (message.type === "E") {
+          throw new Error(parsePgError(message.body));
+        }
+
+        if (message.type === "Z") {
+          return { socket, reader };
+        }
+      }
+    }
+
+    async function runQuery(client, sql) {
+      client.socket.write(buildQueryMessage(sql));
+
+      while (true) {
+        const message = await client.reader.read();
+
+        if (message.type === "E") {
+          throw new Error(parsePgError(message.body));
+        }
+
+        if (message.type === "Z") {
+          return;
+        }
+      }
+    }
+
+    async function closePostgres(client) {
+      client.socket.end(buildTerminateMessage());
+    }
+
+    function createRedisCommand(parts) {
+      const chunks = ["*" + parts.length + "\r\n"];
+      for (const part of parts) {
+        const text = String(part);
+        chunks.push("$" + Buffer.byteLength(text, "utf8") + "\r\n" + text + "\r\n");
+      }
+      return Buffer.from(chunks.join(""), "utf8");
+    }
+
+    async function setRedisKey(host, key, value) {
+      const socket = await new Promise((resolve, reject) => {
+        const candidate = tls.connect(
+          {
+            host,
+            port: 6379,
+            rejectUnauthorized: false
+          },
+          () => resolve(candidate)
+        );
+        candidate.on("error", reject);
+      });
+
+      socket.write(createRedisCommand(["SET", key, value]));
+      const writeReply = await new Promise((resolve, reject) => {
+        let buffer = "";
+
+        socket.on("data", (chunk) => {
+          buffer += chunk.toString("utf8");
+          if (buffer.includes("\r\n")) {
+            resolve(buffer);
+          }
+        });
+        socket.on("error", reject);
+      });
+
+      socket.end();
+
+      if (writeReply.startsWith("-")) {
+        throw new Error("redis-command-failed");
+      }
+    }
+
+    async function loadCredentials() {
+      const secretValue = await secretsManager.send(
+        new GetSecretValueCommand({
+          SecretId: process.env.RDS_SECRET_ARN
+        })
+      );
+
+      return JSON.parse(secretValue.SecretString);
+    }
 
     exports.handler = async (event) => {
-      const secrets = new AWS.SecretsManager();
-      const secretValue = await secrets.getSecretValue({
-        SecretId: process.env.RDS_SECRET_ARN
-      }).promise();
+      const credentials = await loadCredentials();
+      const records = Array.isArray(event && event.Records) ? event.Records : [];
 
-      const credentials = JSON.parse(secretValue.SecretString);
-
-      for (const record of event.Records || []) {
-        const message = JSON.parse(record.body);
+      for (const record of records) {
+        let message;
 
         try {
-          const pg = require("pg");
-          const client = new pg.Client({
-            host: process.env.RDS_ENDPOINT,
-            port: 5432,
-            database: process.env.RDS_DATABASE,
-            user: credentials.username,
-            password: credentials.password,
-            ssl: false
-          });
-
-          await client.connect();
-          await client.query("create table if not exists orders (order_id text primary key, payload jsonb)");
-          await client.query("insert into orders(order_id, payload) values ($1, $2) on conflict (order_id) do nothing", [
-            message.orderId,
-            JSON.stringify(message)
-          ]);
-          await client.end();
+          message = JSON.parse(record.body);
         } catch (error) {
-          console.error("postgres-write-failed", error);
+          console.error("invalid-record-body", error);
+          continue;
+        }
+
+        if (!message || !message.orderId) {
+          console.error("missing-order-id");
+          continue;
+        }
+
+        const client = await connectPostgres({
+          host: process.env.RDS_ENDPOINT,
+          database: process.env.RDS_DATABASE,
+          user: credentials.username,
+          password: credentials.password
+        });
+
+        try {
+          await runQuery(client, "create table if not exists orders (order_id text primary key, payload jsonb not null)");
+          const payload = JSON.stringify(message).replace(/'/g, "''");
+          const sql = "insert into orders(order_id, payload) values ('" + message.orderId.replace(/'/g, "''") + "', '" + payload + "'::jsonb) on conflict (order_id) do nothing";
+          await runQuery(client, sql);
+        } finally {
+          await closePostgres(client);
         }
 
         try {
-          const Redis = require("ioredis");
-          const redis = new Redis({
-            host: process.env.REDIS_ENDPOINT,
-            port: 6379,
-            tls: {}
-          });
-          await redis.set("order:" + message.orderId, "processed");
-          await redis.quit();
+          await setRedisKey(process.env.REDIS_ENDPOINT, "order:" + message.orderId, "processed");
         } catch (error) {
           console.error("redis-write-failed", error);
         }
@@ -461,7 +715,19 @@ resource "aws_secretsmanager_secret_version" "rds" {
   secret_id = aws_secretsmanager_secret.rds.id
   secret_string = jsonencode({
     username = local.rds_username
-    password = local.rds_password
+    password = data.aws_secretsmanager_random_password.rds.random_password
+  })
+}
+
+resource "aws_secretsmanager_secret" "redshift" {
+  name = "${local.app_name}-redshift-credentials"
+}
+
+resource "aws_secretsmanager_secret_version" "redshift" {
+  secret_id = aws_secretsmanager_secret.redshift.id
+  secret_string = jsonencode({
+    username = local.redshift_username
+    password = data.aws_secretsmanager_random_password.redshift.random_password
   })
 }
 
@@ -507,6 +773,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu" {
   evaluation_periods  = 1
   threshold           = 80
   treat_missing_data  = "notBreaching"
+
   dimensions = {
     DBInstanceIdentifier = aws_db_instance.postgres[0].id
   }
@@ -524,6 +791,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_storage" {
   evaluation_periods  = 1
   threshold           = 2147483648
   treat_missing_data  = "notBreaching"
+
   dimensions = {
     DBInstanceIdentifier = aws_db_instance.postgres[0].id
   }
@@ -565,6 +833,7 @@ resource "aws_cloudwatch_metric_alarm" "redis_cpu" {
   evaluation_periods  = 1
   threshold           = 80
   treat_missing_data  = "notBreaching"
+
   dimensions = {
     ReplicationGroupId = aws_elasticache_replication_group.redis[0].id
   }
@@ -582,21 +851,10 @@ resource "aws_cloudwatch_metric_alarm" "redis_memory" {
   evaluation_periods  = 1
   threshold           = 52428800
   treat_missing_data  = "notBreaching"
+
   dimensions = {
     ReplicationGroupId = aws_elasticache_replication_group.redis[0].id
   }
-}
-
-resource "aws_secretsmanager_secret" "redshift" {
-  name = "${local.app_name}-redshift-credentials"
-}
-
-resource "aws_secretsmanager_secret_version" "redshift" {
-  secret_id = aws_secretsmanager_secret.redshift.id
-  secret_string = jsonencode({
-    username = local.redshift_username
-    password = local.redshift_password
-  })
 }
 
 resource "aws_redshift_subnet_group" "analytics" {
@@ -619,7 +877,6 @@ resource "aws_redshift_cluster" "analytics" {
   publicly_accessible       = false
   skip_final_snapshot       = true
   cluster_subnet_group_name = aws_redshift_subnet_group.analytics[0].name
-  vpc_security_group_ids    = [aws_security_group.lambda.id]
 }
 
 resource "aws_cloudwatch_metric_alarm" "redshift_cpu" {
@@ -634,6 +891,7 @@ resource "aws_cloudwatch_metric_alarm" "redshift_cpu" {
   evaluation_periods  = 1
   threshold           = 80
   treat_missing_data  = "notBreaching"
+
   dimensions = {
     ClusterIdentifier = aws_redshift_cluster.analytics[0].id
   }
@@ -651,6 +909,7 @@ resource "aws_cloudwatch_metric_alarm" "redshift_health" {
   evaluation_periods  = 1
   threshold           = 1
   treat_missing_data  = "notBreaching"
+
   dimensions = {
     ClusterIdentifier = aws_redshift_cluster.analytics[0].id
   }
@@ -677,6 +936,55 @@ resource "aws_s3_bucket_public_access_block" "frontend" {
   restrict_public_buckets = true
 }
 
+resource "aws_apigatewayv2_api" "orders" {
+  count = local.local_mode ? 0 : 1
+
+  name          = "${local.app_name}-http-api"
+  protocol_type = "HTTP"
+}
+
+resource "aws_apigatewayv2_integration" "orders" {
+  count                  = local.local_mode ? 0 : 1
+  api_id                 = aws_apigatewayv2_api.orders[0].id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.api_handler.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "orders_post" {
+  count     = local.local_mode ? 0 : 1
+  api_id    = aws_apigatewayv2_api.orders[0].id
+  route_key = "POST /api/orders"
+  target    = "integrations/${aws_apigatewayv2_integration.orders[0].id}"
+}
+
+resource "aws_apigatewayv2_stage" "default" {
+  count       = local.local_mode ? 0 : 1
+  api_id      = aws_apigatewayv2_api.orders[0].id
+  name        = "$default"
+  auto_deploy = true
+
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.api_access.arn
+    format = jsonencode({
+      requestId               = "$context.requestId"
+      routeKey                = "$context.routeKey"
+      status                  = "$context.status"
+      integrationErrorMessage = "$context.integrationErrorMessage"
+      responseLatency         = "$context.responseLatency"
+    })
+  }
+}
+
+resource "aws_lambda_permission" "api_gateway" {
+  count         = local.local_mode ? 0 : 1
+  statement_id  = "AllowApiGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.api_handler.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.orders[0].execution_arn}/*/*"
+}
+
 resource "aws_cloudfront_origin_access_control" "frontend" {
   count = local.local_mode ? 0 : 1
 
@@ -688,8 +996,7 @@ resource "aws_cloudfront_origin_access_control" "frontend" {
 }
 
 resource "aws_cloudfront_distribution" "frontend" {
-  count = local.local_mode ? 0 : 1
-
+  count               = local.local_mode ? 0 : 1
   enabled             = true
   default_root_object = "index.html"
 
@@ -703,6 +1010,18 @@ resource "aws_cloudfront_distribution" "frontend" {
     }
   }
 
+  origin {
+    domain_name = trimprefix(aws_apigatewayv2_api.orders[0].api_endpoint, "https://")
+    origin_id   = "http-api-origin"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
   default_cache_behavior {
     target_origin_id       = "frontend-s3-origin"
     viewer_protocol_policy = "redirect-to-https"
@@ -710,6 +1029,27 @@ resource "aws_cloudfront_distribution" "frontend" {
     cached_methods         = ["GET", "HEAD"]
     cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6"
     compress               = true
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "api/*"
+    target_origin_id       = "http-api-origin"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    compress               = true
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+
+    forwarded_values {
+      query_string = true
+      headers      = ["Accept", "Authorization", "Content-Type", "Origin"]
+
+      cookies {
+        forward = "all"
+      }
+    }
   }
 
   restrictions {
@@ -773,6 +1113,7 @@ resource "aws_cloudwatch_metric_alarm" "cloudfront_5xx" {
   evaluation_periods  = 1
   threshold           = 1
   treat_missing_data  = "notBreaching"
+
   dimensions = {
     DistributionId = aws_cloudfront_distribution.frontend[0].id
     Region         = "Global"
@@ -1008,6 +1349,7 @@ resource "aws_cloudwatch_metric_alarm" "api_errors" {
   evaluation_periods  = 1
   threshold           = 0
   treat_missing_data  = "notBreaching"
+
   dimensions = {
     FunctionName = aws_lambda_function.api_handler.function_name
   }
@@ -1023,6 +1365,7 @@ resource "aws_cloudwatch_metric_alarm" "api_duration" {
   evaluation_periods  = 1
   threshold           = 2000
   treat_missing_data  = "notBreaching"
+
   dimensions = {
     FunctionName = aws_lambda_function.api_handler.function_name
   }
@@ -1038,6 +1381,7 @@ resource "aws_cloudwatch_metric_alarm" "worker_errors" {
   evaluation_periods  = 1
   threshold           = 0
   treat_missing_data  = "notBreaching"
+
   dimensions = {
     FunctionName = aws_lambda_function.worker_processor.function_name
   }
@@ -1053,58 +1397,10 @@ resource "aws_cloudwatch_metric_alarm" "worker_duration" {
   evaluation_periods  = 1
   threshold           = 5000
   treat_missing_data  = "notBreaching"
+
   dimensions = {
     FunctionName = aws_lambda_function.worker_processor.function_name
   }
-}
-
-resource "aws_apigatewayv2_api" "orders" {
-  count = local.local_mode ? 0 : 1
-
-  name          = "${local.app_name}-http-api"
-  protocol_type = "HTTP"
-}
-
-resource "aws_apigatewayv2_integration" "orders" {
-  count                  = local.local_mode ? 0 : 1
-  api_id                 = aws_apigatewayv2_api.orders[0].id
-  integration_type       = "AWS_PROXY"
-  integration_uri        = aws_lambda_function.api_handler.invoke_arn
-  payload_format_version = "2.0"
-}
-
-resource "aws_apigatewayv2_route" "orders_post" {
-  count     = local.local_mode ? 0 : 1
-  api_id    = aws_apigatewayv2_api.orders[0].id
-  route_key = "POST /api/orders"
-  target    = "integrations/${aws_apigatewayv2_integration.orders[0].id}"
-}
-
-resource "aws_apigatewayv2_stage" "default" {
-  count       = local.local_mode ? 0 : 1
-  api_id      = aws_apigatewayv2_api.orders[0].id
-  name        = "$default"
-  auto_deploy = true
-
-  access_log_settings {
-    destination_arn = aws_cloudwatch_log_group.api_access.arn
-    format = jsonencode({
-      requestId               = "$context.requestId"
-      routeKey                = "$context.routeKey"
-      status                  = "$context.status"
-      integrationErrorMessage = "$context.integrationErrorMessage"
-      responseLatency         = "$context.responseLatency"
-    })
-  }
-}
-
-resource "aws_lambda_permission" "api_gateway" {
-  count         = local.local_mode ? 0 : 1
-  statement_id  = "AllowApiGatewayInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.api_handler.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.orders[0].execution_arn}/*/*"
 }
 
 resource "aws_iam_role" "step_functions" {
@@ -1214,6 +1510,7 @@ resource "aws_cloudwatch_metric_alarm" "sfn_failed" {
   evaluation_periods  = 1
   threshold           = 0
   treat_missing_data  = "notBreaching"
+
   dimensions = {
     StateMachineArn = aws_sfn_state_machine.orders.arn
   }
@@ -1261,8 +1558,7 @@ resource "aws_iam_role_policy" "pipes" {
 }
 
 resource "aws_pipes_pipe" "orders" {
-  count = local.local_mode ? 0 : 1
-
+  count    = local.local_mode ? 0 : 1
   name     = "${local.app_name}-pipe"
   role_arn = aws_iam_role.pipes.arn
   source   = aws_sqs_queue.orders.arn
@@ -1331,7 +1627,7 @@ resource "aws_glue_connection" "redshift" {
   connection_type = "JDBC"
 
   connection_properties = {
-    JDBC_CONNECTION_URL = "jdbc:redshift://${aws_redshift_cluster.analytics[0].endpoint}:5439/appanalytics"
+    JDBC_CONNECTION_URL = "jdbc:redshift://${aws_redshift_cluster.analytics[0].endpoint}/appanalytics"
     SECRET_ID           = aws_secretsmanager_secret.redshift.arn
   }
 
@@ -1352,6 +1648,8 @@ resource "aws_glue_crawler" "analytics" {
     connection_name = aws_glue_connection.redshift[0].name
     path            = "appanalytics/%"
   }
+
+  depends_on = [aws_cloudwatch_log_group.glue]
 }
 
 output "cloudfront_distribution_domain_name" {
