@@ -156,6 +156,9 @@ def test_primary_and_secondary_lambda_contract():
     assert 'process.env.AWS_ENDPOINT' in s_code
     assert "|| 'us-east-1'" in p_code
     assert "|| 'us-east-1'" in s_code
+    assert 'EventBridgeClient' in p_code
+    assert 'PutEventsCommand' in p_code
+    assert 'SendMessageCommand' not in p_code
 
     # Gap 2: AWS_ENDPOINT must appear in the Lambda Environment.Variables (not just inline code)
     p_env = p_props.get('Environment', {}).get('Variables', {})
@@ -164,7 +167,7 @@ def test_primary_and_secondary_lambda_contract():
     assert 'AWS_ENDPOINT' in s_env, 'Secondary Lambda must expose AWS_ENDPOINT in Environment.Variables'
 
     # Gap 3: No unexpected environment variable keys beyond what the implementation requires
-    primary_expected_env = {'TABLE_NAME', 'BUCKET_NAME', 'QUEUE_URL', 'AWS_ENDPOINT'}
+    primary_expected_env = {'TABLE_NAME', 'BUCKET_NAME', 'EVENT_BUS_NAME', 'AWS_ENDPOINT'}
     secondary_expected_env = {'AWS_ENDPOINT'}
     assert set(p_env.keys()) == primary_expected_env, (
         f'Primary Lambda Environment.Variables must be exactly {primary_expected_env}, '
@@ -225,6 +228,9 @@ def test_connectivity_rule_queue_pipe_and_method():
     assert primary_lambda_id in json.dumps(integration.get('Uri', {})), (
         f'POST /order integration URI must reference the primary Lambda (logical ID: {primary_lambda_id})'
     )
+    primary_code = _zipfile_text(_resources(template, 'AWS::Lambda::Function')[primary_lambda_id]['Properties'])
+    assert "Source: 'orders.api'" in primary_code
+    assert "DetailType: 'OrderCreated'" in primary_code
 
     rules = _resources(template, 'AWS::Events::Rule')
     _, rule = _find_one(rules, lambda *_: True, 'Expected one events rule')
@@ -396,6 +402,35 @@ def test_rds_security_group_allows_only_primary_lambda_on_5432():
                 f'DB ingress rule on port 5432 must reference the primary Lambda security group '
                 f'(one of {primary_sg_logical_ids}), got: {source_logical_id}'
             )
+
+
+def test_vpc_has_no_nat_gateway_and_private_resources_use_isolated_subnets():
+    template = _template()
+
+    assert len(_resources(template, 'AWS::EC2::NatGateway')) == 0
+
+    ec2_subnets = _resources(template, 'AWS::EC2::Subnet')
+    isolated_private_subnets = {
+        rid for rid, subnet in ec2_subnets.items()
+        if subnet.get('Properties', {}).get('MapPublicIpOnLaunch') is False
+    }
+    assert len(isolated_private_subnets) >= 2
+
+    lambdas = _resources(template, 'AWS::Lambda::Function')
+    _, primary_lambda = _find_one(
+        lambdas,
+        lambda _, r: r['Properties'].get('MemorySize') == 512,
+        'Expected one primary lambda with 512 MB',
+    )
+    lambda_subnets = primary_lambda['Properties'].get('VpcConfig', {}).get('SubnetIds', [])
+    lambda_subnet_refs = {
+        subnet_ref.get('Ref')
+        for subnet_ref in lambda_subnets
+        if isinstance(subnet_ref, dict) and subnet_ref.get('Ref')
+    }
+    assert lambda_subnet_refs.issubset(isolated_private_subnets), (
+        f'Primary Lambda must run only in isolated private subnets, got: {lambda_subnet_refs}'
+    )
 
 
 def test_iam_scope_and_pipe_dedicated_role():
@@ -584,14 +619,21 @@ def test_primary_role_scoped_to_api_write_path():
         'sqs:ReceiveMessage',
         'sqs:DeleteMessage',
         'lambda:InvokeFunction',
+        'sqs:SendMessage',
     }
+    allowed_primary = {'dynamodb:PutItem', 's3:PutObject', 'events:PutEvents'}
+    observed_primary = set()
     for pol in primary_policies:
         for stmt in pol['Properties']['PolicyDocument']['Statement']:
             actions = stmt.get('Action', [])
             if isinstance(actions, str):
                 actions = [actions]
+            observed_primary.update(actions)
             overlap = forbidden_in_primary.intersection(set(actions))
             assert not overlap, (
                 f'Primary Lambda role must not include {overlap}; '
                 f'those permissions belong to the pipe or secondary role'
             )
+    assert allowed_primary.issubset(observed_primary), (
+        f'Primary Lambda role must include {allowed_primary}, got: {observed_primary}'
+    )

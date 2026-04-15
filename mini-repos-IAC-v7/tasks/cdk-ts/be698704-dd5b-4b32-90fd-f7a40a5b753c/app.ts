@@ -33,7 +33,7 @@ export class AppStack extends Stack {
     });
 
     const vpc = new ec2.Vpc(this, 'AppVpc', {
-      natGateways: 1,
+      natGateways: 0,
       maxAzs: 2,
       subnetConfiguration: [
         {
@@ -43,7 +43,7 @@ export class AppStack extends Stack {
         },
         {
           name: 'private',
-          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
           cidrMask: 24,
         },
       ],
@@ -59,7 +59,30 @@ export class AppStack extends Stack {
       allowAllOutbound: true,
     });
 
+    const endpointSg = new ec2.SecurityGroup(this, 'VpcEndpointSg', {
+      vpc,
+      allowAllOutbound: true,
+    });
+
     dbSg.addIngressRule(primaryWorkerSg, ec2.Port.tcp(5432));
+    endpointSg.addIngressRule(primaryWorkerSg, ec2.Port.tcp(443));
+
+    vpc.addGatewayEndpoint('S3VpcEndpoint', {
+      service: ec2.GatewayVpcEndpointAwsService.S3,
+      subnets: [{ subnetType: ec2.SubnetType.PRIVATE_ISOLATED }],
+    });
+
+    vpc.addGatewayEndpoint('DynamoDbVpcEndpoint', {
+      service: ec2.GatewayVpcEndpointAwsService.DYNAMODB,
+      subnets: [{ subnetType: ec2.SubnetType.PRIVATE_ISOLATED }],
+    });
+
+    vpc.addInterfaceEndpoint('EventBridgeVpcEndpoint', {
+      service: ec2.InterfaceVpcEndpointAwsService.EVENTBRIDGE,
+      privateDnsEnabled: true,
+      securityGroups: [endpointSg],
+      subnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+    });
 
     const ordersTable = new dynamodb.Table(this, 'OrdersTable', {
       partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING },
@@ -92,6 +115,8 @@ export class AppStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
+    const defaultEventBus = events.EventBus.fromEventBusName(this, 'DefaultEventBus', 'default');
+
     const primaryRole = new iam.Role(this, 'PrimaryWorkerRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
@@ -116,8 +141,8 @@ export class AppStack extends Stack {
 
     primaryRole.addToPolicy(
       new iam.PolicyStatement({
-        actions: ['sqs:SendMessage'],
-        resources: [mainQueue.queueArn],
+        actions: ['events:PutEvents'],
+        resources: [defaultEventBus.eventBusArn],
       })
     );
 
@@ -127,14 +152,14 @@ export class AppStack extends Stack {
       code: lambda.Code.fromInline([
         "const { DynamoDBClient, PutItemCommand } = require('@aws-sdk/client-dynamodb');",
         "const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');",
-        "const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');",
+        "const { EventBridgeClient, PutEventsCommand } = require('@aws-sdk/client-eventbridge');",
         '',
         'exports.handler = async (event) => {',
         "  const endpoint = process.env.AWS_ENDPOINT || undefined;",
         "  const region = process.env.AWS_REGION || 'us-east-1';",
         '  const ddb = new DynamoDBClient({ region, ...(endpoint ? { endpoint } : {}) });',
         '  const s3 = new S3Client({ region, ...(endpoint ? { endpoint } : {}) });',
-        '  const sqs = new SQSClient({ region, ...(endpoint ? { endpoint } : {}) });',
+        '  const eventBridge = new EventBridgeClient({ region, ...(endpoint ? { endpoint } : {}) });',
         '',
         "  const body = event && event.body ? JSON.parse(event.body) : (event || {});",
         '  const now = Date.now();',
@@ -158,10 +183,18 @@ export class AppStack extends Stack {
         '    Body: JSON.stringify(body),',
         '  }));',
         '',
-        '  await sqs.send(new SendMessageCommand({',
-        '    QueueUrl: process.env.QUEUE_URL,',
-        '    MessageBody: JSON.stringify({ pk, sk, key }),',
+        '  const publishResult = await eventBridge.send(new PutEventsCommand({',
+        '    Entries: [{',
+        '      EventBusName: process.env.EVENT_BUS_NAME,',
+        "      Source: 'orders.api',",
+        "      DetailType: 'OrderCreated',",
+        '      Detail: JSON.stringify({ pk, sk, key, payload: body }),',
+        '    }],',
         '  }));',
+        '',
+        '  if ((publishResult.FailedEntryCount || 0) > 0) {',
+        "    throw new Error(`Failed to publish order event: ${JSON.stringify(publishResult.Entries || [])}`);",
+        '  }',
         '',
         '  return {',
         '    statusCode: 200,',
@@ -175,11 +208,11 @@ export class AppStack extends Stack {
       role: primaryRole,
       vpc,
       securityGroups: [primaryWorkerSg],
-      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
       environment: {
         TABLE_NAME: ordersTable.tableName,
         BUCKET_NAME: rawBucket.bucketName,
-        QUEUE_URL: mainQueue.queueUrl,
+        EVENT_BUS_NAME: defaultEventBus.eventBusName,
         AWS_ENDPOINT: process.env.AWS_ENDPOINT || '',
       },
     });
@@ -306,7 +339,7 @@ export class AppStack extends Stack {
     // attachment — both of which require service APIs unavailable in those environments.
     const dbInstance = new rds.DatabaseInstance(this, 'OrdersDb', {
       vpc,
-      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
       publiclyAccessible: false,
       engine: rds.DatabaseInstanceEngine.postgres({
         version: rds.PostgresEngineVersion.VER_14_7,

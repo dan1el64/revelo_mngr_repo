@@ -1,1599 +1,1698 @@
 {
- "Conditions": {
-  "IsProdAccount": {
-   "Fn::Not": [
-    {
-     "Fn::Equals": [
-      {
-       "Ref": "AWS::AccountId"
-      },
-      "000000000000"
-     ]
-    }
-   ]
-  }
- },
- "Resources": {
-  "AppVpc80F1F7F9": {
-   "Type": "AWS::EC2::VPC",
-   "Properties": {
-    "CidrBlock": "10.0.0.0/16",
-    "EnableDnsHostnames": true,
-    "EnableDnsSupport": true,
-    "InstanceTenancy": "default",
-    "Tags": [
-     {
-      "Key": "Name",
-      "Value": "AppStack/AppVpc"
-     }
-    ]
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/Resource"
-   }
-  },
-  "AppVpcpublicSubnet1Subnet8772DAEA": {
-   "Type": "AWS::EC2::Subnet",
-   "Properties": {
-    "AvailabilityZone": {
-     "Fn::Select": [
-      0,
-      {
-       "Fn::GetAZs": ""
-      }
-     ]
-    },
-    "CidrBlock": "10.0.0.0/24",
-    "MapPublicIpOnLaunch": true,
-    "Tags": [
-     {
-      "Key": "aws-cdk:subnet-name",
-      "Value": "public"
-     },
-     {
-      "Key": "aws-cdk:subnet-type",
-      "Value": "Public"
-     },
-     {
-      "Key": "Name",
-      "Value": "AppStack/AppVpc/publicSubnet1"
-     }
-    ],
-    "VpcId": {
-     "Ref": "AppVpc80F1F7F9"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/publicSubnet1/Subnet"
-   }
-  },
-  "AppVpcpublicSubnet1RouteTableF902084E": {
-   "Type": "AWS::EC2::RouteTable",
-   "Properties": {
-    "Tags": [
-     {
-      "Key": "Name",
-      "Value": "AppStack/AppVpc/publicSubnet1"
-     }
-    ],
-    "VpcId": {
-     "Ref": "AppVpc80F1F7F9"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/publicSubnet1/RouteTable"
-   }
-  },
-  "AppVpcpublicSubnet1RouteTableAssociation1AC5573B": {
-   "Type": "AWS::EC2::SubnetRouteTableAssociation",
-   "Properties": {
-    "RouteTableId": {
-     "Ref": "AppVpcpublicSubnet1RouteTableF902084E"
-    },
-    "SubnetId": {
-     "Ref": "AppVpcpublicSubnet1Subnet8772DAEA"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/publicSubnet1/RouteTableAssociation"
-   }
-  },
-  "AppVpcpublicSubnet1DefaultRouteE576D94C": {
-   "Type": "AWS::EC2::Route",
-   "Properties": {
-    "DestinationCidrBlock": "0.0.0.0/0",
-    "GatewayId": {
-     "Ref": "AppVpcIGW826A76F0"
-    },
-    "RouteTableId": {
-     "Ref": "AppVpcpublicSubnet1RouteTableF902084E"
-    }
-   },
-   "DependsOn": [
-    "AppVpcVPCGW1D33210A"
-   ],
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/publicSubnet1/DefaultRoute"
-   }
-  },
-  "AppVpcpublicSubnet1EIP42F76984": {
-   "Type": "AWS::EC2::EIP",
-   "Properties": {
-    "Domain": "vpc",
-    "Tags": [
-     {
-      "Key": "Name",
-      "Value": "AppStack/AppVpc/publicSubnet1"
-     }
-    ]
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/publicSubnet1/EIP"
-   }
-  },
-  "AppVpcpublicSubnet1NATGateway9E7EC93F": {
-   "Type": "AWS::EC2::NatGateway",
-   "Properties": {
-    "AllocationId": {
-     "Fn::GetAtt": [
-      "AppVpcpublicSubnet1EIP42F76984",
-      "AllocationId"
-     ]
-    },
-    "SubnetId": {
-     "Ref": "AppVpcpublicSubnet1Subnet8772DAEA"
-    },
-    "Tags": [
-     {
-      "Key": "Name",
-      "Value": "AppStack/AppVpc/publicSubnet1"
-     }
-    ]
-   },
-   "DependsOn": [
-    "AppVpcpublicSubnet1DefaultRouteE576D94C",
-    "AppVpcpublicSubnet1RouteTableAssociation1AC5573B"
-   ],
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/publicSubnet1/NATGateway"
-   }
-  },
-  "AppVpcpublicSubnet2SubnetE41E6C0A": {
-   "Type": "AWS::EC2::Subnet",
-   "Properties": {
-    "AvailabilityZone": {
-     "Fn::Select": [
-      1,
-      {
-       "Fn::GetAZs": ""
-      }
-     ]
-    },
-    "CidrBlock": "10.0.1.0/24",
-    "MapPublicIpOnLaunch": true,
-    "Tags": [
-     {
-      "Key": "aws-cdk:subnet-name",
-      "Value": "public"
-     },
-     {
-      "Key": "aws-cdk:subnet-type",
-      "Value": "Public"
-     },
-     {
-      "Key": "Name",
-      "Value": "AppStack/AppVpc/publicSubnet2"
-     }
-    ],
-    "VpcId": {
-     "Ref": "AppVpc80F1F7F9"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/publicSubnet2/Subnet"
-   }
-  },
-  "AppVpcpublicSubnet2RouteTable82F17977": {
-   "Type": "AWS::EC2::RouteTable",
-   "Properties": {
-    "Tags": [
-     {
-      "Key": "Name",
-      "Value": "AppStack/AppVpc/publicSubnet2"
-     }
-    ],
-    "VpcId": {
-     "Ref": "AppVpc80F1F7F9"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/publicSubnet2/RouteTable"
-   }
-  },
-  "AppVpcpublicSubnet2RouteTableAssociationAFB1BC14": {
-   "Type": "AWS::EC2::SubnetRouteTableAssociation",
-   "Properties": {
-    "RouteTableId": {
-     "Ref": "AppVpcpublicSubnet2RouteTable82F17977"
-    },
-    "SubnetId": {
-     "Ref": "AppVpcpublicSubnet2SubnetE41E6C0A"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/publicSubnet2/RouteTableAssociation"
-   }
-  },
-  "AppVpcpublicSubnet2DefaultRouteBA859B08": {
-   "Type": "AWS::EC2::Route",
-   "Properties": {
-    "DestinationCidrBlock": "0.0.0.0/0",
-    "GatewayId": {
-     "Ref": "AppVpcIGW826A76F0"
-    },
-    "RouteTableId": {
-     "Ref": "AppVpcpublicSubnet2RouteTable82F17977"
-    }
-   },
-   "DependsOn": [
-    "AppVpcVPCGW1D33210A"
-   ],
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/publicSubnet2/DefaultRoute"
-   }
-  },
-  "AppVpcprivateSubnet1Subnet8CF47DFB": {
-   "Type": "AWS::EC2::Subnet",
-   "Properties": {
-    "AvailabilityZone": {
-     "Fn::Select": [
-      0,
-      {
-       "Fn::GetAZs": ""
-      }
-     ]
-    },
-    "CidrBlock": "10.0.2.0/24",
-    "MapPublicIpOnLaunch": false,
-    "Tags": [
-     {
-      "Key": "aws-cdk:subnet-name",
-      "Value": "private"
-     },
-     {
-      "Key": "aws-cdk:subnet-type",
-      "Value": "Private"
-     },
-     {
-      "Key": "Name",
-      "Value": "AppStack/AppVpc/privateSubnet1"
-     }
-    ],
-    "VpcId": {
-     "Ref": "AppVpc80F1F7F9"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/privateSubnet1/Subnet"
-   }
-  },
-  "AppVpcprivateSubnet1RouteTable6494272F": {
-   "Type": "AWS::EC2::RouteTable",
-   "Properties": {
-    "Tags": [
-     {
-      "Key": "Name",
-      "Value": "AppStack/AppVpc/privateSubnet1"
-     }
-    ],
-    "VpcId": {
-     "Ref": "AppVpc80F1F7F9"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/privateSubnet1/RouteTable"
-   }
-  },
-  "AppVpcprivateSubnet1RouteTableAssociation4118B1BE": {
-   "Type": "AWS::EC2::SubnetRouteTableAssociation",
-   "Properties": {
-    "RouteTableId": {
-     "Ref": "AppVpcprivateSubnet1RouteTable6494272F"
-    },
-    "SubnetId": {
-     "Ref": "AppVpcprivateSubnet1Subnet8CF47DFB"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/privateSubnet1/RouteTableAssociation"
-   }
-  },
-  "AppVpcprivateSubnet1DefaultRoute57A63F17": {
-   "Type": "AWS::EC2::Route",
-   "Properties": {
-    "DestinationCidrBlock": "0.0.0.0/0",
-    "NatGatewayId": {
-     "Ref": "AppVpcpublicSubnet1NATGateway9E7EC93F"
-    },
-    "RouteTableId": {
-     "Ref": "AppVpcprivateSubnet1RouteTable6494272F"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/privateSubnet1/DefaultRoute"
-   }
-  },
-  "AppVpcprivateSubnet2Subnet2BB4B216": {
-   "Type": "AWS::EC2::Subnet",
-   "Properties": {
-    "AvailabilityZone": {
-     "Fn::Select": [
-      1,
-      {
-       "Fn::GetAZs": ""
-      }
-     ]
-    },
-    "CidrBlock": "10.0.3.0/24",
-    "MapPublicIpOnLaunch": false,
-    "Tags": [
-     {
-      "Key": "aws-cdk:subnet-name",
-      "Value": "private"
-     },
-     {
-      "Key": "aws-cdk:subnet-type",
-      "Value": "Private"
-     },
-     {
-      "Key": "Name",
-      "Value": "AppStack/AppVpc/privateSubnet2"
-     }
-    ],
-    "VpcId": {
-     "Ref": "AppVpc80F1F7F9"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/privateSubnet2/Subnet"
-   }
-  },
-  "AppVpcprivateSubnet2RouteTableC4E83AEF": {
-   "Type": "AWS::EC2::RouteTable",
-   "Properties": {
-    "Tags": [
-     {
-      "Key": "Name",
-      "Value": "AppStack/AppVpc/privateSubnet2"
-     }
-    ],
-    "VpcId": {
-     "Ref": "AppVpc80F1F7F9"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/privateSubnet2/RouteTable"
-   }
-  },
-  "AppVpcprivateSubnet2RouteTableAssociation35EA2B1E": {
-   "Type": "AWS::EC2::SubnetRouteTableAssociation",
-   "Properties": {
-    "RouteTableId": {
-     "Ref": "AppVpcprivateSubnet2RouteTableC4E83AEF"
-    },
-    "SubnetId": {
-     "Ref": "AppVpcprivateSubnet2Subnet2BB4B216"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/privateSubnet2/RouteTableAssociation"
-   }
-  },
-  "AppVpcprivateSubnet2DefaultRoute4128D3F7": {
-   "Type": "AWS::EC2::Route",
-   "Properties": {
-    "DestinationCidrBlock": "0.0.0.0/0",
-    "NatGatewayId": {
-     "Ref": "AppVpcpublicSubnet1NATGateway9E7EC93F"
-    },
-    "RouteTableId": {
-     "Ref": "AppVpcprivateSubnet2RouteTableC4E83AEF"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/privateSubnet2/DefaultRoute"
-   }
-  },
-  "AppVpcIGW826A76F0": {
-   "Type": "AWS::EC2::InternetGateway",
-   "Properties": {
-    "Tags": [
-     {
-      "Key": "Name",
-      "Value": "AppStack/AppVpc"
-     }
-    ]
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/IGW"
-   }
-  },
-  "AppVpcVPCGW1D33210A": {
-   "Type": "AWS::EC2::VPCGatewayAttachment",
-   "Properties": {
-    "InternetGatewayId": {
-     "Ref": "AppVpcIGW826A76F0"
-    },
-    "VpcId": {
-     "Ref": "AppVpc80F1F7F9"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/AppVpc/VPCGW"
-   }
-  },
-  "PrimaryWorkerSg0D16331F": {
-   "Type": "AWS::EC2::SecurityGroup",
-   "Properties": {
-    "GroupDescription": "AppStack/PrimaryWorkerSg",
-    "SecurityGroupEgress": [
-     {
-      "CidrIp": "0.0.0.0/0",
-      "Description": "Allow all outbound traffic by default",
-      "IpProtocol": "-1"
-     }
-    ],
-    "VpcId": {
-     "Ref": "AppVpc80F1F7F9"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/PrimaryWorkerSg/Resource"
-   }
-  },
-  "DbSg495F8305": {
-   "Type": "AWS::EC2::SecurityGroup",
-   "Properties": {
-    "GroupDescription": "AppStack/DbSg",
-    "SecurityGroupEgress": [
-     {
-      "CidrIp": "0.0.0.0/0",
-      "Description": "Allow all outbound traffic by default",
-      "IpProtocol": "-1"
-     }
-    ],
-    "VpcId": {
-     "Ref": "AppVpc80F1F7F9"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/DbSg/Resource"
-   }
-  },
-  "DbSgfromAppStackPrimaryWorkerSg76B8C04154325E031C8B": {
-   "Type": "AWS::EC2::SecurityGroupIngress",
-   "Properties": {
-    "Description": "from AppStackPrimaryWorkerSg76B8C041:5432",
-    "FromPort": 5432,
-    "GroupId": {
-     "Fn::GetAtt": [
-      "DbSg495F8305",
-      "GroupId"
-     ]
-    },
-    "IpProtocol": "tcp",
-    "SourceSecurityGroupId": {
-     "Fn::GetAtt": [
-      "PrimaryWorkerSg0D16331F",
-      "GroupId"
-     ]
-    },
-    "ToPort": 5432
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/DbSg/from AppStackPrimaryWorkerSg76B8C041:5432"
-   }
-  },
-  "OrdersTable315BB997": {
-   "Type": "AWS::DynamoDB::Table",
-   "Properties": {
-    "AttributeDefinitions": [
-     {
-      "AttributeName": "pk",
-      "AttributeType": "S"
-     },
-     {
-      "AttributeName": "sk",
-      "AttributeType": "S"
-     }
-    ],
-    "BillingMode": "PAY_PER_REQUEST",
-    "KeySchema": [
-     {
-      "AttributeName": "pk",
-      "KeyType": "HASH"
-     },
-     {
-      "AttributeName": "sk",
-      "KeyType": "RANGE"
-     }
-    ],
-    "PointInTimeRecoverySpecification": {
-     "PointInTimeRecoveryEnabled": true
-    },
-    "TimeToLiveSpecification": {
-     "AttributeName": "expiresAt",
-     "Enabled": true
-    }
-   },
-   "UpdateReplacePolicy": "Delete",
-   "DeletionPolicy": "Delete",
-   "Metadata": {
-    "aws:cdk:path": "AppStack/OrdersTable/Resource"
-   }
-  },
-  "RawBucket0C3EE094": {
-   "Type": "AWS::S3::Bucket",
-   "Properties": {
-    "BucketEncryption": {
-     "ServerSideEncryptionConfiguration": [
-      {
-       "ServerSideEncryptionByDefault": {
-        "SSEAlgorithm": "AES256"
-       }
-      }
-     ]
-    },
-    "PublicAccessBlockConfiguration": {
-     "BlockPublicAcls": true,
-     "BlockPublicPolicy": true,
-     "IgnorePublicAcls": true,
-     "RestrictPublicBuckets": true
-    }
-   },
-   "UpdateReplacePolicy": "Delete",
-   "DeletionPolicy": "Delete",
-   "Metadata": {
-    "aws:cdk:path": "AppStack/RawBucket/Resource"
-   }
-  },
-  "RawBucketPolicy61C50A52": {
-   "Type": "AWS::S3::BucketPolicy",
-   "Properties": {
-    "Bucket": {
-     "Ref": "RawBucket0C3EE094"
-    },
-    "PolicyDocument": {
-     "Statement": [
-      {
-       "Action": "s3:*",
-       "Condition": {
-        "Bool": {
-         "aws:SecureTransport": "false"
+  "Conditions": {
+    "IsProdAccount": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "AWS::AccountId"
+            },
+            "000000000000"
+          ]
         }
-       },
-       "Effect": "Deny",
-       "Principal": {
-        "AWS": "*"
-       },
-       "Resource": [
-        {
-         "Fn::GetAtt": [
-          "RawBucket0C3EE094",
-          "Arn"
-         ]
+      ]
+    }
+  },
+  "Resources": {
+    "AppVpc80F1F7F9": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "AppStack/AppVpc"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/Resource"
+      }
+    },
+    "AppVpcpublicSubnet1Subnet8772DAEA": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            0,
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
         },
-        {
-         "Fn::Join": [
+        "CidrBlock": "10.0.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "public"
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public"
+          },
+          {
+            "Key": "Name",
+            "Value": "AppStack/AppVpc/publicSubnet1"
+          }
+        ],
+        "VpcId": {
+          "Ref": "AppVpc80F1F7F9"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/publicSubnet1/Subnet"
+      }
+    },
+    "AppVpcpublicSubnet1RouteTableF902084E": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "AppStack/AppVpc/publicSubnet1"
+          }
+        ],
+        "VpcId": {
+          "Ref": "AppVpc80F1F7F9"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/publicSubnet1/RouteTable"
+      }
+    },
+    "AppVpcpublicSubnet1RouteTableAssociation1AC5573B": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "AppVpcpublicSubnet1RouteTableF902084E"
+        },
+        "SubnetId": {
+          "Ref": "AppVpcpublicSubnet1Subnet8772DAEA"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/publicSubnet1/RouteTableAssociation"
+      }
+    },
+    "AppVpcpublicSubnet1DefaultRouteE576D94C": {
+      "Type": "AWS::EC2::Route",
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "AppVpcIGW826A76F0"
+        },
+        "RouteTableId": {
+          "Ref": "AppVpcpublicSubnet1RouteTableF902084E"
+        }
+      },
+      "DependsOn": [
+        "AppVpcVPCGW1D33210A"
+      ],
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/publicSubnet1/DefaultRoute"
+      }
+    },
+    "AppVpcpublicSubnet2SubnetE41E6C0A": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "CidrBlock": "10.0.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "public"
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public"
+          },
+          {
+            "Key": "Name",
+            "Value": "AppStack/AppVpc/publicSubnet2"
+          }
+        ],
+        "VpcId": {
+          "Ref": "AppVpc80F1F7F9"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/publicSubnet2/Subnet"
+      }
+    },
+    "AppVpcpublicSubnet2RouteTable82F17977": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "AppStack/AppVpc/publicSubnet2"
+          }
+        ],
+        "VpcId": {
+          "Ref": "AppVpc80F1F7F9"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/publicSubnet2/RouteTable"
+      }
+    },
+    "AppVpcpublicSubnet2RouteTableAssociationAFB1BC14": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "AppVpcpublicSubnet2RouteTable82F17977"
+        },
+        "SubnetId": {
+          "Ref": "AppVpcpublicSubnet2SubnetE41E6C0A"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/publicSubnet2/RouteTableAssociation"
+      }
+    },
+    "AppVpcpublicSubnet2DefaultRouteBA859B08": {
+      "Type": "AWS::EC2::Route",
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "AppVpcIGW826A76F0"
+        },
+        "RouteTableId": {
+          "Ref": "AppVpcpublicSubnet2RouteTable82F17977"
+        }
+      },
+      "DependsOn": [
+        "AppVpcVPCGW1D33210A"
+      ],
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/publicSubnet2/DefaultRoute"
+      }
+    },
+    "AppVpcprivateSubnet1Subnet8CF47DFB": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            0,
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "CidrBlock": "10.0.2.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "private"
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated"
+          },
+          {
+            "Key": "Name",
+            "Value": "AppStack/AppVpc/privateSubnet1"
+          }
+        ],
+        "VpcId": {
+          "Ref": "AppVpc80F1F7F9"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/privateSubnet1/Subnet"
+      }
+    },
+    "AppVpcprivateSubnet1RouteTable6494272F": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "AppStack/AppVpc/privateSubnet1"
+          }
+        ],
+        "VpcId": {
+          "Ref": "AppVpc80F1F7F9"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/privateSubnet1/RouteTable"
+      }
+    },
+    "AppVpcprivateSubnet1RouteTableAssociation4118B1BE": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "AppVpcprivateSubnet1RouteTable6494272F"
+        },
+        "SubnetId": {
+          "Ref": "AppVpcprivateSubnet1Subnet8CF47DFB"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/privateSubnet1/RouteTableAssociation"
+      }
+    },
+    "AppVpcprivateSubnet2Subnet2BB4B216": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "CidrBlock": "10.0.3.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "private"
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated"
+          },
+          {
+            "Key": "Name",
+            "Value": "AppStack/AppVpc/privateSubnet2"
+          }
+        ],
+        "VpcId": {
+          "Ref": "AppVpc80F1F7F9"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/privateSubnet2/Subnet"
+      }
+    },
+    "AppVpcprivateSubnet2RouteTableC4E83AEF": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "AppStack/AppVpc/privateSubnet2"
+          }
+        ],
+        "VpcId": {
+          "Ref": "AppVpc80F1F7F9"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/privateSubnet2/RouteTable"
+      }
+    },
+    "AppVpcprivateSubnet2RouteTableAssociation35EA2B1E": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "AppVpcprivateSubnet2RouteTableC4E83AEF"
+        },
+        "SubnetId": {
+          "Ref": "AppVpcprivateSubnet2Subnet2BB4B216"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/privateSubnet2/RouteTableAssociation"
+      }
+    },
+    "AppVpcIGW826A76F0": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "AppStack/AppVpc"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/IGW"
+      }
+    },
+    "AppVpcVPCGW1D33210A": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "AppVpcIGW826A76F0"
+        },
+        "VpcId": {
+          "Ref": "AppVpc80F1F7F9"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/VPCGW"
+      }
+    },
+    "AppVpcS3VpcEndpoint29230910": {
+      "Type": "AWS::EC2::VPCEndpoint",
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "AppVpcprivateSubnet1RouteTable6494272F"
+          },
+          {
+            "Ref": "AppVpcprivateSubnet2RouteTableC4E83AEF"
+          }
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region"
+              },
+              ".s3"
+            ]
+          ]
+        },
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "AppVpc80F1F7F9"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/S3VpcEndpoint/Resource"
+      }
+    },
+    "AppVpcDynamoDbVpcEndpoint121F6A94": {
+      "Type": "AWS::EC2::VPCEndpoint",
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "AppVpcprivateSubnet1RouteTable6494272F"
+          },
+          {
+            "Ref": "AppVpcprivateSubnet2RouteTableC4E83AEF"
+          }
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region"
+              },
+              ".dynamodb"
+            ]
+          ]
+        },
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "AppVpc80F1F7F9"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/DynamoDbVpcEndpoint/Resource"
+      }
+    },
+    "AppVpcEventBridgeVpcEndpoint51056B4D": {
+      "Type": "AWS::EC2::VPCEndpoint",
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VpcEndpointSg00AAF2D5",
+              "GroupId"
+            ]
+          }
+        ],
+        "ServiceName": "com.amazonaws.us-east-1.events",
+        "SubnetIds": [
+          {
+            "Ref": "AppVpcprivateSubnet1Subnet8CF47DFB"
+          },
+          {
+            "Ref": "AppVpcprivateSubnet2Subnet2BB4B216"
+          }
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "AppVpc80F1F7F9"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/AppVpc/EventBridgeVpcEndpoint/Resource"
+      }
+    },
+    "PrimaryWorkerSg0D16331F": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "AppStack/PrimaryWorkerSg",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1"
+          }
+        ],
+        "VpcId": {
+          "Ref": "AppVpc80F1F7F9"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/PrimaryWorkerSg/Resource"
+      }
+    },
+    "DbSg495F8305": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "AppStack/DbSg",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1"
+          }
+        ],
+        "VpcId": {
+          "Ref": "AppVpc80F1F7F9"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/DbSg/Resource"
+      }
+    },
+    "DbSgfromAppStackPrimaryWorkerSg76B8C04154325E031C8B": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "Description": "from AppStackPrimaryWorkerSg76B8C041:5432",
+        "FromPort": 5432,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "DbSg495F8305",
+            "GroupId"
+          ]
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "PrimaryWorkerSg0D16331F",
+            "GroupId"
+          ]
+        },
+        "ToPort": 5432
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/DbSg/from AppStackPrimaryWorkerSg76B8C041:5432"
+      }
+    },
+    "VpcEndpointSg00AAF2D5": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "AppStack/VpcEndpointSg",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1"
+          }
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "AppVpc80F1F7F9",
+                "CidrBlock"
+              ]
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "from ",
+                  {
+                    "Fn::GetAtt": [
+                      "AppVpc80F1F7F9",
+                      "CidrBlock"
+                    ]
+                  },
+                  ":443"
+                ]
+              ]
+            },
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443
+          }
+        ],
+        "VpcId": {
+          "Ref": "AppVpc80F1F7F9"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/VpcEndpointSg/Resource"
+      }
+    },
+    "VpcEndpointSgfromAppStackPrimaryWorkerSg76B8C04144389E112B6": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "Description": "from AppStackPrimaryWorkerSg76B8C041:443",
+        "FromPort": 443,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "VpcEndpointSg00AAF2D5",
+            "GroupId"
+          ]
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "PrimaryWorkerSg0D16331F",
+            "GroupId"
+          ]
+        },
+        "ToPort": 443
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/VpcEndpointSg/from AppStackPrimaryWorkerSg76B8C041:443"
+      }
+    },
+    "OrdersTable315BB997": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "pk",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "sk",
+            "AttributeType": "S"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "pk",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "sk",
+            "KeyType": "RANGE"
+          }
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true
+        },
+        "TimeToLiveSpecification": {
+          "AttributeName": "expiresAt",
+          "Enabled": true
+        }
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete",
+      "Metadata": {
+        "aws:cdk:path": "AppStack/OrdersTable/Resource"
+      }
+    },
+    "RawBucket0C3EE094": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        }
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete",
+      "Metadata": {
+        "aws:cdk:path": "AppStack/RawBucket/Resource"
+      }
+    },
+    "RawBucketPolicy61C50A52": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "RawBucket0C3EE094"
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false"
+                }
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*"
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "RawBucket0C3EE094",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "RawBucket0C3EE094",
+                          "Arn"
+                        ]
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/RawBucket/Policy/Resource"
+      }
+    },
+    "OrdersDlq16CD0DA3": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "MessageRetentionPeriod": 1209600,
+        "VisibilityTimeout": 30
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete",
+      "Metadata": {
+        "aws:cdk:path": "AppStack/OrdersDlq/Resource"
+      }
+    },
+    "OrdersQueue3DFA1D51": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "RedrivePolicy": {
+          "deadLetterTargetArn": {
+            "Fn::GetAtt": [
+              "OrdersDlq16CD0DA3",
+              "Arn"
+            ]
+          },
+          "maxReceiveCount": 3
+        },
+        "VisibilityTimeout": 30
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete",
+      "Metadata": {
+        "aws:cdk:path": "AppStack/OrdersQueue/Resource"
+      }
+    },
+    "OrdersQueuePolicy060934B1": {
+      "Type": "AWS::SQS::QueuePolicy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl"
+              ],
+              "Condition": {
+                "ArnEquals": {
+                  "aws:SourceArn": {
+                    "Fn::GetAtt": [
+                      "OrdersRule251509FF",
+                      "Arn"
+                    ]
+                  }
+                }
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com"
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "OrdersQueue3DFA1D51",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Queues": [
+          {
+            "Ref": "OrdersQueue3DFA1D51"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/OrdersQueue/Policy/Resource"
+      }
+    },
+    "PrimaryWorkerRoleA3052315": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+              ]
+            ]
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/PrimaryWorkerRole/Resource"
+      }
+    },
+    "PrimaryWorkerRoleDefaultPolicy1B057949": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "dynamodb:PutItem",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "OrdersTable315BB997",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": "s3:PutObject",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "RawBucket0C3EE094",
+                        "Arn"
+                      ]
+                    },
+                    "/*"
+                  ]
+                ]
+              }
+            },
+            {
+              "Action": "events:PutEvents",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":events:us-east-1:",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":event-bus/default"
+                  ]
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "PrimaryWorkerRoleDefaultPolicy1B057949",
+        "Roles": [
+          {
+            "Ref": "PrimaryWorkerRoleA3052315"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/PrimaryWorkerRole/DefaultPolicy/Resource"
+      }
+    },
+    "PrimaryWorker187A1DF0": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "ZipFile": "const { DynamoDBClient, PutItemCommand } = require('@aws-sdk/client-dynamodb');\nconst { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');\nconst { EventBridgeClient, PutEventsCommand } = require('@aws-sdk/client-eventbridge');\n\nexports.handler = async (event) => {\n  const endpoint = process.env.AWS_ENDPOINT || undefined;\n  const region = process.env.AWS_REGION || 'us-east-1';\n  const ddb = new DynamoDBClient({ region, ...(endpoint ? { endpoint } : {}) });\n  const s3 = new S3Client({ region, ...(endpoint ? { endpoint } : {}) });\n  const eventBridge = new EventBridgeClient({ region, ...(endpoint ? { endpoint } : {}) });\n\n  const body = event && event.body ? JSON.parse(event.body) : (event || {});\n  const now = Date.now();\n  const pk = 'ORDER';\n  const sk = String(now);\n  const key = `raw/${sk}.json`;\n\n  await ddb.send(new PutItemCommand({\n    TableName: process.env.TABLE_NAME,\n    Item: {\n      pk: { S: pk },\n      sk: { S: sk },\n      payload: { S: JSON.stringify(body) },\n      expiresAt: { N: String(Math.floor(now / 1000) + 30 * 24 * 60 * 60) },\n    },\n  }));\n\n  await s3.send(new PutObjectCommand({\n    Bucket: process.env.BUCKET_NAME,\n    Key: key,\n    Body: JSON.stringify(body),\n  }));\n\n  const publishResult = await eventBridge.send(new PutEventsCommand({\n    Entries: [{\n      EventBusName: process.env.EVENT_BUS_NAME,\n      Source: 'orders.api',\n      DetailType: 'OrderCreated',\n      Detail: JSON.stringify({ pk, sk, key, payload: body }),\n    }],\n  }));\n\n  if ((publishResult.FailedEntryCount || 0) > 0) {\n    throw new Error(`Failed to publish order event: ${JSON.stringify(publishResult.Entries || [])}`);\n  }\n\n  return {\n    statusCode: 200,\n    body: JSON.stringify({ ok: true, key }),\n  };\n};"
+        },
+        "Environment": {
+          "Variables": {
+            "TABLE_NAME": {
+              "Ref": "OrdersTable315BB997"
+            },
+            "BUCKET_NAME": {
+              "Ref": "RawBucket0C3EE094"
+            },
+            "EVENT_BUS_NAME": "default",
+            "AWS_ENDPOINT": ""
+          }
+        },
+        "Handler": "index.handler",
+        "MemorySize": 512,
+        "ReservedConcurrentExecutions": 20,
+        "Role": {
+          "Fn::GetAtt": [
+            "PrimaryWorkerRoleA3052315",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs20.x",
+        "Timeout": 10,
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            {
+              "Fn::GetAtt": [
+                "PrimaryWorkerSg0D16331F",
+                "GroupId"
+              ]
+            }
+          ],
+          "SubnetIds": [
+            {
+              "Ref": "AppVpcprivateSubnet1Subnet8CF47DFB"
+            },
+            {
+              "Ref": "AppVpcprivateSubnet2Subnet2BB4B216"
+            }
+          ]
+        }
+      },
+      "DependsOn": [
+        "AppVpcprivateSubnet1RouteTableAssociation4118B1BE",
+        "AppVpcprivateSubnet2RouteTableAssociation35EA2B1E",
+        "PrimaryWorkerRoleDefaultPolicy1B057949",
+        "PrimaryWorkerRoleA3052315"
+      ],
+      "Metadata": {
+        "aws:cdk:path": "AppStack/PrimaryWorker/Resource"
+      }
+    },
+    "PrimaryWorkerLogGroupD7D4645B": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Join": [
+            "",
+            [
+              "/aws/lambda/",
+              {
+                "Ref": "PrimaryWorker187A1DF0"
+              }
+            ]
+          ]
+        },
+        "RetentionInDays": 14
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete",
+      "Metadata": {
+        "aws:cdk:path": "AppStack/PrimaryWorkerLogGroup/Resource"
+      }
+    },
+    "SecondaryWorkerRole0CE1AB25": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/SecondaryWorkerRole/Resource"
+      }
+    },
+    "SecondaryWorker4C97787D": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "ZipFile": "const { SQSClient } = require('@aws-sdk/client-sqs');\n\nexports.handler = async (event) => {\n  const endpoint = process.env.AWS_ENDPOINT || undefined;\n  const region = process.env.AWS_REGION || 'us-east-1';\n  const sqs = new SQSClient({ region, ...(endpoint ? { endpoint } : {}) });\n  void sqs;\n  return { enriched: true, input: event };\n};"
+        },
+        "Environment": {
+          "Variables": {
+            "AWS_ENDPOINT": ""
+          }
+        },
+        "Handler": "index.handler",
+        "MemorySize": 256,
+        "ReservedConcurrentExecutions": 10,
+        "Role": {
+          "Fn::GetAtt": [
+            "SecondaryWorkerRole0CE1AB25",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs20.x",
+        "Timeout": 5
+      },
+      "DependsOn": [
+        "SecondaryWorkerRole0CE1AB25"
+      ],
+      "Metadata": {
+        "aws:cdk:path": "AppStack/SecondaryWorker/Resource"
+      }
+    },
+    "ApiF70053CD": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Name": "Api"
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/Api/Resource"
+      }
+    },
+    "ApiDeploymentB17BE62Daa9227ae50eceed08ef532ae72a98288": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "Properties": {
+        "Description": "Automatically created by the RestApi construct",
+        "RestApiId": {
+          "Ref": "ApiF70053CD"
+        }
+      },
+      "DependsOn": [
+        "ApiorderPOSTB8B6992D",
+        "Apiorder88C17B87"
+      ],
+      "Metadata": {
+        "aws:cdk:path": "AppStack/Api/Deployment/Resource"
+      }
+    },
+    "ApiDeploymentStageprod3EB9684E": {
+      "Type": "AWS::ApiGateway::Stage",
+      "Properties": {
+        "DeploymentId": {
+          "Ref": "ApiDeploymentB17BE62Daa9227ae50eceed08ef532ae72a98288"
+        },
+        "MethodSettings": [
+          {
+            "DataTraceEnabled": false,
+            "HttpMethod": "*",
+            "LoggingLevel": "INFO",
+            "MetricsEnabled": true,
+            "ResourcePath": "/*"
+          }
+        ],
+        "RestApiId": {
+          "Ref": "ApiF70053CD"
+        },
+        "StageName": "prod"
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/Api/DeploymentStage.prod/Resource"
+      }
+    },
+    "Apiorder88C17B87": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "ApiF70053CD",
+            "RootResourceId"
+          ]
+        },
+        "PathPart": "order",
+        "RestApiId": {
+          "Ref": "ApiF70053CD"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/Api/Default/order/Resource"
+      }
+    },
+    "ApiorderPOSTApiPermissionAppStackApi0ADF27A1POSTorder6583BC23": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "PrimaryWorker187A1DF0",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:us-east-1:",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "ApiF70053CD"
+              },
+              "/",
+              {
+                "Ref": "ApiDeploymentStageprod3EB9684E"
+              },
+              "/POST/order"
+            ]
+          ]
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/Api/Default/order/POST/ApiPermission.AppStackApi0ADF27A1.POST..order"
+      }
+    },
+    "ApiorderPOSTApiPermissionTestAppStackApi0ADF27A1POSTorder0995C930": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "PrimaryWorker187A1DF0",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:us-east-1:",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "ApiF70053CD"
+              },
+              "/test-invoke-stage/POST/order"
+            ]
+          ]
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/Api/Default/order/POST/ApiPermission.Test.AppStackApi0ADF27A1.POST..order"
+      }
+    },
+    "ApiorderPOSTB8B6992D": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "AuthorizationType": "NONE",
+        "HttpMethod": "POST",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "PrimaryWorker187A1DF0",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "ResourceId": {
+          "Ref": "Apiorder88C17B87"
+        },
+        "RestApiId": {
+          "Ref": "ApiF70053CD"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/Api/Default/order/POST/Resource"
+      }
+    },
+    "OrdersRule251509FF": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "EventPattern": {
+          "source": [
+            "orders.api"
+          ],
+          "detail-type": [
+            "OrderCreated"
+          ]
+        },
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "OrdersQueue3DFA1D51",
+                "Arn"
+              ]
+            },
+            "Id": "Target0"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/OrdersRule/Resource"
+      }
+    },
+    "StepFunctionsLogGroup8EBFF7CF": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 14
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete",
+      "Metadata": {
+        "aws:cdk:path": "AppStack/StepFunctionsLogGroup/Resource"
+      }
+    },
+    "OrderFlowRole7421902B": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "states.us-east-1.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/OrderFlowRole/Resource"
+      }
+    },
+    "OrderFlowRoleDefaultPolicy4567B4D1": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogDelivery",
+                "logs:GetLogDelivery",
+                "logs:UpdateLogDelivery",
+                "logs:DeleteLogDelivery",
+                "logs:ListLogDeliveries",
+                "logs:PutResourcePolicy",
+                "logs:DescribeResourcePolicies",
+                "logs:DescribeLogGroups"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "OrderFlowRoleDefaultPolicy4567B4D1",
+        "Roles": [
+          {
+            "Ref": "OrderFlowRole7421902B"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/OrderFlowRole/DefaultPolicy/Resource"
+      }
+    },
+    "OrderFlowA028A46E": {
+      "Type": "AWS::StepFunctions::StateMachine",
+      "Properties": {
+        "DefinitionString": "{\"StartAt\":\"Start\",\"States\":{\"Start\":{\"Type\":\"Pass\",\"End\":true}},\"TimeoutSeconds\":300}",
+        "LoggingConfiguration": {
+          "Destinations": [
+            {
+              "CloudWatchLogsLogGroup": {
+                "LogGroupArn": {
+                  "Fn::GetAtt": [
+                    "StepFunctionsLogGroup8EBFF7CF",
+                    "Arn"
+                  ]
+                }
+              }
+            }
+          ],
+          "IncludeExecutionData": true,
+          "Level": "ALL"
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "OrderFlowRole7421902B",
+            "Arn"
+          ]
+        }
+      },
+      "DependsOn": [
+        "OrderFlowRoleDefaultPolicy4567B4D1",
+        "OrderFlowRole7421902B"
+      ],
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete",
+      "Metadata": {
+        "aws:cdk:path": "AppStack/OrderFlow/Resource"
+      }
+    },
+    "OrdersPipeRole49D8C288": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "pipes.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/OrdersPipeRole/Resource"
+      }
+    },
+    "OrdersPipeRoleDefaultPolicyC715113F": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "OrdersQueue3DFA1D51",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "SecondaryWorker4C97787D",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": "states:StartExecution",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "OrderFlowA028A46E"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "OrdersPipeRoleDefaultPolicyC715113F",
+        "Roles": [
+          {
+            "Ref": "OrdersPipeRole49D8C288"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/OrdersPipeRole/DefaultPolicy/Resource"
+      }
+    },
+    "OrdersPipe": {
+      "Type": "AWS::Pipes::Pipe",
+      "Properties": {
+        "Enrichment": {
+          "Fn::GetAtt": [
+            "SecondaryWorker4C97787D",
+            "Arn"
+          ]
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "OrdersPipeRole49D8C288",
+            "Arn"
+          ]
+        },
+        "Source": {
+          "Fn::GetAtt": [
+            "OrdersQueue3DFA1D51",
+            "Arn"
+          ]
+        },
+        "SourceParameters": {
+          "SqsQueueParameters": {
+            "BatchSize": 10
+          }
+        },
+        "Target": {
+          "Ref": "OrderFlowA028A46E"
+        },
+        "TargetParameters": {
+          "StepFunctionStateMachineParameters": {
+            "InvocationType": "FIRE_AND_FORGET"
+          }
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/OrdersPipe"
+      }
+    },
+    "OrdersDbSubnetGroupC6216362": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "Subnet group for OrdersDb database",
+        "SubnetIds": [
+          {
+            "Ref": "AppVpcprivateSubnet1Subnet8CF47DFB"
+          },
+          {
+            "Ref": "AppVpcprivateSubnet2Subnet2BB4B216"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/OrdersDb/SubnetGroup/Default"
+      },
+      "Condition": "IsProdAccount"
+    },
+    "AppStackOrdersDbSecret474F2D713fdaad7efa858a3daf9490cf0a702aeb": {
+      "Type": "AWS::SecretsManager::Secret",
+      "Properties": {
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Generated by the CDK for stack: ",
+              {
+                "Ref": "AWS::StackName"
+              }
+            ]
+          ]
+        },
+        "GenerateSecretString": {
+          "ExcludeCharacters": " %+~`#$&*()|[]{}:;<>?!'/@\"\\",
+          "GenerateStringKey": "password",
+          "PasswordLength": 30,
+          "SecretStringTemplate": "{\"username\":\"postgres\"}"
+        }
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete",
+      "Metadata": {
+        "aws:cdk:path": "AppStack/OrdersDb/Secret/Resource"
+      },
+      "Condition": "IsProdAccount"
+    },
+    "OrdersDbSecretAttachment66BEC12A": {
+      "Type": "AWS::SecretsManager::SecretTargetAttachment",
+      "Properties": {
+        "SecretId": {
+          "Ref": "AppStackOrdersDbSecret474F2D713fdaad7efa858a3daf9490cf0a702aeb"
+        },
+        "TargetId": {
+          "Ref": "OrdersDb889E652A"
+        },
+        "TargetType": "AWS::RDS::DBInstance"
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/OrdersDb/Secret/Attachment/Resource"
+      },
+      "Condition": "IsProdAccount"
+    },
+    "OrdersDb889E652A": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "AllocatedStorage": "100",
+        "CopyTagsToSnapshot": true,
+        "DBInstanceClass": "db.t3.micro",
+        "DBSubnetGroupName": {
+          "Ref": "OrdersDbSubnetGroupC6216362"
+        },
+        "DeletionProtection": false,
+        "Engine": "postgres",
+        "EngineVersion": "14.7",
+        "MasterUserPassword": {
+          "Fn::Join": [
+            "",
+            [
+              "{{resolve:secretsmanager:",
+              {
+                "Ref": "AppStackOrdersDbSecret474F2D713fdaad7efa858a3daf9490cf0a702aeb"
+              },
+              ":SecretString:password::}}"
+            ]
+          ]
+        },
+        "MasterUsername": "postgres",
+        "PubliclyAccessible": false,
+        "StorageEncrypted": true,
+        "StorageType": "gp2",
+        "VPCSecurityGroups": [
+          {
+            "Fn::GetAtt": [
+              "DbSg495F8305",
+              "GroupId"
+            ]
+          }
+        ]
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete",
+      "Metadata": {
+        "aws:cdk:path": "AppStack/OrdersDb/Resource"
+      },
+      "Condition": "IsProdAccount"
+    },
+    "CDKMetadata": {
+      "Type": "AWS::CDK::Metadata",
+      "Properties": {
+        "Analytics": "v2:deflate64:H4sIAAAAAAAA/31STW/bMAz9Lb0rWppdes3HVgRYMc8pch1omXHU2JJmUgkCQf99sGXHXg+7iO89PZEipZV8Xi7l8glutFDlZVHrQoYDg7qI7clsrSk1a2sE3Oh3QLWS4ehUt3XMtiLzRa3VwRcGudMmlFvP+A5FjZM+aWsiqzT0iUezyFp9BcYpx94wtgb5FRhvcB+KDmzNDOrcoGExKEenvpnSWW14sD5on+kECueeAyrfar6/tta7/pb/FfamapEoivJuoLFlIcOjvx5EQV9l2Hh1SdcfUAqZrbW6T3LiUdAfkuGXR9/nSaBfpwMzGoWGRobcprJ9nIyjp4amKEGG796occRznGHbaCJtTRS1rUiGH7Z6ND3iKMDpKo1WhhyJ1073VQe4Q1fbe/8C25OZsQNDlZ69BzmS9a3CDdBEhkQJvyGfbdlJCUWBVzRMMuR+6NT382V0p6ERkiEDoq4Y4xuoszZjzQePwmmHJLuetUPRliTDDhgKINwbYjAKRfpwj/53m7kwug+o2vSsu814MgrqVWrAQIWtDOnPdMYU3qGtkGdf9WH4vBPjP6P56dl5ng8pCmNLlB/05fr8IldL+fL0QVovWm9YNyjzFP8CNtQZUM8DAAA="
+      },
+      "Metadata": {
+        "aws:cdk:path": "AppStack/CDKMetadata/Default"
+      }
+    }
+  },
+  "Outputs": {
+    "ApiEndpoint4F160690": {
+      "Value": {
+        "Fn::Join": [
           "",
           [
-           {
-            "Fn::GetAtt": [
-             "RawBucket0C3EE094",
-             "Arn"
-            ]
-           },
-           "/*"
+            "https://",
+            {
+              "Ref": "ApiF70053CD"
+            },
+            ".execute-api.us-east-1.",
+            {
+              "Ref": "AWS::URLSuffix"
+            },
+            "/",
+            {
+              "Ref": "ApiDeploymentStageprod3EB9684E"
+            },
+            "/"
           ]
-         ]
-        }
-       ]
-      }
-     ],
-     "Version": "2012-10-17"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/RawBucket/Policy/Resource"
-   }
-  },
-  "OrdersDlq16CD0DA3": {
-   "Type": "AWS::SQS::Queue",
-   "Properties": {
-    "MessageRetentionPeriod": 1209600,
-    "VisibilityTimeout": 30
-   },
-   "UpdateReplacePolicy": "Delete",
-   "DeletionPolicy": "Delete",
-   "Metadata": {
-    "aws:cdk:path": "AppStack/OrdersDlq/Resource"
-   }
-  },
-  "OrdersQueue3DFA1D51": {
-   "Type": "AWS::SQS::Queue",
-   "Properties": {
-    "RedrivePolicy": {
-     "deadLetterTargetArn": {
-      "Fn::GetAtt": [
-       "OrdersDlq16CD0DA3",
-       "Arn"
-      ]
-     },
-     "maxReceiveCount": 3
-    },
-    "VisibilityTimeout": 30
-   },
-   "UpdateReplacePolicy": "Delete",
-   "DeletionPolicy": "Delete",
-   "Metadata": {
-    "aws:cdk:path": "AppStack/OrdersQueue/Resource"
-   }
-  },
-  "OrdersQueuePolicy060934B1": {
-   "Type": "AWS::SQS::QueuePolicy",
-   "Properties": {
-    "PolicyDocument": {
-     "Statement": [
-      {
-       "Action": [
-        "sqs:SendMessage",
-        "sqs:GetQueueAttributes",
-        "sqs:GetQueueUrl"
-       ],
-       "Condition": {
-        "ArnEquals": {
-         "aws:SourceArn": {
-          "Fn::GetAtt": [
-           "OrdersRule251509FF",
-           "Arn"
-          ]
-         }
-        }
-       },
-       "Effect": "Allow",
-       "Principal": {
-        "Service": "events.amazonaws.com"
-       },
-       "Resource": {
-        "Fn::GetAtt": [
-         "OrdersQueue3DFA1D51",
-         "Arn"
         ]
-       }
       }
-     ],
-     "Version": "2012-10-17"
     },
-    "Queues": [
-     {
-      "Ref": "OrdersQueue3DFA1D51"
-     }
-    ]
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/OrdersQueue/Policy/Resource"
-   }
-  },
-  "PrimaryWorkerRoleA3052315": {
-   "Type": "AWS::IAM::Role",
-   "Properties": {
-    "AssumeRolePolicyDocument": {
-     "Statement": [
-      {
-       "Action": "sts:AssumeRole",
-       "Effect": "Allow",
-       "Principal": {
-        "Service": "lambda.amazonaws.com"
-       }
-      }
-     ],
-     "Version": "2012-10-17"
-    },
-    "ManagedPolicyArns": [
-     {
-      "Fn::Join": [
-       "",
-       [
-        "arn:",
-        {
-         "Ref": "AWS::Partition"
-        },
-        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-       ]
-      ]
-     },
-     {
-      "Fn::Join": [
-       "",
-       [
-        "arn:",
-        {
-         "Ref": "AWS::Partition"
-        },
-        ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
-       ]
-      ]
-     }
-    ]
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/PrimaryWorkerRole/Resource"
-   }
-  },
-  "PrimaryWorkerRoleDefaultPolicy1B057949": {
-   "Type": "AWS::IAM::Policy",
-   "Properties": {
-    "PolicyDocument": {
-     "Statement": [
-      {
-       "Action": "dynamodb:PutItem",
-       "Effect": "Allow",
-       "Resource": {
-        "Fn::GetAtt": [
-         "OrdersTable315BB997",
-         "Arn"
-        ]
-       }
-      },
-      {
-       "Action": "s3:PutObject",
-       "Effect": "Allow",
-       "Resource": {
+    "ApiUrl": {
+      "Value": {
         "Fn::Join": [
-         "",
-         [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "ApiF70053CD"
+            },
+            ".execute-api.us-east-1.",
+            {
+              "Ref": "AWS::URLSuffix"
+            },
+            "/",
+            {
+              "Ref": "ApiDeploymentStageprod3EB9684E"
+            },
+            "/"
+          ]
+        ]
+      }
+    },
+    "QueueUrl": {
+      "Value": {
+        "Ref": "OrdersQueue3DFA1D51"
+      }
+    },
+    "DynamoDbTableName": {
+      "Value": {
+        "Ref": "OrdersTable315BB997"
+      }
+    },
+    "S3BucketName": {
+      "Value": {
+        "Ref": "RawBucket0C3EE094"
+      }
+    },
+    "RdsEndpoint": {
+      "Value": {
+        "Fn::If": [
+          "IsProdAccount",
           {
-           "Fn::GetAtt": [
-            "RawBucket0C3EE094",
-            "Arn"
-           ]
+            "Fn::GetAtt": [
+              "OrdersDb889E652A",
+              "Endpoint.Address"
+            ]
           },
-          "/*"
-         ]
+          ""
         ]
-       }
-      },
-      {
-       "Action": "sqs:SendMessage",
-       "Effect": "Allow",
-       "Resource": {
+      }
+    },
+    "PrimaryLambdaArn": {
+      "Value": {
         "Fn::GetAtt": [
-         "OrdersQueue3DFA1D51",
-         "Arn"
-        ]
-       }
-      }
-     ],
-     "Version": "2012-10-17"
-    },
-    "PolicyName": "PrimaryWorkerRoleDefaultPolicy1B057949",
-    "Roles": [
-     {
-      "Ref": "PrimaryWorkerRoleA3052315"
-     }
-    ]
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/PrimaryWorkerRole/DefaultPolicy/Resource"
-   }
-  },
-  "PrimaryWorker187A1DF0": {
-   "Type": "AWS::Lambda::Function",
-   "Properties": {
-    "Code": {
-     "ZipFile": "const { DynamoDBClient, PutItemCommand } = require('@aws-sdk/client-dynamodb');\nconst { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');\nconst { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');\n\nexports.handler = async (event) => {\n  const endpoint = process.env.AWS_ENDPOINT || undefined;\n  const region = process.env.AWS_REGION || 'us-east-1';\n  const ddb = new DynamoDBClient({ region, ...(endpoint ? { endpoint } : {}) });\n  const s3 = new S3Client({ region, ...(endpoint ? { endpoint } : {}) });\n  const sqs = new SQSClient({ region, ...(endpoint ? { endpoint } : {}) });\n\n  const body = event && event.body ? JSON.parse(event.body) : (event || {});\n  const now = Date.now();\n  const pk = 'ORDER';\n  const sk = String(now);\n  const key = `raw/${sk}.json`;\n\n  await ddb.send(new PutItemCommand({\n    TableName: process.env.TABLE_NAME,\n    Item: {\n      pk: { S: pk },\n      sk: { S: sk },\n      payload: { S: JSON.stringify(body) },\n      expiresAt: { N: String(Math.floor(now / 1000) + 30 * 24 * 60 * 60) },\n    },\n  }));\n\n  await s3.send(new PutObjectCommand({\n    Bucket: process.env.BUCKET_NAME,\n    Key: key,\n    Body: JSON.stringify(body),\n  }));\n\n  await sqs.send(new SendMessageCommand({\n    QueueUrl: process.env.QUEUE_URL,\n    MessageBody: JSON.stringify({ pk, sk, key }),\n  }));\n\n  return {\n    statusCode: 200,\n    body: JSON.stringify({ ok: true, key }),\n  };\n};"
-    },
-    "Environment": {
-     "Variables": {
-      "TABLE_NAME": {
-       "Ref": "OrdersTable315BB997"
-      },
-      "BUCKET_NAME": {
-       "Ref": "RawBucket0C3EE094"
-      },
-      "QUEUE_URL": {
-       "Ref": "OrdersQueue3DFA1D51"
-      },
-      "AWS_ENDPOINT": ""
-     }
-    },
-    "Handler": "index.handler",
-    "MemorySize": 512,
-    "ReservedConcurrentExecutions": 20,
-    "Role": {
-     "Fn::GetAtt": [
-      "PrimaryWorkerRoleA3052315",
-      "Arn"
-     ]
-    },
-    "Runtime": "nodejs20.x",
-    "Timeout": 10,
-    "VpcConfig": {
-     "SecurityGroupIds": [
-      {
-       "Fn::GetAtt": [
-        "PrimaryWorkerSg0D16331F",
-        "GroupId"
-       ]
-      }
-     ],
-     "SubnetIds": [
-      {
-       "Ref": "AppVpcprivateSubnet1Subnet8CF47DFB"
-      },
-      {
-       "Ref": "AppVpcprivateSubnet2Subnet2BB4B216"
-      }
-     ]
-    }
-   },
-   "DependsOn": [
-    "AppVpcprivateSubnet1DefaultRoute57A63F17",
-    "AppVpcprivateSubnet1RouteTableAssociation4118B1BE",
-    "AppVpcprivateSubnet2DefaultRoute4128D3F7",
-    "AppVpcprivateSubnet2RouteTableAssociation35EA2B1E",
-    "PrimaryWorkerRoleDefaultPolicy1B057949",
-    "PrimaryWorkerRoleA3052315"
-   ],
-   "Metadata": {
-    "aws:cdk:path": "AppStack/PrimaryWorker/Resource"
-   }
-  },
-  "PrimaryWorkerLogGroupD7D4645B": {
-   "Type": "AWS::Logs::LogGroup",
-   "Properties": {
-    "LogGroupName": {
-     "Fn::Join": [
-      "",
-      [
-       "/aws/lambda/",
-       {
-        "Ref": "PrimaryWorker187A1DF0"
-       }
-      ]
-     ]
-    },
-    "RetentionInDays": 14
-   },
-   "UpdateReplacePolicy": "Delete",
-   "DeletionPolicy": "Delete",
-   "Metadata": {
-    "aws:cdk:path": "AppStack/PrimaryWorkerLogGroup/Resource"
-   }
-  },
-  "SecondaryWorkerRole0CE1AB25": {
-   "Type": "AWS::IAM::Role",
-   "Properties": {
-    "AssumeRolePolicyDocument": {
-     "Statement": [
-      {
-       "Action": "sts:AssumeRole",
-       "Effect": "Allow",
-       "Principal": {
-        "Service": "lambda.amazonaws.com"
-       }
-      }
-     ],
-     "Version": "2012-10-17"
-    },
-    "ManagedPolicyArns": [
-     {
-      "Fn::Join": [
-       "",
-       [
-        "arn:",
-        {
-         "Ref": "AWS::Partition"
-        },
-        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-       ]
-      ]
-     }
-    ]
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/SecondaryWorkerRole/Resource"
-   }
-  },
-  "SecondaryWorker4C97787D": {
-   "Type": "AWS::Lambda::Function",
-   "Properties": {
-    "Code": {
-     "ZipFile": "const { SQSClient } = require('@aws-sdk/client-sqs');\n\nexports.handler = async (event) => {\n  const endpoint = process.env.AWS_ENDPOINT || undefined;\n  const region = process.env.AWS_REGION || 'us-east-1';\n  const sqs = new SQSClient({ region, ...(endpoint ? { endpoint } : {}) });\n  void sqs;\n  return { enriched: true, input: event };\n};"
-    },
-    "Environment": {
-     "Variables": {
-      "AWS_ENDPOINT": ""
-     }
-    },
-    "Handler": "index.handler",
-    "MemorySize": 256,
-    "ReservedConcurrentExecutions": 10,
-    "Role": {
-     "Fn::GetAtt": [
-      "SecondaryWorkerRole0CE1AB25",
-      "Arn"
-     ]
-    },
-    "Runtime": "nodejs20.x",
-    "Timeout": 5
-   },
-   "DependsOn": [
-    "SecondaryWorkerRole0CE1AB25"
-   ],
-   "Metadata": {
-    "aws:cdk:path": "AppStack/SecondaryWorker/Resource"
-   }
-  },
-  "ApiF70053CD": {
-   "Type": "AWS::ApiGateway::RestApi",
-   "Properties": {
-    "Name": "Api"
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/Api/Resource"
-   }
-  },
-  "ApiDeploymentB17BE62Daa9227ae50eceed08ef532ae72a98288": {
-   "Type": "AWS::ApiGateway::Deployment",
-   "Properties": {
-    "Description": "Automatically created by the RestApi construct",
-    "RestApiId": {
-     "Ref": "ApiF70053CD"
-    }
-   },
-   "DependsOn": [
-    "ApiorderPOSTB8B6992D",
-    "Apiorder88C17B87"
-   ],
-   "Metadata": {
-    "aws:cdk:path": "AppStack/Api/Deployment/Resource"
-   }
-  },
-  "ApiDeploymentStageprod3EB9684E": {
-   "Type": "AWS::ApiGateway::Stage",
-   "Properties": {
-    "DeploymentId": {
-     "Ref": "ApiDeploymentB17BE62Daa9227ae50eceed08ef532ae72a98288"
-    },
-    "MethodSettings": [
-     {
-      "DataTraceEnabled": false,
-      "HttpMethod": "*",
-      "LoggingLevel": "INFO",
-      "MetricsEnabled": true,
-      "ResourcePath": "/*"
-     }
-    ],
-    "RestApiId": {
-     "Ref": "ApiF70053CD"
-    },
-    "StageName": "prod"
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/Api/DeploymentStage.prod/Resource"
-   }
-  },
-  "Apiorder88C17B87": {
-   "Type": "AWS::ApiGateway::Resource",
-   "Properties": {
-    "ParentId": {
-     "Fn::GetAtt": [
-      "ApiF70053CD",
-      "RootResourceId"
-     ]
-    },
-    "PathPart": "order",
-    "RestApiId": {
-     "Ref": "ApiF70053CD"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/Api/Default/order/Resource"
-   }
-  },
-  "ApiorderPOSTApiPermissionAppStackApi0ADF27A1POSTorder6583BC23": {
-   "Type": "AWS::Lambda::Permission",
-   "Properties": {
-    "Action": "lambda:InvokeFunction",
-    "FunctionName": {
-     "Fn::GetAtt": [
-      "PrimaryWorker187A1DF0",
-      "Arn"
-     ]
-    },
-    "Principal": "apigateway.amazonaws.com",
-    "SourceArn": {
-     "Fn::Join": [
-      "",
-      [
-       "arn:",
-       {
-        "Ref": "AWS::Partition"
-       },
-       ":execute-api:us-east-1:",
-       {
-        "Ref": "AWS::AccountId"
-       },
-       ":",
-       {
-        "Ref": "ApiF70053CD"
-       },
-       "/",
-       {
-        "Ref": "ApiDeploymentStageprod3EB9684E"
-       },
-       "/POST/order"
-      ]
-     ]
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/Api/Default/order/POST/ApiPermission.AppStackApi0ADF27A1.POST..order"
-   }
-  },
-  "ApiorderPOSTApiPermissionTestAppStackApi0ADF27A1POSTorder0995C930": {
-   "Type": "AWS::Lambda::Permission",
-   "Properties": {
-    "Action": "lambda:InvokeFunction",
-    "FunctionName": {
-     "Fn::GetAtt": [
-      "PrimaryWorker187A1DF0",
-      "Arn"
-     ]
-    },
-    "Principal": "apigateway.amazonaws.com",
-    "SourceArn": {
-     "Fn::Join": [
-      "",
-      [
-       "arn:",
-       {
-        "Ref": "AWS::Partition"
-       },
-       ":execute-api:us-east-1:",
-       {
-        "Ref": "AWS::AccountId"
-       },
-       ":",
-       {
-        "Ref": "ApiF70053CD"
-       },
-       "/test-invoke-stage/POST/order"
-      ]
-     ]
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/Api/Default/order/POST/ApiPermission.Test.AppStackApi0ADF27A1.POST..order"
-   }
-  },
-  "ApiorderPOSTB8B6992D": {
-   "Type": "AWS::ApiGateway::Method",
-   "Properties": {
-    "AuthorizationType": "NONE",
-    "HttpMethod": "POST",
-    "Integration": {
-     "IntegrationHttpMethod": "POST",
-     "Type": "AWS_PROXY",
-     "Uri": {
-      "Fn::Join": [
-       "",
-       [
-        "arn:",
-        {
-         "Ref": "AWS::Partition"
-        },
-        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
-        {
-         "Fn::GetAtt": [
           "PrimaryWorker187A1DF0",
           "Arn"
-         ]
-        },
-        "/invocations"
-       ]
-      ]
-     }
-    },
-    "ResourceId": {
-     "Ref": "Apiorder88C17B87"
-    },
-    "RestApiId": {
-     "Ref": "ApiF70053CD"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/Api/Default/order/POST/Resource"
-   }
-  },
-  "OrdersRule251509FF": {
-   "Type": "AWS::Events::Rule",
-   "Properties": {
-    "EventPattern": {
-     "source": [
-      "orders.api"
-     ],
-     "detail-type": [
-      "OrderCreated"
-     ]
-    },
-    "State": "ENABLED",
-    "Targets": [
-     {
-      "Arn": {
-       "Fn::GetAtt": [
-        "OrdersQueue3DFA1D51",
-        "Arn"
-       ]
-      },
-      "Id": "Target0"
-     }
-    ]
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/OrdersRule/Resource"
-   }
-  },
-  "StepFunctionsLogGroup8EBFF7CF": {
-   "Type": "AWS::Logs::LogGroup",
-   "Properties": {
-    "RetentionInDays": 14
-   },
-   "UpdateReplacePolicy": "Delete",
-   "DeletionPolicy": "Delete",
-   "Metadata": {
-    "aws:cdk:path": "AppStack/StepFunctionsLogGroup/Resource"
-   }
-  },
-  "OrderFlowRole7421902B": {
-   "Type": "AWS::IAM::Role",
-   "Properties": {
-    "AssumeRolePolicyDocument": {
-     "Statement": [
-      {
-       "Action": "sts:AssumeRole",
-       "Effect": "Allow",
-       "Principal": {
-        "Service": "states.us-east-1.amazonaws.com"
-       }
+        ]
       }
-     ],
-     "Version": "2012-10-17"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/OrderFlowRole/Resource"
-   }
-  },
-  "OrderFlowRoleDefaultPolicy4567B4D1": {
-   "Type": "AWS::IAM::Policy",
-   "Properties": {
-    "PolicyDocument": {
-     "Statement": [
-      {
-       "Action": [
-        "logs:CreateLogDelivery",
-        "logs:GetLogDelivery",
-        "logs:UpdateLogDelivery",
-        "logs:DeleteLogDelivery",
-        "logs:ListLogDeliveries",
-        "logs:PutResourcePolicy",
-        "logs:DescribeResourcePolicies",
-        "logs:DescribeLogGroups"
-       ],
-       "Effect": "Allow",
-       "Resource": "*"
-      }
-     ],
-     "Version": "2012-10-17"
     },
-    "PolicyName": "OrderFlowRoleDefaultPolicy4567B4D1",
-    "Roles": [
-     {
-      "Ref": "OrderFlowRole7421902B"
-     }
-    ]
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/OrderFlowRole/DefaultPolicy/Resource"
-   }
-  },
-  "OrderFlowA028A46E": {
-   "Type": "AWS::StepFunctions::StateMachine",
-   "Properties": {
-    "DefinitionString": "{\"StartAt\":\"Start\",\"States\":{\"Start\":{\"Type\":\"Pass\",\"End\":true}},\"TimeoutSeconds\":300}",
-    "LoggingConfiguration": {
-     "Destinations": [
-      {
-       "CloudWatchLogsLogGroup": {
-        "LogGroupArn": {
-         "Fn::GetAtt": [
-          "StepFunctionsLogGroup8EBFF7CF",
+    "EnrichmentLambdaArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "SecondaryWorker4C97787D",
           "Arn"
-         ]
+        ]
+      }
+    }
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Type": "AWS::SSM::Parameter::Value<String>",
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+    }
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5"
+                  ],
+                  {
+                    "Ref": "BootstrapVersion"
+                  }
+                ]
+              }
+            ]
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
         }
-       }
-      }
-     ],
-     "IncludeExecutionData": true,
-     "Level": "ALL"
-    },
-    "RoleArn": {
-     "Fn::GetAtt": [
-      "OrderFlowRole7421902B",
-      "Arn"
-     ]
-    }
-   },
-   "DependsOn": [
-    "OrderFlowRoleDefaultPolicy4567B4D1",
-    "OrderFlowRole7421902B"
-   ],
-   "UpdateReplacePolicy": "Delete",
-   "DeletionPolicy": "Delete",
-   "Metadata": {
-    "aws:cdk:path": "AppStack/OrderFlow/Resource"
-   }
-  },
-  "OrdersPipeRole49D8C288": {
-   "Type": "AWS::IAM::Role",
-   "Properties": {
-    "AssumeRolePolicyDocument": {
-     "Statement": [
-      {
-       "Action": "sts:AssumeRole",
-       "Effect": "Allow",
-       "Principal": {
-        "Service": "pipes.amazonaws.com"
-       }
-      }
-     ],
-     "Version": "2012-10-17"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/OrdersPipeRole/Resource"
-   }
-  },
-  "OrdersPipeRoleDefaultPolicyC715113F": {
-   "Type": "AWS::IAM::Policy",
-   "Properties": {
-    "PolicyDocument": {
-     "Statement": [
-      {
-       "Action": [
-        "sqs:ReceiveMessage",
-        "sqs:DeleteMessage",
-        "sqs:GetQueueAttributes"
-       ],
-       "Effect": "Allow",
-       "Resource": {
-        "Fn::GetAtt": [
-         "OrdersQueue3DFA1D51",
-         "Arn"
-        ]
-       }
-      },
-      {
-       "Action": "lambda:InvokeFunction",
-       "Effect": "Allow",
-       "Resource": {
-        "Fn::GetAtt": [
-         "SecondaryWorker4C97787D",
-         "Arn"
-        ]
-       }
-      },
-      {
-       "Action": "states:StartExecution",
-       "Effect": "Allow",
-       "Resource": {
-        "Ref": "OrderFlowA028A46E"
-       }
-      }
-     ],
-     "Version": "2012-10-17"
-    },
-    "PolicyName": "OrdersPipeRoleDefaultPolicyC715113F",
-    "Roles": [
-     {
-      "Ref": "OrdersPipeRole49D8C288"
-     }
-    ]
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/OrdersPipeRole/DefaultPolicy/Resource"
-   }
-  },
-  "OrdersPipe": {
-   "Type": "AWS::Pipes::Pipe",
-   "Properties": {
-    "Enrichment": {
-     "Fn::GetAtt": [
-      "SecondaryWorker4C97787D",
-      "Arn"
-     ]
-    },
-    "RoleArn": {
-     "Fn::GetAtt": [
-      "OrdersPipeRole49D8C288",
-      "Arn"
-     ]
-    },
-    "Source": {
-     "Fn::GetAtt": [
-      "OrdersQueue3DFA1D51",
-      "Arn"
-     ]
-    },
-    "SourceParameters": {
-     "SqsQueueParameters": {
-      "BatchSize": 10
-     }
-    },
-    "Target": {
-     "Ref": "OrderFlowA028A46E"
-    },
-    "TargetParameters": {
-     "StepFunctionStateMachineParameters": {
-      "InvocationType": "FIRE_AND_FORGET"
-     }
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/OrdersPipe"
-   }
-  },
-  "OrdersDbSubnetGroupC6216362": {
-   "Type": "AWS::RDS::DBSubnetGroup",
-   "Properties": {
-    "DBSubnetGroupDescription": "Subnet group for OrdersDb database",
-    "SubnetIds": [
-     {
-      "Ref": "AppVpcprivateSubnet1Subnet8CF47DFB"
-     },
-     {
-      "Ref": "AppVpcprivateSubnet2Subnet2BB4B216"
-     }
-    ]
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/OrdersDb/SubnetGroup/Default"
-   },
-   "Condition": "IsProdAccount"
-  },
-  "AppStackOrdersDbSecret474F2D713fdaad7efa858a3daf9490cf0a702aeb": {
-   "Type": "AWS::SecretsManager::Secret",
-   "Properties": {
-    "Description": {
-     "Fn::Join": [
-      "",
-      [
-       "Generated by the CDK for stack: ",
-       {
-        "Ref": "AWS::StackName"
-       }
       ]
-     ]
-    },
-    "GenerateSecretString": {
-     "ExcludeCharacters": " %+~`#$&*()|[]{}:;<>?!'/@\"\\",
-     "GenerateStringKey": "password",
-     "PasswordLength": 30,
-     "SecretStringTemplate": "{\"username\":\"postgres\"}"
     }
-   },
-   "UpdateReplacePolicy": "Delete",
-   "DeletionPolicy": "Delete",
-   "Metadata": {
-    "aws:cdk:path": "AppStack/OrdersDb/Secret/Resource"
-   },
-   "Condition": "IsProdAccount"
-  },
-  "OrdersDbSecretAttachment66BEC12A": {
-   "Type": "AWS::SecretsManager::SecretTargetAttachment",
-   "Properties": {
-    "SecretId": {
-     "Ref": "AppStackOrdersDbSecret474F2D713fdaad7efa858a3daf9490cf0a702aeb"
-    },
-    "TargetId": {
-     "Ref": "OrdersDb889E652A"
-    },
-    "TargetType": "AWS::RDS::DBInstance"
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/OrdersDb/Secret/Attachment/Resource"
-   },
-   "Condition": "IsProdAccount"
-  },
-  "OrdersDb889E652A": {
-   "Type": "AWS::RDS::DBInstance",
-   "Properties": {
-    "AllocatedStorage": "100",
-    "CopyTagsToSnapshot": true,
-    "DBInstanceClass": "db.t3.micro",
-    "DBSubnetGroupName": {
-     "Ref": "OrdersDbSubnetGroupC6216362"
-    },
-    "DeletionProtection": false,
-    "Engine": "postgres",
-    "EngineVersion": "14.7",
-    "MasterUserPassword": {
-     "Fn::Join": [
-      "",
-      [
-       "{{resolve:secretsmanager:",
-       {
-        "Ref": "AppStackOrdersDbSecret474F2D713fdaad7efa858a3daf9490cf0a702aeb"
-       },
-       ":SecretString:password::}}"
-      ]
-     ]
-    },
-    "MasterUsername": "postgres",
-    "PubliclyAccessible": false,
-    "StorageEncrypted": true,
-    "StorageType": "gp2",
-    "VPCSecurityGroups": [
-     {
-      "Fn::GetAtt": [
-       "DbSg495F8305",
-       "GroupId"
-      ]
-     }
-    ]
-   },
-   "UpdateReplacePolicy": "Delete",
-   "DeletionPolicy": "Delete",
-   "Metadata": {
-    "aws:cdk:path": "AppStack/OrdersDb/Resource"
-   },
-   "Condition": "IsProdAccount"
-  },
-  "CDKMetadata": {
-   "Type": "AWS::CDK::Metadata",
-   "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/31SyW7bMBD9ltxp1kkvuXppAwNNq8pBrsWIGsuMJVLlDG0YBP+9kKitPfTCefP4OBvnST6u13L9ADdaqfKyqnUhw5FBXcTuZHbWlJq1NQJu9CugepLhvVXd1Xu2E5kvaq2OvjDIHTej3HrGNyhqnPmZ2xBZpaEPPIo78OWQdeY78Asw3uAuMqevwDgHPhhGZ3ASpEoGb8MM6tygYXFE5Z3m+4uzvu1r+C9xMJVDoijKu4HGloUMU/U9iII+y7D16pLqGFAyma21us908qOg3yTDT4++j5NAf84PFm4UGhoZcpvS9nYWjpoamqIEGb56o8YBLnGGrtFE2pooaluRDN9sNTU94iig1VWamgw5Em9a3Wcd4B7b2t77Ue5OZuEdGar0qT3Ikax3CrdAszMESvgV+WzLjkooCryiYZIh90Onvp8vY3saGiEZMiDqkjG+gjprM+ac/Cha3SLJrmfdonAlybAHhgIID4YYjEKRNmfqf79dEqP6iMqlb91vx5dRUM9SAwYqdDKknemEybyBq5AXOzcJ/r2J8a/R/PDcel4OKQpjS5Qf9On6+Cyf1vL54YO0XjlvWDco82T/AI13w16tAwAA"
-   },
-   "Metadata": {
-    "aws:cdk:path": "AppStack/CDKMetadata/Default"
-   }
   }
- },
- "Outputs": {
-  "ApiEndpoint4F160690": {
-   "Value": {
-    "Fn::Join": [
-     "",
-     [
-      "https://",
-      {
-       "Ref": "ApiF70053CD"
-      },
-      ".execute-api.us-east-1.",
-      {
-       "Ref": "AWS::URLSuffix"
-      },
-      "/",
-      {
-       "Ref": "ApiDeploymentStageprod3EB9684E"
-      },
-      "/"
-     ]
-    ]
-   }
-  },
-  "ApiUrl": {
-   "Value": {
-    "Fn::Join": [
-     "",
-     [
-      "https://",
-      {
-       "Ref": "ApiF70053CD"
-      },
-      ".execute-api.us-east-1.",
-      {
-       "Ref": "AWS::URLSuffix"
-      },
-      "/",
-      {
-       "Ref": "ApiDeploymentStageprod3EB9684E"
-      },
-      "/"
-     ]
-    ]
-   }
-  },
-  "QueueUrl": {
-   "Value": {
-    "Ref": "OrdersQueue3DFA1D51"
-   }
-  },
-  "DynamoDbTableName": {
-   "Value": {
-    "Ref": "OrdersTable315BB997"
-   }
-  },
-  "S3BucketName": {
-   "Value": {
-    "Ref": "RawBucket0C3EE094"
-   }
-  },
-  "RdsEndpoint": {
-   "Value": {
-    "Fn::If": [
-     "IsProdAccount",
-     {
-      "Fn::GetAtt": [
-       "OrdersDb889E652A",
-       "Endpoint.Address"
-      ]
-     },
-     ""
-    ]
-   }
-  },
-  "PrimaryLambdaArn": {
-   "Value": {
-    "Fn::GetAtt": [
-     "PrimaryWorker187A1DF0",
-     "Arn"
-    ]
-   }
-  },
-  "EnrichmentLambdaArn": {
-   "Value": {
-    "Fn::GetAtt": [
-     "SecondaryWorker4C97787D",
-     "Arn"
-    ]
-   }
-  }
- },
- "Parameters": {
-  "BootstrapVersion": {
-   "Type": "AWS::SSM::Parameter::Value<String>",
-   "Default": "/cdk-bootstrap/hnb659fds/version",
-   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
-  }
- },
- "Rules": {
-  "CheckBootstrapVersion": {
-   "Assertions": [
-    {
-     "Assert": {
-      "Fn::Not": [
-       {
-        "Fn::Contains": [
-         [
-          "1",
-          "2",
-          "3",
-          "4",
-          "5"
-         ],
-         {
-          "Ref": "BootstrapVersion"
-         }
-        ]
-       }
-      ]
-     },
-     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
-    }
-   ]
-  }
- }
 }
