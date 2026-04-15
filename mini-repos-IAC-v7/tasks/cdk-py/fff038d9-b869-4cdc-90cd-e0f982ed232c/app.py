@@ -298,13 +298,6 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
         retention_period=Duration.days(4),
     )
 
-    processing_events_queue = sqs.Queue(
-        stack,
-        "ProcessingEventsQueue",
-        visibility_timeout=Duration.seconds(60),
-        retention_period=Duration.days(4),
-    )
-
     notifications_queue = sqs.Queue(stack, "NotificationsQueue")
 
     audit_table = dynamodb.Table(
@@ -556,7 +549,7 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
         event_source_arn=ingestion_queue.queue_arn,
         batch_size=10,
         max_batching_window=Duration.seconds(5),
-        enabled=False,
+        enabled=True,
     )
     worker_event_source_mapping.node.add_dependency(ingestion_queue)
 
@@ -675,6 +668,22 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
         },
     )
 
+    event_rule_role = iam.Role(
+        stack,
+        "ApplicationEventRuleRole",
+        assumed_by=iam.ServicePrincipal("events.amazonaws.com"),
+        inline_policies={
+            "ApplicationEventRulePermissions": iam.PolicyDocument(
+                statements=[
+                    iam.PolicyStatement(
+                        actions=["states:StartExecution"],
+                        resources=[state_machine.attr_arn],
+                    )
+                ]
+            )
+        },
+    )
+
     processing_event_rule = events.CfnRule(
         stack,
         "ApplicationEventRule",
@@ -685,26 +694,11 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
         },
         targets=[
             events.CfnRule.TargetProperty(
-                arn=processing_events_queue.queue_arn,
-                id="ProcessingEventsQueueTarget",
+                arn=state_machine.attr_arn,
+                id="ProcessingStateMachineTarget",
+                role_arn=event_rule_role.role_arn,
             )
         ],
-    )
-
-    processing_events_queue_policy = sqs.QueuePolicy(
-        stack,
-        "ProcessingEventsQueuePolicy",
-        queues=[processing_events_queue],
-    )
-    processing_events_queue_policy.document.add_statements(
-        iam.PolicyStatement(
-            sid="AllowEventBridgeDelivery",
-            effect=iam.Effect.ALLOW,
-            principals=[iam.ServicePrincipal("events.amazonaws.com")],
-            actions=["sqs:SendMessage"],
-            resources=[processing_events_queue.queue_arn],
-            conditions={"ArnEquals": {"aws:SourceArn": processing_event_rule.attr_arn}},
-        )
     )
 
     pipe_role = iam.Role(
@@ -721,7 +715,7 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
                             "sqs:GetQueueAttributes",
                             "sqs:ChangeMessageVisibility",
                         ],
-                        resources=[processing_events_queue.queue_arn],
+                        resources=[ingestion_queue.queue_arn],
                     ),
                     iam.PolicyStatement(
                         actions=["lambda:InvokeFunction"],
@@ -740,7 +734,7 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
         stack,
         "ProcessingPipe",
         role_arn=pipe_role.role_arn,
-        source=processing_events_queue.queue_arn,
+        source=ingestion_queue.queue_arn,
         source_parameters=pipes.CfnPipe.PipeSourceParametersProperty(
             sqs_queue_parameters=pipes.CfnPipe.PipeSourceSqsQueueParametersProperty(
                 batch_size=1

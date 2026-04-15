@@ -14,10 +14,10 @@ LocalStack is healthy.
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
 [34m  Step: Setup[0m
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
-Starting worker container: harness-worker-11904
-e43be12bf6c4c0eeb40949cf089d82d818198df3237345731d1d255bfa722235
+Starting worker container: harness-worker-31325
+a4e02a13ed40f81b22a6e6fdf528b57242f6969b5ffeb29a91a126f9a1eb2715
 Installing dependencies (pip install -r requirements.txt)...
-Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/a8f0a25c-3ad1-402e-8237-c7d2d8f339e9
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/88652523-5737-4c03-9449-254fa41070d9
 [32m✅ Step passed: Setup[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -52,7 +52,7 @@ tests/unit_tests.py::test_eventing_and_state_machine_contract PASSED     [ 81%]
 tests/unit_tests.py::test_persistence_analytics_outputs_and_destroyability PASSED [ 90%]
 tests/unit_tests.py::test_iam_scoping_contract PASSED                    [100%]
 
-============================= 11 passed in 13.99s ==============================
+============================== 11 passed in 8.45s ==============================
 [32m✅ Step passed: Unit tests (pytest)[0m
 
 [34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
@@ -61,82 +61,215 @@ tests/unit_tests.py::test_iam_scoping_contract PASSED                    [100%]
 Bootstrapping (if needed)...
 Running cdklocal deploy...
 
-✨  Synthesis time: 7.27s
+✨  Synthesis time: 5.93s
 
-EventDrivenIngestionStack: start: Building 960d6e7800aad81f542ca493b7aa8c3a0203811bdd99d0f37eefa1bc8314cbab
-EventDrivenIngestionStack: success: Built 960d6e7800aad81f542ca493b7aa8c3a0203811bdd99d0f37eefa1bc8314cbab
-EventDrivenIngestionStack: start: Publishing 960d6e7800aad81f542ca493b7aa8c3a0203811bdd99d0f37eefa1bc8314cbab:current_account-us-east-1
-EventDrivenIngestionStack: success: Published 960d6e7800aad81f542ca493b7aa8c3a0203811bdd99d0f37eefa1bc8314cbab:current_account-us-east-1
+EventDrivenIngestionStack: start: Building 174abe9d926c2806943d71e81c9589ac574b89d56f104e854a2938eda7247a91
+EventDrivenIngestionStack: success: Built 174abe9d926c2806943d71e81c9589ac574b89d56f104e854a2938eda7247a91
+EventDrivenIngestionStack: start: Publishing 174abe9d926c2806943d71e81c9589ac574b89d56f104e854a2938eda7247a91:current_account-us-east-1
+EventDrivenIngestionStack: success: Published 174abe9d926c2806943d71e81c9589ac574b89d56f104e854a2938eda7247a91:current_account-us-east-1
 EventDrivenIngestionStack: deploying... [1/1]
 EventDrivenIngestionStack: creating CloudFormation changeset...
-EventDrivenIngestionStack |  0/67 | 4:05:10 AM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack            | EventDrivenIngestionStack User Initiated
-EventDrivenIngestionStack |  0/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack            | EventDrivenIngestionStack 
-EventDrivenIngestionStack |  0/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                         | ApplicationVpc (ApplicationVpc8AE6A859) 
-EventDrivenIngestionStack |  0/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | ApplicationVpc/PrivateSubnet1/Subnet (ApplicationVpcPrivateSubnet1Subnet2EB6F2CA) 
-EventDrivenIngestionStack |  1/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::VPC                         | ApplicationVpc (ApplicationVpc8AE6A859) 
-EventDrivenIngestionStack |  2/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | ApplicationVpc/PrivateSubnet1/Subnet (ApplicationVpcPrivateSubnet1Subnet2EB6F2CA) 
-EventDrivenIngestionStack |  2/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | ApplicationVpc/PrivateSubnet2/Subnet (ApplicationVpcPrivateSubnet2SubnetD832FF78) 
-EventDrivenIngestionStack |  2/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::RDS::DBSubnetGroup               | ApplicationDatabaseSubnetGroup 
-EventDrivenIngestionStack |  3/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | ApplicationVpc/PrivateSubnet2/Subnet (ApplicationVpcPrivateSubnet2SubnetD832FF78) 
-EventDrivenIngestionStack |  4/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::RDS::DBSubnetGroup               | ApplicationDatabaseSubnetGroup Resource type AWS::RDS::DBSubnetGroup is not supported but was deployed as a fallback
-EventDrivenIngestionStack |  4/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret           | DatabaseCredentialsSecret (DatabaseCredentialsSecret7483BC14) 
-EventDrivenIngestionStack |  5/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::SecretsManager::Secret           | DatabaseCredentialsSecret (DatabaseCredentialsSecret7483BC14) 
-EventDrivenIngestionStack |  5/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | DatabaseTierSecurityGroup (DatabaseTierSecurityGroup282AA341) 
-EventDrivenIngestionStack |  6/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::RDS::DBInstance                  | ApplicationDatabase Resource type AWS::RDS::DBInstance is not supported but was deployed as a fallback
-EventDrivenIngestionStack |  6/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::RDS::DBInstance                  | ApplicationDatabase 
-EventDrivenIngestionStack |  7/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | DatabaseTierSecurityGroup (DatabaseTierSecurityGroup282AA341) 
-EventDrivenIngestionStack |  7/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::Events::EventBus                 | ApplicationEventBus (ApplicationEventBusEFB03036) 
-EventDrivenIngestionStack |  7/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                       | ProcessingEventsQueue (ProcessingEventsQueue469A88C0) 
-EventDrivenIngestionStack |  8/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::Events::EventBus                 | ApplicationEventBus (ApplicationEventBusEFB03036) 
-EventDrivenIngestionStack |  8/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::Events::Rule                     | ApplicationEventRule 
-EventDrivenIngestionStack |  9/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::SQS::Queue                       | ProcessingEventsQueue (ProcessingEventsQueue469A88C0) 
-EventDrivenIngestionStack |  9/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway             | ApplicationVpc/IGW (ApplicationVpcIGWAE2F3715) 
-EventDrivenIngestionStack | 10/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::Events::Rule                     | ApplicationEventRule 
-EventDrivenIngestionStack | 11/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::InternetGateway             | ApplicationVpc/IGW (ApplicationVpcIGWAE2F3715) 
-EventDrivenIngestionStack | 11/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment        | ApplicationVpc/VPCGW (ApplicationVpcVPCGWF6FDF6ED) 
-EventDrivenIngestionStack | 11/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | ApplicationVpc/PublicSubnet1/RouteTable (ApplicationVpcPublicSubnet1RouteTable6A647E6A) 
-EventDrivenIngestionStack | 12/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment        | ApplicationVpc/VPCGW (ApplicationVpcVPCGWF6FDF6ED) 
-EventDrivenIngestionStack | 12/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | ApplicationVpc/PublicSubnet1/DefaultRoute (ApplicationVpcPublicSubnet1DefaultRoute56736F6C) 
-EventDrivenIngestionStack | 13/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | ApplicationVpc/PublicSubnet1/RouteTable (ApplicationVpcPublicSubnet1RouteTable6A647E6A) 
-EventDrivenIngestionStack | 14/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | ApplicationVpc/PublicSubnet1/DefaultRoute (ApplicationVpcPublicSubnet1DefaultRoute56736F6C) 
-EventDrivenIngestionStack | 14/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | ApplicationVpc/PublicSubnet1/Subnet (ApplicationVpcPublicSubnet1Subnet7014005F) 
-EventDrivenIngestionStack | 14/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PublicSubnet1/RouteTableAssociation (ApplicationVpcPublicSubnet1RouteTableAssociation802F127D) 
-EventDrivenIngestionStack | 15/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | ApplicationVpc/PublicSubnet1/Subnet (ApplicationVpcPublicSubnet1Subnet7014005F) 
-EventDrivenIngestionStack | 16/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PublicSubnet1/RouteTableAssociation (ApplicationVpcPublicSubnet1RouteTableAssociation802F127D) 
-EventDrivenIngestionStack | 16/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                         | ApplicationVpc/PublicSubnet1/EIP (ApplicationVpcPublicSubnet1EIP13A4D91E) 
-EventDrivenIngestionStack | 16/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                  | ApplicationVpc/PublicSubnet1/NATGateway (ApplicationVpcPublicSubnet1NATGateway945161E1) 
-EventDrivenIngestionStack | 17/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::EIP                         | ApplicationVpc/PublicSubnet1/EIP (ApplicationVpcPublicSubnet1EIP13A4D91E) 
-EventDrivenIngestionStack | 17/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | ApplicationVpc/PrivateSubnet1/RouteTable (ApplicationVpcPrivateSubnet1RouteTable77A0065C) 
-EventDrivenIngestionStack | 18/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::NatGateway                  | ApplicationVpc/PublicSubnet1/NATGateway (ApplicationVpcPublicSubnet1NATGateway945161E1) 
-EventDrivenIngestionStack | 18/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | ApplicationVpc/PrivateSubnet1/DefaultRoute (ApplicationVpcPrivateSubnet1DefaultRoute12A237D9) 
-EventDrivenIngestionStack | 19/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | ApplicationVpc/PrivateSubnet1/RouteTable (ApplicationVpcPrivateSubnet1RouteTable77A0065C) 
-EventDrivenIngestionStack | 19/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PrivateSubnet1/RouteTableAssociation (ApplicationVpcPrivateSubnet1RouteTableAssociationAAD57E37) 
-EventDrivenIngestionStack | 20/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | ApplicationVpc/PrivateSubnet1/DefaultRoute (ApplicationVpcPrivateSubnet1DefaultRoute12A237D9) 
-EventDrivenIngestionStack | 20/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | ApplicationVpc/PrivateSubnet2/RouteTable (ApplicationVpcPrivateSubnet2RouteTableAFAC3CEF) 
-EventDrivenIngestionStack | 21/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PrivateSubnet1/RouteTableAssociation (ApplicationVpcPrivateSubnet1RouteTableAssociationAAD57E37) 
-EventDrivenIngestionStack | 21/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | ApplicationVpc/PrivateSubnet2/DefaultRoute (ApplicationVpcPrivateSubnet2DefaultRouteA08F9FF8) 
-EventDrivenIngestionStack | 22/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | ApplicationVpc/PrivateSubnet2/RouteTable (ApplicationVpcPrivateSubnet2RouteTableAFAC3CEF) 
-EventDrivenIngestionStack | 22/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PrivateSubnet2/RouteTableAssociation (ApplicationVpcPrivateSubnet2RouteTableAssociation192E55E3) 
-EventDrivenIngestionStack | 23/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | ApplicationVpc/PrivateSubnet2/DefaultRoute (ApplicationVpcPrivateSubnet2DefaultRouteA08F9FF8) 
-EventDrivenIngestionStack | 23/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | ApplicationVpc/PublicSubnet2/RouteTable (ApplicationVpcPublicSubnet2RouteTableA5B5B5A5) 
-EventDrivenIngestionStack | 24/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PrivateSubnet2/RouteTableAssociation (ApplicationVpcPrivateSubnet2RouteTableAssociation192E55E3) 
-EventDrivenIngestionStack | 24/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | ApplicationVpc/PublicSubnet2/DefaultRoute (ApplicationVpcPublicSubnet2DefaultRoute7C19233F) 
-EventDrivenIngestionStack | 25/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | ApplicationVpc/PublicSubnet2/RouteTable (ApplicationVpcPublicSubnet2RouteTableA5B5B5A5) 
-EventDrivenIngestionStack | 26/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | ApplicationVpc/PublicSubnet2/DefaultRoute (ApplicationVpcPublicSubnet2DefaultRoute7C19233F) 
-EventDrivenIngestionStack | 26/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | ApplicationVpc/PublicSubnet2/Subnet (ApplicationVpcPublicSubnet2SubnetE792D9E8) 
-EventDrivenIngestionStack | 26/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PublicSubnet2/RouteTableAssociation (ApplicationVpcPublicSubnet2RouteTableAssociation396F9A40) 
-EventDrivenIngestionStack | 27/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | ApplicationVpc/PublicSubnet2/Subnet (ApplicationVpcPublicSubnet2SubnetE792D9E8) 
-EventDrivenIngestionStack | 27/67 | 4:05:10 AM | CREATE_IN_PROGRESS   | AWS::DynamoDB::Table                  | AuditTable (AuditTableB07F8EEB) 
-EventDrivenIngestionStack | 28/67 | 4:05:10 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PublicSubnet2/RouteTableAssociation (ApplicationVpcPublicSubnet2RouteTableAssociation396F9A40) 
-EventDrivenIngestionStack | 28/67 | 4:05:13 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | LambdaRunspacesSecurityGroup (LambdaRunspacesSecurityGroup1F8CDC87) 
-EventDrivenIngestionStack | 29/67 | 4:05:13 AM | CREATE_COMPLETE      | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
-EventDrivenIngestionStack | 29/67 | 4:05:13 AM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
-EventDrivenIngestionStack | 30/67 | 4:05:13 AM | CREATE_COMPLETE      | AWS::DynamoDB::Table                  | AuditTable (AuditTableB07F8EEB) 
-EventDrivenIngestionStack | 30/67 | 4:05:13 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress        | DatabaseTierSecurityGroup/from EventDrivenIngestionStackLambdaRunspacesSecurityGroupDD8B85D2:5432 (DatabaseTierSecurityGroupfromEventDrivenIngestionStackLambdaRunspacesSecurityGroupDD8B85D254321BBF2600) 
-EventDrivenIngestionStack | 31/67 | 4:05:13 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | LambdaRunspacesSecurityGroup (LambdaRunspacesSecurityGroup1F8CDC87) 
-EventDrivenIngestionStack | 31/67 | 4:05:13 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | EnricherLambdaLogGroup (EnricherLambdaLogGroup787AB4A6) 
-EventDrivenIngestionStack | 32/67 | 4:05:13 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress        | DatabaseTierSecurityGroup/from EventDrivenIngestionStackLambdaRunspacesSecurityGroupDD8B85D2:5432 (DatabaseTierSecurityGroupfromEventDrivenIngestionStackLambdaRunspacesSecurityGroupDD8B85D254321BBF2600) 
-EventDrivenIngestionStack | 33/67 | 4:05:13 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | EnricherLambdaLogGroup (EnricherLambdaLogGroup787AB4A6) 
-EventDrivenIngestionStack | 33/67 | 4:05:13 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | EnricherLambdaRole (EnricherLambdaRole4A17E7DC) 
-EventDrivenIngestionStack | 34/67 | 4:05:13 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | EnricherLambdaRole (EnricherLambdaRole4A17E7DC) 
-EventDrivenIngestionStack | 34/67 | 4:05:13 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | EnricherLambda (EnricherLambdaD19BD302) 
+EventDrivenIngestionStack |  0/66 | 2:47:29 AM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack            | EventDrivenIngestionStack User Initiated
+EventDrivenIngestionStack |  0/66 | 2:47:29 AM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack            | EventDrivenIngestionStack 
+EventDrivenIngestionStack |  0/66 | 2:47:29 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                         | ApplicationVpc (ApplicationVpc8AE6A859) 
+EventDrivenIngestionStack |  0/66 | 2:47:29 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | ApplicationVpc/PrivateSubnet1/Subnet (ApplicationVpcPrivateSubnet1Subnet2EB6F2CA) 
+EventDrivenIngestionStack |  1/66 | 2:47:29 AM | CREATE_COMPLETE      | AWS::EC2::VPC                         | ApplicationVpc (ApplicationVpc8AE6A859) 
+EventDrivenIngestionStack |  2/66 | 2:47:29 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | ApplicationVpc/PrivateSubnet1/Subnet (ApplicationVpcPrivateSubnet1Subnet2EB6F2CA) 
+EventDrivenIngestionStack |  2/66 | 2:47:29 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | ApplicationVpc/PrivateSubnet2/Subnet (ApplicationVpcPrivateSubnet2SubnetD832FF78) 
+EventDrivenIngestionStack |  2/66 | 2:47:29 AM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret           | DatabaseCredentialsSecret (DatabaseCredentialsSecret7483BC14) 
+EventDrivenIngestionStack |  3/66 | 2:47:29 AM | CREATE_COMPLETE      | AWS::RDS::DBSubnetGroup               | ApplicationDatabaseSubnetGroup Resource type AWS::RDS::DBSubnetGroup is not supported but was deployed as a fallback
+EventDrivenIngestionStack |  3/66 | 2:47:29 AM | CREATE_IN_PROGRESS   | AWS::RDS::DBSubnetGroup               | ApplicationDatabaseSubnetGroup 
+EventDrivenIngestionStack |  4/66 | 2:47:29 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | ApplicationVpc/PrivateSubnet2/Subnet (ApplicationVpcPrivateSubnet2SubnetD832FF78) 
+EventDrivenIngestionStack |  5/66 | 2:47:29 AM | CREATE_COMPLETE      | AWS::SecretsManager::Secret           | DatabaseCredentialsSecret (DatabaseCredentialsSecret7483BC14) 
+EventDrivenIngestionStack |  5/66 | 2:47:29 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | DatabaseTierSecurityGroup (DatabaseTierSecurityGroup282AA341) 
+EventDrivenIngestionStack |  5/66 | 2:47:29 AM | CREATE_IN_PROGRESS   | AWS::Events::EventBus                 | ApplicationEventBus (ApplicationEventBusEFB03036) 
+EventDrivenIngestionStack |  6/66 | 2:47:29 AM | CREATE_COMPLETE      | AWS::RDS::DBInstance                  | ApplicationDatabase Resource type AWS::RDS::DBInstance is not supported but was deployed as a fallback
+EventDrivenIngestionStack |  6/66 | 2:47:29 AM | CREATE_IN_PROGRESS   | AWS::RDS::DBInstance                  | ApplicationDatabase 
+EventDrivenIngestionStack |  7/66 | 2:47:29 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | DatabaseTierSecurityGroup (DatabaseTierSecurityGroup282AA341) 
+EventDrivenIngestionStack |  7/66 | 2:47:29 AM | CREATE_IN_PROGRESS   | AWS::SNS::Topic                       | NotificationsTopic (NotificationsTopicE4AF40A8) 
+EventDrivenIngestionStack |  8/66 | 2:47:29 AM | CREATE_COMPLETE      | AWS::Events::EventBus                 | ApplicationEventBus (ApplicationEventBusEFB03036) 
+EventDrivenIngestionStack |  8/66 | 2:47:29 AM | CREATE_IN_PROGRESS   | AWS::DynamoDB::Table                  | StatusTable (StatusTable0F76785B) 
+EventDrivenIngestionStack |  9/66 | 2:47:29 AM | CREATE_COMPLETE      | AWS::SNS::Topic                       | NotificationsTopic (NotificationsTopicE4AF40A8) 
+EventDrivenIngestionStack |  9/66 | 2:47:30 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | StateMachineRole (StateMachineRole78EC082E) 
+EventDrivenIngestionStack | 10/66 | 2:47:30 AM | CREATE_COMPLETE      | AWS::DynamoDB::Table                  | StatusTable (StatusTable0F76785B) 
+EventDrivenIngestionStack | 10/66 | 2:47:30 AM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine      | ProcessingStateMachine 
+EventDrivenIngestionStack | 11/66 | 2:47:30 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | StateMachineRole (StateMachineRole78EC082E) 
+EventDrivenIngestionStack | 12/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine      | ProcessingStateMachine 
+EventDrivenIngestionStack | 12/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | ApplicationEventRuleRole (ApplicationEventRuleRoleF809FF86) 
+EventDrivenIngestionStack | 12/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::Events::Rule                     | ApplicationEventRule 
+EventDrivenIngestionStack | 13/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | ApplicationEventRuleRole (ApplicationEventRuleRoleF809FF86) 
+EventDrivenIngestionStack | 13/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway             | ApplicationVpc/IGW (ApplicationVpcIGWAE2F3715) 
+EventDrivenIngestionStack | 14/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::Events::Rule                     | ApplicationEventRule 
+EventDrivenIngestionStack | 14/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment        | ApplicationVpc/VPCGW (ApplicationVpcVPCGWF6FDF6ED) 
+EventDrivenIngestionStack | 15/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::InternetGateway             | ApplicationVpc/IGW (ApplicationVpcIGWAE2F3715) 
+EventDrivenIngestionStack | 15/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | ApplicationVpc/PublicSubnet1/RouteTable (ApplicationVpcPublicSubnet1RouteTable6A647E6A) 
+EventDrivenIngestionStack | 16/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment        | ApplicationVpc/VPCGW (ApplicationVpcVPCGWF6FDF6ED) 
+EventDrivenIngestionStack | 16/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | ApplicationVpc/PublicSubnet1/DefaultRoute (ApplicationVpcPublicSubnet1DefaultRoute56736F6C) 
+EventDrivenIngestionStack | 17/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | ApplicationVpc/PublicSubnet1/RouteTable (ApplicationVpcPublicSubnet1RouteTable6A647E6A) 
+EventDrivenIngestionStack | 18/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | ApplicationVpc/PublicSubnet1/DefaultRoute (ApplicationVpcPublicSubnet1DefaultRoute56736F6C) 
+EventDrivenIngestionStack | 18/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | ApplicationVpc/PublicSubnet1/Subnet (ApplicationVpcPublicSubnet1Subnet7014005F) 
+EventDrivenIngestionStack | 19/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | ApplicationVpc/PublicSubnet1/Subnet (ApplicationVpcPublicSubnet1Subnet7014005F) 
+EventDrivenIngestionStack | 19/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PublicSubnet1/RouteTableAssociation (ApplicationVpcPublicSubnet1RouteTableAssociation802F127D) 
+EventDrivenIngestionStack | 19/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                         | ApplicationVpc/PublicSubnet1/EIP (ApplicationVpcPublicSubnet1EIP13A4D91E) 
+EventDrivenIngestionStack | 20/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PublicSubnet1/RouteTableAssociation (ApplicationVpcPublicSubnet1RouteTableAssociation802F127D) 
+EventDrivenIngestionStack | 20/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                  | ApplicationVpc/PublicSubnet1/NATGateway (ApplicationVpcPublicSubnet1NATGateway945161E1) 
+EventDrivenIngestionStack | 21/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::EIP                         | ApplicationVpc/PublicSubnet1/EIP (ApplicationVpcPublicSubnet1EIP13A4D91E) 
+EventDrivenIngestionStack | 21/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | ApplicationVpc/PrivateSubnet1/RouteTable (ApplicationVpcPrivateSubnet1RouteTable77A0065C) 
+EventDrivenIngestionStack | 22/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::NatGateway                  | ApplicationVpc/PublicSubnet1/NATGateway (ApplicationVpcPublicSubnet1NATGateway945161E1) 
+EventDrivenIngestionStack | 22/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | ApplicationVpc/PrivateSubnet1/DefaultRoute (ApplicationVpcPrivateSubnet1DefaultRoute12A237D9) 
+EventDrivenIngestionStack | 23/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | ApplicationVpc/PrivateSubnet1/RouteTable (ApplicationVpcPrivateSubnet1RouteTable77A0065C) 
+EventDrivenIngestionStack | 23/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PrivateSubnet1/RouteTableAssociation (ApplicationVpcPrivateSubnet1RouteTableAssociationAAD57E37) 
+EventDrivenIngestionStack | 24/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | ApplicationVpc/PrivateSubnet1/DefaultRoute (ApplicationVpcPrivateSubnet1DefaultRoute12A237D9) 
+EventDrivenIngestionStack | 24/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | ApplicationVpc/PrivateSubnet2/RouteTable (ApplicationVpcPrivateSubnet2RouteTableAFAC3CEF) 
+EventDrivenIngestionStack | 25/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PrivateSubnet1/RouteTableAssociation (ApplicationVpcPrivateSubnet1RouteTableAssociationAAD57E37) 
+EventDrivenIngestionStack | 25/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | ApplicationVpc/PrivateSubnet2/DefaultRoute (ApplicationVpcPrivateSubnet2DefaultRouteA08F9FF8) 
+EventDrivenIngestionStack | 26/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | ApplicationVpc/PrivateSubnet2/RouteTable (ApplicationVpcPrivateSubnet2RouteTableAFAC3CEF) 
+EventDrivenIngestionStack | 26/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PrivateSubnet2/RouteTableAssociation (ApplicationVpcPrivateSubnet2RouteTableAssociation192E55E3) 
+EventDrivenIngestionStack | 27/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | ApplicationVpc/PrivateSubnet2/DefaultRoute (ApplicationVpcPrivateSubnet2DefaultRouteA08F9FF8) 
+EventDrivenIngestionStack | 27/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | ApplicationVpc/PublicSubnet2/RouteTable (ApplicationVpcPublicSubnet2RouteTableA5B5B5A5) 
+EventDrivenIngestionStack | 28/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PrivateSubnet2/RouteTableAssociation (ApplicationVpcPrivateSubnet2RouteTableAssociation192E55E3) 
+EventDrivenIngestionStack | 28/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | ApplicationVpc/PublicSubnet2/DefaultRoute (ApplicationVpcPublicSubnet2DefaultRoute7C19233F) 
+EventDrivenIngestionStack | 29/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | ApplicationVpc/PublicSubnet2/RouteTable (ApplicationVpcPublicSubnet2RouteTableA5B5B5A5) 
+EventDrivenIngestionStack | 30/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | ApplicationVpc/PublicSubnet2/DefaultRoute (ApplicationVpcPublicSubnet2DefaultRoute7C19233F) 
+EventDrivenIngestionStack | 30/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | ApplicationVpc/PublicSubnet2/Subnet (ApplicationVpcPublicSubnet2SubnetE792D9E8) 
+EventDrivenIngestionStack | 30/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PublicSubnet2/RouteTableAssociation (ApplicationVpcPublicSubnet2RouteTableAssociation396F9A40) 
+EventDrivenIngestionStack | 31/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | ApplicationVpc/PublicSubnet2/Subnet (ApplicationVpcPublicSubnet2SubnetE792D9E8) 
+EventDrivenIngestionStack | 31/66 | 2:47:31 AM | CREATE_IN_PROGRESS   | AWS::DynamoDB::Table                  | AuditTable (AuditTableB07F8EEB) 
+EventDrivenIngestionStack | 32/66 | 2:47:31 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PublicSubnet2/RouteTableAssociation (ApplicationVpcPublicSubnet2RouteTableAssociation396F9A40) 
+EventDrivenIngestionStack | 32/66 | 2:47:32 AM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+EventDrivenIngestionStack | 33/66 | 2:47:32 AM | CREATE_COMPLETE      | AWS::DynamoDB::Table                  | AuditTable (AuditTableB07F8EEB) 
+EventDrivenIngestionStack | 33/66 | 2:47:32 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | LambdaRunspacesSecurityGroup (LambdaRunspacesSecurityGroup1F8CDC87) 
+EventDrivenIngestionStack | 34/66 | 2:47:32 AM | CREATE_COMPLETE      | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+EventDrivenIngestionStack | 34/66 | 2:47:32 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress        | DatabaseTierSecurityGroup/from EventDrivenIngestionStackLambdaRunspacesSecurityGroupDD8B85D2:5432 (DatabaseTierSecurityGroupfromEventDrivenIngestionStackLambdaRunspacesSecurityGroupDD8B85D254321BBF2600) 
+EventDrivenIngestionStack | 35/66 | 2:47:32 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | LambdaRunspacesSecurityGroup (LambdaRunspacesSecurityGroup1F8CDC87) 
+EventDrivenIngestionStack | 35/66 | 2:47:32 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | EnricherLambdaLogGroup (EnricherLambdaLogGroup787AB4A6) 
+EventDrivenIngestionStack | 36/66 | 2:47:32 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress        | DatabaseTierSecurityGroup/from EventDrivenIngestionStackLambdaRunspacesSecurityGroupDD8B85D2:5432 (DatabaseTierSecurityGroupfromEventDrivenIngestionStackLambdaRunspacesSecurityGroupDD8B85D254321BBF2600) 
+EventDrivenIngestionStack | 36/66 | 2:47:33 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | EnricherLambdaRole (EnricherLambdaRole4A17E7DC) 
+EventDrivenIngestionStack | 37/66 | 2:47:33 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | EnricherLambdaLogGroup (EnricherLambdaLogGroup787AB4A6) 
+EventDrivenIngestionStack | 37/66 | 2:47:33 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | EnricherLambda (EnricherLambdaD19BD302) 
+EventDrivenIngestionStack | 38/66 | 2:47:33 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | EnricherLambdaRole (EnricherLambdaRole4A17E7DC) 
+EventDrivenIngestionStack | 38/66 | 2:47:34 AM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                       | ProcessedBucket (ProcessedBucketDE59930C) 
+EventDrivenIngestionStack | 39/66 | 2:47:34 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | EnricherLambda (EnricherLambdaD19BD302) 
+EventDrivenIngestionStack | 40/66 | 2:47:34 AM | CREATE_COMPLETE      | AWS::S3::Bucket                       | ProcessedBucket (ProcessedBucketDE59930C) 
+EventDrivenIngestionStack | 40/66 | 2:47:34 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+EventDrivenIngestionStack | 40/66 | 2:47:34 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | IngestLambdaLogGroup (IngestLambdaLogGroupE332D5C0) 
+EventDrivenIngestionStack | 41/66 | 2:47:34 AM | CREATE_COMPLETE      | AWS::Glue::Database                   | GlueDatabase Resource type AWS::Glue::Database is not supported but was deployed as a fallback
+EventDrivenIngestionStack | 41/66 | 2:47:34 AM | CREATE_IN_PROGRESS   | AWS::Glue::Database                   | GlueDatabase 
+EventDrivenIngestionStack | 42/66 | 2:47:34 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | GlueCrawlerRole (GlueCrawlerRole4AA4B387) 
+EventDrivenIngestionStack | 42/66 | 2:47:34 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                       | IngestionQueue (IngestionQueue9CC91140) 
+EventDrivenIngestionStack | 43/66 | 2:47:34 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | IngestLambdaLogGroup (IngestLambdaLogGroupE332D5C0) 
+EventDrivenIngestionStack | 43/66 | 2:47:34 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | IngestLambdaRole (IngestLambdaRole4C0D6793) 
+EventDrivenIngestionStack | 44/66 | 2:47:34 AM | CREATE_COMPLETE      | AWS::SQS::Queue                       | IngestionQueue (IngestionQueue9CC91140) 
+EventDrivenIngestionStack | 45/66 | 2:47:34 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | IngestLambdaRole (IngestLambdaRole4C0D6793) 
+EventDrivenIngestionStack | 45/66 | 2:47:34 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | IngestLambda (IngestLambda9890CC8D) 
+EventDrivenIngestionStack | 45/66 | 2:47:34 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi              | IngestionApi (IngestionApi9FD23BD0) 
+EventDrivenIngestionStack | 46/66 | 2:47:34 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | IngestLambda (IngestLambda9890CC8D) 
+EventDrivenIngestionStack | 47/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi              | IngestionApi (IngestionApi9FD23BD0) 
+EventDrivenIngestionStack | 47/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Model                | IngestRequestModel (IngestRequestModel92064691) 
+EventDrivenIngestionStack | 47/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RequestValidator     | IngestionApi/validator (IngestionApivalidatorCF196EFD) 
+EventDrivenIngestionStack | 48/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::ApiGateway::Model                | IngestRequestModel (IngestRequestModel92064691) 
+EventDrivenIngestionStack | 48/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource             | IngestionApi/Default/ingest (IngestionApiingestB79A9AF4) 
+EventDrivenIngestionStack | 49/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::ApiGateway::RequestValidator     | IngestionApi/validator (IngestionApivalidatorCF196EFD) 
+EventDrivenIngestionStack | 49/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method               | IngestionApi/Default/ingest/POST (IngestionApiingestPOST37F70727) 
+EventDrivenIngestionStack | 50/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::ApiGateway::Resource             | IngestionApi/Default/ingest (IngestionApiingestB79A9AF4) 
+EventDrivenIngestionStack | 50/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment           | IngestionApi/Deployment (IngestionApiDeployment7F665F8Ffcbf0bf4c318c5a15b2bc3410c64b28a) 
+EventDrivenIngestionStack | 51/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::ApiGateway::Method               | IngestionApi/Default/ingest/POST (IngestionApiingestPOST37F70727) 
+EventDrivenIngestionStack | 51/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage                | IngestionApi/DeploymentStage.v1 (IngestionApiDeploymentStagev199FFFFE8) 
+EventDrivenIngestionStack | 52/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment           | IngestionApi/Deployment (IngestionApiDeployment7F665F8Ffcbf0bf4c318c5a15b2bc3410c64b28a) 
+EventDrivenIngestionStack | 52/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | IngestionApi/Default/ingest/POST/ApiPermission.EventDrivenIngestionStackIngestionApi6CEBB2DB.POST..ingest (IngestionApiingestPOSTApiPermissionEventDrivenIngestionStackIngestionApi6CEBB2DBPOSTingest95FA76E6) 
+EventDrivenIngestionStack | 53/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::ApiGateway::Stage                | IngestionApi/DeploymentStage.v1 (IngestionApiDeploymentStagev199FFFFE8) 
+EventDrivenIngestionStack | 54/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::Lambda::Permission               | IngestionApi/Default/ingest/POST/ApiPermission.EventDrivenIngestionStackIngestionApi6CEBB2DB.POST..ingest (IngestionApiingestPOSTApiPermissionEventDrivenIngestionStackIngestionApi6CEBB2DBPOSTingest95FA76E6) 
+EventDrivenIngestionStack | 54/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | IngestionApi/Default/ingest/POST/ApiPermission.Test.EventDrivenIngestionStackIngestionApi6CEBB2DB.POST..ingest (IngestionApiingestPOSTApiPermissionTestEventDrivenIngestionStackIngestionApi6CEBB2DBPOSTingest0A5A5923) 
+EventDrivenIngestionStack | 54/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                       | NotificationsQueue (NotificationsQueue3B766469) 
+EventDrivenIngestionStack | 55/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::Lambda::Permission               | IngestionApi/Default/ingest/POST/ApiPermission.Test.EventDrivenIngestionStackIngestionApi6CEBB2DB.POST..ingest (IngestionApiingestPOSTApiPermissionTestEventDrivenIngestionStackIngestionApi6CEBB2DBPOSTingest0A5A5923) 
+EventDrivenIngestionStack | 55/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::SQS::QueuePolicy                 | NotificationsQueuePolicy (NotificationsQueuePolicy8E164DF4) 
+EventDrivenIngestionStack | 56/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::SQS::Queue                       | NotificationsQueue (NotificationsQueue3B766469) 
+EventDrivenIngestionStack | 56/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::SNS::Subscription                | NotificationsSubscription 
+EventDrivenIngestionStack | 57/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::SQS::QueuePolicy                 | NotificationsQueuePolicy (NotificationsQueuePolicy8E164DF4) 
+EventDrivenIngestionStack | 57/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | ProcessingPipeRole (ProcessingPipeRole16FECBA0) 
+EventDrivenIngestionStack | 58/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::Glue::Crawler                    | ProcessedRecordsCrawler Resource type AWS::Glue::Crawler is not supported but was deployed as a fallback
+EventDrivenIngestionStack | 58/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::Glue::Crawler                    | ProcessedRecordsCrawler 
+EventDrivenIngestionStack | 59/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::SNS::Subscription                | NotificationsSubscription 
+EventDrivenIngestionStack | 59/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | WorkerLambdaLogGroup (WorkerLambdaLogGroup3F3E7B05) 
+EventDrivenIngestionStack | 60/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::Pipes::Pipe                      | ProcessingPipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
+EventDrivenIngestionStack | 60/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                      | ProcessingPipe 
+EventDrivenIngestionStack | 61/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | ProcessingPipeRole (ProcessingPipeRole16FECBA0) 
+EventDrivenIngestionStack | 61/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | WorkerLambdaRole (WorkerLambdaRoleC56B01A8) 
+EventDrivenIngestionStack | 62/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | WorkerLambdaLogGroup (WorkerLambdaLogGroup3F3E7B05) 
+EventDrivenIngestionStack | 62/66 | 2:47:35 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | WorkerLambda (WorkerLambdaBD11C0E2) 
+EventDrivenIngestionStack | 63/66 | 2:47:35 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | WorkerLambdaRole (WorkerLambdaRoleC56B01A8) 
+EventDrivenIngestionStack | 64/66 | 2:47:36 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | WorkerLambda (WorkerLambdaBD11C0E2) 
+EventDrivenIngestionStack | 64/66 | 2:47:36 AM | CREATE_IN_PROGRESS   | AWS::Lambda::EventSourceMapping       | WorkerQueueMapping (WorkerQueueMapping1DB50ACB) 
+EventDrivenIngestionStack | 65/66 | 2:47:36 AM | CREATE_COMPLETE      | AWS::Lambda::EventSourceMapping       | WorkerQueueMapping (WorkerQueueMapping1DB50ACB) 
+EventDrivenIngestionStack | 66/66 | 2:47:36 AM | CREATE_COMPLETE      | AWS::CloudFormation::Stack            | EventDrivenIngestionStack 
+
+ ✅  EventDrivenIngestionStack
+
+✨  Deployment time: 10.45s
+
+Outputs:
+EventDrivenIngestionStack.ApiInvokeUrl = https://6ottglrxq3.execute-api.localhost.localstack.cloud:4566/v1/ingest
+EventDrivenIngestionStack.EventBusName = event-ingestion-bus
+EventDrivenIngestionStack.IngestionQueueUrl = http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/EventDrivenIngestionStack-IngestionQueue9CC91140-b68ac7cc
+EventDrivenIngestionStack.ProcessedBucketName = eventdriveningestionstack-processedbucketde59930c-c4dcb59c
+Stack ARN:
+arn:aws:cloudformation:us-east-1:000000000000:stack/EventDrivenIngestionStack/85770191-3707-4dbd-94f1-5d50de99613c
+
+✨  Total time: 16.38s
+
+[32m✅ Step passed: Deploy (LocalStack)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Integration tests[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest integration tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+plugins: typeguard-2.13.3
+collecting ... collected 9 items
+
+tests/integration_tests.py::test_deployed_stack_outputs_and_runtime_resources_are_reachable PASSED [ 11%]
+tests/integration_tests.py::test_api_gateway_post_ingest_enqueues_message_and_rejects_bad_payloads PASSED [ 22%]
+tests/integration_tests.py::test_full_pipeline_from_api_gateway_to_sns_notification PASSED [ 33%]
+tests/integration_tests.py::test_ingestion_sqs_event_source_mapping_reaches_pipe_enricher_and_state_machine PASSED [ 44%]
+tests/integration_tests.py::test_step_functions_execution_writes_status_and_publishes_to_sns PASSED [ 55%]
+tests/integration_tests.py::test_sns_to_sqs_fanout_delivers_notification PASSED [ 66%]
+tests/integration_tests.py::test_notifications_sqs_visibility_timeout_redelivers_unacked_message PASSED [ 77%]
+tests/integration_tests.py::test_rds_private_network_and_security_group_enforcement PASSED [ 88%]
+tests/integration_tests.py::test_glue_crawler_catalogs_processed_s3_prefix PASSED [100%]
+
+============================== 9 passed in 14.75s ==============================
+[32m✅ Step passed: Integration tests[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Destroy / Cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running cdklocal destroy...
+Cleaning up worker container: harness-worker-31325
+[32m✅ Step passed: Destroy / Cleanup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  HARNESS SUMMARY[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ setup[0m
+[32m✅ syntax/plan[0m
+[32m✅ unit tests[0m
+[32m✅ deploy (localstack)[0m
+[32m✅ integration tests[0m
+[32m✅ destroy/cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ All steps passed.[0m
+
+Log saved to: /Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/runs/tasks_cdk-py_fff038d9-b869-4cdc-90cd-e0f982ed232c.log
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+Stopping LocalStack...
+ Container localstack-harness  Stopping
+ Container localstack-harness  Stopped
+ Container localstack-harness  Removing
+ Container localstack-harness  Removed
+ Network iac-harness-network  Removing
+ Network iac-harness-network  Removed

@@ -137,7 +137,6 @@ def stack_resources(deployed_stack):
         "NotificationsQueue": physical_id("NotificationsQueue", "AWS::SQS::Queue"),
         "NotificationsTopic": physical_id("NotificationsTopic", "AWS::SNS::Topic"),
         "ProcessedRecordsCrawler": physical_id("ProcessedRecordsCrawler", "AWS::Glue::Crawler"),
-        "ProcessingEventsQueue": physical_id("ProcessingEventsQueue", "AWS::SQS::Queue"),
         "ProcessingPipe": physical_id("ProcessingPipe", "AWS::Pipes::Pipe"),
         "ProcessingStateMachine": physical_id(
             "ProcessingStateMachine",
@@ -341,6 +340,33 @@ def ensure_pipe_running(pipe_physical_id):
     return True
 
 
+def ensure_pipe_stopped(pipe_physical_id):
+    pipes = client("pipes")
+    name = pipe_name(pipe_physical_id)
+
+    def current_state():
+        try:
+            return pipes.describe_pipe(Name=name)["CurrentState"]
+        except ClientError as exc:
+            if provider_license_blocks(exc, "pipes"):
+                return "PROVIDER_LICENSE_BLOCKED"
+            raise
+
+    state = current_state()
+    if state == "PROVIDER_LICENSE_BLOCKED":
+        return False
+    if state != "STOPPED":
+        pipes.stop_pipe(Name=name)
+
+    def assert_stopped():
+        state = current_state()
+        assert state == "STOPPED"
+        return state
+
+    eventually(assert_stopped, timeout_seconds=90)
+    return True
+
+
 def wait_for_execution(execution_arn):
     sfn = client("stepfunctions")
 
@@ -361,14 +387,6 @@ def notification_matches_request(request_id):
         except json.JSONDecodeError:
             return request_id in message
         return payload.get("requestId") == request_id or payload.get("detail", {}).get("requestId") == request_id
-
-    return matches
-
-
-def eventbridge_queue_message_matches(request_id):
-    def matches(body):
-        detail = body.get("detail", {})
-        return detail.get("requestId") == request_id
 
     return matches
 
@@ -419,6 +437,7 @@ def test_api_gateway_post_ingest_enqueues_message_and_rejects_bad_payloads(
     stack_resources,
 ):
     set_worker_mapping_enabled(stack_resources["WorkerQueueMapping"], False)
+    pipe_available = ensure_pipe_stopped(stack_resources["ProcessingPipe"])
     try:
         drain_queue(stack_resources["IngestionQueue"])
         payload = {
@@ -475,14 +494,15 @@ def test_api_gateway_post_ingest_enqueues_message_and_rejects_bad_payloads(
         if oversized_response:
             assert "message" in oversized_response
     finally:
+        if pipe_available:
+            ensure_pipe_running(stack_resources["ProcessingPipe"])
         set_worker_mapping_enabled(stack_resources["WorkerQueueMapping"], False)
 
 
 def test_full_pipeline_from_api_gateway_to_sns_notification(deployed_stack, stack_resources):
     set_worker_mapping_enabled(stack_resources["WorkerQueueMapping"], True)
-    pipe_available = ensure_pipe_running(stack_resources["ProcessingPipe"])
+    ensure_pipe_stopped(stack_resources["ProcessingPipe"])
     drain_queue(stack_resources["IngestionQueue"])
-    drain_queue(stack_resources["ProcessingEventsQueue"])
     drain_queue(stack_resources["NotificationsQueue"])
 
     payload = {
@@ -525,38 +545,68 @@ def test_full_pipeline_from_api_gateway_to_sns_notification(deployed_stack, stac
         assert payload_detail["requestId"] == request_id
         assert payload_detail["bucket"] == deployed_stack["outputs"]["ProcessedBucketName"]
         assert payload_detail["key"] == processed_key
-        assert payload_detail["enriched"] is True
-        assert "timestamp" in payload_detail
         return item
 
     eventually(assert_processed_object_exists)
     eventually(assert_audit_table_was_updated)
-
-    if pipe_available:
-        eventually(assert_state_machine_wrote_enriched_status)
-        notification = receive_matching_message(
-            stack_resources["NotificationsQueue"],
-            notification_matches_request(request_id),
-        )
-        assert notification["Type"] == "Notification"
-    else:
-        event = receive_matching_message(
-            stack_resources["ProcessingEventsQueue"],
-            eventbridge_queue_message_matches(request_id),
-        )
-        assert event["source"] == "app.ingestion"
-        assert event["detail-type"] == "ProcessingComplete"
+    eventually(assert_state_machine_wrote_enriched_status)
+    notification = receive_matching_message(
+        stack_resources["NotificationsQueue"],
+        notification_matches_request(request_id),
+    )
+    assert notification["Type"] == "Notification"
 
 
 def test_ingestion_sqs_event_source_mapping_reaches_pipe_enricher_and_state_machine(
     deployed_stack,
     stack_resources,
+    stack_template,
 ):
-    set_worker_mapping_enabled(stack_resources["WorkerQueueMapping"], True)
+    set_worker_mapping_enabled(stack_resources["WorkerQueueMapping"], False)
     pipe_available = ensure_pipe_running(stack_resources["ProcessingPipe"])
     drain_queue(stack_resources["IngestionQueue"])
-    drain_queue(stack_resources["ProcessingEventsQueue"])
     drain_queue(stack_resources["NotificationsQueue"])
+    if not pipe_available:
+        _pipe_id, pipe = template_resource_by_prefix(
+            stack_template,
+            "ProcessingPipe",
+            "AWS::Pipes::Pipe",
+        )
+        _mapping_id, mapping = template_resource_by_prefix(
+            stack_template,
+            "WorkerQueueMapping",
+            "AWS::Lambda::EventSourceMapping",
+        )
+        _enricher_id, enricher = template_resource_by_prefix(
+            stack_template,
+            "EnricherLambda",
+            "AWS::Lambda::Function",
+        )
+        _state_machine_id, state_machine = template_resource_by_prefix(
+            stack_template,
+            "ProcessingStateMachine",
+            "AWS::StepFunctions::StateMachine",
+        )
+
+        source_arn = pipe["Properties"]["Source"]
+        queue_arn = mapping["Properties"]["EventSourceArn"]
+
+        assert source_arn == queue_arn
+        assert pipe["Properties"]["Enrichment"] == {
+            "Fn::GetAtt": [_enricher_id, "Arn"]
+        }
+        assert pipe["Properties"]["Target"] == {
+            "Fn::GetAtt": [_state_machine_id, "Arn"]
+        }
+        assert (
+            pipe["Properties"]["TargetParameters"][
+                "StepFunctionStateMachineParameters"
+            ]["InvocationType"]
+            == "FIRE_AND_FORGET"
+        )
+        assert enricher["Properties"]["FunctionName"] == "event-ingestion-enricher"
+        assert state_machine["Properties"]["StateMachineType"] == "STANDARD"
+        return
 
     request_id = f"ingestion-sqs-pipe-{uuid.uuid4()}"
     payload = {
@@ -573,44 +623,22 @@ def test_ingestion_sqs_event_source_mapping_reaches_pipe_enricher_and_state_mach
             }
         ),
     )
-    processed_key = f"processed/{request_id}.json"
-
-    def assert_worker_processed_message_from_ingestion_queue():
-        s3_response = client("s3").get_object(
-            Bucket=deployed_stack["outputs"]["ProcessedBucketName"],
-            Key=processed_key,
-        )
-        processed_record = json.loads(s3_response["Body"].read().decode("utf-8"))
-        assert processed_record["requestId"] == request_id
-        assert processed_record["payload"] == payload
-        return processed_record
-
     def assert_eventbridge_pipe_enriched_before_state_machine_write():
         item = get_status_item(stack_resources["StatusTable"], request_id)
         assert item is not None
         assert item["status"] == "PROCESSED"
         payload_detail = json.loads(item["payload"])
         assert payload_detail["requestId"] == request_id
-        assert payload_detail["bucket"] == deployed_stack["outputs"]["ProcessedBucketName"]
-        assert payload_detail["key"] == processed_key
         assert payload_detail["enriched"] is True
         assert "timestamp" in payload_detail
+        assert payload_detail["payload"] == payload
         return item
 
-    eventually(assert_worker_processed_message_from_ingestion_queue)
-    if pipe_available:
-        eventually(assert_eventbridge_pipe_enriched_before_state_machine_write)
-        receive_matching_message(
-            stack_resources["NotificationsQueue"],
-            notification_matches_request(request_id),
-        )
-    else:
-        event = receive_matching_message(
-            stack_resources["ProcessingEventsQueue"],
-            eventbridge_queue_message_matches(request_id),
-        )
-        assert event["source"] == "app.ingestion"
-        assert event["detail-type"] == "ProcessingComplete"
+    eventually(assert_eventbridge_pipe_enriched_before_state_machine_write)
+    receive_matching_message(
+        stack_resources["NotificationsQueue"],
+        notification_matches_request(request_id),
+    )
 
 
 def test_step_functions_execution_writes_status_and_publishes_to_sns(stack_resources):
