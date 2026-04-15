@@ -2,9 +2,8 @@ import json
 import os
 import pathlib
 import time
-import urllib.error
-import urllib.request
 import unittest
+import uuid
 
 import boto3
 
@@ -12,6 +11,7 @@ import boto3
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 STATE_JSON = ROOT / "state.json"
 RAW_STATE = ROOT / "terraform.tfstate"
+MANAGED_CACHING_OPTIMIZED_ID = "658327ea-f89d-4fab-a63d-7e88639e58f6"
 
 
 def _load_state_document():
@@ -66,61 +66,94 @@ def _resource_values(resources, resource_type, resource_name):
     raise AssertionError(f"Resource {resource_type}.{resource_name} not found in Terraform state")
 
 
-def _find_resource(resources, resource_type, resource_name):
+def _maybe_resource_values(resources, resource_type, resource_name):
     for resource in resources:
         if resource["type"] == resource_type and resource["name"] == resource_name:
             return resource["values"]
     return None
 
 
-def _output_value(outputs, name, default=None):
-    if name not in outputs:
-        return default
+def _output_value(outputs, name):
     value = outputs[name]
     return value["value"] if isinstance(value, dict) and "value" in value else value
+
+
+def _lambda_environment_variables(lambda_resource):
+    environment = lambda_resource.get("environment")
+    if isinstance(environment, list) and environment:
+        return environment[0].get("variables", {})
+    if isinstance(environment, dict):
+        return environment.get("variables", {})
+    return {}
 
 
 def _aws_endpoint():
     return os.environ.get("TF_VAR_aws_endpoint") or os.environ.get("AWS_ENDPOINT_URL") or ""
 
 
+def _using_custom_endpoint():
+    return bool(_aws_endpoint())
+
+
 def _aws_region():
     return os.environ.get("TF_VAR_aws_region") or os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION") or "us-east-1"
 
 
-def _lambda_client():
+def _client(service_name):
     kwargs = {"region_name": _aws_region()}
     endpoint = _aws_endpoint()
     if endpoint:
         kwargs["endpoint_url"] = endpoint
-    return boto3.client("lambda", **kwargs)
+    return boto3.client(service_name, **kwargs)
 
 
-def _post_json(url, payload, *, expect_error=False):
-    request = urllib.request.Request(
-        url,
-        data=payload if isinstance(payload, bytes) else json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=10) as response:
-            return response.status, json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        if not expect_error:
-            raise
-        return exc.code, json.loads(exc.read().decode("utf-8"))
+def _api_gateway_event(body):
+    return {
+        "version": "2.0",
+        "routeKey": "POST /api/orders",
+        "rawPath": "/api/orders",
+        "headers": {"content-type": "application/json"},
+        "requestContext": {"http": {"method": "POST", "path": "/api/orders"}},
+        "body": json.dumps(body) if not isinstance(body, str) else body,
+    }
 
 
-def _post_with_retry(url, payload, *, expect_error=False, attempts=5):
-    last_error = None
-    for _ in range(attempts):
-        try:
-            return _post_json(url, payload, expect_error=expect_error)
-        except Exception as exc:  # pragma: no cover
-            last_error = exc
-            time.sleep(2)
-    raise last_error
+def _invoke_lambda(lambda_client, function_name, payload):
+    response = lambda_client.invoke(FunctionName=function_name, Payload=json.dumps(payload).encode("utf-8"))
+    raw_payload = response["Payload"].read().decode("utf-8")
+    return json.loads(raw_payload) if raw_payload else None
+
+
+def _set_event_source_mapping_enabled(lambda_client, mapping_uuid, enabled):
+    lambda_client.update_event_source_mapping(UUID=mapping_uuid, Enabled=enabled)
+    deadline = time.time() + 60
+    expected_state = "Enabled" if enabled else "Disabled"
+
+    while time.time() < deadline:
+        mapping = lambda_client.get_event_source_mapping(UUID=mapping_uuid)
+        state = mapping.get("State", "")
+        if state == expected_state or (not enabled and state in {"Disabling", "Disabled"}):
+            return
+        time.sleep(2)
+
+    raise AssertionError(f"Event source mapping {mapping_uuid} did not reach {expected_state}")
+
+
+def _receive_matching_message(sqs_client, queue_url, predicate, timeout_seconds=30):
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        response = sqs_client.receive_message(
+            QueueUrl=queue_url,
+            MaxNumberOfMessages=10,
+            WaitTimeSeconds=2,
+            VisibilityTimeout=20,
+        )
+        for message in response.get("Messages", []):
+            body = json.loads(message["Body"])
+            if predicate(body):
+                return message, body
+        time.sleep(1)
+    raise AssertionError("Timed out waiting for expected SQS message")
 
 
 class TestIntegration(unittest.TestCase):
@@ -128,13 +161,16 @@ class TestIntegration(unittest.TestCase):
     def setUpClass(cls):
         cls.document = _load_state_document()
         cls.resources, cls.outputs = _resources_and_outputs(cls.document)
-        cls.local_mode = bool(_aws_endpoint())
-        cls.http_api_url = _output_value(cls.outputs, "http_api_endpoint_url")
+        cls.lambda_client = _client("lambda")
+        cls.sqs_client = _client("sqs")
+        cls.secrets_client = _client("secretsmanager")
 
-    def test_frontend_stack_is_deployed(self):
+    def test_frontend_stack_and_cloudfront_behavior_are_deployed(self):
         bucket = _resource_values(self.resources, "aws_s3_bucket", "frontend")
         versioning = _resource_values(self.resources, "aws_s3_bucket_versioning", "frontend")
         public_access = _resource_values(self.resources, "aws_s3_bucket_public_access_block", "frontend")
+        distribution = _maybe_resource_values(self.resources, "aws_cloudfront_distribution", "frontend")
+        oac = _maybe_resource_values(self.resources, "aws_cloudfront_origin_access_control", "frontend")
 
         self.assertTrue(bucket["force_destroy"])
         self.assertEqual(versioning["versioning_configuration"][0]["status"], "Enabled")
@@ -144,158 +180,135 @@ class TestIntegration(unittest.TestCase):
         objects = {r["values"]["key"] for r in self.resources if r["type"] == "aws_s3_object"}
         self.assertEqual(objects, {"index.html", "app.js"})
 
-        distribution = _find_resource(self.resources, "aws_cloudfront_distribution", "frontend")
-        oac = [r for r in self.resources if r["type"] == "aws_cloudfront_origin_access_control"]
-        if self.local_mode:
+        if _using_custom_endpoint():
             self.assertIsNone(distribution)
-            self.assertEqual(len(oac), 0)
-        else:
-            self.assertEqual(distribution["default_root_object"], "index.html")
-            self.assertTrue(distribution["enabled"])
-            self.assertEqual(len(oac), 1)
+            self.assertIsNone(oac)
+            self.assertEqual(_output_value(self.outputs, "cloudfront_distribution_domain_name"), "endpoint-disabled")
+            return
 
-    def test_network_and_private_access_controls(self):
+        self.assertEqual(oac["signing_behavior"], "always")
+        self.assertEqual(oac["signing_protocol"], "sigv4")
+        self.assertEqual(distribution["default_root_object"], "index.html")
+        self.assertTrue(distribution["enabled"])
+
+        default_behavior = distribution["default_cache_behavior"][0]
+        self.assertEqual(default_behavior["viewer_protocol_policy"], "redirect-to-https")
+        self.assertEqual(default_behavior["allowed_methods"], ["GET", "HEAD"])
+        self.assertEqual(default_behavior["cached_methods"], ["GET", "HEAD"])
+        self.assertEqual(default_behavior["cache_policy_id"], MANAGED_CACHING_OPTIMIZED_ID)
+
+        ordered_behavior = distribution["ordered_cache_behavior"][0]
+        self.assertEqual(ordered_behavior["path_pattern"], "api/*")
+        self.assertEqual(ordered_behavior["viewer_protocol_policy"], "redirect-to-https")
+        self.assertEqual(ordered_behavior["allowed_methods"], ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"])
+
+    def test_network_private_access_and_endpoint_security_group_contract(self):
         endpoints = [r["values"] for r in self.resources if r["type"] == "aws_vpc_endpoint"]
+        lambda_sg = _resource_values(self.resources, "aws_security_group", "lambda")
+        rds_sg = _resource_values(self.resources, "aws_security_group", "rds")
+        redis_sg = _resource_values(self.resources, "aws_security_group", "redis")
+        db_instance = _maybe_resource_values(self.resources, "aws_db_instance", "postgres")
+        redshift = _maybe_resource_values(self.resources, "aws_redshift_cluster", "analytics")
+
         self.assertEqual(len(endpoints), 3)
-
-        service_suffixes = {endpoint["service_name"].rsplit(".", 1)[-1] for endpoint in endpoints}
-        self.assertEqual(service_suffixes, {"logs", "secretsmanager", "sqs"})
-
+        self.assertEqual({endpoint["service_name"].rsplit(".", 1)[-1] for endpoint in endpoints}, {"logs", "secretsmanager", "sqs"})
         for endpoint in endpoints:
             self.assertEqual(endpoint["vpc_endpoint_type"], "Interface")
             self.assertEqual(len(endpoint["subnet_ids"]), 2)
             self.assertEqual(len(endpoint["security_group_ids"]), 1)
 
-        route_tables = [r for r in self.resources if r["type"] == "aws_route_table"]
-        self.assertEqual(len(route_tables), 2)
+        self.assertEqual(lambda_sg["ingress"][0]["from_port"], 443)
+        self.assertEqual(lambda_sg["ingress"][0]["to_port"], 443)
+        self.assertTrue(lambda_sg["ingress"][0]["self"])
+        self.assertEqual(rds_sg["ingress"][0]["from_port"], 5432)
+        self.assertEqual(redis_sg["ingress"][0]["from_port"], 6379)
         self.assertFalse(any(r["type"] == "aws_nat_gateway" for r in self.resources))
+        if _using_custom_endpoint():
+            self.assertIsNone(db_instance)
+            self.assertIsNone(redshift)
+            return
 
-        if not self.local_mode:
-            db_instance = _resource_values(self.resources, "aws_db_instance", "postgres")
-            redshift = _resource_values(self.resources, "aws_redshift_cluster", "analytics")
-            self.assertFalse(db_instance["publicly_accessible"])
-            self.assertFalse(redshift["publicly_accessible"])
+        self.assertFalse(db_instance["publicly_accessible"])
+        self.assertFalse(redshift["publicly_accessible"])
 
-    def test_data_stores_are_deployed_not_stubbed(self):
+    def test_data_stores_secrets_and_glue_connection_use_secret_arns(self):
+        rds_secret = _resource_values(self.resources, "aws_secretsmanager_secret", "rds")
+        redshift_secret = _resource_values(self.resources, "aws_secretsmanager_secret", "redshift")
+        worker_lambda = _resource_values(self.resources, "aws_lambda_function", "worker_processor")
+        glue_connection = _maybe_resource_values(self.resources, "aws_glue_connection", "redshift")
+        redshift_cluster = _maybe_resource_values(self.resources, "aws_redshift_cluster", "analytics")
+
         self.assertEqual(len([r for r in self.resources if r["type"] == "aws_secretsmanager_secret"]), 2)
         self.assertEqual(len([r for r in self.resources if r["type"] == "aws_secretsmanager_secret_version"]), 2)
 
-        if self.local_mode:
-            self.assertEqual(len([r for r in self.resources if r["type"] == "aws_db_subnet_group"]), 0)
-            self.assertEqual(len([r for r in self.resources if r["type"] == "aws_elasticache_subnet_group"]), 0)
-            self.assertEqual(len([r for r in self.resources if r["type"] == "aws_redshift_subnet_group"]), 0)
+        rds_secret_value = json.loads(self.secrets_client.get_secret_value(SecretId=rds_secret["arn"])["SecretString"])
+        redshift_secret_value = json.loads(self.secrets_client.get_secret_value(SecretId=redshift_secret["arn"])["SecretString"])
+        self.assertEqual(set(rds_secret_value), {"username", "password"})
+        self.assertEqual(set(redshift_secret_value), {"username", "password"})
+
+        environment_variables = _lambda_environment_variables(worker_lambda)
+        self.assertEqual(environment_variables["RDS_SECRET_ARN"], rds_secret["arn"])
+        self.assertEqual(environment_variables["RDS_DATABASE"], "orders")
+        if _using_custom_endpoint():
+            self.assertEqual(environment_variables["RDS_ENDPOINT"], "endpoint-disabled")
+            self.assertEqual(environment_variables["REDIS_ENDPOINT"], "endpoint-disabled")
+            self.assertIsNone(glue_connection)
+            self.assertIsNone(redshift_cluster)
+            self.assertEqual(_output_value(self.outputs, "rds_endpoint_address"), "endpoint-disabled")
+            self.assertEqual(_output_value(self.outputs, "redshift_endpoint_address"), "endpoint-disabled")
             return
 
-        db_instance = _resource_values(self.resources, "aws_db_instance", "postgres")
-        redis = _resource_values(self.resources, "aws_elasticache_replication_group", "redis")
-        redshift = _resource_values(self.resources, "aws_redshift_cluster", "analytics")
+        self.assertEqual(glue_connection["connection_properties"]["SECRET_ID"], redshift_secret["arn"])
+        self.assertIn(redshift_cluster["endpoint"], glue_connection["connection_properties"]["JDBC_CONNECTION_URL"])
 
-        self.assertEqual(db_instance["engine"], "postgres")
-        self.assertEqual(db_instance["engine_version"], "15.4")
-        self.assertEqual(db_instance["instance_class"], "db.t3.micro")
-        self.assertEqual(db_instance["allocated_storage"], 20)
-        self.assertTrue(db_instance["skip_final_snapshot"])
-        self.assertFalse(db_instance["deletion_protection"])
+    def test_api_handler_direct_invocation_returns_202_and_writes_to_sqs(self):
+        api_handler = _resource_values(self.resources, "aws_lambda_function", "api_handler")
+        event_source_mapping = _resource_values(self.resources, "aws_lambda_event_source_mapping", "worker_orders")
+        queue_url = _output_value(self.outputs, "sqs_queue_url")
+        trace_id = f"trace-{uuid.uuid4()}"
 
-        self.assertEqual(redis["engine"], "redis")
-        self.assertEqual(redis["engine_version"], "7.1")
-        self.assertEqual(redis["node_type"], "cache.t3.micro")
-        self.assertTrue(redis["at_rest_encryption_enabled"])
-        self.assertTrue(redis["transit_encryption_enabled"])
+        _set_event_source_mapping_enabled(self.lambda_client, event_source_mapping["uuid"], False)
+        try:
+            response = _invoke_lambda(
+                self.lambda_client,
+                api_handler["function_name"],
+                _api_gateway_event({"sku": "demo", "quantity": 1, "traceId": trace_id}),
+            )
+            self.assertEqual(response["statusCode"], 202)
 
-        self.assertEqual(redshift["cluster_type"], "single-node")
-        self.assertEqual(redshift["database_name"], "appanalytics")
-        self.assertEqual(redshift["node_type"], "dc2.large")
-        self.assertTrue(redshift["encrypted"])
-        self.assertTrue(redshift["skip_final_snapshot"])
+            payload = json.loads(response["body"])
+            self.assertIn("orderId", payload)
+            self.assertTrue(payload["orderId"].startswith("order-"))
 
-    def test_api_queue_and_lambda_integration_resources(self):
-        queue = _resource_values(self.resources, "aws_sqs_queue", "orders")
-        mapping = _resource_values(self.resources, "aws_lambda_event_source_mapping", "worker_orders")
+            message, body = _receive_matching_message(
+                self.sqs_client,
+                queue_url,
+                lambda candidate: candidate.get("orderId") == payload["orderId"] and candidate.get("payload", {}).get("traceId") == trace_id,
+            )
+            self.assertEqual(body["payload"], {"sku": "demo", "quantity": 1, "traceId": trace_id})
+            self.assertTrue(body["submittedAt"])
+            self.sqs_client.delete_message(QueueUrl=queue_url, ReceiptHandle=message["ReceiptHandle"])
+        finally:
+            _set_event_source_mapping_enabled(self.lambda_client, event_source_mapping["uuid"], True)
 
-        self.assertEqual(queue["visibility_timeout_seconds"], 30)
-        self.assertEqual(queue["message_retention_seconds"], 345600)
-        self.assertEqual(mapping["batch_size"], 5)
-
-        lambdas = [r["values"] for r in self.resources if r["type"] == "aws_lambda_function"]
-        self.assertEqual(len(lambdas), 3)
-
-        runtimes = {lambda_fn["runtime"] for lambda_fn in lambdas}
-        self.assertEqual(runtimes, {"nodejs20.x"})
-
-        timeouts = {lambda_fn["function_name"]: lambda_fn["timeout"] for lambda_fn in lambdas}
-        self.assertEqual(timeouts["api-handler"], 10)
-        self.assertEqual(timeouts["worker-processor"], 20)
-        self.assertEqual(timeouts["enrichment-lambda"], 10)
-
-        api = _find_resource(self.resources, "aws_apigatewayv2_api", "orders")
-        stage = _find_resource(self.resources, "aws_apigatewayv2_stage", "default")
-        if self.local_mode:
-            self.assertIsNone(api)
-            self.assertIsNone(stage)
-        else:
-            self.assertEqual(api["protocol_type"], "HTTP")
-            self.assertEqual(stage["name"], "$default")
-            self.assertTrue(stage["auto_deploy"])
-
-    def test_http_api_accepts_valid_json_payload(self):
-        if self.local_mode or not self.http_api_url or self.http_api_url == "endpoint-disabled":
-            self.assertEqual(self.http_api_url, "endpoint-disabled")
-            self.assertIsNone(_find_resource(self.resources, "aws_apigatewayv2_api", "orders"))
-            return
-
-        status, payload = _post_with_retry(f"{self.http_api_url}/api/orders", {"sku": "demo", "quantity": 1})
-        self.assertEqual(status, 202)
-        self.assertIn("orderId", payload)
-        self.assertTrue(payload["orderId"])
-
-    def test_http_api_rejects_invalid_json_payload(self):
-        if self.local_mode or not self.http_api_url or self.http_api_url == "endpoint-disabled":
-            self.assertEqual(self.http_api_url, "endpoint-disabled")
-            self.assertIsNone(_find_resource(self.resources, "aws_apigatewayv2_api", "orders"))
-            return
-
-        status, payload = _post_with_retry(f"{self.http_api_url}/api/orders", b'{"broken"', expect_error=True)
-        self.assertEqual(status, 400)
-        self.assertEqual(payload, {"error": "invalid-json"})
+    def test_api_handler_rejects_invalid_json(self):
+        api_handler = _resource_values(self.resources, "aws_lambda_function", "api_handler")
+        response = _invoke_lambda(self.lambda_client, api_handler["function_name"], _api_gateway_event('{"broken"'))
+        self.assertEqual(response["statusCode"], 400)
+        self.assertEqual(json.loads(response["body"]), {"error": "invalid-json"})
 
     def test_enrichment_lambda_invocation_is_behavioral(self):
         enrichment = _resource_values(self.resources, "aws_lambda_function", "enrichment")
-        response = _lambda_client().invoke(
-            FunctionName=enrichment["function_name"],
-            Payload=json.dumps({"orderId": "integration-check"}).encode("utf-8"),
-        )
-        payload = json.loads(response["Payload"].read().decode("utf-8"))
-        self.assertTrue(payload["enriched"])
+        payload = _invoke_lambda(self.lambda_client, enrichment["function_name"], {"orderId": "integration-check"})
         self.assertEqual(payload["orderId"], "integration-check")
+        self.assertTrue(payload["enriched"])
         self.assertTrue(payload["timestamp"])
 
-    def test_state_machine_glue_and_outputs(self):
+    def test_state_machine_pipe_and_outputs_are_wired_end_to_end(self):
         state_machine = _resource_values(self.resources, "aws_sfn_state_machine", "orders")
-        definition = json.loads(state_machine["definition"])
-
-        self.assertEqual(state_machine["type"], "STANDARD")
-        self.assertEqual(definition["StartAt"], "InvokeEnrichment")
-        self.assertEqual(definition["States"]["InvokeEnrichment"]["Resource"], "arn:aws:states:::lambda:invoke")
-        self.assertEqual(definition["States"]["SendToQueue"]["Resource"], "arn:aws:states:::sqs:sendMessage")
-
-        pipe = _find_resource(self.resources, "aws_pipes_pipe", "orders")
-        glue_connections = [r for r in self.resources if r["type"] == "aws_glue_connection"]
-        glue_crawlers = [r for r in self.resources if r["type"] == "aws_glue_crawler"]
-        glue_databases = [r for r in self.resources if r["type"] == "aws_glue_catalog_database"]
-
-        if self.local_mode:
-            self.assertIsNone(pipe)
-            self.assertEqual(len(glue_connections), 0)
-            self.assertEqual(len(glue_crawlers), 0)
-            self.assertEqual(len(glue_databases), 0)
-        else:
-            self.assertEqual(pipe["source_parameters"][0]["sqs_queue_parameters"][0]["batch_size"], 1)
-            self.assertEqual(pipe["target_parameters"][0]["step_function_state_machine_parameters"][0]["invocation_type"], "FIRE_AND_FORGET")
-            self.assertEqual(len(glue_connections), 1)
-            self.assertEqual(len(glue_crawlers), 1)
-            self.assertEqual(len(glue_databases), 1)
-
+        pipe = _maybe_resource_values(self.resources, "aws_pipes_pipe", "orders")
+        queue = _resource_values(self.resources, "aws_sqs_queue", "orders")
+        enrichment = _resource_values(self.resources, "aws_lambda_function", "enrichment")
         required_outputs = {
             "cloudfront_distribution_domain_name",
             "http_api_endpoint_url",
@@ -303,36 +316,57 @@ class TestIntegration(unittest.TestCase):
             "redshift_endpoint_address",
             "sqs_queue_url",
         }
+
+        definition = json.loads(state_machine["definition"])
+        self.assertEqual(state_machine["type"], "STANDARD")
+        self.assertEqual(definition["StartAt"], "InvokeEnrichment")
+        self.assertEqual(definition["States"]["InvokeEnrichment"]["Resource"], "arn:aws:states:::lambda:invoke")
+        self.assertEqual(definition["States"]["SendToQueue"]["Resource"], "arn:aws:states:::sqs:sendMessage")
         self.assertEqual(set(self.outputs), required_outputs)
-        for name, value in self.outputs.items():
-            actual = value["value"] if isinstance(value, dict) and "value" in value else value
-            self.assertIsNotNone(actual)
-            if name == "sqs_queue_url":
-                self.assertNotEqual(actual, "endpoint-disabled")
-            elif self.local_mode:
-                self.assertEqual(actual, "endpoint-disabled")
-            else:
-                self.assertNotEqual(actual, "endpoint-disabled")
+
+        if _using_custom_endpoint():
+            self.assertIsNone(pipe)
+            self.assertEqual(_output_value(self.outputs, "http_api_endpoint_url"), "endpoint-disabled")
+            self.assertEqual(_output_value(self.outputs, "cloudfront_distribution_domain_name"), "endpoint-disabled")
+            self.assertEqual(_output_value(self.outputs, "rds_endpoint_address"), "endpoint-disabled")
+            self.assertEqual(_output_value(self.outputs, "redshift_endpoint_address"), "endpoint-disabled")
+            self.assertTrue(_output_value(self.outputs, "sqs_queue_url"))
+            return
+
+        self.assertEqual(pipe["source"], queue["arn"])
+        self.assertEqual(pipe["enrichment"], enrichment["arn"])
+        self.assertEqual(pipe["target"], state_machine["arn"])
+        self.assertEqual(pipe["source_parameters"][0]["sqs_queue_parameters"][0]["batch_size"], 1)
+        self.assertEqual(pipe["target_parameters"][0]["step_function_state_machine_parameters"][0]["invocation_type"], "FIRE_AND_FORGET")
+        for output_name in required_outputs:
+            self.assertTrue(_output_value(self.outputs, output_name))
 
     def test_alarms_and_roles_match_prompt_counts(self):
         alarms = [r["values"] for r in self.resources if r["type"] == "aws_cloudwatch_metric_alarm"]
         iam_roles = [r for r in self.resources if r["type"] == "aws_iam_role"]
 
-        self.assertEqual(len(alarms), 5 if self.local_mode else 12)
+        self.assertEqual(len(alarms), 5 if _using_custom_endpoint() else 12)
         self.assertEqual(len(iam_roles), 6)
 
         metrics = {(alarm["namespace"], alarm["metric_name"]) for alarm in alarms}
-        self.assertIn(("AWS/Lambda", "Errors"), metrics)
-        self.assertIn(("AWS/Lambda", "Duration"), metrics)
-        self.assertIn(("AWS/States", "ExecutionsFailed"), metrics)
-        if not self.local_mode:
-            self.assertIn(("AWS/RDS", "CPUUtilization"), metrics)
-            self.assertIn(("AWS/RDS", "FreeStorageSpace"), metrics)
-            self.assertIn(("AWS/ElastiCache", "CPUUtilization"), metrics)
-            self.assertIn(("AWS/ElastiCache", "FreeableMemory"), metrics)
-            self.assertIn(("AWS/Redshift", "CPUUtilization"), metrics)
-            self.assertIn(("AWS/Redshift", "HealthStatus"), metrics)
-            self.assertIn(("AWS/CloudFront", "5xxErrorRate"), metrics)
+        expected_metrics = {
+            ("AWS/Lambda", "Errors"),
+            ("AWS/Lambda", "Duration"),
+            ("AWS/States", "ExecutionsFailed"),
+        }
+        if not _using_custom_endpoint():
+            expected_metrics.update(
+                {
+                    ("AWS/RDS", "CPUUtilization"),
+                    ("AWS/RDS", "FreeStorageSpace"),
+                    ("AWS/ElastiCache", "CPUUtilization"),
+                    ("AWS/ElastiCache", "FreeableMemory"),
+                    ("AWS/Redshift", "CPUUtilization"),
+                    ("AWS/Redshift", "HealthStatus"),
+                    ("AWS/CloudFront", "5xxErrorRate"),
+                }
+            )
+        self.assertEqual(metrics, expected_metrics)
 
 
 if __name__ == "__main__":

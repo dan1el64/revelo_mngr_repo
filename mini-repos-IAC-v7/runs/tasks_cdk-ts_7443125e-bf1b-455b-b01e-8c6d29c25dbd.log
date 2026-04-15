@@ -1,0 +1,264 @@
+Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/tasks/cdk-ts/7443125e-bf1b-455b-b01e-8c6d29c25dbd FRAMEWORK=cdk-ts
+
+
+Starting LocalStack (harness environment)...
+ Network iac-harness-network  Creating
+ Network iac-harness-network  Created
+ Container localstack-harness  Creating
+ Container localstack-harness  Created
+ Container localstack-harness  Starting
+ Container localstack-harness  Started
+Waiting for LocalStack health endpoint: http://localhost:4566/_localstack/health
+LocalStack is healthy.
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Setup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Starting worker container: harness-worker-74452
+90a0aa2294712052e34999b7714f6a72989f706e0c49e8df858bdb5aa31ce172
+Installing dependencies (npm install)...
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+
+added 406 packages, and audited 441 packages in 24s
+
+40 packages are looking for funding
+  run `npm fund` for details
+
+5 vulnerabilities (3 moderate, 2 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues, run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.12.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
+npm notice To update run: npm install -g npm@11.12.1
+npm notice
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/3a2770af-8bac-46f7-831e-8a36d85a418d
+[32m✅ Step passed: Setup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Syntax / Synth[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Checking for LocalStack references...
+Running cdklocal synth...
+Generating template.json for unit tests...
+[32m✅ Step passed: Syntax / Synth[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Unit tests (pytest)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest unit tests...
+============================= test session starts ==============================
+platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+collecting ... collected 11 items
+
+tests/unit_tests.py::test_expected_resource_counts PASSED                [  9%]
+tests/unit_tests.py::test_vpc_subnets_and_routes_match_contract PASSED   [ 18%]
+tests/unit_tests.py::test_database_configuration_and_secret_generation PASSED [ 27%]
+tests/unit_tests.py::test_s3_bucket_retention_and_security_settings PASSED [ 36%]
+tests/unit_tests.py::test_log_groups_are_explicit_and_destroyable PASSED [ 45%]
+tests/unit_tests.py::test_lambda_contracts_vpc_wiring_and_inline_code PASSED [ 54%]
+tests/unit_tests.py::test_iam_roles_are_scoped_to_expected_actions PASSED [ 63%]
+tests/unit_tests.py::test_security_groups_allow_only_expected_traffic PASSED [ 72%]
+tests/unit_tests.py::test_api_gateway_methods_logging_and_schedule_wiring PASSED [ 81%]
+tests/unit_tests.py::test_deliverable_input_contract_and_destructibility PASSED [ 90%]
+tests/unit_tests.py::test_outputs_exist_for_runtime_discovery PASSED     [100%]
+
+============================== 11 passed in 0.08s ==============================
+[32m✅ Step passed: Unit tests (pytest)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Deploy (LocalStack)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Bootstrapping (if needed)...
+Running cdklocal deploy...
+
+✨  Synthesis time: 9.79s
+
+InfrastructureAnalystStack: start: Building 35a79308ee0e3002712e42ae20ff4e831db51de49a2b9a7e76621e88fc462c5e
+InfrastructureAnalystStack: success: Built 35a79308ee0e3002712e42ae20ff4e831db51de49a2b9a7e76621e88fc462c5e
+InfrastructureAnalystStack: start: Publishing 35a79308ee0e3002712e42ae20ff4e831db51de49a2b9a7e76621e88fc462c5e:current_account-current_region
+InfrastructureAnalystStack: success: Published 35a79308ee0e3002712e42ae20ff4e831db51de49a2b9a7e76621e88fc462c5e:current_account-current_region
+InfrastructureAnalystStack: deploying... [1/1]
+InfrastructureAnalystStack: creating CloudFormation changeset...
+InfrastructureAnalystStack |  0/51 | 1:51:19 PM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack            | InfrastructureAnalystStack User Initiated
+InfrastructureAnalystStack |  0/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack            | InfrastructureAnalystStack 
+InfrastructureAnalystStack |  1/51 | 1:51:19 PM | CREATE_COMPLETE      | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+InfrastructureAnalystStack |  1/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+InfrastructureAnalystStack |  1/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                         | Vpc (Vpc8378EB38) 
+InfrastructureAnalystStack |  1/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | Vpc/PrivateSubnet1/RouteTable (VpcPrivateSubnet1RouteTableB2C5B500) 
+InfrastructureAnalystStack |  2/51 | 1:51:19 PM | CREATE_COMPLETE      | AWS::EC2::VPC                         | Vpc (Vpc8378EB38) 
+InfrastructureAnalystStack |  3/51 | 1:51:19 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | Vpc/PrivateSubnet1/RouteTable (VpcPrivateSubnet1RouteTableB2C5B500) 
+InfrastructureAnalystStack |  3/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | Vpc/PrivateSubnet1/Subnet (VpcPrivateSubnet1Subnet536B997A) 
+InfrastructureAnalystStack |  3/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | Vpc/PrivateSubnet1/RouteTableAssociation (VpcPrivateSubnet1RouteTableAssociation70C59FA6) 
+InfrastructureAnalystStack |  4/51 | 1:51:19 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | Vpc/PrivateSubnet1/Subnet (VpcPrivateSubnet1Subnet536B997A) 
+InfrastructureAnalystStack |  4/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway             | Vpc/IGW (VpcIGWD7BA715C) 
+InfrastructureAnalystStack |  5/51 | 1:51:19 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | Vpc/PrivateSubnet1/RouteTableAssociation (VpcPrivateSubnet1RouteTableAssociation70C59FA6) 
+InfrastructureAnalystStack |  5/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment        | Vpc/VPCGW (VpcVPCGWBF912B6E) 
+InfrastructureAnalystStack |  6/51 | 1:51:19 PM | CREATE_COMPLETE      | AWS::EC2::InternetGateway             | Vpc/IGW (VpcIGWD7BA715C) 
+InfrastructureAnalystStack |  6/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | Vpc/PublicSubnet1/RouteTable (VpcPublicSubnet1RouteTable6C95E38E) 
+InfrastructureAnalystStack |  7/51 | 1:51:19 PM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment        | Vpc/VPCGW (VpcVPCGWBF912B6E) 
+InfrastructureAnalystStack |  7/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | Vpc/PublicSubnet1/DefaultRoute (VpcPublicSubnet1DefaultRoute3DA9E72A) 
+InfrastructureAnalystStack |  8/51 | 1:51:19 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | Vpc/PublicSubnet1/RouteTable (VpcPublicSubnet1RouteTable6C95E38E) 
+InfrastructureAnalystStack |  9/51 | 1:51:19 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | Vpc/PublicSubnet1/DefaultRoute (VpcPublicSubnet1DefaultRoute3DA9E72A) 
+InfrastructureAnalystStack |  9/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | Vpc/PublicSubnet1/Subnet (VpcPublicSubnet1Subnet5C2D37C4) 
+InfrastructureAnalystStack |  9/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | Vpc/PublicSubnet1/RouteTableAssociation (VpcPublicSubnet1RouteTableAssociation97140677) 
+InfrastructureAnalystStack | 10/51 | 1:51:19 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | Vpc/PublicSubnet1/Subnet (VpcPublicSubnet1Subnet5C2D37C4) 
+InfrastructureAnalystStack | 10/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                         | Vpc/PublicSubnet1/EIP (VpcPublicSubnet1EIPD7E02669) 
+InfrastructureAnalystStack | 11/51 | 1:51:19 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | Vpc/PublicSubnet1/RouteTableAssociation (VpcPublicSubnet1RouteTableAssociation97140677) 
+InfrastructureAnalystStack | 11/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                  | Vpc/PublicSubnet1/NATGateway (VpcPublicSubnet1NATGateway4D7517AA) 
+InfrastructureAnalystStack | 12/51 | 1:51:19 PM | CREATE_COMPLETE      | AWS::EC2::EIP                         | Vpc/PublicSubnet1/EIP (VpcPublicSubnet1EIPD7E02669) 
+InfrastructureAnalystStack | 12/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | Vpc/PrivateSubnet1/DefaultRoute (VpcPrivateSubnet1DefaultRouteBE02A9ED) 
+InfrastructureAnalystStack | 13/51 | 1:51:19 PM | CREATE_COMPLETE      | AWS::EC2::NatGateway                  | Vpc/PublicSubnet1/NATGateway (VpcPublicSubnet1NATGateway4D7517AA) 
+InfrastructureAnalystStack | 13/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | Vpc/PrivateSubnet2/RouteTable (VpcPrivateSubnet2RouteTableA678073B) 
+InfrastructureAnalystStack | 14/51 | 1:51:19 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | Vpc/PrivateSubnet1/DefaultRoute (VpcPrivateSubnet1DefaultRouteBE02A9ED) 
+InfrastructureAnalystStack | 14/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | Vpc/PrivateSubnet2/DefaultRoute (VpcPrivateSubnet2DefaultRoute060D2087) 
+InfrastructureAnalystStack | 15/51 | 1:51:19 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | Vpc/PrivateSubnet2/RouteTable (VpcPrivateSubnet2RouteTableA678073B) 
+InfrastructureAnalystStack | 15/51 | 1:51:19 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | CollectorLogGroup (CollectorLogGroup1D43C0E2) 
+InfrastructureAnalystStack | 16/51 | 1:51:19 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | Vpc/PrivateSubnet2/DefaultRoute (VpcPrivateSubnet2DefaultRoute060D2087) 
+InfrastructureAnalystStack | 16/51 | 1:51:20 PM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret           | DatabaseSecret (DatabaseSecret86DBB7B3) 
+InfrastructureAnalystStack | 17/51 | 1:51:20 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | CollectorLogGroup (CollectorLogGroup1D43C0E2) 
+InfrastructureAnalystStack | 17/51 | 1:51:20 PM | CREATE_IN_PROGRESS   | AWS::S3::Bucket                       | FindingsBucket (FindingsBucket86B2B157) 
+InfrastructureAnalystStack | 18/51 | 1:51:20 PM | CREATE_COMPLETE      | AWS::SecretsManager::Secret           | DatabaseSecret (DatabaseSecret86DBB7B3) 
+InfrastructureAnalystStack | 19/51 | 1:51:20 PM | CREATE_COMPLETE      | AWS::S3::Bucket                       | FindingsBucket (FindingsBucket86B2B157) 
+InfrastructureAnalystStack | 19/51 | 1:51:20 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | CollectorRole (CollectorRole8FF99B37) 
+InfrastructureAnalystStack | 19/51 | 1:51:20 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | CollectorRole/DefaultPolicy (CollectorRoleDefaultPolicy3CB789BE) 
+InfrastructureAnalystStack | 20/51 | 1:51:20 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | CollectorRole (CollectorRole8FF99B37) 
+InfrastructureAnalystStack | 21/51 | 1:51:20 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | CollectorRole/DefaultPolicy (CollectorRoleDefaultPolicy3CB789BE) 
+InfrastructureAnalystStack | 21/51 | 1:51:20 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | Vpc/PrivateSubnet2/Subnet (VpcPrivateSubnet2Subnet3788AAA1) 
+InfrastructureAnalystStack | 21/51 | 1:51:20 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | Vpc/PrivateSubnet2/RouteTableAssociation (VpcPrivateSubnet2RouteTableAssociationA89CAD56) 
+InfrastructureAnalystStack | 22/51 | 1:51:20 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | Vpc/PrivateSubnet2/Subnet (VpcPrivateSubnet2Subnet3788AAA1) 
+InfrastructureAnalystStack | 22/51 | 1:51:20 PM | CREATE_IN_PROGRESS   | AWS::RDS::DBSubnetGroup               | DatabaseSubnetGroup/Default (DatabaseSubnetGroup) 
+InfrastructureAnalystStack | 23/51 | 1:51:20 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | Vpc/PrivateSubnet2/RouteTableAssociation (VpcPrivateSubnet2RouteTableAssociationA89CAD56) 
+InfrastructureAnalystStack | 24/51 | 1:51:20 PM | CREATE_COMPLETE      | AWS::RDS::DBSubnetGroup               | DatabaseSubnetGroup/Default (DatabaseSubnetGroup) Resource type AWS::RDS::DBSubnetGroup is not supported but was deployed as a fallback
+InfrastructureAnalystStack | 24/51 | 1:51:20 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
+InfrastructureAnalystStack | 24/51 | 1:51:20 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | LambdaSecurityGroup (LambdaSecurityGroup0BD9FC99) 
+InfrastructureAnalystStack | 25/51 | 1:51:20 PM | CREATE_COMPLETE      | AWS::RDS::DBInstance                  | Database (DatabaseB269D8BB) Resource type AWS::RDS::DBInstance is not supported but was deployed as a fallback
+InfrastructureAnalystStack | 25/51 | 1:51:20 PM | CREATE_IN_PROGRESS   | AWS::RDS::DBInstance                  | Database (DatabaseB269D8BB) 
+InfrastructureAnalystStack | 26/51 | 1:51:20 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
+InfrastructureAnalystStack | 26/51 | 1:51:20 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | CollectorFunction (CollectorFunction30759564) 
+InfrastructureAnalystStack | 27/51 | 1:51:20 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | LambdaSecurityGroup (LambdaSecurityGroup0BD9FC99) 
+InfrastructureAnalystStack | 28/51 | 1:51:22 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | CollectorFunction (CollectorFunction30759564) 
+InfrastructureAnalystStack | 28/51 | 1:51:22 PM | CREATE_IN_PROGRESS   | AWS::Scheduler::Schedule              | CollectorSchedule 
+InfrastructureAnalystStack | 28/51 | 1:51:24 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | CollectorFunction/AllowSchedulerInvoke (CollectorFunctionAllowSchedulerInvoke70927C22) 
+InfrastructureAnalystStack | 29/51 | 1:51:24 PM | CREATE_COMPLETE      | AWS::Scheduler::Schedule              | CollectorSchedule 
+InfrastructureAnalystStack | 29/51 | 1:51:24 PM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress        | DatabaseSecurityGroup/from InfrastructureAnalystStackLambdaSecurityGroup4E59A5AB:5432 (DatabaseSecurityGroupfromInfrastructureAnalystStackLambdaSecurityGroup4E59A5AB5432A7AEFB92) 
+InfrastructureAnalystStack | 30/51 | 1:51:24 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | CollectorFunction/AllowSchedulerInvoke (CollectorFunctionAllowSchedulerInvoke70927C22) 
+InfrastructureAnalystStack | 30/51 | 1:51:24 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::RestApi              | InfrastructureApi (InfrastructureApiA215CA59) 
+InfrastructureAnalystStack | 31/51 | 1:51:24 PM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress        | DatabaseSecurityGroup/from InfrastructureAnalystStackLambdaSecurityGroup4E59A5AB:5432 (DatabaseSecurityGroupfromInfrastructureAnalystStackLambdaSecurityGroup4E59A5AB5432A7AEFB92) 
+InfrastructureAnalystStack | 31/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource             | InfrastructureApi/Default/summary (InfrastructureApisummaryD9A02859) 
+InfrastructureAnalystStack | 32/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::ApiGateway::RestApi              | InfrastructureApi (InfrastructureApiA215CA59) 
+InfrastructureAnalystStack | 32/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Resource             | InfrastructureApi/Default/run (InfrastructureApirun64CE712C) 
+InfrastructureAnalystStack | 33/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::ApiGateway::Resource             | InfrastructureApi/Default/summary (InfrastructureApisummaryD9A02859) 
+InfrastructureAnalystStack | 33/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method               | InfrastructureApi/Default/run/POST (InfrastructureApirunPOST41394F1E) 
+InfrastructureAnalystStack | 34/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::ApiGateway::Resource             | InfrastructureApi/Default/run (InfrastructureApirun64CE712C) 
+InfrastructureAnalystStack | 34/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | SummaryRole (SummaryRoleE7CA866A) 
+InfrastructureAnalystStack | 35/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method               | InfrastructureApi/Default/run/POST (InfrastructureApirunPOST41394F1E) 
+InfrastructureAnalystStack | 35/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | SummaryLogGroup (SummaryLogGroup261522F0) 
+InfrastructureAnalystStack | 36/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::IAM::Role                        | SummaryRole (SummaryRoleE7CA866A) 
+InfrastructureAnalystStack | 36/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | SummaryRole/DefaultPolicy (SummaryRoleDefaultPolicy198BBE6E) 
+InfrastructureAnalystStack | 37/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | SummaryLogGroup (SummaryLogGroup261522F0) 
+InfrastructureAnalystStack | 37/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | SummaryFunction (SummaryFunctionF741E427) 
+InfrastructureAnalystStack | 38/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::IAM::Policy                      | SummaryRole/DefaultPolicy (SummaryRoleDefaultPolicy198BBE6E) 
+InfrastructureAnalystStack | 38/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Method               | InfrastructureApi/Default/summary/GET (InfrastructureApisummaryGETCF314900) 
+InfrastructureAnalystStack | 39/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::Lambda::Function                 | SummaryFunction (SummaryFunctionF741E427) 
+InfrastructureAnalystStack | 39/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Deployment           | InfrastructureApi/Deployment (InfrastructureApiDeploymentBCEA856Ceef5f5554171a37eb31fdeb5bdbd62f2) 
+InfrastructureAnalystStack | 40/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::ApiGateway::Method               | InfrastructureApi/Default/summary/GET (InfrastructureApisummaryGETCF314900) 
+InfrastructureAnalystStack | 40/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::ApiGateway::Stage                | InfrastructureApi/DeploymentStage.prod (InfrastructureApiDeploymentStageprodA39D7263) 
+InfrastructureAnalystStack | 41/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::ApiGateway::Deployment           | InfrastructureApi/Deployment (InfrastructureApiDeploymentBCEA856Ceef5f5554171a37eb31fdeb5bdbd62f2) 
+InfrastructureAnalystStack | 41/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | InfrastructureApi/Default/run/POST/ApiPermission.InfrastructureAnalystStackInfrastructureApiA4A7E002.POST..run (InfrastructureApirunPOSTApiPermissionInfrastructureAnalystStackInfrastructureApiA4A7E002POSTrun27FF27A5) 
+InfrastructureAnalystStack | 42/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::ApiGateway::Stage                | InfrastructureApi/DeploymentStage.prod (InfrastructureApiDeploymentStageprodA39D7263) 
+InfrastructureAnalystStack | 42/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | InfrastructureApi/Default/run/POST/ApiPermission.Test.InfrastructureAnalystStackInfrastructureApiA4A7E002.POST..run (InfrastructureApirunPOSTApiPermissionTestInfrastructureAnalystStackInfrastructureApiA4A7E002POSTrun872384FD) 
+InfrastructureAnalystStack | 43/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | InfrastructureApi/Default/run/POST/ApiPermission.InfrastructureAnalystStackInfrastructureApiA4A7E002.POST..run (InfrastructureApirunPOSTApiPermissionInfrastructureAnalystStackInfrastructureApiA4A7E002POSTrun27FF27A5) 
+InfrastructureAnalystStack | 43/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | InfrastructureApi/Default/summary/GET/ApiPermission.InfrastructureAnalystStackInfrastructureApiA4A7E002.GET..summary (InfrastructureApisummaryGETApiPermissionInfrastructureAnalystStackInfrastructureApiA4A7E002GETsummary7CA8D091) 
+InfrastructureAnalystStack | 44/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | InfrastructureApi/Default/run/POST/ApiPermission.Test.InfrastructureAnalystStackInfrastructureApiA4A7E002.POST..run (InfrastructureApirunPOSTApiPermissionTestInfrastructureAnalystStackInfrastructureApiA4A7E002POSTrun872384FD) 
+InfrastructureAnalystStack | 44/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | InfrastructureApi/Default/summary/GET/ApiPermission.Test.InfrastructureAnalystStackInfrastructureApiA4A7E002.GET..summary (InfrastructureApisummaryGETApiPermissionTestInfrastructureAnalystStackInfrastructureApiA4A7E002GETsummaryEB685C5C) 
+InfrastructureAnalystStack | 45/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | InfrastructureApi/Default/summary/GET/ApiPermission.InfrastructureAnalystStackInfrastructureApiA4A7E002.GET..summary (InfrastructureApisummaryGETApiPermissionInfrastructureAnalystStackInfrastructureApiA4A7E002GETsummary7CA8D091) 
+InfrastructureAnalystStack | 45/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | Vpc/PublicSubnet2/RouteTable (VpcPublicSubnet2RouteTable94F7E489) 
+InfrastructureAnalystStack | 46/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::Lambda::Permission               | InfrastructureApi/Default/summary/GET/ApiPermission.Test.InfrastructureAnalystStackInfrastructureApiA4A7E002.GET..summary (InfrastructureApisummaryGETApiPermissionTestInfrastructureAnalystStackInfrastructureApiA4A7E002GETsummaryEB685C5C) 
+InfrastructureAnalystStack | 46/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | Vpc/PublicSubnet2/DefaultRoute (VpcPublicSubnet2DefaultRoute97F91067) 
+InfrastructureAnalystStack | 47/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | Vpc/PublicSubnet2/RouteTable (VpcPublicSubnet2RouteTable94F7E489) 
+InfrastructureAnalystStack | 48/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::EC2::Route                       | Vpc/PublicSubnet2/DefaultRoute (VpcPublicSubnet2DefaultRoute97F91067) 
+InfrastructureAnalystStack | 48/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | Vpc/PublicSubnet2/Subnet (VpcPublicSubnet2Subnet691E08A3) 
+InfrastructureAnalystStack | 48/51 | 1:51:26 PM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | Vpc/PublicSubnet2/RouteTableAssociation (VpcPublicSubnet2RouteTableAssociationDD5762D8) 
+InfrastructureAnalystStack | 49/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | Vpc/PublicSubnet2/Subnet (VpcPublicSubnet2Subnet691E08A3) 
+InfrastructureAnalystStack | 50/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | Vpc/PublicSubnet2/RouteTableAssociation (VpcPublicSubnet2RouteTableAssociationDD5762D8) 
+InfrastructureAnalystStack | 51/51 | 1:51:26 PM | CREATE_COMPLETE      | AWS::CloudFormation::Stack            | InfrastructureAnalystStack 
+
+ ✅  InfrastructureAnalystStack
+
+✨  Deployment time: 10.54s
+
+Outputs:
+InfrastructureAnalystStack.ApiUrl = https://qayfjyturp.execute-api.localhost.localstack.cloud:4566/prod/
+InfrastructureAnalystStack.CollectorFunctionName = infrastructure-analyst-collector
+InfrastructureAnalystStack.DatabaseSecretArn = arn:aws:secretsmanager:us-east-1:000000000000:secret:InfrastructureAnalystStack-DatabaseSecret86DBB7B3-6c59b2d4-xluBRb
+InfrastructureAnalystStack.FindingsBucketName = infrastructureanalyststack-findingsbucket86b2b157-9c9ca11f
+InfrastructureAnalystStack.InfrastructureApiEndpoint9265A61D = https://qayfjyturp.execute-api.localhost.localstack.cloud:4566/prod/
+InfrastructureAnalystStack.SummaryFunctionName = infrastructure-analyst-summary
+Stack ARN:
+arn:aws:cloudformation:us-east-1:000000000000:stack/InfrastructureAnalystStack/2df953f3-84f1-470e-a4d2-ada9be3f6399
+
+✨  Total time: 20.33s
+
+[32m✅ Step passed: Deploy (LocalStack)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Integration tests[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest integration tests...
+============================= test session starts ==============================
+platform linux -- Python 3.11.2, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+collecting ... collected 6 items
+
+tests/integration_tests.py::test_stack_outputs_and_resource_counts_are_present PASSED [ 16%]
+tests/integration_tests.py::test_bucket_configuration_matches_inventory_contract PASSED [ 33%]
+tests/integration_tests.py::test_log_groups_and_lambda_configurations_are_correct PASSED [ 50%]
+tests/integration_tests.py::test_database_and_secret_configuration_are_correct PASSED [ 66%]
+tests/integration_tests.py::test_api_gateway_and_schedule_are_wired_to_the_expected_targets PASSED [ 83%]
+tests/integration_tests.py::test_security_groups_are_minimal_and_database_only_accepts_lambda_traffic PASSED [100%]
+
+============================== 6 passed in 1.84s ===============================
+[32m✅ Step passed: Integration tests[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Destroy / Cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running cdklocal destroy...
+Cleaning up worker container: harness-worker-74452
+[32m✅ Step passed: Destroy / Cleanup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  HARNESS SUMMARY[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ setup[0m
+[32m✅ syntax/plan[0m
+[32m✅ unit tests[0m
+[32m✅ deploy (localstack)[0m
+[32m✅ integration tests[0m
+[32m✅ destroy/cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ All steps passed.[0m
+
+Log saved to: /Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/runs/tasks_cdk-ts_7443125e-bf1b-455b-b01e-8c6d29c25dbd.log
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+Stopping LocalStack...
+ Container localstack-harness  Stopping
+ Container localstack-harness  Stopped
+ Container localstack-harness  Removing
+ Container localstack-harness  Removed
+ Network iac-harness-network  Removing
+ Network iac-harness-network  Removed

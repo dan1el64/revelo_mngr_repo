@@ -87,10 +87,10 @@ locals {
   az_a = data.aws_availability_zones.available.names[0]
   az_b = data.aws_availability_zones.available.names[1]
 
-  app_name   = "three-tier-orders"
-  vpc_cidr   = "10.0.0.0/16"
-  bucket_id  = "${local.app_name}-${var.aws_region}-frontend"
-  local_mode = var.aws_endpoint != ""
+  app_name        = "three-tier-orders"
+  vpc_cidr        = "10.0.0.0/16"
+  bucket_id       = "${local.app_name}-${var.aws_region}-frontend"
+  custom_endpoint = var.aws_endpoint != ""
 
   api_handler_name       = "api-handler"
   worker_processor_name  = "worker-processor"
@@ -732,14 +732,14 @@ resource "aws_secretsmanager_secret_version" "redshift" {
 }
 
 resource "aws_db_subnet_group" "postgres" {
-  count = local.local_mode ? 0 : 1
+  count = local.custom_endpoint ? 0 : 1
 
   name       = "${local.app_name}-db-subnets"
   subnet_ids = local.private_subnet_ids
 }
 
 resource "aws_db_instance" "postgres" {
-  count = local.local_mode ? 0 : 1
+  count = local.custom_endpoint ? 0 : 1
 
   identifier                      = "${local.app_name}-postgres"
   engine                          = "postgres"
@@ -762,7 +762,7 @@ resource "aws_db_instance" "postgres" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "rds_cpu" {
-  count = local.local_mode ? 0 : 1
+  count = local.custom_endpoint ? 0 : 1
 
   alarm_name          = "${local.app_name}-rds-cpu"
   namespace           = "AWS/RDS"
@@ -780,7 +780,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "rds_storage" {
-  count = local.local_mode ? 0 : 1
+  count = local.custom_endpoint ? 0 : 1
 
   alarm_name          = "${local.app_name}-rds-storage"
   namespace           = "AWS/RDS"
@@ -798,14 +798,14 @@ resource "aws_cloudwatch_metric_alarm" "rds_storage" {
 }
 
 resource "aws_elasticache_subnet_group" "redis" {
-  count = local.local_mode ? 0 : 1
+  count = local.custom_endpoint ? 0 : 1
 
   name       = "${local.app_name}-redis-subnets"
   subnet_ids = local.private_subnet_ids
 }
 
 resource "aws_elasticache_replication_group" "redis" {
-  count = local.local_mode ? 0 : 1
+  count = local.custom_endpoint ? 0 : 1
 
   replication_group_id       = "${local.app_name}-redis"
   description                = "Redis replication group for order processing"
@@ -822,7 +822,7 @@ resource "aws_elasticache_replication_group" "redis" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "redis_cpu" {
-  count = local.local_mode ? 0 : 1
+  count = local.custom_endpoint ? 0 : 1
 
   alarm_name          = "${local.app_name}-redis-cpu"
   namespace           = "AWS/ElastiCache"
@@ -840,7 +840,7 @@ resource "aws_cloudwatch_metric_alarm" "redis_cpu" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "redis_memory" {
-  count = local.local_mode ? 0 : 1
+  count = local.custom_endpoint ? 0 : 1
 
   alarm_name          = "${local.app_name}-redis-memory"
   namespace           = "AWS/ElastiCache"
@@ -858,14 +858,14 @@ resource "aws_cloudwatch_metric_alarm" "redis_memory" {
 }
 
 resource "aws_redshift_subnet_group" "analytics" {
-  count = local.local_mode ? 0 : 1
+  count = local.custom_endpoint ? 0 : 1
 
   name       = "${local.app_name}-redshift-subnets"
   subnet_ids = local.private_subnet_ids
 }
 
 resource "aws_redshift_cluster" "analytics" {
-  count = local.local_mode ? 0 : 1
+  count = local.custom_endpoint ? 0 : 1
 
   cluster_identifier        = "${local.app_name}-redshift"
   database_name             = "appanalytics"
@@ -880,7 +880,7 @@ resource "aws_redshift_cluster" "analytics" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "redshift_cpu" {
-  count = local.local_mode ? 0 : 1
+  count = local.custom_endpoint ? 0 : 1
 
   alarm_name          = "${local.app_name}-redshift-cpu"
   namespace           = "AWS/Redshift"
@@ -898,7 +898,7 @@ resource "aws_cloudwatch_metric_alarm" "redshift_cpu" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "redshift_health" {
-  count = local.local_mode ? 0 : 1
+  count = local.custom_endpoint ? 0 : 1
 
   alarm_name          = "${local.app_name}-redshift-health"
   namespace           = "AWS/Redshift"
@@ -937,14 +937,14 @@ resource "aws_s3_bucket_public_access_block" "frontend" {
 }
 
 resource "aws_apigatewayv2_api" "orders" {
-  count = local.local_mode ? 0 : 1
+  count = local.custom_endpoint ? 0 : 1
 
   name          = "${local.app_name}-http-api"
   protocol_type = "HTTP"
 }
 
 resource "aws_apigatewayv2_integration" "orders" {
-  count                  = local.local_mode ? 0 : 1
+  count                  = local.custom_endpoint ? 0 : 1
   api_id                 = aws_apigatewayv2_api.orders[0].id
   integration_type       = "AWS_PROXY"
   integration_uri        = aws_lambda_function.api_handler.invoke_arn
@@ -952,14 +952,14 @@ resource "aws_apigatewayv2_integration" "orders" {
 }
 
 resource "aws_apigatewayv2_route" "orders_post" {
-  count     = local.local_mode ? 0 : 1
+  count     = local.custom_endpoint ? 0 : 1
   api_id    = aws_apigatewayv2_api.orders[0].id
   route_key = "POST /api/orders"
   target    = "integrations/${aws_apigatewayv2_integration.orders[0].id}"
 }
 
 resource "aws_apigatewayv2_stage" "default" {
-  count       = local.local_mode ? 0 : 1
+  count       = local.custom_endpoint ? 0 : 1
   api_id      = aws_apigatewayv2_api.orders[0].id
   name        = "$default"
   auto_deploy = true
@@ -977,7 +977,7 @@ resource "aws_apigatewayv2_stage" "default" {
 }
 
 resource "aws_lambda_permission" "api_gateway" {
-  count         = local.local_mode ? 0 : 1
+  count         = local.custom_endpoint ? 0 : 1
   statement_id  = "AllowApiGatewayInvoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.api_handler.function_name
@@ -986,7 +986,7 @@ resource "aws_lambda_permission" "api_gateway" {
 }
 
 resource "aws_cloudfront_origin_access_control" "frontend" {
-  count = local.local_mode ? 0 : 1
+  count = local.custom_endpoint ? 0 : 1
 
   name                              = "${local.app_name}-oac"
   description                       = "Origin access control for frontend bucket"
@@ -996,7 +996,7 @@ resource "aws_cloudfront_origin_access_control" "frontend" {
 }
 
 resource "aws_cloudfront_distribution" "frontend" {
-  count               = local.local_mode ? 0 : 1
+  count               = local.custom_endpoint ? 0 : 1
   enabled             = true
   default_root_object = "index.html"
 
@@ -1064,7 +1064,7 @@ resource "aws_cloudfront_distribution" "frontend" {
 }
 
 resource "aws_s3_bucket_policy" "frontend" {
-  count  = local.local_mode ? 0 : 1
+  count  = local.custom_endpoint ? 0 : 1
   bucket = aws_s3_bucket.frontend.id
   policy = jsonencode({
     Version = "2012-10-17"
@@ -1102,7 +1102,7 @@ resource "aws_s3_object" "app_js" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "cloudfront_5xx" {
-  count = local.local_mode ? 0 : 1
+  count = local.custom_endpoint ? 0 : 1
 
   alarm_name          = "${local.app_name}-cloudfront-5xx"
   namespace           = "AWS/CloudFront"
@@ -1299,9 +1299,9 @@ resource "aws_lambda_function" "worker_processor" {
   environment {
     variables = {
       RDS_SECRET_ARN = aws_secretsmanager_secret.rds.arn
-      RDS_ENDPOINT   = local.local_mode ? "endpoint-disabled" : aws_db_instance.postgres[0].address
+      RDS_ENDPOINT   = local.custom_endpoint ? "endpoint-disabled" : aws_db_instance.postgres[0].address
       RDS_DATABASE   = "orders"
-      REDIS_ENDPOINT = local.local_mode ? "endpoint-disabled" : aws_elasticache_replication_group.redis[0].primary_endpoint_address
+      REDIS_ENDPOINT = local.custom_endpoint ? "endpoint-disabled" : aws_elasticache_replication_group.redis[0].primary_endpoint_address
     }
   }
 
@@ -1558,7 +1558,7 @@ resource "aws_iam_role_policy" "pipes" {
 }
 
 resource "aws_pipes_pipe" "orders" {
-  count    = local.local_mode ? 0 : 1
+  count    = local.custom_endpoint ? 0 : 1
   name     = "${local.app_name}-pipe"
   role_arn = aws_iam_role.pipes.arn
   source   = aws_sqs_queue.orders.arn
@@ -1616,13 +1616,13 @@ resource "aws_iam_role_policy" "glue_secret" {
 }
 
 resource "aws_glue_catalog_database" "analytics" {
-  count = local.local_mode ? 0 : 1
+  count = local.custom_endpoint ? 0 : 1
 
   name = "analytics_catalog"
 }
 
 resource "aws_glue_connection" "redshift" {
-  count           = local.local_mode ? 0 : 1
+  count           = local.custom_endpoint ? 0 : 1
   name            = "${local.app_name}-redshift-jdbc"
   connection_type = "JDBC"
 
@@ -1639,7 +1639,7 @@ resource "aws_glue_connection" "redshift" {
 }
 
 resource "aws_glue_crawler" "analytics" {
-  count         = local.local_mode ? 0 : 1
+  count         = local.custom_endpoint ? 0 : 1
   name          = "${local.app_name}-crawler"
   role          = aws_iam_role.glue.arn
   database_name = aws_glue_catalog_database.analytics[0].name
@@ -1653,19 +1653,19 @@ resource "aws_glue_crawler" "analytics" {
 }
 
 output "cloudfront_distribution_domain_name" {
-  value = local.local_mode ? "endpoint-disabled" : aws_cloudfront_distribution.frontend[0].domain_name
+  value = local.custom_endpoint ? "endpoint-disabled" : aws_cloudfront_distribution.frontend[0].domain_name
 }
 
 output "http_api_endpoint_url" {
-  value = local.local_mode ? "endpoint-disabled" : aws_apigatewayv2_api.orders[0].api_endpoint
+  value = local.custom_endpoint ? "endpoint-disabled" : aws_apigatewayv2_api.orders[0].api_endpoint
 }
 
 output "rds_endpoint_address" {
-  value = local.local_mode ? "endpoint-disabled" : aws_db_instance.postgres[0].address
+  value = local.custom_endpoint ? "endpoint-disabled" : aws_db_instance.postgres[0].address
 }
 
 output "redshift_endpoint_address" {
-  value = local.local_mode ? "endpoint-disabled" : aws_redshift_cluster.analytics[0].endpoint
+  value = local.custom_endpoint ? "endpoint-disabled" : aws_redshift_cluster.analytics[0].endpoint
 }
 
 output "sqs_queue_url" {
