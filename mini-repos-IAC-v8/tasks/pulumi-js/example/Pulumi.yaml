@@ -1,0 +1,4 @@
+name: pulumi-aws-js
+runtime: nodejs
+main: app.js
+description: A Pulumi JavaScript program for AWS infrastructure

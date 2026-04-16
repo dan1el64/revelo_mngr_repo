@@ -1,0 +1,30 @@
+# Terraform generated files
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+.tfplan
+*.tfplan
+
+# Harness-generated files
+plan.json
+state.json
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.egg-info/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

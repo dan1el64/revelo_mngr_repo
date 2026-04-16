@@ -1,0 +1,4 @@
+.pulumi/
+preview.json
+state.json
+node_modules/
