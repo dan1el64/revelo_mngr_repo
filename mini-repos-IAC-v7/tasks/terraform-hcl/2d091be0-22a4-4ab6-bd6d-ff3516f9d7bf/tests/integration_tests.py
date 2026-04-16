@@ -284,6 +284,7 @@ def is_allowed_eni_wildcard_statement(statement):
 def test_network_and_security_contract_is_live_via_boto3():
     assert len(resources_of_type("aws_nat_gateway")) == 0
     assert len(resources_of_type("aws_internet_gateway")) == 1
+    assert {group["name"] for group in resources_of_type("aws_security_group")} == {"alb_sg", "backend_sg", "db_sg"}
 
     vpc = resource_values("aws_vpc")
     public_subnet_a = resource_values("aws_subnet", lambda values: values.get("cidr_block") == "10.0.1.0/24")
@@ -294,7 +295,6 @@ def test_network_and_security_contract_is_live_via_boto3():
     alb_sg = security_group_values("alb_sg")
     backend_sg = security_group_values("backend_sg")
     db_sg = security_group_values("db_sg")
-    vpce_sg = security_group_values("vpce_sg")
     igw = resources_of_type("aws_internet_gateway")[0]
 
     ec2 = aws_client("ec2")
@@ -338,6 +338,13 @@ def test_network_and_security_contract_is_live_via_boto3():
         and any(range_.get("CidrIp") == "0.0.0.0/0" for range_ in permission.get("IpRanges", []))
         for permission in live_alb_sg["IpPermissions"]
     )
+    assert any(
+        permission["IpProtocol"] == "tcp"
+        and permission["FromPort"] == 8080
+        and permission["ToPort"] == 8080
+        and any(pair["GroupId"] == backend_sg["id"] for pair in permission.get("UserIdGroupPairs", []))
+        for permission in live_alb_sg["IpPermissionsEgress"]
+    )
 
     live_backend_sg = ec2.describe_security_groups(GroupIds=[backend_sg["id"]])["SecurityGroups"][0]
     assert any(
@@ -347,13 +354,30 @@ def test_network_and_security_contract_is_live_via_boto3():
         and any(pair["GroupId"] == alb_sg["id"] for pair in permission.get("UserIdGroupPairs", []))
         for permission in live_backend_sg["IpPermissions"]
     )
+    assert len(live_backend_sg["IpPermissionsEgress"]) == 2
     assert any(
-        permission["IpProtocol"] == "-1"
-        and any(range_.get("CidrIp") == "0.0.0.0/0" for range_ in permission.get("IpRanges", []))
+        permission["IpProtocol"] == "tcp"
+        and permission["FromPort"] == 443
+        and permission["ToPort"] == 443
+        and any(pair["GroupId"] == db_sg["id"] for pair in permission.get("UserIdGroupPairs", []))
+        for permission in live_backend_sg["IpPermissionsEgress"]
+    )
+    assert any(
+        permission["IpProtocol"] == "tcp"
+        and permission["FromPort"] == 5432
+        and permission["ToPort"] == 5432
+        and any(pair["GroupId"] == db_sg["id"] for pair in permission.get("UserIdGroupPairs", []))
         for permission in live_backend_sg["IpPermissionsEgress"]
     )
 
     live_db_sg = ec2.describe_security_groups(GroupIds=[db_sg["id"]])["SecurityGroups"][0]
+    assert any(
+        permission["IpProtocol"] == "tcp"
+        and permission["FromPort"] == 443
+        and permission["ToPort"] == 443
+        and any(pair["GroupId"] == backend_sg["id"] for pair in permission.get("UserIdGroupPairs", []))
+        for permission in live_db_sg["IpPermissions"]
+    )
     assert any(
         permission["IpProtocol"] == "tcp"
         and permission["FromPort"] == 5432
@@ -361,20 +385,7 @@ def test_network_and_security_contract_is_live_via_boto3():
         and any(pair["GroupId"] == backend_sg["id"] for pair in permission.get("UserIdGroupPairs", []))
         for permission in live_db_sg["IpPermissions"]
     )
-    assert any(
-        permission["IpProtocol"] == "-1"
-        and any(range_.get("CidrIp") == "0.0.0.0/0" for range_ in permission.get("IpRanges", []))
-        for permission in live_db_sg["IpPermissionsEgress"]
-    )
-
-    live_vpce_sg = ec2.describe_security_groups(GroupIds=[vpce_sg["id"]])["SecurityGroups"][0]
-    assert any(
-        permission["IpProtocol"] == "tcp"
-        and permission["FromPort"] == 443
-        and permission["ToPort"] == 443
-        and any(pair["GroupId"] == backend_sg["id"] for pair in permission.get("UserIdGroupPairs", []))
-        for permission in live_vpce_sg["IpPermissions"]
-    )
+    assert live_db_sg["IpPermissionsEgress"] == []
 
     endpoints = [
         resource_values("aws_vpc_endpoint", lambda values, suffix=suffix: values.get("service_name", "").endswith(suffix))
@@ -388,6 +399,7 @@ def test_network_and_security_contract_is_live_via_boto3():
         "com.amazonaws.us-east-1.states",
         "com.amazonaws.us-east-1.logs",
     }
+    assert all(endpoint.get("Groups") == [{"GroupId": db_sg["id"], "GroupName": "db_sg"}] for endpoint in live_endpoints)
 
 
 def test_alb_api_gateway_and_lambda_configuration_are_live():

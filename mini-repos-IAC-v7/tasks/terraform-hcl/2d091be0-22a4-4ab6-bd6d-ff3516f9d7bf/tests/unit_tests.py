@@ -241,15 +241,36 @@ def test_security_groups_and_endpoints_cover_required_rules():
     alb_sg = resource_block("aws_security_group", "alb_sg")
     backend_sg = resource_block("aws_security_group", "backend_sg")
     db_sg = resource_block("aws_security_group", "db_sg")
-    vpce_sg = resource_block("aws_security_group", "vpce_sg")
+    alb_http = resource_block("aws_vpc_security_group_ingress_rule", "alb_http")
+    alb_to_backend = resource_block("aws_vpc_security_group_egress_rule", "alb_to_backend")
+    backend_from_alb = resource_block("aws_vpc_security_group_ingress_rule", "backend_from_alb")
+    backend_to_endpoints = resource_block("aws_vpc_security_group_egress_rule", "backend_to_endpoints")
+    backend_to_db = resource_block("aws_vpc_security_group_egress_rule", "backend_to_db")
+    db_endpoints_from_backend = resource_block("aws_vpc_security_group_ingress_rule", "db_endpoints_from_backend")
+    db_postgres_from_backend = resource_block("aws_vpc_security_group_ingress_rule", "db_postgres_from_backend")
 
-    assert 'cidr_blocks = ["0.0.0.0/0"]' in alb_sg
-    assert "from_port       = 8080" in backend_sg
-    assert "security_groups = [aws_security_group.alb_sg.id]" in backend_sg
-    assert "from_port       = 5432" in db_sg
-    assert "security_groups = [aws_security_group.backend_sg.id]" in db_sg
-    assert "from_port       = 443" in vpce_sg
-    assert "security_groups = [aws_security_group.backend_sg.id]" in vpce_sg
+    assert set(resource_names("aws_security_group")) == {"alb_sg", "backend_sg", "db_sg"}
+    assert "egress = []" in db_sg
+    assert "egress = []" in alb_sg
+    assert "egress = []" in backend_sg
+    assert 'cidr_ipv4         = "0.0.0.0/0"' in alb_http
+    assert "security_group_id = aws_security_group.alb_sg.id" in alb_http
+    assert "referenced_security_group_id = aws_security_group.backend_sg.id" in alb_to_backend
+    assert "from_port                    = 8080" in alb_to_backend
+    assert "security_group_id            = aws_security_group.backend_sg.id" in backend_from_alb
+    assert "referenced_security_group_id = aws_security_group.alb_sg.id" in backend_from_alb
+    assert "security_group_id            = aws_security_group.backend_sg.id" in backend_to_endpoints
+    assert "from_port                    = 443" in backend_to_endpoints
+    assert "referenced_security_group_id = aws_security_group.db_sg.id" in backend_to_endpoints
+    assert "security_group_id            = aws_security_group.backend_sg.id" in backend_to_db
+    assert "from_port                    = 5432" in backend_to_db
+    assert "referenced_security_group_id = aws_security_group.db_sg.id" in backend_to_db
+    assert "security_group_id            = aws_security_group.db_sg.id" in db_endpoints_from_backend
+    assert "from_port                    = 443" in db_endpoints_from_backend
+    assert "referenced_security_group_id = aws_security_group.backend_sg.id" in db_endpoints_from_backend
+    assert "security_group_id            = aws_security_group.db_sg.id" in db_postgres_from_backend
+    assert "from_port                    = 5432" in db_postgres_from_backend
+    assert "referenced_security_group_id = aws_security_group.backend_sg.id" in db_postgres_from_backend
     assert count_pattern(r'^resource "aws_vpc_endpoint" "') == 4
     for endpoint_name, suffix in [
         ("secretsmanager", ".secretsmanager"),
@@ -260,7 +281,7 @@ def test_security_groups_and_endpoints_cover_required_rules():
         endpoint = resource_block("aws_vpc_endpoint", endpoint_name)
         assert 'vpc_endpoint_type   = "Interface"' in endpoint
         assert suffix in endpoint
-        assert "security_group_ids  = [aws_security_group.vpce_sg.id]" in endpoint
+        assert "security_group_ids  = [aws_security_group.db_sg.id]" in endpoint
 
 
 def test_lambda_resource_contracts_handlers_and_permissions_are_declared():
@@ -308,6 +329,7 @@ def test_database_secret_rds_and_schema_contract_are_declared():
     assert "password = random_password.db_password.result" in secret_version
     assert "special = false" in resource_block("random_password", "db_password")
     assert "subnet_ids = [aws_subnet.private_1.id, aws_subnet.private_2.id]" in db_subnet_group
+    assert "count = local.supports_rds ? 1 : 0" in db_subnet_group
     assert 'engine                 = "postgres"' in db_instance
     assert 'engine_version         = "15.4"' in db_instance
     assert 'instance_class         = "db.t3.micro"' in db_instance
@@ -316,9 +338,11 @@ def test_database_secret_rds_and_schema_contract_are_declared():
     assert "publicly_accessible    = false" in db_instance
     assert "port                   = 5432" in db_instance
     assert "vpc_security_group_ids = [aws_security_group.db_sg.id]" in db_instance
+    assert "count                  = local.supports_rds ? 1 : 0" in db_instance
     assert "id serial primary key" in backend_source
     assert "value text not null" in backend_source
     assert "created_at timestamp default now()" in backend_source
+    assert "DB_DISABLED" in backend_source
 
 
 def test_state_machine_pipe_and_iam_policies_are_scoped():
@@ -368,6 +392,14 @@ def test_log_groups_are_explicit_and_not_conditionally_skipped():
     assert "count             = local.endpoint_override_enabled ? 0 : 1" not in frontend_log_group
     assert "count             = local.endpoint_override_enabled ? 0 : 1" not in backend_log_group
     assert "count             = local.endpoint_override_enabled ? 0 : 1" not in worker_log_group
+
+
+def test_endpoint_override_compatibility_flags_are_explicit():
+    assert "endpoint_override_enabled" in TF
+    assert "supports_rds" in TF
+    assert "supports_pipes" in TF
+    assert "supports_apigateway" in TF
+    assert "supports_alb" in TF
 
 
 def test_frontend_lambda_returns_html_with_health_link():

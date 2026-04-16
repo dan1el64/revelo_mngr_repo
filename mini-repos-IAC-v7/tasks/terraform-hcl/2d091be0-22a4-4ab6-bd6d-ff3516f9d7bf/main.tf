@@ -175,19 +175,7 @@ resource "aws_security_group" "alb_sg" {
   description = "ALB security group"
   vpc_id      = aws_vpc.main.id
 
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  egress = []
 }
 
 resource "aws_security_group" "backend_sg" {
@@ -195,59 +183,71 @@ resource "aws_security_group" "backend_sg" {
   description = "Backend Lambda security group"
   vpc_id      = aws_vpc.main.id
 
-  ingress {
-    from_port       = 8080
-    to_port         = 8080
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb_sg.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  egress = []
 }
 
 resource "aws_security_group" "db_sg" {
   name        = "db_sg"
-  description = "Database security group"
+  description = "Database and interface endpoint security group"
   vpc_id      = aws_vpc.main.id
 
-  ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.backend_sg.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  egress = []
 }
 
-resource "aws_security_group" "vpce_sg" {
-  name        = "vpce_sg"
-  description = "Interface endpoint security group"
-  vpc_id      = aws_vpc.main.id
+resource "aws_vpc_security_group_ingress_rule" "alb_http" {
+  security_group_id = aws_security_group.alb_sg.id
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 80
+  ip_protocol       = "tcp"
+  to_port           = 80
+}
 
-  ingress {
-    from_port       = 443
-    to_port         = 443
-    protocol        = "tcp"
-    security_groups = [aws_security_group.backend_sg.id]
-  }
+resource "aws_vpc_security_group_egress_rule" "alb_to_backend" {
+  security_group_id            = aws_security_group.alb_sg.id
+  referenced_security_group_id = aws_security_group.backend_sg.id
+  from_port                    = 8080
+  ip_protocol                  = "tcp"
+  to_port                      = 8080
+}
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+resource "aws_vpc_security_group_ingress_rule" "backend_from_alb" {
+  security_group_id            = aws_security_group.backend_sg.id
+  referenced_security_group_id = aws_security_group.alb_sg.id
+  from_port                    = 8080
+  ip_protocol                  = "tcp"
+  to_port                      = 8080
+}
+
+resource "aws_vpc_security_group_egress_rule" "backend_to_endpoints" {
+  security_group_id            = aws_security_group.backend_sg.id
+  referenced_security_group_id = aws_security_group.db_sg.id
+  from_port                    = 443
+  ip_protocol                  = "tcp"
+  to_port                      = 443
+}
+
+resource "aws_vpc_security_group_egress_rule" "backend_to_db" {
+  security_group_id            = aws_security_group.backend_sg.id
+  referenced_security_group_id = aws_security_group.db_sg.id
+  from_port                    = 5432
+  ip_protocol                  = "tcp"
+  to_port                      = 5432
+}
+
+resource "aws_vpc_security_group_ingress_rule" "db_endpoints_from_backend" {
+  security_group_id            = aws_security_group.db_sg.id
+  referenced_security_group_id = aws_security_group.backend_sg.id
+  from_port                    = 443
+  ip_protocol                  = "tcp"
+  to_port                      = 443
+}
+
+resource "aws_vpc_security_group_ingress_rule" "db_postgres_from_backend" {
+  security_group_id            = aws_security_group.db_sg.id
+  referenced_security_group_id = aws_security_group.backend_sg.id
+  from_port                    = 5432
+  ip_protocol                  = "tcp"
+  to_port                      = 5432
 }
 
 resource "aws_vpc_endpoint" "secretsmanager" {
@@ -255,7 +255,7 @@ resource "aws_vpc_endpoint" "secretsmanager" {
   service_name        = "com.amazonaws.${var.aws_region}.secretsmanager"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = [aws_subnet.private_1.id, aws_subnet.private_2.id]
-  security_group_ids  = [aws_security_group.vpce_sg.id]
+  security_group_ids  = [aws_security_group.db_sg.id]
   private_dns_enabled = true
 }
 
@@ -264,7 +264,7 @@ resource "aws_vpc_endpoint" "sqs" {
   service_name        = "com.amazonaws.${var.aws_region}.sqs"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = [aws_subnet.private_1.id, aws_subnet.private_2.id]
-  security_group_ids  = [aws_security_group.vpce_sg.id]
+  security_group_ids  = [aws_security_group.db_sg.id]
   private_dns_enabled = true
 }
 
@@ -273,7 +273,7 @@ resource "aws_vpc_endpoint" "sfn" {
   service_name        = "com.amazonaws.${var.aws_region}.states"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = [aws_subnet.private_1.id, aws_subnet.private_2.id]
-  security_group_ids  = [aws_security_group.vpce_sg.id]
+  security_group_ids  = [aws_security_group.db_sg.id]
   private_dns_enabled = true
 }
 
@@ -282,7 +282,7 @@ resource "aws_vpc_endpoint" "logs" {
   service_name        = "com.amazonaws.${var.aws_region}.logs"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = [aws_subnet.private_1.id, aws_subnet.private_2.id]
-  security_group_ids  = [aws_security_group.vpce_sg.id]
+  security_group_ids  = [aws_security_group.db_sg.id]
   private_dns_enabled = true
 }
 
