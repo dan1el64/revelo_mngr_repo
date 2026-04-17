@@ -19,7 +19,6 @@ from aws_cdk import (
     aws_sqs as sqs,
     aws_stepfunctions as sfn,
 )
-from aws_cdk import aws_stepfunctions_tasks as sfn_tasks
 from constructs import Construct
 
 
@@ -220,6 +219,17 @@ def add_log_write_permissions(role: iam.Role, log_group: logs.LogGroup, sid: str
     )
 
 
+def add_metric_write_permissions(role: iam.Role, namespace: str, sid: str) -> None:
+    role.add_to_policy(
+        iam.PolicyStatement(
+            sid=sid,
+            actions=["cloudwatch:PutMetricData"],
+            resources=["*"],
+            conditions={"StringEquals": {"cloudwatch:namespace": namespace}},
+        )
+    )
+
+
 class SecurityBaselineStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -334,7 +344,6 @@ class SecurityBaselineStack(Stack):
             encryption=s3.BucketEncryption.S3_MANAGED,
             versioned=True,
             removal_policy=RemovalPolicy.DESTROY,
-            auto_delete_objects=True,
         )
 
         ingest_function_name = generated_name(self, "ingest-handler")
@@ -421,6 +430,16 @@ class SecurityBaselineStack(Stack):
         add_lambda_vpc_permissions(workflow_role)
         add_log_write_permissions(ingest_role, ingest_log_group, "WriteIngestLogs")
         add_log_write_permissions(workflow_role, workflow_log_group, "WriteWorkflowLogs")
+        add_metric_write_permissions(
+            ingest_role,
+            "SecurityBaseline/Ingest",
+            "WriteIngestMetrics",
+        )
+        add_metric_write_permissions(
+            workflow_role,
+            "SecurityBaseline/Workflow",
+            "WriteWorkflowMetrics",
+        )
 
         ingest_role.add_to_policy(
             iam.PolicyStatement(
@@ -437,21 +456,22 @@ class SecurityBaselineStack(Stack):
             )
         )
 
-        workflow_definition = sfn.Chain.start(
-            sfn_tasks.LambdaInvoke(
-                self,
-                "RunWorkflowWorker",
-                lambda_function=workflow_worker,
-                payload_response_only=True,
-            )
-        ).next(sfn.Succeed(self, "WorkflowSucceeded"))
-
-        workflow_state_machine = sfn.StateMachine(
+        workflow_state_machine = sfn.CfnStateMachine(
             self,
             "WorkflowStateMachine",
-            state_machine_type=sfn.StateMachineType.STANDARD,
-            definition_body=sfn.DefinitionBody.from_chainable(workflow_definition),
-            role=state_machine_role,
+            state_machine_type="STANDARD",
+            role_arn=state_machine_role.role_arn,
+            definition_string=cdk.Fn.sub(
+                (
+                    '{"StartAt":"RunWorkflowWorker",'
+                    '"States":{"RunWorkflowWorker":{'
+                    '"Type":"Task",'
+                    '"Resource":"${WorkflowWorkerArn}",'
+                    '"Next":"WorkflowSucceeded"},'
+                    '"WorkflowSucceeded":{"Type":"Succeed"}}}'
+                ),
+                {"WorkflowWorkerArn": workflow_worker.function_arn},
+            ),
         )
 
         state_machine_role.add_to_policy(
@@ -460,6 +480,9 @@ class SecurityBaselineStack(Stack):
                 actions=["lambda:InvokeFunction"],
                 resources=[workflow_worker.function_arn],
             )
+        )
+        workflow_state_machine.node.add_dependency(
+            state_machine_role.node.find_child("DefaultPolicy")
         )
 
         pipe_role.add_to_policy(
@@ -485,20 +508,20 @@ class SecurityBaselineStack(Stack):
             iam.PolicyStatement(
                 sid="StartWorkflowExecution",
                 actions=["states:StartExecution"],
-                resources=[workflow_state_machine.state_machine_arn],
+                resources=[workflow_state_machine.attr_arn],
             )
         )
 
-        api = apigwv2.HttpApi(
+        api = apigwv2.CfnApi(
             self,
             "IngressHttpApi",
-            create_default_stage=False,
+            protocol_type="HTTP",
         )
 
         lambda_integration = apigwv2.CfnIntegration(
             self,
             "IngestLambdaIntegration",
-            api_id=api.api_id,
+            api_id=api.ref,
             integration_type="AWS_PROXY",
             integration_method="POST",
             integration_uri=(
@@ -511,7 +534,7 @@ class SecurityBaselineStack(Stack):
         apigwv2.CfnRoute(
             self,
             "IngestRoute",
-            api_id=api.api_id,
+            api_id=api.ref,
             route_key="POST /ingest",
             target=f"integrations/{lambda_integration.ref}",
         )
@@ -519,7 +542,7 @@ class SecurityBaselineStack(Stack):
         apigwv2.CfnStage(
             self,
             "IngressDefaultStage",
-            api_id=api.api_id,
+            api_id=api.ref,
             stage_name="$default",
             auto_deploy=True,
             access_log_settings=apigwv2.CfnStage.AccessLogSettingsProperty(
@@ -538,13 +561,13 @@ class SecurityBaselineStack(Stack):
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             source_arn=Stack.of(self).format_arn(
                 service="execute-api",
-                resource=api.api_id,
+                resource=api.ref,
                 resource_name="*/POST/ingest",
                 arn_format=cdk.ArnFormat.SLASH_RESOURCE_NAME,
             ),
         )
 
-        pipes.CfnPipe(
+        pipe = pipes.CfnPipe(
             self,
             "IngestPipe",
             role_arn=pipe_role.role_arn,
@@ -555,7 +578,7 @@ class SecurityBaselineStack(Stack):
                 )
             ),
             enrichment=ingest_handler.function_arn,
-            target=workflow_state_machine.state_machine_arn,
+            target=workflow_state_machine.attr_arn,
             target_parameters=pipes.CfnPipe.PipeTargetParametersProperty(
                 step_function_state_machine_parameters=(
                     pipes.CfnPipe.PipeTargetStateMachineParametersProperty(
@@ -564,6 +587,7 @@ class SecurityBaselineStack(Stack):
                 )
             ),
         )
+        pipe.node.add_dependency(pipe_role.node.find_child("DefaultPolicy"))
 
         glue_database = glue.CfnDatabase(
             self,
@@ -605,7 +629,7 @@ class SecurityBaselineStack(Stack):
             )
         )
 
-        glue.CfnCrawler(
+        crawler = glue.CfnCrawler(
             self,
             "SecurityInventoryCrawler",
             role=crawler_role.role_arn,
@@ -618,6 +642,7 @@ class SecurityBaselineStack(Stack):
                 ]
             ),
         )
+        crawler.node.add_dependency(crawler_role.node.find_child("DefaultPolicy"))
 
 
 def build_app() -> cdk.App:  # pragma: no cover
