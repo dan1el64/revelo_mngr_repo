@@ -69,14 +69,10 @@ variable "aws_secret_access_key" {
 
 data "aws_partition" "current" {}
 
-data "aws_caller_identity" "current" {
-  count = local.reduced_endpoint_mode ? 0 : 1
-}
-
 locals {
   lambda_a_name         = "order-intake-processor"
   lambda_b_name         = "analytics-kickoff-worker"
-  reduced_endpoint_mode = length(regexall("amazonaws\\.com", var.aws_endpoint)) == 0
+  full_service_endpoint = length(regexall("amazonaws\\.com", var.aws_endpoint)) > 0
 
   availability_zones = ["${var.aws_region}a", "${var.aws_region}b"]
 
@@ -84,11 +80,13 @@ locals {
   lambda_b_log_group_name = "/aws/lambda/${local.lambda_b_name}"
   sfn_log_group_name      = "/aws/vendedlogs/states/orders-processing"
   api_stage_name          = "prod"
-  api_gateway_account_id  = local.reduced_endpoint_mode ? "000000000000" : data.aws_caller_identity.current[0].account_id
 
   glue_catalog_arn  = "arn:${data.aws_partition.current.partition}:glue:${var.aws_region}:*:catalog"
   glue_database_arn = "arn:${data.aws_partition.current.partition}:glue:${var.aws_region}:*:database/orders_analytics_catalog"
   glue_table_arn    = "arn:${data.aws_partition.current.partition}:glue:${var.aws_region}:*:table/orders_analytics_catalog/*"
+
+  rds_secret_host      = local.full_service_endpoint ? aws_db_instance.postgres[0].address : "orders-postgres.internal"
+  redshift_secret_host = local.full_service_endpoint ? aws_redshift_cluster.analytics[0].dns_name : "orders-analytics.internal"
 
   lambda_vpc_actions = [
     "ec2:AssignPrivateIpAddresses",
@@ -362,7 +360,7 @@ resource "aws_secretsmanager_secret_version" "rds" {
   secret_id = aws_secretsmanager_secret.rds.id
   secret_string = jsonencode({
     engine   = "postgres"
-    host     = local.reduced_endpoint_mode ? "orders-postgres.internal" : aws_db_instance.postgres[0].address
+    host     = local.rds_secret_host
     password = random_password.rds.result
     port     = 5432
     username = "orders_admin"
@@ -378,7 +376,7 @@ resource "aws_secretsmanager_secret_version" "redshift" {
   secret_string = jsonencode({
     cluster_identifier = "orders-analytics"
     database           = "analytics"
-    host               = local.reduced_endpoint_mode ? "orders-analytics.internal" : aws_redshift_cluster.analytics[0].dns_name
+    host               = local.redshift_secret_host
     password           = random_password.redshift.result
     port               = 5439
     username           = "analytics_admin"
@@ -386,19 +384,19 @@ resource "aws_secretsmanager_secret_version" "redshift" {
 }
 
 resource "aws_db_subnet_group" "postgres" {
-  count      = local.reduced_endpoint_mode ? 0 : 1
+  count      = local.full_service_endpoint ? 1 : 0
   name       = "orders-db-subnet-group"
   subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]
 }
 
 resource "aws_redshift_subnet_group" "analytics" {
-  count      = local.reduced_endpoint_mode ? 0 : 1
+  count      = local.full_service_endpoint ? 1 : 0
   name       = "orders-redshift-subnet-group"
   subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]
 }
 
 resource "aws_db_instance" "postgres" {
-  count                  = local.reduced_endpoint_mode ? 0 : 1
+  count                  = local.full_service_endpoint ? 1 : 0
   identifier             = "orders-postgres"
   allocated_storage      = 20
   engine                 = "postgres"
@@ -416,7 +414,7 @@ resource "aws_db_instance" "postgres" {
 }
 
 resource "aws_redshift_cluster" "analytics" {
-  count                     = local.reduced_endpoint_mode ? 0 : 1
+  count                     = local.full_service_endpoint ? 1 : 0
   cluster_identifier        = "orders-analytics"
   cluster_type              = "single-node"
   node_type                 = "dc2.large"
@@ -434,12 +432,12 @@ resource "aws_redshift_cluster" "analytics" {
 }
 
 resource "aws_glue_catalog_database" "analytics" {
-  count = local.reduced_endpoint_mode ? 0 : 1
+  count = local.full_service_endpoint ? 1 : 0
   name  = "orders_analytics_catalog"
 }
 
 resource "aws_glue_connection" "redshift" {
-  count           = local.reduced_endpoint_mode ? 0 : 1
+  count           = local.full_service_endpoint ? 1 : 0
   name            = "orders-redshift-jdbc"
   connection_type = "JDBC"
 
@@ -456,7 +454,7 @@ resource "aws_glue_connection" "redshift" {
 }
 
 resource "aws_iam_role" "glue" {
-  count = local.reduced_endpoint_mode ? 0 : 1
+  count = local.full_service_endpoint ? 1 : 0
   name  = "orders-glue-crawler-role"
 
   assume_role_policy = jsonencode({
@@ -474,7 +472,7 @@ resource "aws_iam_role" "glue" {
 }
 
 resource "aws_iam_role_policy" "glue" {
-  count = local.reduced_endpoint_mode ? 0 : 1
+  count = local.full_service_endpoint ? 1 : 0
   name  = "orders-glue-crawler-policy"
   role  = aws_iam_role.glue[0].id
 
@@ -530,7 +528,7 @@ resource "aws_iam_role_policy" "glue" {
 }
 
 resource "aws_glue_crawler" "redshift" {
-  count         = local.reduced_endpoint_mode ? 0 : 1
+  count         = local.full_service_endpoint ? 1 : 0
   name          = "orders-redshift-crawler"
   database_name = aws_glue_catalog_database.analytics[0].name
   role          = aws_iam_role.glue[0].arn
@@ -566,11 +564,17 @@ data "archive_file" "lambda_a" {
 
       def handler(event, context):
           secret_arn = os.environ["DB_SECRET_ARN"]
-          secret = boto3.client("secretsmanager").get_secret_value(SecretId=secret_arn)
+          client = boto3.client("secretsmanager")
+          secret = client.get_secret_value(SecretId=secret_arn)
           return {
               "statusCode": 200,
-              "secret_present": "SecretString" in secret,
-              "received": event,
+              "headers": {
+                  "Content-Type": "application/json"
+              },
+              "body": json.dumps({
+                  "secret_present": "SecretString" in secret,
+                  "received": event,
+              }),
           }
     PYTHON
     filename = "index.py"
@@ -819,7 +823,7 @@ resource "aws_sfn_state_machine" "orders" {
 }
 
 resource "aws_iam_role" "pipe" {
-  count = local.reduced_endpoint_mode ? 0 : 1
+  count = local.full_service_endpoint ? 1 : 0
   name  = "orders-pipe-role"
 
   assume_role_policy = jsonencode({
@@ -837,7 +841,7 @@ resource "aws_iam_role" "pipe" {
 }
 
 resource "aws_iam_role_policy" "pipe" {
-  count = local.reduced_endpoint_mode ? 0 : 1
+  count = local.full_service_endpoint ? 1 : 0
   name  = "orders-pipe-policy"
   role  = aws_iam_role.pipe[0].id
 
@@ -872,7 +876,7 @@ resource "aws_iam_role_policy" "pipe" {
 }
 
 resource "aws_pipes_pipe" "orders" {
-  count    = local.reduced_endpoint_mode ? 0 : 1
+  count    = local.full_service_endpoint ? 1 : 0
   name     = "orders-pipe"
   role_arn = aws_iam_role.pipe[0].arn
   source   = aws_sqs_queue.order_events.arn
@@ -938,5 +942,5 @@ resource "aws_lambda_permission" "api_gateway_to_lambda_a" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda_a.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "arn:${data.aws_partition.current.partition}:execute-api:${var.aws_region}:${local.api_gateway_account_id}:*/${local.api_stage_name}/POST/orders"
+  source_arn    = "${aws_api_gateway_rest_api.orders.execution_arn}/${local.api_stage_name}/POST/orders"
 }

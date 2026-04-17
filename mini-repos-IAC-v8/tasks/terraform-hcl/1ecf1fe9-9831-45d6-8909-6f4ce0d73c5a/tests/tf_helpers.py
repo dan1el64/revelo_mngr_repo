@@ -44,15 +44,6 @@ def resources_of_type(resources: list[dict], type_name: str, mode: str | None = 
     return matches
 
 
-def reduced_endpoint_mode(resources: list[dict]) -> bool:
-    return (
-        not resources_of_type(resources, "aws_db_instance")
-        and not resources_of_type(resources, "aws_glue_catalog_database")
-        and not resources_of_type(resources, "aws_pipes_pipe")
-        and not resources_of_type(resources, "aws_redshift_cluster")
-    )
-
-
 def one_block(value):
     if isinstance(value, list):
         assert len(value) == 1, f"Expected exactly one nested block, found {len(value)}"
