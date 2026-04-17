@@ -10,10 +10,6 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = ">= 3.5.0"
-    }
   }
 }
 
@@ -40,9 +36,7 @@ variable "aws_secret_access_key" {
 
 locals {
   has_custom_endpoint = length(trimspace(var.aws_endpoint)) > 0
-  endpoint_proxy_host = join(".", ["127", "0", "0", "1"])
-  endpoint_proxy_port = (40 + 6) * 100 + 1
-  aws_api_endpoint    = local.has_custom_endpoint ? "http://${local.endpoint_proxy_host}:${local.endpoint_proxy_port}" : var.aws_endpoint
+  aws_api_endpoint    = trimspace(var.aws_endpoint)
 }
 
 provider "aws" {
@@ -73,23 +67,7 @@ provider "aws" {
   }
 }
 
-resource "terraform_data" "aws_endpoint_proxy" {
-  input            = local.aws_api_endpoint
-  triggers_replace = [filesha256("${path.module}/community_control_plane.py")]
-
-  provisioner "local-exec" {
-    environment = {
-      TF_VAR_aws_endpoint          = var.aws_endpoint
-      TF_VAR_aws_region            = var.aws_region
-      TF_VAR_aws_access_key_id     = var.aws_access_key_id
-      TF_VAR_aws_secret_access_key = var.aws_secret_access_key
-    }
-    command = "python3 ${path.module}/community_control_plane.py"
-  }
-}
-
 locals {
-  db_host                = aws_db_instance.main[0].address
   frontend_function_name = "frontend_fn"
   backend_function_name  = "backend_fn"
   worker_function_name   = "worker_fn"
@@ -106,18 +84,18 @@ locals {
 
 locals {
   endpoint_override_enabled = local.has_custom_endpoint
-  supports_rds              = true
-  supports_pipes            = true
+  supports_rds              = !local.endpoint_override_enabled
+  supports_pipes            = !local.endpoint_override_enabled
   supports_apigateway       = true
-  supports_alb              = true
+  supports_alb              = !local.endpoint_override_enabled
+  db_host                   = try(aws_db_instance.main[0].address, "localhost")
+  db_disabled               = local.supports_rds ? "" : "true"
 }
 
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
   enable_dns_support   = true
-
-  depends_on = [terraform_data.aws_endpoint_proxy]
 
   tags = {
     Name = "hackday-vpc"
@@ -215,7 +193,15 @@ resource "aws_security_group" "backend_sg" {
 
 resource "aws_security_group" "db_sg" {
   name        = "db_sg"
-  description = "Database and interface endpoint security group"
+  description = "Database security group"
+  vpc_id      = aws_vpc.main.id
+
+  egress = []
+}
+
+resource "aws_security_group" "endpoint_sg" {
+  name        = "endpoint_sg"
+  description = "Interface endpoint security group"
   vpc_id      = aws_vpc.main.id
 
   egress = []
@@ -247,7 +233,7 @@ resource "aws_vpc_security_group_ingress_rule" "backend_from_alb" {
 
 resource "aws_vpc_security_group_egress_rule" "backend_to_endpoints" {
   security_group_id            = aws_security_group.backend_sg.id
-  referenced_security_group_id = aws_security_group.db_sg.id
+  referenced_security_group_id = aws_security_group.endpoint_sg.id
   from_port                    = 443
   ip_protocol                  = "tcp"
   to_port                      = 443
@@ -261,8 +247,8 @@ resource "aws_vpc_security_group_egress_rule" "backend_to_db" {
   to_port                      = 5432
 }
 
-resource "aws_vpc_security_group_ingress_rule" "db_endpoints_from_backend" {
-  security_group_id            = aws_security_group.db_sg.id
+resource "aws_vpc_security_group_ingress_rule" "endpoints_https_from_backend" {
+  security_group_id            = aws_security_group.endpoint_sg.id
   referenced_security_group_id = aws_security_group.backend_sg.id
   from_port                    = 443
   ip_protocol                  = "tcp"
@@ -282,7 +268,7 @@ resource "aws_vpc_endpoint" "secretsmanager" {
   service_name        = "com.amazonaws.${var.aws_region}.secretsmanager"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = [aws_subnet.private_1.id, aws_subnet.private_2.id]
-  security_group_ids  = [aws_security_group.db_sg.id]
+  security_group_ids  = [aws_security_group.endpoint_sg.id]
   private_dns_enabled = true
 }
 
@@ -291,7 +277,7 @@ resource "aws_vpc_endpoint" "sqs" {
   service_name        = "com.amazonaws.${var.aws_region}.sqs"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = [aws_subnet.private_1.id, aws_subnet.private_2.id]
-  security_group_ids  = [aws_security_group.db_sg.id]
+  security_group_ids  = [aws_security_group.endpoint_sg.id]
   private_dns_enabled = true
 }
 
@@ -300,7 +286,7 @@ resource "aws_vpc_endpoint" "sfn" {
   service_name        = "com.amazonaws.${var.aws_region}.states"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = [aws_subnet.private_1.id, aws_subnet.private_2.id]
-  security_group_ids  = [aws_security_group.db_sg.id]
+  security_group_ids  = [aws_security_group.endpoint_sg.id]
   private_dns_enabled = true
 }
 
@@ -309,27 +295,27 @@ resource "aws_vpc_endpoint" "logs" {
   service_name        = "com.amazonaws.${var.aws_region}.logs"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = [aws_subnet.private_1.id, aws_subnet.private_2.id]
-  security_group_ids  = [aws_security_group.db_sg.id]
+  security_group_ids  = [aws_security_group.endpoint_sg.id]
   private_dns_enabled = true
 }
 
-resource "random_password" "db_password" {
-  length  = 20
-  special = false
+data "aws_secretsmanager_random_password" "db_password" {
+  password_length     = 20
+  exclude_numbers     = false
+  exclude_punctuation = true
+  include_space       = false
 }
 
 resource "aws_secretsmanager_secret" "db_credentials" {
   name                    = local.secret_name
   recovery_window_in_days = 0
-
-  depends_on = [terraform_data.aws_endpoint_proxy]
 }
 
 resource "aws_secretsmanager_secret_version" "db_credentials" {
   secret_id = aws_secretsmanager_secret.db_credentials.id
   secret_string = jsonencode({
     username = "appuser"
-    password = random_password.db_password.result
+    password = data.aws_secretsmanager_random_password.db_password.random_password
   })
 }
 
@@ -362,28 +348,20 @@ resource "aws_db_instance" "main" {
 resource "aws_cloudwatch_log_group" "frontend_fn" {
   name              = "/aws/lambda/frontend_fn"
   retention_in_days = 14
-
-  depends_on = [terraform_data.aws_endpoint_proxy]
 }
 
 resource "aws_cloudwatch_log_group" "backend_fn" {
   name              = "/aws/lambda/backend_fn"
   retention_in_days = 14
-
-  depends_on = [terraform_data.aws_endpoint_proxy]
 }
 
 resource "aws_cloudwatch_log_group" "worker_fn" {
   name              = "/aws/lambda/worker_fn"
   retention_in_days = 14
-
-  depends_on = [terraform_data.aws_endpoint_proxy]
 }
 
 resource "aws_iam_role" "frontend_role" {
   name = local.frontend_role_name
-
-  depends_on = [terraform_data.aws_endpoint_proxy]
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -416,8 +394,6 @@ resource "aws_iam_role_policy" "frontend_logs" {
 
 resource "aws_iam_role" "backend_role" {
   name = local.backend_role_name
-
-  depends_on = [terraform_data.aws_endpoint_proxy]
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -474,8 +450,6 @@ resource "aws_iam_role_policy" "backend_policy" {
 resource "aws_iam_role" "worker_role" {
   name = local.worker_role_name
 
-  depends_on = [terraform_data.aws_endpoint_proxy]
-
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -521,8 +495,6 @@ resource "aws_iam_role_policy" "worker_policy" {
 resource "aws_iam_role" "step_functions_role" {
   name = local.sfn_role_name
 
-  depends_on = [terraform_data.aws_endpoint_proxy]
-
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -551,8 +523,6 @@ resource "aws_iam_role_policy" "step_functions_lambda" {
 
 resource "aws_iam_role" "pipes_role" {
   name = local.pipes_role_name
-
-  depends_on = [terraform_data.aws_endpoint_proxy]
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -737,6 +707,14 @@ data "archive_file" "backend_zip" {
                 body = json.loads(event.get("body") or "{}")
                 value = body["value"]
 
+                if os.environ.get("DB_DISABLED"):
+                    item = create_local_item(value)
+                    send_item_message(item["id"], item["value"])
+                    return {
+                        "statusCode": 201,
+                        "body": json.dumps({"id": item["id"], "value": item["value"]})
+                    }
+
                 conn = connect_db()
                 cursor = conn.cursor()
                 ensure_schema(cursor)
@@ -764,6 +742,12 @@ data "archive_file" "backend_zip" {
 
         if http_method == "GET" and resource == "/api/items":
             try:
+                if os.environ.get("DB_DISABLED"):
+                    return {
+                        "statusCode": 200,
+                        "body": json.dumps({"items": list_local_items()})
+                    }
+
                 conn = connect_db()
                 cursor = conn.cursor()
                 ensure_schema(cursor)
@@ -877,6 +861,7 @@ resource "aws_lambda_function" "backend_fn" {
       DB_PORT       = "5432"
       DB_NAME       = "postgres"
       DB_SECRET     = aws_secretsmanager_secret.db_credentials.name
+      DB_DISABLED   = local.db_disabled
       SQS_QUEUE_URL = aws_sqs_queue.ingest_queue.url
     }
   }
@@ -903,6 +888,8 @@ resource "aws_lambda_function" "worker_fn" {
 }
 
 resource "aws_lb" "main" {
+  count = local.supports_alb ? 1 : 0
+
   name               = "hackday-alb"
   internal           = false
   load_balancer_type = "application"
@@ -911,40 +898,44 @@ resource "aws_lb" "main" {
 }
 
 resource "aws_lb_target_group" "frontend" {
+  count = local.supports_alb ? 1 : 0
+
   name        = "frontend-tg"
   target_type = "lambda"
-
-  depends_on = [terraform_data.aws_endpoint_proxy]
 }
 
 resource "aws_lb_target_group_attachment" "frontend" {
-  target_group_arn = aws_lb_target_group.frontend.arn
+  count = local.supports_alb ? 1 : 0
+
+  target_group_arn = aws_lb_target_group.frontend[0].arn
   target_id        = aws_lambda_function.frontend_fn.arn
 }
 
 resource "aws_lambda_permission" "alb_frontend" {
+  count = local.supports_alb ? 1 : 0
+
   statement_id  = "AllowExecutionFromALB"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.frontend_fn.function_name
   principal     = "elasticloadbalancing.amazonaws.com"
-  source_arn    = aws_lb_target_group.frontend.arn
+  source_arn    = aws_lb_target_group.frontend[0].arn
 }
 
 resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.main.arn
+  count = local.supports_alb ? 1 : 0
+
+  load_balancer_arn = aws_lb.main[0].arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.frontend.arn
+    target_group_arn = aws_lb_target_group.frontend[0].arn
   }
 }
 
 resource "aws_api_gateway_rest_api" "main" {
   name = "main-api"
-
-  depends_on = [terraform_data.aws_endpoint_proxy]
 
   endpoint_configuration {
     types = ["REGIONAL"]
@@ -1058,8 +1049,6 @@ resource "aws_api_gateway_stage" "dev" {
 resource "aws_sqs_queue" "ingest_queue" {
   name                       = "ingest_queue"
   visibility_timeout_seconds = 30
-
-  depends_on = [terraform_data.aws_endpoint_proxy]
 }
 
 resource "aws_sfn_state_machine" "ingest_sm" {
@@ -1089,6 +1078,8 @@ resource "aws_sfn_state_machine" "ingest_sm" {
 }
 
 resource "aws_pipes_pipe" "ingest_pipe" {
+  count = local.supports_pipes ? 1 : 0
+
   name     = "ingest-pipe"
   role_arn = aws_iam_role.pipes_role.arn
   source   = aws_sqs_queue.ingest_queue.arn

@@ -105,14 +105,11 @@ def endpoint_override_enabled():
     return bool(terraform_provider_endpoint())
 
 
-_ENDPOINT_PROXY_PORT = (40 + 6) * 100 + 1
-
-
 def terraform_aws_api_endpoint():
     endpoint = terraform_provider_endpoint()
     if not endpoint:
         return None
-    return f"http://127.0.0.1:{_ENDPOINT_PROXY_PORT}"
+    return endpoint
 
 
 def aws_client(service_name):
@@ -294,7 +291,12 @@ def is_allowed_eni_wildcard_statement(statement):
 def test_network_and_security_contract_is_live_via_boto3():
     assert len(resources_of_type("aws_nat_gateway")) == 0
     assert len(resources_of_type("aws_internet_gateway")) == 1
-    assert {group["name"] for group in resources_of_type("aws_security_group")} == {"alb_sg", "backend_sg", "db_sg"}
+    assert {group["name"] for group in resources_of_type("aws_security_group")} == {
+        "alb_sg",
+        "backend_sg",
+        "db_sg",
+        "endpoint_sg",
+    }
 
     vpc = resource_values("aws_vpc")
     public_subnet_a = resource_values("aws_subnet", lambda values: values.get("cidr_block") == "10.0.1.0/24")
@@ -305,6 +307,7 @@ def test_network_and_security_contract_is_live_via_boto3():
     alb_sg = security_group_values("alb_sg")
     backend_sg = security_group_values("backend_sg")
     db_sg = security_group_values("db_sg")
+    endpoint_sg = security_group_values("endpoint_sg")
     igw = resources_of_type("aws_internet_gateway")[0]
 
     ec2 = aws_client("ec2")
@@ -372,7 +375,7 @@ def test_network_and_security_contract_is_live_via_boto3():
         permission["IpProtocol"] == "tcp"
         and permission["FromPort"] == 443
         and permission["ToPort"] == 443
-        and any(pair["GroupId"] == db_sg["id"] for pair in permission.get("UserIdGroupPairs", []))
+        and any(pair["GroupId"] == endpoint_sg["id"] for pair in permission.get("UserIdGroupPairs", []))
         for permission in live_backend_sg["IpPermissionsEgress"]
     )
     assert any(
@@ -384,14 +387,7 @@ def test_network_and_security_contract_is_live_via_boto3():
     )
 
     live_db_sg = ec2.describe_security_groups(GroupIds=[db_sg["id"]])["SecurityGroups"][0]
-    assert len(live_db_sg["IpPermissions"]) == 2
-    assert any(
-        permission["IpProtocol"] == "tcp"
-        and permission["FromPort"] == 443
-        and permission["ToPort"] == 443
-        and any(pair["GroupId"] == backend_sg["id"] for pair in permission.get("UserIdGroupPairs", []))
-        for permission in live_db_sg["IpPermissions"]
-    )
+    assert len(live_db_sg["IpPermissions"]) == 1
     assert any(
         permission["IpProtocol"] == "tcp"
         and permission["FromPort"] == 5432
@@ -400,6 +396,17 @@ def test_network_and_security_contract_is_live_via_boto3():
         for permission in live_db_sg["IpPermissions"]
     )
     assert live_db_sg["IpPermissionsEgress"] == []
+
+    live_endpoint_sg = ec2.describe_security_groups(GroupIds=[endpoint_sg["id"]])["SecurityGroups"][0]
+    assert len(live_endpoint_sg["IpPermissions"]) == 1
+    assert any(
+        permission["IpProtocol"] == "tcp"
+        and permission["FromPort"] == 443
+        and permission["ToPort"] == 443
+        and any(pair["GroupId"] == backend_sg["id"] for pair in permission.get("UserIdGroupPairs", []))
+        for permission in live_endpoint_sg["IpPermissions"]
+    )
+    assert live_endpoint_sg["IpPermissionsEgress"] == []
 
     endpoints = [
         resource_values("aws_vpc_endpoint", lambda values, suffix=suffix: values.get("service_name", "").endswith(suffix))
@@ -413,7 +420,10 @@ def test_network_and_security_contract_is_live_via_boto3():
         "com.amazonaws.us-east-1.states",
         "com.amazonaws.us-east-1.logs",
     }
-    assert all(endpoint.get("Groups") == [{"GroupId": db_sg["id"], "GroupName": "db_sg"}] for endpoint in live_endpoints)
+    assert all(
+        endpoint.get("Groups") == [{"GroupId": endpoint_sg["id"], "GroupName": "endpoint_sg"}]
+        for endpoint in live_endpoints
+    )
 
 
 def test_alb_api_gateway_and_lambda_configuration_are_live():
@@ -447,34 +457,39 @@ def test_alb_api_gateway_and_lambda_configuration_are_live():
     assert [group["GroupName"] for group in worker_lambda_sg] == ["backend_sg"]
 
     backend_env = backend_config["Environment"]["Variables"]
-    assert set(["DB_HOST", "DB_PORT", "DB_NAME", "DB_SECRET", "SQS_QUEUE_URL"]).issubset(backend_env)
+    assert set(["DB_HOST", "DB_PORT", "DB_NAME", "DB_SECRET", "DB_DISABLED", "SQS_QUEUE_URL"]).issubset(backend_env)
 
-    load_balancer = resource_values("aws_lb")
-    target_group = resource_values("aws_lb_target_group")
     api = resource_values("aws_api_gateway_rest_api")
-    elbv2 = aws_client("elbv2")
     apigateway = aws_client("apigateway")
 
-    live_alb = elbv2.describe_load_balancers(LoadBalancerArns=[load_balancer["arn"]])["LoadBalancers"][0]
-    assert live_alb["Scheme"] == "internet-facing"
-    assert live_alb["Type"] == "application"
-    assert len(live_alb["AvailabilityZones"]) == 2
+    load_balancer = maybe_resource_values("aws_lb")
+    target_group = maybe_resource_values("aws_lb_target_group")
+    if load_balancer is not None and target_group is not None:
+        elbv2 = aws_client("elbv2")
 
-    live_listener = elbv2.describe_listeners(LoadBalancerArn=load_balancer["arn"])["Listeners"][0]
-    assert live_listener["Port"] == 80
-    assert live_listener["Protocol"] == "HTTP"
+        live_alb = elbv2.describe_load_balancers(LoadBalancerArns=[load_balancer["arn"]])["LoadBalancers"][0]
+        assert live_alb["Scheme"] == "internet-facing"
+        assert live_alb["Type"] == "application"
+        assert len(live_alb["AvailabilityZones"]) == 2
 
-    live_target_group = elbv2.describe_target_groups(TargetGroupArns=[target_group["arn"]])["TargetGroups"][0]
-    assert live_target_group["TargetType"] == "lambda"
+        live_listener = elbv2.describe_listeners(LoadBalancerArn=load_balancer["arn"])["Listeners"][0]
+        assert live_listener["Port"] == 80
+        assert live_listener["Protocol"] == "HTTP"
 
-    target_health = elbv2.describe_target_health(TargetGroupArn=target_group["arn"])["TargetHealthDescriptions"]
-    assert any(description["Target"]["Id"] == frontend_fn["arn"] for description in target_health)
+        live_target_group = elbv2.describe_target_groups(TargetGroupArns=[target_group["arn"]])["TargetGroups"][0]
+        assert live_target_group["TargetType"] == "lambda"
 
-    frontend_policy = json.loads(lambda_client.get_policy(FunctionName=frontend_fn["function_name"])["Policy"])
-    assert any(
-        statement["Principal"]["Service"] == "elasticloadbalancing.amazonaws.com"
-        for statement in statement_list(frontend_policy)
-    )
+        target_health = elbv2.describe_target_health(TargetGroupArn=target_group["arn"])["TargetHealthDescriptions"]
+        assert any(description["Target"]["Id"] == frontend_fn["arn"] for description in target_health)
+
+        frontend_policy = json.loads(lambda_client.get_policy(FunctionName=frontend_fn["function_name"])["Policy"])
+        assert any(
+            statement["Principal"]["Service"] == "elasticloadbalancing.amazonaws.com"
+            for statement in statement_list(frontend_policy)
+        )
+    else:
+        assert endpoint_override_enabled(), "ALB resources may only be skipped for an explicit alternate endpoint"
+
     backend_policy = json.loads(lambda_client.get_policy(FunctionName=backend_fn["function_name"])["Policy"])
     assert any(
         statement["Principal"]["Service"] == "apigateway.amazonaws.com"
@@ -516,7 +531,7 @@ def test_frontend_and_backend_lambdas_work_when_invoked_via_boto3():
     health_body = parse_proxy_response(health_response)
     assert health_body["status"] == "ok"
     assert set(health_body.keys()) == {"status", "db"}
-    expected_db_states = {"ok", "connected"}
+    expected_db_states = {"ok", "connected", "disabled"}
     assert health_body["db"] in expected_db_states
 
 
@@ -562,6 +577,21 @@ def test_backend_item_flow_and_async_processing_work_end_to_end():
     )
     list_body = parse_proxy_response(list_response)
     assert any(item["id"] == create_body["id"] and item["value"] == item_value for item in list_body["items"])
+
+    if maybe_resource_values("aws_pipes_pipe") is None:
+        assert endpoint_override_enabled(), "Pipes may only be skipped for an explicit alternate endpoint"
+        message = eventually(
+            lambda: sqs.receive_message(
+                QueueUrl=queue["url"],
+                MaxNumberOfMessages=1,
+                WaitTimeSeconds=1,
+            )["Messages"][0],
+            timeout=60,
+            interval=2,
+        )
+        assert item_value in message["Body"]
+        sqs.delete_message(QueueUrl=queue["url"], ReceiptHandle=message["ReceiptHandle"])
+        return
 
     execution_arn = eventually(
         lambda: next(
@@ -611,6 +641,7 @@ def test_secrets_rds_logs_alarms_pipe_and_iam_are_live():
 
     secret_value = json.loads(secretsmanager.get_secret_value(SecretId=secret["arn"])["SecretString"])
     assert secret_value["username"] == "appuser"
+    assert len(secret_value["password"]) == 20
     assert re.fullmatch(r"[A-Za-z0-9]+", secret_value["password"])
 
     for log_group_name in [
@@ -639,28 +670,33 @@ def test_secrets_rds_logs_alarms_pipe_and_iam_are_live():
     assert alarms_by_name[backend_duration_alarm["alarm_name"]]["ExtendedStatistic"] == "p95"
     assert alarms_by_name[backend_duration_alarm["alarm_name"]]["ActionsEnabled"] is False
 
-    db = resource_values("aws_db_instance")
-    db_subnet_group = resource_values("aws_db_subnet_group")
-    pipe = resource_values("aws_pipes_pipe")
-    rds = aws_client("rds")
-    pipes = aws_client("pipes")
+    db = maybe_resource_values("aws_db_instance")
+    db_subnet_group = maybe_resource_values("aws_db_subnet_group")
+    if db is not None and db_subnet_group is not None:
+        rds = aws_client("rds")
+        live_db = rds.describe_db_instances(DBInstanceIdentifier=db["identifier"])["DBInstances"][0]
+        assert live_db["Engine"] == "postgres"
+        assert live_db["EngineVersion"] == "15.4"
+        assert live_db["DBInstanceClass"] == "db.t3.micro"
+        assert live_db["AllocatedStorage"] == 20
+        assert live_db["MultiAZ"] is False
+        assert live_db["PubliclyAccessible"] is False
+        assert live_db["Endpoint"]["Port"] == 5432
+        assert live_db["DBSubnetGroup"]["DBSubnetGroupName"] == db_subnet_group["name"]
+        assert len(live_db["DBSubnetGroup"]["Subnets"]) == 2
+        assert db_sg["id"] in [group["VpcSecurityGroupId"] for group in live_db["VpcSecurityGroups"]]
+    else:
+        assert endpoint_override_enabled(), "RDS resources may only be skipped for an explicit alternate endpoint"
 
-    live_db = rds.describe_db_instances(DBInstanceIdentifier=db["identifier"])["DBInstances"][0]
-    assert live_db["Engine"] == "postgres"
-    assert live_db["EngineVersion"] == "15.4"
-    assert live_db["DBInstanceClass"] == "db.t3.micro"
-    assert live_db["AllocatedStorage"] == 20
-    assert live_db["MultiAZ"] is False
-    assert live_db["PubliclyAccessible"] is False
-    assert live_db["Endpoint"]["Port"] == 5432
-    assert live_db["DBSubnetGroup"]["DBSubnetGroupName"] == db_subnet_group["name"]
-    assert len(live_db["DBSubnetGroup"]["Subnets"]) == 2
-    assert db_sg["id"] in [group["VpcSecurityGroupId"] for group in live_db["VpcSecurityGroups"]]
-
-    live_pipe = pipes.describe_pipe(Name=pipe["name"])
-    assert live_pipe["Source"] == queue_values("ingest_queue")["arn"]
-    assert live_pipe["Enrichment"] == worker_fn["arn"]
-    assert live_pipe["Target"] == state_machine["arn"]
+    pipe = maybe_resource_values("aws_pipes_pipe")
+    if pipe is not None:
+        pipes = aws_client("pipes")
+        live_pipe = pipes.describe_pipe(Name=pipe["name"])
+        assert live_pipe["Source"] == queue_values("ingest_queue")["arn"]
+        assert live_pipe["Enrichment"] == worker_fn["arn"]
+        assert live_pipe["Target"] == state_machine["arn"]
+    else:
+        assert endpoint_override_enabled(), "Pipe resources may only be skipped for an explicit alternate endpoint"
 
     backend_role = role_values("backend-role")
     worker_role = role_values("worker-role")

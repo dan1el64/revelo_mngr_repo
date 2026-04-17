@@ -17,8 +17,6 @@ from botocore.stub import Stubber
 ROOT = Path(__file__).resolve().parents[1]
 MAIN_TF = ROOT / "main.tf"
 TF = MAIN_TF.read_text()
-CONTROL_PLANE = (ROOT / "community_control_plane.py").read_text()
-
 
 def provider_block(name):
     return block("provider", name)
@@ -188,24 +186,13 @@ def test_provider_contract_and_endpoint_override_are_explicit():
     assert re.search(r"\bregion\s*=\s*var\.aws_region\b", provider)
     assert re.search(r"\baccess_key\s*=\s*var\.aws_access_key_id\b", provider)
     assert re.search(r"\bsecret_key\s*=\s*var\.aws_secret_access_key\b", provider)
-    assert re.search(r"\baws_api_endpoint\s*=", TF)
-    assert "TF_VAR_aws_endpoint          = var.aws_endpoint" in resource_block("terraform_data", "aws_endpoint_proxy")
-    assert "def forward_to_upstream" in CONTROL_PLANE
-    assert "DBInstanceNotFound" in CONTROL_PLANE
-    assert '"x-amzn-ErrorType"' in CONTROL_PLANE
-    assert "NotFoundException" in CONTROL_PLANE
-    for action in [
-        "DescribeLoadBalancerAttributes",
-        "ModifyLoadBalancerAttributes",
-        "DescribeTargetGroupAttributes",
-        "ModifyTargetGroupAttributes",
-        "DescribeCapacityReservation",
-        "ModifyCapacityReservation",
-        "DescribeListenerAttributes",
-        "ModifyListenerAttributes",
-    ]:
-        assert action in CONTROL_PLANE
-    assert "def ensure_listener" in CONTROL_PLANE
+    assert re.search(r"\baws_api_endpoint\s*=\s*trimspace\(var\.aws_endpoint\)", TF)
+    assert "terraform_data" not in TF
+    assert "aws_endpoint_proxy" not in TF
+    assert "endpoint_proxy" not in TF
+    assert "community_control_plane.py" not in TF
+    assert "127.0.0.1" not in TF
+    assert "(40 + 6) * 100 + 1" not in TF
     for service in [
         "apigateway",
         "cloudwatch",
@@ -263,19 +250,23 @@ def test_security_groups_and_endpoints_cover_required_rules():
     alb_sg = resource_block("aws_security_group", "alb_sg")
     backend_sg = resource_block("aws_security_group", "backend_sg")
     db_sg = resource_block("aws_security_group", "db_sg")
+    endpoint_sg = resource_block("aws_security_group", "endpoint_sg")
     alb_http = resource_block("aws_vpc_security_group_ingress_rule", "alb_http")
     alb_to_backend = resource_block("aws_vpc_security_group_egress_rule", "alb_to_backend")
     backend_from_alb = resource_block("aws_vpc_security_group_ingress_rule", "backend_from_alb")
     backend_to_endpoints = resource_block("aws_vpc_security_group_egress_rule", "backend_to_endpoints")
     backend_to_db = resource_block("aws_vpc_security_group_egress_rule", "backend_to_db")
-    db_endpoints_from_backend = resource_block("aws_vpc_security_group_ingress_rule", "db_endpoints_from_backend")
+    endpoints_https_from_backend = resource_block(
+        "aws_vpc_security_group_ingress_rule",
+        "endpoints_https_from_backend",
+    )
     db_postgres_from_backend = resource_block("aws_vpc_security_group_ingress_rule", "db_postgres_from_backend")
 
-    assert set(resource_names("aws_security_group")) == {"alb_sg", "backend_sg", "db_sg"}
+    assert set(resource_names("aws_security_group")) == {"alb_sg", "backend_sg", "db_sg", "endpoint_sg"}
     assert set(resource_names("aws_vpc_security_group_ingress_rule")) == {
         "alb_http",
         "backend_from_alb",
-        "db_endpoints_from_backend",
+        "endpoints_https_from_backend",
         "db_postgres_from_backend",
     }
     assert set(resource_names("aws_vpc_security_group_egress_rule")) == {
@@ -284,6 +275,7 @@ def test_security_groups_and_endpoints_cover_required_rules():
         "backend_to_db",
     }
     assert "egress = []" in db_sg
+    assert "egress = []" in endpoint_sg
     assert "egress = []" in alb_sg
     assert "egress = []" in backend_sg
     assert 'cidr_ipv4         = "0.0.0.0/0"' in alb_http
@@ -294,16 +286,18 @@ def test_security_groups_and_endpoints_cover_required_rules():
     assert "referenced_security_group_id = aws_security_group.alb_sg.id" in backend_from_alb
     assert "security_group_id            = aws_security_group.backend_sg.id" in backend_to_endpoints
     assert "from_port                    = 443" in backend_to_endpoints
-    assert "referenced_security_group_id = aws_security_group.db_sg.id" in backend_to_endpoints
+    assert "referenced_security_group_id = aws_security_group.endpoint_sg.id" in backend_to_endpoints
     assert "security_group_id            = aws_security_group.backend_sg.id" in backend_to_db
     assert "from_port                    = 5432" in backend_to_db
     assert "referenced_security_group_id = aws_security_group.db_sg.id" in backend_to_db
-    assert "security_group_id            = aws_security_group.db_sg.id" in db_endpoints_from_backend
-    assert "from_port                    = 443" in db_endpoints_from_backend
-    assert "referenced_security_group_id = aws_security_group.backend_sg.id" in db_endpoints_from_backend
+    assert "security_group_id            = aws_security_group.endpoint_sg.id" in endpoints_https_from_backend
+    assert "from_port                    = 443" in endpoints_https_from_backend
+    assert "referenced_security_group_id = aws_security_group.backend_sg.id" in endpoints_https_from_backend
     assert "security_group_id            = aws_security_group.db_sg.id" in db_postgres_from_backend
     assert "from_port                    = 5432" in db_postgres_from_backend
     assert "referenced_security_group_id = aws_security_group.backend_sg.id" in db_postgres_from_backend
+    assert "443" not in db_sg
+    assert "5432" not in endpoint_sg
     assert 'cidr_ipv4         = "0.0.0.0/0"' not in "\n".join(all_resource_blocks("aws_vpc_security_group_egress_rule"))
     assert count_pattern(r'^resource "aws_vpc_endpoint" "') == 4
     for endpoint_name, suffix in [
@@ -315,13 +309,18 @@ def test_security_groups_and_endpoints_cover_required_rules():
         endpoint = resource_block("aws_vpc_endpoint", endpoint_name)
         assert 'vpc_endpoint_type   = "Interface"' in endpoint
         assert suffix in endpoint
-        assert "security_group_ids  = [aws_security_group.db_sg.id]" in endpoint
+        assert "security_group_ids  = [aws_security_group.endpoint_sg.id]" in endpoint
+        assert "aws_security_group.db_sg.id" not in endpoint
 
 
 def test_lambda_resource_contracts_handlers_and_permissions_are_declared():
     frontend = resource_block("aws_lambda_function", "frontend_fn")
     backend = resource_block("aws_lambda_function", "backend_fn")
     worker = resource_block("aws_lambda_function", "worker_fn")
+    alb = resource_block("aws_lb", "main")
+    target_group = resource_block("aws_lb_target_group", "frontend")
+    alb_permission = resource_block("aws_lambda_permission", "alb_frontend")
+    listener = resource_block("aws_lb_listener", "http")
     assert 'handler          = "index.handler"' in frontend
     assert 'runtime          = "python3.12"' in frontend
     assert "memory_size      = 256" in frontend
@@ -336,8 +335,13 @@ def test_lambda_resource_contracts_handlers_and_permissions_are_declared():
     assert "memory_size      = 256" in worker
     assert "timeout          = 10" in worker
     assert "security_group_ids = [aws_security_group.backend_sg.id]" in worker
-    assert 'target_type = "lambda"' in resource_block("aws_lb_target_group", "frontend")
-    assert "principal     = \"elasticloadbalancing.amazonaws.com\"" in resource_block("aws_lambda_permission", "alb_frontend")
+    assert "DB_DISABLED   = local.db_disabled" in backend
+    assert "count = local.supports_alb ? 1 : 0" in alb
+    assert "count = local.supports_alb ? 1 : 0" in target_group
+    assert "count = local.supports_alb ? 1 : 0" in alb_permission
+    assert "count = local.supports_alb ? 1 : 0" in listener
+    assert 'target_type = "lambda"' in target_group
+    assert "principal     = \"elasticloadbalancing.amazonaws.com\"" in alb_permission
     assert "principal     = \"apigateway.amazonaws.com\"" in resource_block("aws_lambda_permission", "apigw_backend")
 
 
@@ -356,14 +360,21 @@ def test_api_gateway_integrations_and_stage_target_backend_lambda():
 def test_database_secret_rds_and_schema_contract_are_declared():
     secret = resource_block("aws_secretsmanager_secret", "db_credentials")
     secret_version = resource_block("aws_secretsmanager_secret_version", "db_credentials")
+    generated_password = data_block("aws_secretsmanager_random_password", "db_password")
     db_subnet_group = resource_block("aws_db_subnet_group", "rds")
     db_instance = resource_block("aws_db_instance", "main")
     backend_source = lambda_source_for("backend_fn")
 
     assert "recovery_window_in_days = 0" in secret
     assert 'username = "appuser"' in secret_version
-    assert "password = random_password.db_password.result" in secret_version
-    assert "special = false" in resource_block("random_password", "db_password")
+    assert "password = data.aws_secretsmanager_random_password.db_password.random_password" in secret_version
+    assert re.search(r"\bpassword_length\s*=\s*20\b", generated_password)
+    assert re.search(r"\bexclude_numbers\s*=\s*false\b", generated_password)
+    assert re.search(r"\bexclude_punctuation\s*=\s*true\b", generated_password)
+    assert re.search(r"\binclude_space\s*=\s*false\b", generated_password)
+    assert 'resource "random_password"' not in TF
+    assert 'provider "random"' not in TF
+    assert "hashicorp/random" not in TF
     assert "subnet_ids = [aws_subnet.private_1.id, aws_subnet.private_2.id]" in db_subnet_group
     assert "count = local.supports_rds ? 1 : 0" in db_subnet_group
     assert 'engine                 = "postgres"' in db_instance
@@ -392,6 +403,7 @@ def test_state_machine_pipe_and_iam_policies_are_scoped():
     assert '"Type": "Task"' in sfn
     assert '"Type": "Succeed"' in sfn
     assert '"FunctionName": "${aws_lambda_function.worker_fn.arn}"' in sfn
+    assert "count = local.supports_pipes ? 1 : 0" in pipe
     assert "source   = aws_sqs_queue.ingest_queue.arn" in pipe
     assert "enrichment = aws_lambda_function.worker_fn.arn" in pipe
     assert "target   = aws_sfn_state_machine.ingest_sm.arn" in pipe
@@ -431,11 +443,11 @@ def test_log_groups_are_explicit_and_not_conditionally_skipped():
 
 
 def test_endpoint_override_compatibility_flags_are_explicit():
-    assert "endpoint_override_enabled" in TF
-    assert "supports_rds" in TF
-    assert "supports_pipes" in TF
-    assert "supports_apigateway" in TF
-    assert "supports_alb" in TF
+    assert re.search(r"\bendpoint_override_enabled\s*=\s*local\.has_custom_endpoint\b", TF)
+    assert re.search(r"\bsupports_rds\s*=\s*!local\.endpoint_override_enabled\b", TF)
+    assert re.search(r"\bsupports_pipes\s*=\s*!local\.endpoint_override_enabled\b", TF)
+    assert re.search(r"\bsupports_apigateway\s*=\s*true\b", TF)
+    assert re.search(r"\bsupports_alb\s*=\s*!local\.endpoint_override_enabled\b", TF)
 
 
 def test_frontend_lambda_returns_html_with_health_link():
@@ -603,6 +615,55 @@ def test_backend_post_items_inserts_row_and_sends_message_with_boto3():
     assert response["statusCode"] in {200, 201}
     assert body["id"] == 42
     assert body["value"] == "demo-item"
+
+
+def test_backend_db_disabled_path_uses_local_items_and_sqs(tmp_path):
+    sqs_client, sqs_stubber = stubbed_client("sqs")
+    queue_url = "https://sqs.us-east-1.amazonaws.com/123456789012/ingest_queue"
+    sqs_stubber.add_response(
+        "send_message",
+        {"MessageId": "msg-local"},
+        {
+            "QueueUrl": queue_url,
+            "MessageBody": json.dumps({"id": 1, "value": "offline-item"}),
+        },
+    )
+
+    def boto_factory(service_name, **_kwargs):
+        if service_name == "sqs":
+            return sqs_client
+        raise AssertionError(f"Unexpected boto3 client request while DB is disabled: {service_name}")
+
+    module = load_lambda_module("backend_fn", boto3_client_factory=boto_factory)
+    module["LOCAL_ITEMS_PATH"] = str(tmp_path / "backend_items.json")
+
+    with patched_environment(
+        DB_DISABLED="true",
+        DB_HOST="localhost",
+        DB_PORT="5432",
+        DB_SECRET="db-secret",
+        SQS_QUEUE_URL=queue_url,
+    ):
+        create_response = module["handler"](
+            {
+                "httpMethod": "POST",
+                "resource": "/api/items",
+                "path": "/api/items",
+                "body": json.dumps({"value": "offline-item"}),
+            },
+            lambda_context(),
+        )
+        list_response = module["handler"](
+            {"httpMethod": "GET", "resource": "/api/items", "path": "/api/items"},
+            lambda_context(),
+        )
+
+    sqs_stubber.assert_no_pending_responses()
+    create_body = json.loads(create_response["body"])
+    list_body = json.loads(list_response["body"])
+    assert create_response["statusCode"] == 201
+    assert create_body == {"id": 1, "value": "offline-item"}
+    assert list_body["items"][0]["value"] == "offline-item"
 
 
 def test_backend_get_items_returns_recent_rows():
