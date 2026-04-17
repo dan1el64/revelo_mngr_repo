@@ -17,6 +17,7 @@ from botocore.stub import Stubber
 ROOT = Path(__file__).resolve().parents[1]
 MAIN_TF = ROOT / "main.tf"
 TF = MAIN_TF.read_text()
+CONTROL_PLANE = (ROOT / "community_control_plane.py").read_text()
 
 
 def provider_block(name):
@@ -183,13 +184,33 @@ def test_main_tf_is_the_only_terraform_file_and_variable_contract_is_exact():
 
 def test_provider_contract_and_endpoint_override_are_explicit():
     provider = provider_block("aws")
+    assert count_pattern(r'^provider "aws"') == 1
     assert re.search(r"\bregion\s*=\s*var\.aws_region\b", provider)
     assert re.search(r"\baccess_key\s*=\s*var\.aws_access_key_id\b", provider)
     assert re.search(r"\bsecret_key\s*=\s*var\.aws_secret_access_key\b", provider)
+    assert re.search(r"\baws_api_endpoint\s*=", TF)
+    assert "TF_VAR_aws_endpoint          = var.aws_endpoint" in resource_block("terraform_data", "aws_endpoint_proxy")
+    assert "def forward_to_upstream" in CONTROL_PLANE
+    assert "DBInstanceNotFound" in CONTROL_PLANE
+    assert '"x-amzn-ErrorType"' in CONTROL_PLANE
+    assert "NotFoundException" in CONTROL_PLANE
+    for action in [
+        "DescribeLoadBalancerAttributes",
+        "ModifyLoadBalancerAttributes",
+        "DescribeTargetGroupAttributes",
+        "ModifyTargetGroupAttributes",
+        "DescribeCapacityReservation",
+        "ModifyCapacityReservation",
+        "DescribeListenerAttributes",
+        "ModifyListenerAttributes",
+    ]:
+        assert action in CONTROL_PLANE
+    assert "def ensure_listener" in CONTROL_PLANE
     for service in [
         "apigateway",
         "cloudwatch",
         "ec2",
+        "elbv2",
         "iam",
         "lambda",
         "logs",
@@ -201,7 +222,8 @@ def test_provider_contract_and_endpoint_override_are_explicit():
         "sfn",
         "sts",
     ]:
-        assert re.search(rf"\b{service}\s*=\s*var\.aws_endpoint\b", provider), service
+        assert re.search(rf"\b{service}\s*=\s*local\.aws_api_endpoint\b", provider), service
+    assert "aws.community_services" not in TF
 
 
 def test_no_deletion_protection_retain_or_termination_protection_is_enabled():
@@ -250,6 +272,17 @@ def test_security_groups_and_endpoints_cover_required_rules():
     db_postgres_from_backend = resource_block("aws_vpc_security_group_ingress_rule", "db_postgres_from_backend")
 
     assert set(resource_names("aws_security_group")) == {"alb_sg", "backend_sg", "db_sg"}
+    assert set(resource_names("aws_vpc_security_group_ingress_rule")) == {
+        "alb_http",
+        "backend_from_alb",
+        "db_endpoints_from_backend",
+        "db_postgres_from_backend",
+    }
+    assert set(resource_names("aws_vpc_security_group_egress_rule")) == {
+        "alb_to_backend",
+        "backend_to_endpoints",
+        "backend_to_db",
+    }
     assert "egress = []" in db_sg
     assert "egress = []" in alb_sg
     assert "egress = []" in backend_sg
@@ -271,6 +304,7 @@ def test_security_groups_and_endpoints_cover_required_rules():
     assert "security_group_id            = aws_security_group.db_sg.id" in db_postgres_from_backend
     assert "from_port                    = 5432" in db_postgres_from_backend
     assert "referenced_security_group_id = aws_security_group.backend_sg.id" in db_postgres_from_backend
+    assert 'cidr_ipv4         = "0.0.0.0/0"' not in "\n".join(all_resource_blocks("aws_vpc_security_group_egress_rule"))
     assert count_pattern(r'^resource "aws_vpc_endpoint" "') == 4
     for endpoint_name, suffix in [
         ("secretsmanager", ".secretsmanager"),
@@ -320,11 +354,13 @@ def test_api_gateway_integrations_and_stage_target_backend_lambda():
 
 
 def test_database_secret_rds_and_schema_contract_are_declared():
+    secret = resource_block("aws_secretsmanager_secret", "db_credentials")
     secret_version = resource_block("aws_secretsmanager_secret_version", "db_credentials")
     db_subnet_group = resource_block("aws_db_subnet_group", "rds")
     db_instance = resource_block("aws_db_instance", "main")
     backend_source = lambda_source_for("backend_fn")
 
+    assert "recovery_window_in_days = 0" in secret
     assert 'username = "appuser"' in secret_version
     assert "password = random_password.db_password.result" in secret_version
     assert "special = false" in resource_block("random_password", "db_password")

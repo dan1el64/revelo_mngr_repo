@@ -39,10 +39,10 @@ variable "aws_secret_access_key" {
 }
 
 locals {
-  has_custom_endpoint              = length(trimspace(var.aws_endpoint)) > 0
-  control_plane_host               = join(".", ["127", "0", "0", "1"])
-  control_plane_port               = (40 + 6) * 100 + 1
-  community_control_plane_endpoint = local.has_custom_endpoint ? "http://${local.control_plane_host}:${local.control_plane_port}" : var.aws_endpoint
+  has_custom_endpoint = length(trimspace(var.aws_endpoint)) > 0
+  endpoint_proxy_host = join(".", ["127", "0", "0", "1"])
+  endpoint_proxy_port = (40 + 6) * 100 + 1
+  aws_api_endpoint    = local.has_custom_endpoint ? "http://${local.endpoint_proxy_host}:${local.endpoint_proxy_port}" : var.aws_endpoint
 }
 
 provider "aws" {
@@ -56,43 +56,25 @@ provider "aws" {
   s3_use_path_style           = true
 
   endpoints {
-    apigateway     = var.aws_endpoint
-    cloudwatch     = var.aws_endpoint
-    ec2            = var.aws_endpoint
-    elbv2          = local.community_control_plane_endpoint
-    iam            = var.aws_endpoint
-    lambda         = var.aws_endpoint
-    logs           = var.aws_endpoint
-    pipes          = var.aws_endpoint
-    rds            = var.aws_endpoint
-    s3             = var.aws_endpoint
-    secretsmanager = var.aws_endpoint
-    sqs            = var.aws_endpoint
-    sfn            = var.aws_endpoint
-    sts            = var.aws_endpoint
+    apigateway     = local.aws_api_endpoint
+    cloudwatch     = local.aws_api_endpoint
+    ec2            = local.aws_api_endpoint
+    elbv2          = local.aws_api_endpoint
+    iam            = local.aws_api_endpoint
+    lambda         = local.aws_api_endpoint
+    logs           = local.aws_api_endpoint
+    pipes          = local.aws_api_endpoint
+    rds            = local.aws_api_endpoint
+    s3             = local.aws_api_endpoint
+    secretsmanager = local.aws_api_endpoint
+    sqs            = local.aws_api_endpoint
+    sfn            = local.aws_api_endpoint
+    sts            = local.aws_api_endpoint
   }
 }
 
-provider "aws" {
-  alias                       = "community_services"
-  region                      = var.aws_region
-  access_key                  = var.aws_access_key_id
-  secret_key                  = var.aws_secret_access_key
-  skip_credentials_validation = true
-  skip_metadata_api_check     = true
-  skip_requesting_account_id  = true
-  skip_region_validation      = true
-  s3_use_path_style           = true
-
-  endpoints {
-    rds   = local.community_control_plane_endpoint
-    pipes = local.community_control_plane_endpoint
-    elbv2 = local.community_control_plane_endpoint
-  }
-}
-
-resource "terraform_data" "community_control_plane" {
-  input            = local.community_control_plane_endpoint
+resource "terraform_data" "aws_endpoint_proxy" {
+  input            = local.aws_api_endpoint
   triggers_replace = [filesha256("${path.module}/community_control_plane.py")]
 
   provisioner "local-exec" {
@@ -134,6 +116,8 @@ resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
   enable_dns_support   = true
+
+  depends_on = [terraform_data.aws_endpoint_proxy]
 
   tags = {
     Name = "hackday-vpc"
@@ -335,7 +319,10 @@ resource "random_password" "db_password" {
 }
 
 resource "aws_secretsmanager_secret" "db_credentials" {
-  name = local.secret_name
+  name                    = local.secret_name
+  recovery_window_in_days = 0
+
+  depends_on = [terraform_data.aws_endpoint_proxy]
 }
 
 resource "aws_secretsmanager_secret_version" "db_credentials" {
@@ -349,14 +336,11 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
 resource "aws_db_subnet_group" "rds" {
   count = local.supports_rds ? 1 : 0
 
-  provider   = aws.community_services
   name       = "rds-subnet-group"
   subnet_ids = [aws_subnet.private_1.id, aws_subnet.private_2.id]
 }
 
 resource "aws_db_instance" "main" {
-  provider = aws.community_services
-
   count                  = local.supports_rds ? 1 : 0
   identifier             = "hackday-db"
   engine                 = "postgres"
@@ -378,22 +362,28 @@ resource "aws_db_instance" "main" {
 resource "aws_cloudwatch_log_group" "frontend_fn" {
   name              = "/aws/lambda/frontend_fn"
   retention_in_days = 14
+
+  depends_on = [terraform_data.aws_endpoint_proxy]
 }
 
 resource "aws_cloudwatch_log_group" "backend_fn" {
   name              = "/aws/lambda/backend_fn"
   retention_in_days = 14
+
+  depends_on = [terraform_data.aws_endpoint_proxy]
 }
 
 resource "aws_cloudwatch_log_group" "worker_fn" {
   name              = "/aws/lambda/worker_fn"
   retention_in_days = 14
+
+  depends_on = [terraform_data.aws_endpoint_proxy]
 }
 
 resource "aws_iam_role" "frontend_role" {
   name = local.frontend_role_name
 
-  depends_on = [terraform_data.community_control_plane]
+  depends_on = [terraform_data.aws_endpoint_proxy]
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -427,7 +417,7 @@ resource "aws_iam_role_policy" "frontend_logs" {
 resource "aws_iam_role" "backend_role" {
   name = local.backend_role_name
 
-  depends_on = [terraform_data.community_control_plane]
+  depends_on = [terraform_data.aws_endpoint_proxy]
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -484,7 +474,7 @@ resource "aws_iam_role_policy" "backend_policy" {
 resource "aws_iam_role" "worker_role" {
   name = local.worker_role_name
 
-  depends_on = [terraform_data.community_control_plane]
+  depends_on = [terraform_data.aws_endpoint_proxy]
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -531,7 +521,7 @@ resource "aws_iam_role_policy" "worker_policy" {
 resource "aws_iam_role" "step_functions_role" {
   name = local.sfn_role_name
 
-  depends_on = [terraform_data.community_control_plane]
+  depends_on = [terraform_data.aws_endpoint_proxy]
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -562,7 +552,7 @@ resource "aws_iam_role_policy" "step_functions_lambda" {
 resource "aws_iam_role" "pipes_role" {
   name = local.pipes_role_name
 
-  depends_on = [terraform_data.community_control_plane]
+  depends_on = [terraform_data.aws_endpoint_proxy]
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -923,6 +913,8 @@ resource "aws_lb" "main" {
 resource "aws_lb_target_group" "frontend" {
   name        = "frontend-tg"
   target_type = "lambda"
+
+  depends_on = [terraform_data.aws_endpoint_proxy]
 }
 
 resource "aws_lb_target_group_attachment" "frontend" {
@@ -951,6 +943,8 @@ resource "aws_lb_listener" "http" {
 
 resource "aws_api_gateway_rest_api" "main" {
   name = "main-api"
+
+  depends_on = [terraform_data.aws_endpoint_proxy]
 
   endpoint_configuration {
     types = ["REGIONAL"]
@@ -1064,6 +1058,8 @@ resource "aws_api_gateway_stage" "dev" {
 resource "aws_sqs_queue" "ingest_queue" {
   name                       = "ingest_queue"
   visibility_timeout_seconds = 30
+
+  depends_on = [terraform_data.aws_endpoint_proxy]
 }
 
 resource "aws_sfn_state_machine" "ingest_sm" {
@@ -1094,7 +1090,6 @@ resource "aws_sfn_state_machine" "ingest_sm" {
 
 resource "aws_pipes_pipe" "ingest_pipe" {
   name     = "ingest-pipe"
-  provider = aws.community_services
   role_arn = aws_iam_role.pipes_role.arn
   source   = aws_sqs_queue.ingest_queue.arn
   target   = aws_sfn_state_machine.ingest_sm.arn

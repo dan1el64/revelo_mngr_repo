@@ -277,14 +277,15 @@ class TestTerraformSourceContract(unittest.TestCase):
             r'resource "aws_db_instance" "main" \{[\s\S]*?username\s*=\s*jsondecode\(aws_secretsmanager_secret_version\.db_credentials\.secret_string\)\["username"\][\s\S]*?password\s*=\s*jsondecode\(aws_secretsmanager_secret_version\.db_credentials\.secret_string\)\["password"\]'
         )
 
-        self.assertIn('boto3.client("sqs")', self.main_tf)
+        self.assertIn('boto3.client("sqs", endpoint_url=endpoint_url)', self.main_tf)
         self.assertIn("send_message(", self.main_tf)
-        self.assertIn('boto3.client("stepfunctions")', self.main_tf)
+        self.assertIn('boto3.client("stepfunctions", endpoint_url=endpoint_url)', self.main_tf)
         self.assertIn("start_execution(", self.main_tf)
-        self.assertIn('boto3.client("secretsmanager")', self.main_tf)
+        self.assertIn('boto3.client("secretsmanager", endpoint_url=endpoint_url)', self.main_tf)
         self.assertIn("get_secret_value(", self.main_tf)
-        self.assertIn('boto3.client("s3")', self.main_tf)
+        self.assertIn('boto3.client("s3", endpoint_url=endpoint_url)', self.main_tf)
         self.assertIn("put_object(", self.main_tf)
+        self.assertIn('os.environ.get("AWS_ENDPOINT_URL") or None', self.main_tf)
         self.assertIn('processed/{context.aws_request_id}.json', self.main_tf)
 
         bucket = self.resource_map["aws_s3_bucket.data"]["values"]

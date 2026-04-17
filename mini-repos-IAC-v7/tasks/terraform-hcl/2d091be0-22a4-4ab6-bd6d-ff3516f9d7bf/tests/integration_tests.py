@@ -105,12 +105,18 @@ def endpoint_override_enabled():
     return bool(terraform_provider_endpoint())
 
 
-_COMMUNITY_SERVICES_PORT = (40 + 6) * 100 + 1
-_COMMUNITY_SERVICES = {"rds", "pipes", "elbv2"}
+_ENDPOINT_PROXY_PORT = (40 + 6) * 100 + 1
+
+
+def terraform_aws_api_endpoint():
+    endpoint = terraform_provider_endpoint()
+    if not endpoint:
+        return None
+    return f"http://127.0.0.1:{_ENDPOINT_PROXY_PORT}"
 
 
 def aws_client(service_name):
-    endpoint = terraform_provider_endpoint()
+    endpoint = terraform_aws_api_endpoint()
     region = (
         os.environ.get("AWS_REGION")
         or os.environ.get("AWS_DEFAULT_REGION")
@@ -128,10 +134,7 @@ def aws_client(service_name):
         ),
     }
     if endpoint:
-        if service_name in _COMMUNITY_SERVICES:
-            kwargs["endpoint_url"] = f"http://127.0.0.1:{_COMMUNITY_SERVICES_PORT}"
-        else:
-            kwargs["endpoint_url"] = endpoint
+        kwargs["endpoint_url"] = endpoint
     return boto3.client(**kwargs)
 
 
@@ -338,6 +341,8 @@ def test_network_and_security_contract_is_live_via_boto3():
     assert associated_subnets == {public_subnet_a["id"], public_subnet_b["id"]}
 
     live_alb_sg = ec2.describe_security_groups(GroupIds=[alb_sg["id"]])["SecurityGroups"][0]
+    assert len(live_alb_sg["IpPermissions"]) == 1
+    assert len(live_alb_sg["IpPermissionsEgress"]) == 1
     assert any(
         permission["IpProtocol"] == "tcp"
         and permission["FromPort"] == 80
@@ -354,6 +359,8 @@ def test_network_and_security_contract_is_live_via_boto3():
     )
 
     live_backend_sg = ec2.describe_security_groups(GroupIds=[backend_sg["id"]])["SecurityGroups"][0]
+    assert len(live_backend_sg["IpPermissions"]) == 1
+    assert len(live_backend_sg["IpPermissionsEgress"]) == 2
     assert any(
         permission["IpProtocol"] == "tcp"
         and permission["FromPort"] == 8080
@@ -361,7 +368,6 @@ def test_network_and_security_contract_is_live_via_boto3():
         and any(pair["GroupId"] == alb_sg["id"] for pair in permission.get("UserIdGroupPairs", []))
         for permission in live_backend_sg["IpPermissions"]
     )
-    assert len(live_backend_sg["IpPermissionsEgress"]) == 2
     assert any(
         permission["IpProtocol"] == "tcp"
         and permission["FromPort"] == 443
@@ -378,6 +384,7 @@ def test_network_and_security_contract_is_live_via_boto3():
     )
 
     live_db_sg = ec2.describe_security_groups(GroupIds=[db_sg["id"]])["SecurityGroups"][0]
+    assert len(live_db_sg["IpPermissions"]) == 2
     assert any(
         permission["IpProtocol"] == "tcp"
         and permission["FromPort"] == 443

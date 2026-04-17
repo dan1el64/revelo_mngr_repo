@@ -6,6 +6,7 @@ import subprocess
 import sys
 import threading
 import time
+import http.client
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -21,10 +22,14 @@ STATE = {
     "rds_instances": {},
     "deleted_rds_instances": set(),
     "load_balancers": {},
+    "load_balancer_attributes": {},
     "target_groups": {},
+    "target_group_attributes": {},
     "target_health": {},
     "listeners": {},
+    "listener_attributes": {},
     "pipes": {},
+    "deleted_pipes": {},
 }
 
 _PIPE_THREADS = {}
@@ -188,12 +193,47 @@ def values_for_prefix(params, prefix):
     return [value for key, value in sorted(params.items()) if key.startswith(prefix)]
 
 
+def attributes_from_params(params):
+    attributes = {}
+    indexes = sorted(
+        {
+            key.split(".")[2]
+            for key in params
+            if key.startswith("Attributes.member.") and key.endswith(".Key")
+        },
+        key=int,
+    )
+    for index in indexes:
+        key = params.get(f"Attributes.member.{index}.Key")
+        value = params.get(f"Attributes.member.{index}.Value")
+        if key is not None and value is not None:
+            attributes[key] = value
+    return attributes
+
+
 def normalize_db_identifier(value):
     if not value:
         return "hackday-db"
     if ":db:" in value:
         return value.rsplit(":db:", 1)[-1]
     return value
+
+
+def db_identifier_matches(instance, identifier):
+    identifier = normalize_db_identifier(identifier)
+    return identifier in {
+        instance.get("identifier"),
+        instance.get("resource_id"),
+        arn("rds", "db:" + instance.get("identifier", "")),
+    }
+
+
+def find_db_instance(identifier):
+    identifier = normalize_db_identifier(identifier)
+    for instance in STATE["rds_instances"].values():
+        if db_identifier_matches(instance, identifier):
+            return instance
+    return None
 
 
 def requested_db_identifier(params):
@@ -211,6 +251,9 @@ def ensure_db_instance(identifier):
     identifier = normalize_db_identifier(identifier)
     if identifier in STATE["deleted_rds_instances"]:
         return None
+    existing = find_db_instance(identifier)
+    if existing:
+        return existing
     if identifier not in STATE["rds_instances"]:
         STATE["rds_instances"][identifier] = {
             "identifier": identifier,
@@ -335,9 +378,115 @@ def listener_xml(listener):
     )
 
 
+def ensure_listener(load_balancer_arn=None):
+    if STATE["listeners"]:
+        if load_balancer_arn:
+            for listener in STATE["listeners"].values():
+                if listener.get("load_balancer_arn") == load_balancer_arn:
+                    return listener
+        return next(iter(STATE["listeners"].values()))
+
+    lb_arn = load_balancer_arn or next(iter(STATE["load_balancers"]), arn("elasticloadbalancing", "loadbalancer/app/hackday-alb/local"))
+    target_group_arn = next(
+        iter(STATE["target_groups"]),
+        arn("elasticloadbalancing", "targetgroup/frontend-tg/local"),
+    )
+    listener = {
+        "arn": arn("elasticloadbalancing", "listener/app/hackday-alb/local/listener"),
+        "load_balancer_arn": lb_arn,
+        "port": "80",
+        "protocol": "HTTP",
+        "target_group_arn": target_group_arn,
+    }
+    STATE["listeners"][listener["arn"]] = listener
+    return listener
+
+
+def attributes_xml(attributes):
+    members = "".join(
+        (
+            "<member>"
+            f"<Key>{key}</Key>"
+            f"<Value>{value}</Value>"
+            "</member>"
+        )
+        for key, value in sorted(attributes.items())
+    )
+    return f"<Attributes>{members}</Attributes>"
+
+
+def default_load_balancer_attributes():
+    return {
+        "access_logs.s3.enabled": "false",
+        "deletion_protection.enabled": "false",
+        "idle_timeout.timeout_seconds": "60",
+        "routing.http2.enabled": "true",
+    }
+
+
+def default_target_group_attributes():
+    return {
+        "deregistration_delay.timeout_seconds": "300",
+        "lambda.multi_value_headers.enabled": "false",
+    }
+
+
+def default_listener_attributes():
+    return {
+        "routing.http.response.server.enabled": "true",
+    }
+
+
+def capacity_reservation_xml():
+    return (
+        "<LastModifiedTime>2026-01-01T00:00:00Z</LastModifiedTime>"
+        "<DecreaseRequestsRemaining>0</DecreaseRequestsRemaining>"
+        "<MinimumLoadBalancerCapacity><CapacityUnits>0</CapacityUnits></MinimumLoadBalancerCapacity>"
+        "<CapacityReservationState />"
+    )
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *_args):
         return
+
+    def forward_to_upstream(self, body=b""):
+        upstream = os.environ.get("TF_VAR_aws_endpoint", "").strip()
+        if not upstream:
+            self.send_json({"status": "ok"})
+            return
+
+        parsed = urllib.parse.urlparse(upstream)
+        connection_class = http.client.HTTPSConnection if parsed.scheme == "https" else http.client.HTTPConnection
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        connection = connection_class(parsed.hostname, port, timeout=60)
+        upstream_base_path = parsed.path.rstrip("/")
+        target = f"{upstream_base_path}{self.path}"
+        if not target.startswith("/"):
+            target = f"/{target}"
+
+        headers = {
+            key: value
+            for key, value in self.headers.items()
+            if key.lower() not in {"connection", "content-length", "host", "transfer-encoding"}
+        }
+        if body:
+            headers["Content-Length"] = str(len(body))
+        headers["Host"] = parsed.netloc
+
+        try:
+            connection.request(self.command, target, body=body, headers=headers)
+            response = connection.getresponse()
+            response_body = response.read()
+            self.send_response(response.status)
+            for key, value in response.getheaders():
+                if key.lower() not in {"connection", "content-length", "transfer-encoding"}:
+                    self.send_header(key, value)
+            self.send_header("Content-Length", str(len(response_body)))
+            self.end_headers()
+            self.wfile.write(response_body)
+        finally:
+            connection.close()
 
     def request_payload(self):
         length = int(self.headers.get("Content-Length", "0") or "0")
@@ -358,20 +507,43 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(data).encode("utf-8"))
 
+    def send_json_error(self, code, message, status=404):
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("x-amzn-ErrorType", code)
+        self.end_headers()
+        self.wfile.write(json.dumps({"__type": code, "Message": message, "message": message}).encode("utf-8"))
+
+    def send_query_error(self, code, message, status=404):
+        body = (
+            '<ErrorResponse xmlns="http://rds.amazonaws.com/doc/2014-10-31/">'
+            "<Error>"
+            "<Type>Sender</Type>"
+            f"<Code>{code}</Code>"
+            f"<Message>{message}</Message>"
+            "</Error>"
+            "<RequestId>local-control-plane</RequestId>"
+            "</ErrorResponse>"
+        )
+        self.send_response(status)
+        self.send_header("Content-Type", "text/xml")
+        self.end_headers()
+        self.wfile.write(body.encode("utf-8"))
+
     def do_GET(self):
         path = urllib.parse.urlparse(self.path).path
         if path.startswith("/v1/pipes/"):
             name = path.rsplit("/", 1)[-1]
-            pipe = STATE["pipes"].setdefault(
-                name,
-                {"Name": name, "Arn": arn("pipes", "pipe/" + name), "CurrentState": "RUNNING"},
-            )
+            pipe = STATE["pipes"].get(name)
+            if not pipe:
+                self.send_json_error("NotFoundException", f"Pipe {name} does not exist.")
+                return
             self.send_json(pipe)
             return
         if path.startswith("/tags/"):
             self.send_json({"tags": {}})
             return
-        self.send_json({"status": "ok"})
+        self.forward_to_upstream()
 
     def do_DELETE(self):
         path = urllib.parse.urlparse(self.path).path
@@ -380,9 +552,11 @@ class Handler(BaseHTTPRequestHandler):
             _PIPE_STOP[name] = True
             _PIPE_THREADS.pop(name, None)
             pipe = STATE["pipes"].pop(name, {"Name": name, "Arn": arn("pipes", "pipe/" + name)})
+            pipe["CurrentState"] = "DELETING"
+            STATE["deleted_pipes"][name] = pipe
             self.send_json(pipe)
             return
-        self.send_json({})
+        self.forward_to_upstream()
 
     def do_POST(self):
         params, raw_body = self.request_payload()
@@ -404,6 +578,7 @@ class Handler(BaseHTTPRequestHandler):
                 "CreationTime": int(time.time()),
                 "LastModifiedTime": int(time.time()),
             }
+            STATE["deleted_pipes"].pop(name, None)
             STATE["pipes"][name] = pipe
             source_arn = payload.get("Source", "")
             target_arn = payload.get("Target", "")
@@ -453,12 +628,18 @@ class Handler(BaseHTTPRequestHandler):
         if action == "DescribeDBInstances":
             instance_id = requested_db_identifier(params)
             if params.get("DBInstanceIdentifier"):
-                instance = ensure_db_instance(instance_id)
-                instances = [instance] if instance else []
+                instance = find_db_instance(instance_id)
+                if not instance or normalize_db_identifier(instance_id) in STATE["deleted_rds_instances"]:
+                    self.send_query_error(
+                        "DBInstanceNotFound",
+                        f"DBInstance {instance_id} not found.",
+                    )
+                    return
+                instances = [instance]
             elif STATE["rds_instances"]:
                 instances = list(STATE["rds_instances"].values())
             elif instance_id:
-                instance = ensure_db_instance(instance_id)
+                instance = find_db_instance(instance_id)
                 instances = [instance] if instance else []
             else:
                 instances = []
@@ -466,9 +647,20 @@ class Handler(BaseHTTPRequestHandler):
             return
         if action == "DeleteDBInstance":
             identifier = normalize_db_identifier(params.get("DBInstanceIdentifier"))
-            STATE["rds_instances"].pop(identifier, None)
-            STATE["deleted_rds_instances"].add(identifier)
-            self.send_xml(rds_response(action, ""))
+            instance = find_db_instance(identifier)
+            if instance:
+                STATE["rds_instances"].pop(instance["identifier"], None)
+                STATE["deleted_rds_instances"].update(
+                    {
+                        identifier,
+                        instance["identifier"],
+                        instance.get("resource_id", ""),
+                    }
+                )
+                self.send_xml(rds_response(action, db_instance_xml(instance)))
+            else:
+                STATE["deleted_rds_instances"].add(identifier)
+                self.send_query_error("DBInstanceNotFound", f"DBInstance {identifier} not found.")
             return
         if action == "DeleteDBSubnetGroup":
             STATE["rds_subnet_groups"].pop(params.get("DBSubnetGroupName"), None)
@@ -497,6 +689,19 @@ class Handler(BaseHTTPRequestHandler):
             body = "".join(lb_xml(lb) for lb in STATE["load_balancers"].values())
             self.send_xml(elbv2_response(action, f"<LoadBalancers>{body}</LoadBalancers>"))
             return
+        if action in {"DescribeLoadBalancerAttributes", "ModifyLoadBalancerAttributes"}:
+            lb_arn = params.get("LoadBalancerArn")
+            attributes = STATE["load_balancer_attributes"].setdefault(
+                lb_arn,
+                default_load_balancer_attributes(),
+            )
+            if action == "ModifyLoadBalancerAttributes":
+                attributes.update(attributes_from_params(params))
+            self.send_xml(elbv2_response(action, attributes_xml(attributes)))
+            return
+        if action in {"DescribeCapacityReservation", "ModifyCapacityReservation"}:
+            self.send_xml(elbv2_response(action, capacity_reservation_xml()))
+            return
         if action == "CreateTargetGroup":
             name = params.get("Name", "frontend-tg")
             tg = {
@@ -510,6 +715,16 @@ class Handler(BaseHTTPRequestHandler):
         if action == "DescribeTargetGroups":
             body = "".join(tg_xml(tg) for tg in STATE["target_groups"].values())
             self.send_xml(elbv2_response(action, f"<TargetGroups>{body}</TargetGroups>"))
+            return
+        if action in {"DescribeTargetGroupAttributes", "ModifyTargetGroupAttributes"}:
+            target_group_arn = params.get("TargetGroupArn")
+            attributes = STATE["target_group_attributes"].setdefault(
+                target_group_arn,
+                default_target_group_attributes(),
+            )
+            if action == "ModifyTargetGroupAttributes":
+                attributes.update(attributes_from_params(params))
+            self.send_xml(elbv2_response(action, attributes_xml(attributes)))
             return
         if action == "RegisterTargets":
             target_group_arn = params.get("TargetGroupArn")
@@ -542,19 +757,65 @@ class Handler(BaseHTTPRequestHandler):
             self.send_xml(elbv2_response(action, f"<Listeners>{listener_xml(listener)}</Listeners>"))
             return
         if action == "DescribeListeners":
-            body = "".join(listener_xml(listener) for listener in STATE["listeners"].values())
+            listener_arns = values_for_prefix(params, "ListenerArns.member.")
+            load_balancer_arn = params.get("LoadBalancerArn")
+            if listener_arns:
+                listeners = [
+                    STATE["listeners"].get(listener_arn)
+                    for listener_arn in listener_arns
+                    if listener_arn in STATE["listeners"]
+                ]
+            else:
+                listeners = [
+                    listener
+                    for listener in STATE["listeners"].values()
+                    if not load_balancer_arn or listener.get("load_balancer_arn") == load_balancer_arn
+                ]
+            if not listeners and load_balancer_arn:
+                listeners = [ensure_listener(load_balancer_arn)]
+            body = "".join(listener_xml(listener) for listener in listeners)
             self.send_xml(elbv2_response(action, f"<Listeners>{body}</Listeners>"))
             return
+        if action in {"DescribeListenerAttributes", "ModifyListenerAttributes"}:
+            listener_arn = params.get("ListenerArn")
+            if listener_arn:
+                STATE["listeners"].setdefault(listener_arn, ensure_listener())
+            attributes = STATE["listener_attributes"].setdefault(
+                listener_arn,
+                default_listener_attributes(),
+            )
+            if action == "ModifyListenerAttributes":
+                attributes.update(attributes_from_params(params))
+            self.send_xml(elbv2_response(action, attributes_xml(attributes)))
+            return
         if action == "DeleteLoadBalancer":
-            STATE["load_balancers"].pop(params.get("LoadBalancerArn"), None)
+            lb_arn = params.get("LoadBalancerArn")
+            STATE["load_balancers"].pop(lb_arn, None)
+            STATE["load_balancer_attributes"].pop(lb_arn, None)
+            deleted_listener_arns = {
+                listener_arn
+                for listener_arn, listener in STATE["listeners"].items()
+                if listener.get("load_balancer_arn") == lb_arn
+            }
+            STATE["listeners"] = {
+                listener_arn: listener
+                for listener_arn, listener in STATE["listeners"].items()
+                if listener_arn not in deleted_listener_arns
+            }
+            for listener_arn in deleted_listener_arns:
+                STATE["listener_attributes"].pop(listener_arn, None)
             self.send_xml(elbv2_response(action, ""))
             return
         if action == "DeleteTargetGroup":
-            STATE["target_groups"].pop(params.get("TargetGroupArn"), None)
+            target_group_arn = params.get("TargetGroupArn")
+            STATE["target_groups"].pop(target_group_arn, None)
+            STATE["target_group_attributes"].pop(target_group_arn, None)
             self.send_xml(elbv2_response(action, ""))
             return
         if action == "DeleteListener":
-            STATE["listeners"].pop(params.get("ListenerArn"), None)
+            listener_arn = params.get("ListenerArn")
+            STATE["listeners"].pop(listener_arn, None)
+            STATE["listener_attributes"].pop(listener_arn, None)
             self.send_xml(elbv2_response(action, ""))
             return
         if action == "DeregisterTargets":
@@ -577,7 +838,20 @@ class Handler(BaseHTTPRequestHandler):
             self.send_xml(elbv2_response(action, f"<TagDescriptions>{tag_descriptions}</TagDescriptions>"))
             return
 
-        self.send_xml(xml_response(action or "Unknown", "", "http://local-control-plane/"))
+        self.forward_to_upstream(raw_body.encode("utf-8"))
+
+    def do_PUT(self):
+        length = int(self.headers.get("Content-Length", "0") or "0")
+        body = self.rfile.read(length) if length else b""
+        self.forward_to_upstream(body)
+
+    def do_PATCH(self):
+        length = int(self.headers.get("Content-Length", "0") or "0")
+        body = self.rfile.read(length) if length else b""
+        self.forward_to_upstream(body)
+
+    def do_HEAD(self):
+        self.forward_to_upstream()
 
 
 def serve():

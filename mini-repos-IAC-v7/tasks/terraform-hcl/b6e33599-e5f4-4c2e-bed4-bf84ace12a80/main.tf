@@ -83,13 +83,14 @@ data "archive_file" "ingest_lambda_zip" {
 
       def handler(event, context):
           payload = json.dumps(event)
+          endpoint_url = os.environ.get("AWS_ENDPOINT_URL") or None
 
-          boto3.client("sqs").send_message(
+          boto3.client("sqs", endpoint_url=endpoint_url).send_message(
               QueueUrl=os.environ["QUEUE_URL"],
               MessageBody=payload,
           )
 
-          boto3.client("stepfunctions").start_execution(
+          boto3.client("stepfunctions", endpoint_url=endpoint_url).start_execution(
               stateMachineArn=os.environ["STATE_MACHINE_ARN"],
               name=f"ingest-{context.aws_request_id}",
               input=payload,
@@ -116,7 +117,8 @@ data "archive_file" "worker_lambda_zip" {
 
 
       def handler(event, context):
-          secret_value = boto3.client("secretsmanager").get_secret_value(
+          endpoint_url = os.environ.get("AWS_ENDPOINT_URL") or None
+          secret_value = boto3.client("secretsmanager", endpoint_url=endpoint_url).get_secret_value(
               SecretId=os.environ["DB_SECRET_ARN"]
           )
           credentials = json.loads(secret_value["SecretString"])
@@ -129,7 +131,7 @@ data "archive_file" "worker_lambda_zip" {
               "event": event,
           }
 
-          boto3.client("s3").put_object(
+          boto3.client("s3", endpoint_url=endpoint_url).put_object(
               Bucket=os.environ["BUCKET_NAME"],
               Key=object_key,
               Body=json.dumps(payload).encode("utf-8"),
@@ -430,6 +432,7 @@ locals {
   api_logs_role_name   = "saas-backend-api-gateway-logs-role-${local.stack_suffix}"
   db_subnet_group_name = "saas-backend-db-subnet-group-${local.stack_suffix}"
   db_identifier        = "saas-backend-db-${local.stack_suffix}"
+  lambda_sdk_endpoint  = var.aws_endpoint == null ? null : replace(var.aws_endpoint, "localhost", "host.docker.internal")
 }
 
 resource "aws_secretsmanager_secret" "db_credentials" {
@@ -689,10 +692,15 @@ resource "aws_lambda_function" "worker" {
   }
 
   environment {
-    variables = {
-      BUCKET_NAME   = aws_s3_bucket.data.bucket
-      DB_SECRET_ARN = aws_secretsmanager_secret.db_credentials.arn
-    }
+    variables = merge(
+      {
+        BUCKET_NAME   = aws_s3_bucket.data.bucket
+        DB_SECRET_ARN = aws_secretsmanager_secret.db_credentials.arn
+      },
+      local.lambda_sdk_endpoint == null ? {} : {
+        AWS_ENDPOINT_URL = local.lambda_sdk_endpoint
+      }
+    )
   }
 
   depends_on = [
@@ -744,10 +752,15 @@ resource "aws_lambda_function" "ingest" {
   }
 
   environment {
-    variables = {
-      QUEUE_URL         = aws_sqs_queue.processing.url
-      STATE_MACHINE_ARN = aws_sfn_state_machine.processing.arn
-    }
+    variables = merge(
+      {
+        QUEUE_URL         = aws_sqs_queue.processing.url
+        STATE_MACHINE_ARN = aws_sfn_state_machine.processing.arn
+      },
+      local.lambda_sdk_endpoint == null ? {} : {
+        AWS_ENDPOINT_URL = local.lambda_sdk_endpoint
+      }
+    )
   }
 
   depends_on = [
