@@ -133,56 +133,66 @@ def handler(event, _context):
     s3_client = _client("s3")
     events_client = _client("events")
     audit_table = dynamodb.Table(os.environ["AUDIT_TABLE_NAME"])
+    batch_item_failures = []
 
     for record in event.get("Records", []):
-        message = json.loads(record["body"])
-        request_id = message["requestId"]
-        payload = message["payload"]
+        message_id = record.get("messageId") or record.get("messageID") or "unknown"
+        try:
+            message = json.loads(record["body"])
+            if not isinstance(message, dict):
+                raise ValueError("SQS body must decode to a JSON object")
+            request_id = message["requestId"]
+            payload = message["payload"]
 
-        audit_item = audit_table.get_item(Key={"pk": request_id}).get("Item", {})
-        processed_at = datetime.now(timezone.utc).isoformat()
-        object_key = f"processed/{request_id}.json"
-        processed_record = {
-            "requestId": request_id,
-            "payload": payload,
-            "audit": audit_item,
-            "processedAt": processed_at,
-        }
+            audit_item = audit_table.get_item(Key={"pk": request_id}).get("Item")
+            if not audit_item:
+                raise ValueError(f"audit item {request_id} was not found")
 
-        s3_client.put_object(
-            Bucket=os.environ["PROCESSED_BUCKET_NAME"],
-            Key=object_key,
-            Body=json.dumps(processed_record, default=_json_default).encode("utf-8"),
-            ContentType="application/json",
-        )
+            processed_at = datetime.now(timezone.utc).isoformat()
+            object_key = f"processed/{request_id}.json"
+            processed_record = {
+                "requestId": request_id,
+                "payload": payload,
+                "audit": audit_item,
+                "processedAt": processed_at,
+            }
 
-        audit_table.update_item(
-            Key={"pk": request_id},
-            UpdateExpression="SET processedAt = :processed_at, objectKey = :object_key",
-            ExpressionAttributeValues={
-                ":processed_at": processed_at,
-                ":object_key": object_key,
-            },
-        )
+            s3_client.put_object(
+                Bucket=os.environ["PROCESSED_BUCKET_NAME"],
+                Key=object_key,
+                Body=json.dumps(processed_record, default=_json_default).encode("utf-8"),
+                ContentType="application/json",
+            )
 
-        events_client.put_events(
-            Entries=[
-                {
-                    "EventBusName": os.environ["EVENT_BUS_NAME"],
-                    "Source": os.environ["EVENT_SOURCE"],
-                    "DetailType": os.environ["EVENT_DETAIL_TYPE"],
-                    "Detail": json.dumps(
-                        {
-                            "requestId": request_id,
-                            "bucket": os.environ["PROCESSED_BUCKET_NAME"],
-                            "key": object_key,
-                        }
-                    ),
-                }
-            ]
-        )
+            audit_table.update_item(
+                Key={"pk": request_id},
+                UpdateExpression="SET processedAt = :processed_at, objectKey = :object_key",
+                ExpressionAttributeValues={
+                    ":processed_at": processed_at,
+                    ":object_key": object_key,
+                },
+            )
 
-    return {"batchItemFailures": []}
+            events_client.put_events(
+                Entries=[
+                    {
+                        "EventBusName": os.environ["EVENT_BUS_NAME"],
+                        "Source": os.environ["EVENT_SOURCE"],
+                        "DetailType": os.environ["EVENT_DETAIL_TYPE"],
+                        "Detail": json.dumps(
+                            {
+                                "requestId": request_id,
+                                "bucket": os.environ["PROCESSED_BUCKET_NAME"],
+                                "key": object_key,
+                            }
+                        ),
+                    }
+                ]
+            )
+        except Exception:
+            batch_item_failures.append({"itemIdentifier": message_id})
+
+    return {"batchItemFailures": batch_item_failures}
 """
 
 
@@ -549,6 +559,7 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
         event_source_arn=ingestion_queue.queue_arn,
         batch_size=10,
         max_batching_window=Duration.seconds(5),
+        report_batch_item_failures=True,
         enabled=True,
     )
     worker_event_source_mapping.node.add_dependency(ingestion_queue)

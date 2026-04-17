@@ -247,6 +247,7 @@ def test_network_topology_and_database_security_contract(monkeypatch):
 
 def test_api_gateway_ingress_contract(monkeypatch):
     _app_module, _app, _stack, template_json = synthesize(monkeypatch)
+    _, rest_api = find_single_resource(template_json, "AWS::ApiGateway::RestApi")
     _, resource = find_single_resource(template_json, "AWS::ApiGateway::Resource")
     _, method = find_single_resource(template_json, "AWS::ApiGateway::Method")
     _, stage = find_single_resource(template_json, "AWS::ApiGateway::Stage")
@@ -271,6 +272,9 @@ def test_api_gateway_ingress_contract(monkeypatch):
     assert validator["Properties"]["RestApiId"] == method["Properties"]["RestApiId"]
     assert model["Properties"]["ContentType"] == "application/json"
     assert model["Properties"]["Schema"]["maxLength"] == 262144
+    # REST API Gateway has no configurable 256 KB reject-before-Lambda limit.
+    # MinimumCompressionSize would compress payloads, not reject them.
+    assert "MinimumCompressionSize" not in rest_api["Properties"]
     assert stage["Properties"]["StageName"] == "v1"
 
 
@@ -314,6 +318,9 @@ def test_lambda_resource_contract(monkeypatch):
     _, event_source_mapping = find_single_resource(template_json, "AWS::Lambda::EventSourceMapping")
     assert event_source_mapping["Properties"]["BatchSize"] == 10
     assert event_source_mapping["Properties"]["MaximumBatchingWindowInSeconds"] == 5
+    assert event_source_mapping["Properties"]["FunctionResponseTypes"] == [
+        "ReportBatchItemFailures"
+    ]
     assert event_source_mapping["Properties"]["Enabled"] is True
     assert event_source_mapping["Properties"]["FunctionName"] == {"Ref": worker_lambda_id}
 
@@ -553,6 +560,144 @@ def test_worker_and_enricher_lambda_logic(monkeypatch):
     assert pipe_batch_event["detail"]["enriched"] is True
 
 
+def test_worker_lambda_negative_paths(monkeypatch):
+    app_module = load_app_module(monkeypatch)
+
+    class FakeAuditTable:
+        def __init__(self, missing_request_ids=None):
+            self.missing_request_ids = set(missing_request_ids or [])
+            self.get_requests = []
+            self.updates = []
+
+        def get_item(self, **kwargs):
+            self.get_requests.append(kwargs)
+            request_id = kwargs["Key"]["pk"]
+            if request_id in self.missing_request_ids:
+                return {}
+            return {"Item": {"pk": request_id, "status": "RECEIVED"}}
+
+        def update_item(self, **kwargs):
+            self.updates.append(kwargs)
+            return {"Attributes": {}}
+
+    class FakeDynamoResource:
+        def __init__(self, table):
+            self.table = table
+
+        def Table(self, _name):
+            return self.table
+
+    class FakeS3Client:
+        def __init__(self, fail=False):
+            self.fail = fail
+            self.objects = []
+
+        def put_object(self, **kwargs):
+            if self.fail:
+                raise RuntimeError("s3 write failed")
+            self.objects.append(kwargs)
+            return {"ETag": "abc"}
+
+    class FakeEventsClient:
+        def __init__(self):
+            self.entries = []
+
+        def put_events(self, **kwargs):
+            self.entries.append(kwargs)
+            return {"FailedEntryCount": 0}
+
+    class FakeBoto3:
+        def __init__(self, table, s3):
+            self.table = table
+            self.s3 = s3
+            self.events = FakeEventsClient()
+
+        def client(self, service_name, **_kwargs):
+            if service_name == "s3":
+                return self.s3
+            if service_name == "events":
+                return self.events
+            raise AssertionError(service_name)
+
+        def resource(self, service_name, **_kwargs):
+            assert service_name == "dynamodb"
+            return FakeDynamoResource(self.table)
+
+    monkeypatch.setenv("AUDIT_TABLE_NAME", "audit-table")
+    monkeypatch.setenv("PROCESSED_BUCKET_NAME", "processed-bucket")
+    monkeypatch.setenv("EVENT_BUS_NAME", "event-ingestion-bus")
+    monkeypatch.setenv("EVENT_SOURCE", "app.ingestion")
+    monkeypatch.setenv("EVENT_DETAIL_TYPE", "ProcessingComplete")
+
+    malformed_table = FakeAuditTable()
+    malformed_s3 = FakeS3Client()
+    malformed_boto3 = FakeBoto3(malformed_table, malformed_s3)
+    malformed_handler = load_inline_handler(
+        app_module.WORKER_LAMBDA_CODE,
+        malformed_boto3,
+    )
+    malformed_response = malformed_handler(
+        {"Records": [{"messageId": "bad-json", "body": "not-json"}]},
+        None,
+    )
+    assert malformed_response == {
+        "batchItemFailures": [{"itemIdentifier": "bad-json"}]
+    }
+    assert malformed_table.get_requests == []
+    assert malformed_s3.objects == []
+    assert malformed_boto3.events.entries == []
+
+    missing_table = FakeAuditTable(missing_request_ids={"missing-req"})
+    missing_s3 = FakeS3Client()
+    missing_boto3 = FakeBoto3(missing_table, missing_s3)
+    missing_handler = load_inline_handler(app_module.WORKER_LAMBDA_CODE, missing_boto3)
+    missing_response = missing_handler(
+        {
+            "Records": [
+                {
+                    "messageId": "missing-item",
+                    "body": json.dumps(
+                        {"requestId": "missing-req", "payload": {"a": 1}}
+                    ),
+                }
+            ]
+        },
+        None,
+    )
+    assert missing_response == {
+        "batchItemFailures": [{"itemIdentifier": "missing-item"}]
+    }
+    assert missing_table.get_requests == [{"Key": {"pk": "missing-req"}}]
+    assert missing_s3.objects == []
+    assert missing_boto3.events.entries == []
+
+    s3_failure_table = FakeAuditTable()
+    s3_failure_client = FakeS3Client(fail=True)
+    s3_failure_boto3 = FakeBoto3(s3_failure_table, s3_failure_client)
+    s3_failure_handler = load_inline_handler(
+        app_module.WORKER_LAMBDA_CODE,
+        s3_failure_boto3,
+    )
+    s3_failure_response = s3_failure_handler(
+        {
+            "Records": [
+                {
+                    "messageId": "s3-failure",
+                    "body": json.dumps(
+                        {"requestId": "write-fails", "payload": {"a": 2}}
+                    ),
+                }
+            ]
+        },
+        None,
+    )
+    assert s3_failure_response == {
+        "batchItemFailures": [{"itemIdentifier": "s3-failure"}]
+    }
+    assert s3_failure_table.updates == []
+    assert s3_failure_boto3.events.entries == []
+
+
 def test_eventing_and_state_machine_contract(monkeypatch):
     _app_module, _app, _stack, template_json = synthesize(monkeypatch)
     queue_resources = resources_by_type(template_json, "AWS::SQS::Queue")
@@ -651,6 +796,7 @@ def test_persistence_analytics_outputs_and_destroyability(monkeypatch):
     ingestion_queue_id = event_source_mapping["Properties"]["EventSourceArn"]["Fn::GetAtt"][0]
     ingestion_queue = queue_resources[ingestion_queue_id]
     assert ingestion_queue["Properties"]["MessageRetentionPeriod"] == 345600
+    assert ingestion_queue["Properties"]["VisibilityTimeout"] == 60
     assert "FifoQueue" not in ingestion_queue["Properties"]
 
     assert len(resources_by_type(template_json, "AWS::DynamoDB::Table")) == 2
@@ -866,6 +1012,23 @@ def test_iam_scoping_contract(monkeypatch):
 
     glue_actions = flatten_actions(glue_role)
     assert {"s3:GetObject", "s3:ListBucket", "glue:GetDatabase", "glue:CreateTable"} <= glue_actions
+    glue_statements = policy_statements(glue_role, "GlueCrawlerPermissions")
+    assert find_statement_with_action(glue_statements, "s3:GetObject")["Resource"] == {
+        "Fn::Join": ["", [{"Fn::GetAtt": [bucket_id, "Arn"]}, "/processed/*"]]
+    }
+    list_bucket_statement = find_statement_with_action(glue_statements, "s3:ListBucket")
+    assert list_bucket_statement["Resource"] == {"Fn::GetAtt": [bucket_id, "Arn"]}
+    assert list_bucket_statement["Condition"] == {
+        "StringLike": {"s3:prefix": ["processed/*"]}
+    }
+    glue_catalog_statement = find_statement_with_action(
+        glue_statements,
+        "glue:CreateTable",
+    )
+    glue_resources = json.dumps(glue_catalog_statement["Resource"])
+    assert ":catalog" in glue_resources
+    assert ":database/event_ingestion_status" in glue_resources
+    assert ":table/event_ingestion_status/*" in glue_resources
 
     statement = notifications_queue_policy["Properties"]["PolicyDocument"]["Statement"][0]
     assert statement["Principal"] == {"Service": "sns.amazonaws.com"}

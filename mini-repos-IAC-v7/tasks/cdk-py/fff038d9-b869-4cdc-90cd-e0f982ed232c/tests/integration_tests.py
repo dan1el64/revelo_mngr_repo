@@ -489,10 +489,10 @@ def test_api_gateway_post_ingest_enqueues_message_and_rejects_bad_payloads(
             stack_resources,
             raw_body=json.dumps("x" * 262145),
         )
-        assert oversized_status in {400, 413}
+        assert oversized_status == 400
         oversized_response = parse_optional_json_body(oversized_body)
         if oversized_response:
-            assert "message" in oversized_response
+            assert oversized_response.get("message") == "Invalid request body"
     finally:
         if pipe_available:
             ensure_pipe_running(stack_resources["ProcessingPipe"])
