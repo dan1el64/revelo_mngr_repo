@@ -1,0 +1,261 @@
+Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/tasks/cdk-py/d1154cb9-340a-485c-ab0c-9d279a375a5a FRAMEWORK=cdk-py
+
+
+Starting LocalStack (harness environment)...
+ Network iac-harness-network  Creating
+ Network iac-harness-network  Created
+ Container localstack-harness  Creating
+ Container localstack-harness  Created
+ Container localstack-harness  Starting
+ Container localstack-harness  Started
+Waiting for LocalStack health endpoint: http://localhost:4566/_localstack/health
+LocalStack is healthy.
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Setup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Starting worker container: harness-worker-87961
+d19b4088e49340388c055caac53d407293e4313ea1601ae67d657a4382ae8a57
+Installing dependencies (pip install -r requirements.txt)...
+Captured ACM Certificate ARN: arn:aws:acm:us-east-1:000000000000:certificate/54ec832f-66d7-406c-b354-0e0f69305530
+[32m✅ Step passed: Setup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Syntax / Synth[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Checking for LocalStack references...
+Running cdklocal synth...
+Generating template.json for unit tests...
+[32m✅ Step passed: Syntax / Synth[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Unit tests (pytest)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest unit tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+plugins: typeguard-2.13.3
+collecting ... collected 17 items
+
+tests/unit_tests.py::test_exact_resource_inventory PASSED                [  5%]
+tests/unit_tests.py::test_region_defaults_to_us_east_1_when_unset PASSED [ 11%]
+tests/unit_tests.py::test_vpc_topology_private_placement_and_az_distribution PASSED [ 17%]
+tests/unit_tests.py::test_security_groups_do_not_allow_public_ingress_and_db_uses_dedicated_group PASSED [ 23%]
+tests/unit_tests.py::test_enrichment_lambda_uses_only_declared_security_groups PASSED [ 29%]
+tests/unit_tests.py::test_lambdas_use_required_shape_logs_and_zip_package PASSED [ 35%]
+tests/unit_tests.py::test_api_stage_route_and_access_logs_match_prompt PASSED [ 41%]
+tests/unit_tests.py::test_rds_and_redshift_use_generated_secrets_without_inline_passwords PASSED [ 47%]
+tests/unit_tests.py::test_state_machine_definition_is_single_task_to_backend_lambda_with_logging PASSED [ 52%]
+tests/unit_tests.py::test_pipe_configuration_and_glue_redshift_wiring_match_prompt PASSED [ 58%]
+tests/unit_tests.py::test_iam_policies_are_least_privilege_for_primary_roles PASSED [ 64%]
+tests/unit_tests.py::test_enrichment_lambda_has_no_direct_triggers_or_public_endpoints PASSED [ 70%]
+tests/unit_tests.py::test_all_resources_are_destructible_without_retain_policies PASSED [ 76%]
+tests/unit_tests.py::test_backend_lambda_runtime_validates_enqueues_once_and_writes_single_row PASSED [ 82%]
+tests/unit_tests.py::test_backend_lambda_rejects_invalid_payload_without_side_effects PASSED [ 88%]
+tests/unit_tests.py::test_backend_lambda_handles_step_functions_invocation_without_api_side_effects PASSED [ 94%]
+tests/unit_tests.py::test_enrichment_lambda_runtime_returns_original_body_and_enrichment PASSED [100%]
+
+============================== 17 passed in 5.63s ==============================
+[32m✅ Step passed: Unit tests (pytest)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Deploy (LocalStack)[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Bootstrapping (if needed)...
+Running cdklocal deploy...
+
+✨  Synthesis time: 4.52s
+
+InternalWebAppStack: deploying... [1/1]
+InternalWebAppStack: creating CloudFormation changeset...
+InternalWebAppStack |  0/59 | 3:16:07 AM | REVIEW_IN_PROGRESS   | AWS::CloudFormation::Stack            | InternalWebAppStack User Initiated
+InternalWebAppStack |  0/59 | 3:16:07 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPC                         | ApplicationVpc (ApplicationVpc8AE6A859) 
+InternalWebAppStack |  0/59 | 3:16:07 AM | CREATE_IN_PROGRESS   | AWS::CloudFormation::Stack            | InternalWebAppStack 
+InternalWebAppStack |  0/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | ApplicationVpc/PrivateSubnet2/RouteTable (ApplicationVpcPrivateSubnet2RouteTableAFAC3CEF) 
+InternalWebAppStack |  1/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::VPC                         | ApplicationVpc (ApplicationVpc8AE6A859) 
+InternalWebAppStack |  2/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | ApplicationVpc/PrivateSubnet2/RouteTable (ApplicationVpcPrivateSubnet2RouteTableAFAC3CEF) 
+InternalWebAppStack |  2/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | ApplicationVpc/PrivateSubnet2/Subnet (ApplicationVpcPrivateSubnet2SubnetD832FF78) 
+InternalWebAppStack |  2/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PrivateSubnet2/RouteTableAssociation (ApplicationVpcPrivateSubnet2RouteTableAssociation192E55E3) 
+InternalWebAppStack |  3/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | ApplicationVpc/PrivateSubnet2/Subnet (ApplicationVpcPrivateSubnet2SubnetD832FF78) 
+InternalWebAppStack |  4/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PrivateSubnet2/RouteTableAssociation (ApplicationVpcPrivateSubnet2RouteTableAssociation192E55E3) 
+InternalWebAppStack |  4/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | BackendApiHandlerRole (BackendApiHandlerRole5E7B2147) 
+InternalWebAppStack |  4/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::SQS::Queue                       | OrderWorkQueue (OrderWorkQueueF68826A4) 
+InternalWebAppStack |  5/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | BackendApiHandlerRole (BackendApiHandlerRole5E7B2147) 
+InternalWebAppStack |  5/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret           | ApplicationDatabaseSecret (ApplicationDatabaseSecretCC2242CC) 
+InternalWebAppStack |  6/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::SQS::Queue                       | OrderWorkQueue (OrderWorkQueueF68826A4) 
+InternalWebAppStack |  6/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | BackendApiHandlerRole/DefaultPolicy (BackendApiHandlerRoleDefaultPolicy9B2AD47E) 
+InternalWebAppStack |  7/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::SecretsManager::Secret           | ApplicationDatabaseSecret (ApplicationDatabaseSecretCC2242CC) 
+InternalWebAppStack |  7/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::InternetGateway             | ApplicationVpc/IGW (ApplicationVpcIGWAE2F3715) 
+InternalWebAppStack |  8/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | BackendApiHandlerRole/DefaultPolicy (BackendApiHandlerRoleDefaultPolicy9B2AD47E) 
+InternalWebAppStack |  8/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::VPCGatewayAttachment        | ApplicationVpc/VPCGW (ApplicationVpcVPCGWF6FDF6ED) 
+InternalWebAppStack |  9/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::InternetGateway             | ApplicationVpc/IGW (ApplicationVpcIGWAE2F3715) 
+InternalWebAppStack | 10/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::VPCGatewayAttachment        | ApplicationVpc/VPCGW (ApplicationVpcVPCGWF6FDF6ED) 
+InternalWebAppStack | 10/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | ApplicationVpc/PublicSubnet1/RouteTable (ApplicationVpcPublicSubnet1RouteTable6A647E6A) 
+InternalWebAppStack | 10/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | ApplicationVpc/PublicSubnet1/DefaultRoute (ApplicationVpcPublicSubnet1DefaultRoute56736F6C) 
+InternalWebAppStack | 11/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | ApplicationVpc/PublicSubnet1/RouteTable (ApplicationVpcPublicSubnet1RouteTable6A647E6A) 
+InternalWebAppStack | 12/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | ApplicationVpc/PublicSubnet1/DefaultRoute (ApplicationVpcPublicSubnet1DefaultRoute56736F6C) 
+InternalWebAppStack | 12/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | ApplicationVpc/PublicSubnet1/Subnet (ApplicationVpcPublicSubnet1Subnet7014005F) 
+InternalWebAppStack | 12/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PublicSubnet1/RouteTableAssociation (ApplicationVpcPublicSubnet1RouteTableAssociation802F127D) 
+InternalWebAppStack | 13/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | ApplicationVpc/PublicSubnet1/Subnet (ApplicationVpcPublicSubnet1Subnet7014005F) 
+InternalWebAppStack | 13/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::EIP                         | ApplicationVpc/PublicSubnet1/EIP (ApplicationVpcPublicSubnet1EIP13A4D91E) 
+InternalWebAppStack | 14/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PublicSubnet1/RouteTableAssociation (ApplicationVpcPublicSubnet1RouteTableAssociation802F127D) 
+InternalWebAppStack | 14/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::NatGateway                  | ApplicationVpc/PublicSubnet1/NATGateway (ApplicationVpcPublicSubnet1NATGateway945161E1) 
+InternalWebAppStack | 15/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::EIP                         | ApplicationVpc/PublicSubnet1/EIP (ApplicationVpcPublicSubnet1EIP13A4D91E) 
+InternalWebAppStack | 15/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | ApplicationVpc/PrivateSubnet1/RouteTable (ApplicationVpcPrivateSubnet1RouteTable77A0065C) 
+InternalWebAppStack | 16/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::NatGateway                  | ApplicationVpc/PublicSubnet1/NATGateway (ApplicationVpcPublicSubnet1NATGateway945161E1) 
+InternalWebAppStack | 16/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | ApplicationVpc/PrivateSubnet1/DefaultRoute (ApplicationVpcPrivateSubnet1DefaultRoute12A237D9) 
+InternalWebAppStack | 17/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | ApplicationVpc/PrivateSubnet1/RouteTable (ApplicationVpcPrivateSubnet1RouteTable77A0065C) 
+InternalWebAppStack | 18/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | ApplicationVpc/PrivateSubnet1/DefaultRoute (ApplicationVpcPrivateSubnet1DefaultRoute12A237D9) 
+InternalWebAppStack | 18/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | ApplicationVpc/PrivateSubnet1/Subnet (ApplicationVpcPrivateSubnet1Subnet2EB6F2CA) 
+InternalWebAppStack | 18/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PrivateSubnet1/RouteTableAssociation (ApplicationVpcPrivateSubnet1RouteTableAssociationAAD57E37) 
+InternalWebAppStack | 19/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | ApplicationVpc/PrivateSubnet1/Subnet (ApplicationVpcPrivateSubnet1Subnet2EB6F2CA) 
+InternalWebAppStack | 19/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | ApplicationVpc/PrivateSubnet2/DefaultRoute (ApplicationVpcPrivateSubnet2DefaultRouteA08F9FF8) 
+InternalWebAppStack | 20/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PrivateSubnet1/RouteTableAssociation (ApplicationVpcPrivateSubnet1RouteTableAssociationAAD57E37) 
+InternalWebAppStack | 20/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
+InternalWebAppStack | 21/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | ApplicationVpc/PrivateSubnet2/DefaultRoute (ApplicationVpcPrivateSubnet2DefaultRouteA08F9FF8) 
+InternalWebAppStack | 21/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroup               | BackendLambdaSecurityGroup (BackendLambdaSecurityGroup25568CE5) 
+InternalWebAppStack | 22/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | DatabaseSecurityGroup (DatabaseSecurityGroup7319C0F6) 
+InternalWebAppStack | 22/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::EC2::SecurityGroupIngress        | DatabaseSecurityGroup/from InternalWebAppStackBackendLambdaSecurityGroupF5736C9C:5432 (DatabaseSecurityGroupfromInternalWebAppStackBackendLambdaSecurityGroupF5736C9C543231342B33) 
+InternalWebAppStack | 23/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroup               | BackendLambdaSecurityGroup (BackendLambdaSecurityGroup25568CE5) 
+InternalWebAppStack | 24/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::RDS::DBSubnetGroup               | ApplicationPostgresSubnetGroup Resource type AWS::RDS::DBSubnetGroup is not supported but was deployed as a fallback
+InternalWebAppStack | 24/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::RDS::DBSubnetGroup               | ApplicationPostgresSubnetGroup 
+InternalWebAppStack | 25/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::EC2::SecurityGroupIngress        | DatabaseSecurityGroup/from InternalWebAppStackBackendLambdaSecurityGroupF5736C9C:5432 (DatabaseSecurityGroupfromInternalWebAppStackBackendLambdaSecurityGroupF5736C9C543231342B33) 
+InternalWebAppStack | 25/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | BackendApiHandler (BackendApiHandler7A1EAB14) 
+InternalWebAppStack | 26/59 | 3:16:08 AM | CREATE_COMPLETE      | AWS::RDS::DBInstance                  | ApplicationPostgresInstance Resource type AWS::RDS::DBInstance is not supported but was deployed as a fallback
+InternalWebAppStack | 26/59 | 3:16:08 AM | CREATE_IN_PROGRESS   | AWS::RDS::DBInstance                  | ApplicationPostgresInstance 
+InternalWebAppStack | 26/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Permission               | AllowHttpApiInvokeBackend 
+InternalWebAppStack | 27/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::ApiGatewayV2::Api                | OrdersHttpApi Resource type AWS::ApiGatewayV2::Api is not supported but was deployed as a fallback
+InternalWebAppStack | 27/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Api                | OrdersHttpApi 
+InternalWebAppStack | 28/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | BackendApiHandler (BackendApiHandler7A1EAB14) 
+InternalWebAppStack | 28/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | AnalyticsGlueCrawlerRole (AnalyticsGlueCrawlerRole06EB0F6A) 
+InternalWebAppStack | 29/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::Glue::Database                   | AnalyticsCatalogDatabase Resource type AWS::Glue::Database is not supported but was deployed as a fallback
+InternalWebAppStack | 29/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::Glue::Database                   | AnalyticsCatalogDatabase 
+InternalWebAppStack | 30/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::Lambda::Permission               | AllowHttpApiInvokeBackend 
+InternalWebAppStack | 30/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::SecretsManager::Secret           | AnalyticsRedshiftAdminSecret (AnalyticsRedshiftAdminSecretCADB6E30) 
+InternalWebAppStack | 31/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | AnalyticsGlueCrawlerRole (AnalyticsGlueCrawlerRole06EB0F6A) 
+InternalWebAppStack | 31/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | AnalyticsGlueCrawlerRole/DefaultPolicy (AnalyticsGlueCrawlerRoleDefaultPolicy1F2BAFFE) 
+InternalWebAppStack | 32/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::SecretsManager::Secret           | AnalyticsRedshiftAdminSecret (AnalyticsRedshiftAdminSecretCADB6E30) 
+InternalWebAppStack | 32/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::Redshift::ClusterSubnetGroup     | AnalyticsRedshiftSubnetGroup 
+InternalWebAppStack | 33/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | AnalyticsGlueCrawlerRole/DefaultPolicy (AnalyticsGlueCrawlerRoleDefaultPolicy1F2BAFFE) 
+InternalWebAppStack | 34/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::Redshift::ClusterSubnetGroup     | AnalyticsRedshiftSubnetGroup 
+InternalWebAppStack | 34/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::Redshift::Cluster                | AnalyticsRedshiftCluster 
+InternalWebAppStack | 35/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::Redshift::Cluster                | AnalyticsRedshiftCluster 
+InternalWebAppStack | 36/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::Glue::Connection                 | AnalyticsRedshiftJdbcConnection Resource type AWS::Glue::Connection is not supported but was deployed as a fallback
+InternalWebAppStack | 36/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::Glue::Connection                 | AnalyticsRedshiftJdbcConnection 
+InternalWebAppStack | 36/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::EC2::RouteTable                  | ApplicationVpc/PublicSubnet2/RouteTable (ApplicationVpcPublicSubnet2RouteTableA5B5B5A5) 
+InternalWebAppStack | 37/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::Glue::Crawler                    | AnalyticsRedshiftCrawler Resource type AWS::Glue::Crawler is not supported but was deployed as a fallback
+InternalWebAppStack | 37/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::Glue::Crawler                    | AnalyticsRedshiftCrawler 
+InternalWebAppStack | 37/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::EC2::Route                       | ApplicationVpc/PublicSubnet2/DefaultRoute (ApplicationVpcPublicSubnet2DefaultRoute7C19233F) 
+InternalWebAppStack | 38/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::EC2::RouteTable                  | ApplicationVpc/PublicSubnet2/RouteTable (ApplicationVpcPublicSubnet2RouteTableA5B5B5A5) 
+InternalWebAppStack | 39/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::EC2::Route                       | ApplicationVpc/PublicSubnet2/DefaultRoute (ApplicationVpcPublicSubnet2DefaultRoute7C19233F) 
+InternalWebAppStack | 39/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::EC2::Subnet                      | ApplicationVpc/PublicSubnet2/Subnet (ApplicationVpcPublicSubnet2SubnetE792D9E8) 
+InternalWebAppStack | 39/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PublicSubnet2/RouteTableAssociation (ApplicationVpcPublicSubnet2RouteTableAssociation396F9A40) 
+InternalWebAppStack | 40/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::EC2::Subnet                      | ApplicationVpc/PublicSubnet2/Subnet (ApplicationVpcPublicSubnet2SubnetE792D9E8) 
+InternalWebAppStack | 40/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | BackendApiHandlerLogGroup (BackendApiHandlerLogGroup4F39DE98) 
+InternalWebAppStack | 41/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::EC2::SubnetRouteTableAssociation | ApplicationVpc/PublicSubnet2/RouteTableAssociation (ApplicationVpcPublicSubnet2RouteTableAssociation396F9A40) 
+InternalWebAppStack | 42/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+InternalWebAppStack | 42/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::CDK::Metadata                    | CDKMetadata/Default (CDKMetadata) 
+InternalWebAppStack | 43/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | BackendApiHandlerLogGroup (BackendApiHandlerLogGroup4F39DE98) 
+InternalWebAppStack | 43/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | EventEnrichmentRole (EventEnrichmentRoleC19F5F3A) 
+InternalWebAppStack | 43/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | EventEnrichmentRole/DefaultPolicy (EventEnrichmentRoleDefaultPolicy2FDAFA68) 
+InternalWebAppStack | 44/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | EventEnrichmentRole (EventEnrichmentRoleC19F5F3A) 
+InternalWebAppStack | 44/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::Lambda::Function                 | EventEnrichmentFunction (EventEnrichmentFunction496A1D0E) 
+InternalWebAppStack | 45/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | EventEnrichmentRole/DefaultPolicy (EventEnrichmentRoleDefaultPolicy2FDAFA68) 
+InternalWebAppStack | 45/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | EventEnrichmentLogGroup (EventEnrichmentLogGroup3442C262) 
+InternalWebAppStack | 46/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::Lambda::Function                 | EventEnrichmentFunction (EventEnrichmentFunction496A1D0E) 
+InternalWebAppStack | 47/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | EventEnrichmentLogGroup (EventEnrichmentLogGroup3442C262) 
+InternalWebAppStack | 47/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | OrderFulfillmentStateMachineRole (OrderFulfillmentStateMachineRoleEC997FA9) 
+InternalWebAppStack | 47/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | OrderFulfillmentStateMachineRole/DefaultPolicy (OrderFulfillmentStateMachineRoleDefaultPolicy31173655) 
+InternalWebAppStack | 48/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | OrderFulfillmentStateMachineRole (OrderFulfillmentStateMachineRoleEC997FA9) 
+InternalWebAppStack | 48/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | OrderFulfillmentStateMachineLogGroup (OrderFulfillmentStateMachineLogGroup01FC104F) 
+InternalWebAppStack | 49/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | OrderFulfillmentStateMachineRole/DefaultPolicy (OrderFulfillmentStateMachineRoleDefaultPolicy31173655) 
+InternalWebAppStack | 49/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::StepFunctions::StateMachine      | OrderFulfillmentStateMachine (OrderFulfillmentStateMachineEB6B2709) 
+InternalWebAppStack | 50/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | OrderFulfillmentStateMachineLogGroup (OrderFulfillmentStateMachineLogGroup01FC104F) 
+InternalWebAppStack | 50/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::IAM::Role                        | OrderProcessingPipeRole (OrderProcessingPipeRoleF8196DA9) 
+InternalWebAppStack | 51/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::StepFunctions::StateMachine      | OrderFulfillmentStateMachine (OrderFulfillmentStateMachineEB6B2709) 
+InternalWebAppStack | 51/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::IAM::Policy                      | OrderProcessingPipeRole/DefaultPolicy (OrderProcessingPipeRoleDefaultPolicy043C73A4) 
+InternalWebAppStack | 52/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::Pipes::Pipe                      | OrderProcessingPipe Resource type AWS::Pipes::Pipe is not supported but was deployed as a fallback
+InternalWebAppStack | 52/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::Pipes::Pipe                      | OrderProcessingPipe 
+InternalWebAppStack | 53/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::IAM::Role                        | OrderProcessingPipeRole (OrderProcessingPipeRoleF8196DA9) 
+InternalWebAppStack | 53/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::Logs::LogGroup                   | OrdersApiAccessLogGroup (OrdersApiAccessLogGroup1A654EB2) 
+InternalWebAppStack | 54/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::IAM::Policy                      | OrderProcessingPipeRole/DefaultPolicy (OrderProcessingPipeRoleDefaultPolicy043C73A4) 
+InternalWebAppStack | 55/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::ApiGatewayV2::Route              | OrdersRoute Resource type AWS::ApiGatewayV2::Route is not supported but was deployed as a fallback
+InternalWebAppStack | 55/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Route              | OrdersRoute 
+InternalWebAppStack | 56/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::ApiGatewayV2::Integration        | OrdersIntegration Resource type AWS::ApiGatewayV2::Integration is not supported but was deployed as a fallback
+InternalWebAppStack | 56/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Integration        | OrdersIntegration 
+InternalWebAppStack | 57/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::ApiGatewayV2::Stage              | OrdersDefaultStage Resource type AWS::ApiGatewayV2::Stage is not supported but was deployed as a fallback
+InternalWebAppStack | 57/59 | 3:16:09 AM | CREATE_IN_PROGRESS   | AWS::ApiGatewayV2::Stage              | OrdersDefaultStage 
+InternalWebAppStack | 58/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::Logs::LogGroup                   | OrdersApiAccessLogGroup (OrdersApiAccessLogGroup1A654EB2) 
+InternalWebAppStack | 59/59 | 3:16:09 AM | CREATE_COMPLETE      | AWS::CloudFormation::Stack            | InternalWebAppStack 
+
+ ✅  InternalWebAppStack
+
+✨  Deployment time: 5.55s
+
+Outputs:
+InternalWebAppStack.OrderFulfillmentStateMachineArn = arn:aws:states:us-east-1:000000000000:stateMachine:InternalWebAppStack-OrderFulfillmentStateMac-51d75989
+InternalWebAppStack.OrderWorkQueueArn = arn:aws:sqs:us-east-1:000000000000:InternalWebAppStack-OrderWorkQueueF68826A4-fb9e36e6
+InternalWebAppStack.OrdersApiEndpoint = unknown
+Stack ARN:
+arn:aws:cloudformation:us-east-1:000000000000:stack/InternalWebAppStack/836126c5-3ffb-4596-a08f-ac05c421e824
+
+✨  Total time: 10.07s
+
+[32m✅ Step passed: Deploy (LocalStack)[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Integration tests[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running pytest integration tests...
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /work
+configfile: pytest.ini
+plugins: typeguard-2.13.3
+collecting ... collected 8 items
+
+tests/integration_tests.py::test_stack_contains_expected_live_resources PASSED [ 12%]
+tests/integration_tests.py::test_lambda_configurations_and_queue_attributes PASSED [ 25%]
+tests/integration_tests.py::test_api_pipe_and_state_machine_wiring PASSED [ 37%]
+tests/integration_tests.py::test_database_and_analytics_resources_are_private PASSED [ 50%]
+tests/integration_tests.py::test_iam_policies_are_scoped_to_live_resources PASSED [ 62%]
+tests/integration_tests.py::test_invalid_order_payload_returns_400_without_queue_message PASSED [ 75%]
+tests/integration_tests.py::test_orders_flow_reaches_step_functions_via_queue_and_pipe PASSED [ 87%]
+tests/integration_tests.py::test_pipe_delivery_includes_enrichment_when_available PASSED [100%]
+
+============================== 8 passed in 42.67s ==============================
+[32m✅ Step passed: Integration tests[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  Step: Destroy / Cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+Running cdklocal destroy...
+Cleaning up worker container: harness-worker-87961
+[32m✅ Step passed: Destroy / Cleanup[0m
+
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[34m  HARNESS SUMMARY[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ setup[0m
+[32m✅ syntax/plan[0m
+[32m✅ unit tests[0m
+[32m✅ deploy (localstack)[0m
+[32m✅ integration tests[0m
+[32m✅ destroy/cleanup[0m
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[32m✅ All steps passed.[0m
+
+Log saved to: ../../../runs/tasks_cdk-py_d1154cb9-340a-485c-ab0c-9d279a375a5a-local-rerun-2.log
+[34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+Stopping LocalStack...
+ Container localstack-harness  Stopping
+ Container localstack-harness  Stopped
+ Container localstack-harness  Removing
+ Container localstack-harness  Removed
+ Network iac-harness-network  Removing
+ Network iac-harness-network  Removed

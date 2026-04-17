@@ -55,6 +55,15 @@ def _actions_for_statement(statement):
     return actions if isinstance(actions, list) else [actions]
 
 
+def _security_group_logical_id(reference):
+    if isinstance(reference, dict):
+        if "Fn::GetAtt" in reference:
+            return reference["Fn::GetAtt"][0]
+        if "Ref" in reference:
+            return reference["Ref"]
+    raise AssertionError(f"unsupported security group reference: {reference}")
+
+
 def _lambda_code_module(source, monkeypatch, *, with_pg8000):
     requested_services = []
     client_kwargs = {}
@@ -244,6 +253,47 @@ def test_security_groups_do_not_allow_public_ingress_and_db_uses_dedicated_group
     )
     assert db_instance["VPCSecurityGroups"] == [{"Fn::GetAtt": [database_sg_id, "GroupId"]}]
 
+    redshift = next(
+        resource["Properties"]
+        for resource in resources.values()
+        if resource["Type"] == "AWS::Redshift::Cluster"
+    )
+    assert redshift["VpcSecurityGroupIds"] == [{"Fn::GetAtt": [database_sg_id, "GroupId"]}]
+
+    glue_connection = next(
+        resource["Properties"]
+        for resource in resources.values()
+        if resource["Type"] == "AWS::Glue::Connection"
+    )
+    glue_requirements = glue_connection["ConnectionInput"]["PhysicalConnectionRequirements"]
+    assert glue_requirements["SecurityGroupIdList"] == [{"Fn::GetAtt": [database_sg_id, "GroupId"]}]
+
+
+def test_enrichment_lambda_uses_only_declared_security_groups():
+    template_dict = synth_template_dict()
+    declared_security_group_ids = {
+        logical_id
+        for logical_id, resource in template_dict["Resources"].items()
+        if resource["Type"] == "AWS::EC2::SecurityGroup"
+    }
+    backend_sg_id, _ = _find_resource(
+        template_dict,
+        "AWS::EC2::SecurityGroup",
+        lambda _lid, resource: "backend API handler" in resource["Properties"]["GroupDescription"],
+    )
+    _, enrichment_lambda = _find_resource(
+        template_dict,
+        "AWS::Lambda::Function",
+        lambda _lid, resource: "APP_DB_NAME" not in resource["Properties"]["Environment"]["Variables"],
+    )
+
+    enrichment_security_group_ids = [
+        _security_group_logical_id(reference)
+        for reference in enrichment_lambda["Properties"]["VpcConfig"]["SecurityGroupIds"]
+    ]
+    assert set(enrichment_security_group_ids).issubset(declared_security_group_ids)
+    assert enrichment_security_group_ids == [backend_sg_id]
+
 
 def test_lambdas_use_required_shape_logs_and_zip_package():
     template_dict = synth_template_dict()
@@ -342,11 +392,15 @@ def test_rds_and_redshift_use_generated_secrets_without_inline_passwords():
         for resource in resources.values()
         if resource["Type"] == "AWS::Redshift::Cluster"
     )
+    assert "resolve:secretsmanager" in json.dumps(redshift["MasterUsername"])
     assert "resolve:secretsmanager" in json.dumps(redshift["MasterUserPassword"])
     assert redshift["PubliclyAccessible"] is False
     assert redshift["ClusterType"] == "single-node"
     assert redshift["NodeType"] == "dc2.large"
     assert redshift["DBName"] == "analytics"
+    assert "AWS::SecretsManager::SecretTargetAttachment" not in {
+        resource["Type"] for resource in resources.values()
+    }
 
 
 def test_state_machine_definition_is_single_task_to_backend_lambda_with_logging():
@@ -631,14 +685,69 @@ def test_backend_lambda_rejects_invalid_payload_without_side_effects(monkeypatch
 
     monkeypatch.setenv("WORK_QUEUE_URL", "https://sqs.example/orders")
 
-    response = module.handler(
+    invalid_events = [
         {
             "requestContext": {"http": {"method": "POST"}},
             "body": json.dumps({"customerId": "cust-1"}),
         },
-        None,
-    )
+        {
+            "requestContext": {"http": {"method": "POST"}},
+            "body": json.dumps({"orderId": "ord-1"}),
+        },
+        {
+            "requestContext": {"http": {"method": "POST"}},
+            "body": '{"orderId":',
+        },
+        {
+            "requestContext": {"http": {"method": "POST"}},
+            "body": "",
+        },
+        {
+            "requestContext": {"http": {"method": "POST"}},
+            "body": None,
+        },
+    ]
 
-    assert response["statusCode"] == 400
+    for event in invalid_events:
+        response = module.handler(event, None)
+        assert response["statusCode"] == 400
+
     assert sqs_messages == []
     assert requested_services == []
+
+
+def test_backend_lambda_handles_step_functions_invocation_without_api_side_effects(monkeypatch):
+    app_module = _load_app_module()
+    (
+        module,
+        requested_services,
+        _client_kwargs,
+        sqs_messages,
+        _secret_requests,
+        _sql_calls,
+        _connection_kwargs,
+    ) = _lambda_code_module(app_module.BACKEND_LAMBDA_CODE, monkeypatch, with_pg8000=False)
+
+    workflow_event = {
+        "messageBody": json.dumps({"orderId": "ord-1", "customerId": "cust-1"}),
+        "enrichment": {"isEnriched": True},
+    }
+    response = module.handler(workflow_event, None)
+
+    assert response["status"] == "FULFILLED"
+    assert response["workflowId"]
+    assert response["input"] == workflow_event
+    assert sqs_messages == []
+    assert requested_services == []
+
+
+def test_enrichment_lambda_runtime_returns_original_body_and_enrichment(monkeypatch):
+    app_module = _load_app_module()
+    module, *_ = _lambda_code_module(app_module.ENRICHMENT_LAMBDA_CODE, monkeypatch, with_pg8000=False)
+
+    original_body = json.dumps({"orderId": "ord-1", "customerId": "cust-1"})
+    response = module.handler({"body": original_body}, None)
+
+    assert response["originalBody"] == original_body
+    assert response["enrichment"]["source"] == "event-enrichment"
+    assert response["enrichment"]["isEnriched"] is True

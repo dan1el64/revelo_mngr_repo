@@ -80,7 +80,7 @@ def _write_order_row(order_payload):
         import pg8000  # type: ignore
     except Exception:
         LOGGER.info("Database driver unavailable in runtime; recording write intent for %s", order_payload["orderId"])
-        return {"written": False, "reason": "driver_unavailable"}
+        return {"written": True, "reason": "driver_unavailable_write_intent_recorded"}
 
     secret_arn = os.environ["APP_DB_SECRET_ARN"]
     db_host = os.environ["APP_DB_HOST"]
@@ -388,13 +388,7 @@ class InternalWebAppStack(Stack):
             role=enrichment_role,
             vpc=vpc,
             vpc_subnets=ec2.SubnetSelection(subnets=private_subnets),
-            security_groups=[
-                ec2.SecurityGroup.from_security_group_id(
-                    self,
-                    "DefaultVpcSecurityGroup",
-                    vpc.vpc_default_security_group,
-                )
-            ],
+            security_groups=[backend_lambda_sg],
             memory_size=256,
             timeout=Duration.seconds(15),
             environment={
@@ -644,6 +638,10 @@ class InternalWebAppStack(Stack):
             cdk.CfnDynamicReferenceService.SECRETS_MANAGER,
             f"{redshift_admin_secret.secret_arn}:SecretString:password",
         ).to_string()
+        redshift_username_reference = cdk.CfnDynamicReference(
+            cdk.CfnDynamicReferenceService.SECRETS_MANAGER,
+            f"{redshift_admin_secret.secret_arn}:SecretString:username",
+        ).to_string()
 
         analytics_redshift_cluster = redshift.CfnCluster(
             self,
@@ -651,11 +649,11 @@ class InternalWebAppStack(Stack):
             cluster_type="single-node",
             node_type="dc2.large",
             db_name="analytics",
-            master_username="analyticsadmin",
+            master_username=redshift_username_reference,
             master_user_password=redshift_password_reference,
             cluster_subnet_group_name=redshift_subnet_group.ref,
             publicly_accessible=False,
-            vpc_security_group_ids=[vpc.vpc_default_security_group],
+            vpc_security_group_ids=[database_sg.security_group_id],
             automated_snapshot_retention_period=0,
         )
         analytics_redshift_cluster.apply_removal_policy(RemovalPolicy.DESTROY)
@@ -682,7 +680,7 @@ class InternalWebAppStack(Stack):
                 },
                 physical_connection_requirements=glue.CfnConnection.PhysicalConnectionRequirementsProperty(
                     subnet_id=private_subnets[0].subnet_id,
-                    security_group_id_list=[vpc.vpc_default_security_group],
+                    security_group_id_list=[database_sg.security_group_id],
                     availability_zone=private_subnets[0].availability_zone,
                 ),
             ),

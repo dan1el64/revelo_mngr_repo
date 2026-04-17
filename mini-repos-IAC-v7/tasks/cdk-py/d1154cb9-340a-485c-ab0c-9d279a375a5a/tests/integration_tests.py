@@ -236,7 +236,7 @@ def _wait_for(description: str, predicate, timeout_seconds: int = 120, interval_
     raise AssertionError(f"timed out waiting for {description}")
 
 
-def _post_json(url: str, payload: dict):
+def _post_json_response(url: str, payload: dict):
     body = json.dumps(payload).encode("utf-8")
     request = urllib.request.Request(
         url=url,
@@ -250,13 +250,23 @@ def _post_json(url: str, payload: dict):
             return response.status, json.loads(response_body)
     except urllib.error.HTTPError as exc:
         error_body = exc.read().decode("utf-8")
-        pytest.fail(f"POST {url} failed with {exc.code}: {error_body}")
+        try:
+            return exc.code, json.loads(error_body)
+        except json.JSONDecodeError:
+            return exc.code, {"error": error_body}
     except urllib.error.URLError as exc:
         if _is_emulated_environment():
             raise AssertionError(
                 f"HTTP endpoint is not reachable in this emulated environment: {exc.reason}"
             ) from exc
         raise
+
+
+def _post_json(url: str, payload: dict):
+    status_code, response_body = _post_json_response(url, payload)
+    if status_code >= 400:
+        pytest.fail(f"POST {url} failed with {status_code}: {response_body}")
+    return status_code, response_body
 
 
 def _json_document(value):
@@ -337,6 +347,19 @@ def _find_matching_queue_message(sqs_client, queue_url: str, order_id: str):
                 return message
         time.sleep(1)
     raise AssertionError(f"timed out waiting for queue message for order {order_id}")
+
+
+def _assert_no_queue_message_containing(sqs_client, queue_url: str, marker: str):
+    deadline = time.time() + 5
+    while time.time() < deadline:
+        response = sqs_client.receive_message(
+            QueueUrl=queue_url,
+            MaxNumberOfMessages=10,
+            WaitTimeSeconds=1,
+            VisibilityTimeout=0,
+        )
+        for message in response.get("Messages", []):
+            assert marker not in message.get("Body", "")
 
 
 def test_stack_contains_expected_live_resources(stack_resources):
@@ -778,6 +801,45 @@ def test_iam_policies_are_scoped_to_live_resources(stack_resources):
     }
 
 
+def test_invalid_order_payload_returns_400_without_queue_message(
+    stack_outputs, stack_resources
+):
+    sqs_client = _client("sqs")
+    lambda_client = _client("lambda")
+
+    queue_resource = _resource_of_type(stack_resources, "AWS::SQS::Queue")[0]
+    backend_lambda_resource = _resource_by_logical_prefix(
+        stack_resources, "BackendApiHandler", "AWS::Lambda::Function"
+    )
+    queue_url = _queue_url(sqs_client, queue_resource)
+    customer_id = f"invalid-customer-{uuid.uuid4().hex[:12]}"
+    request_payload = {"customerId": customer_id}
+
+    try:
+        usable_api_endpoint = _require_http_url(
+            stack_outputs.get("OrdersApiEndpoint", ""),
+            "OrdersApiEndpoint",
+        ).rstrip("/")
+        transport_status_code, response_body = _post_json_response(
+            f"{usable_api_endpoint}/orders",
+            request_payload,
+        )
+        assert transport_status_code == 400
+        error_response = response_body
+    except AssertionError:
+        transport_status_code, response_body = _invoke_backend_as_api(
+            lambda_client,
+            backend_lambda_resource["PhysicalResourceId"],
+            request_payload,
+        )
+        assert transport_status_code == 200
+        assert response_body["statusCode"] == 400
+        error_response = _json_document(response_body["body"])
+
+    assert "orderId" in error_response["error"]
+    _assert_no_queue_message_containing(sqs_client, queue_url, customer_id)
+
+
 def test_orders_flow_reaches_step_functions_via_queue_and_pipe(
     stack_outputs, stack_resources
 ):
@@ -828,6 +890,7 @@ def test_orders_flow_reaches_step_functions_via_queue_and_pipe(
     assert accepted_response["accepted"] is True
     assert accepted_response["orderId"] == order_id
     assert accepted_response["messageId"]
+    assert accepted_response["databaseWrite"]["written"] is True
 
     def _matching_execution():
         paginator = sfn_client.get_paginator("list_executions")
@@ -926,3 +989,96 @@ def test_orders_flow_reaches_step_functions_via_queue_and_pipe(
         output_message_body = json.loads(output_message_body)
     assert output_message_body["orderId"] == order_id
     assert output_message_body["customerId"] == customer_id
+
+
+def test_pipe_delivery_includes_enrichment_when_available(
+    stack_outputs, stack_resources
+):
+    lambda_client = _client("lambda")
+    pipes_client = _client("pipes")
+    sfn_client = _client("stepfunctions")
+
+    pipe_resource = _resource_of_type(stack_resources, "AWS::Pipes::Pipe")[0]
+    state_machine_arn = stack_outputs["OrderFulfillmentStateMachineArn"]
+    backend_lambda_resource = _resource_by_logical_prefix(
+        stack_resources, "BackendApiHandler", "AWS::Lambda::Function"
+    )
+
+    try:
+        pipe = pipes_client.describe_pipe(Name=pipe_resource["PhysicalResourceId"])
+    except botocore.exceptions.ClientError as exc:
+        if _is_emulated_service_unavailable_error(exc, "pipes"):
+            return
+        raise
+
+    if pipe["CurrentState"] != "RUNNING":
+        return
+
+    order_id = f"pipe-order-{uuid.uuid4().hex[:12]}"
+    customer_id = f"pipe-customer-{uuid.uuid4().hex[:12]}"
+    request_started_at = datetime.now(timezone.utc) - timedelta(seconds=2)
+    request_payload = {
+        "orderId": order_id,
+        "customerId": customer_id,
+        "submittedAt": datetime.now(timezone.utc).isoformat(),
+    }
+
+    try:
+        usable_api_endpoint = _require_http_url(
+            stack_outputs.get("OrdersApiEndpoint", ""),
+            "OrdersApiEndpoint",
+        ).rstrip("/")
+        transport_status_code, response_body = _post_json(
+            f"{usable_api_endpoint}/orders",
+            request_payload,
+        )
+        assert transport_status_code == 202
+        accepted_response = response_body
+    except AssertionError:
+        transport_status_code, response_body = _invoke_backend_as_api(
+            lambda_client,
+            backend_lambda_resource["PhysicalResourceId"],
+            request_payload,
+        )
+        assert transport_status_code == 200
+        assert response_body["statusCode"] == 202
+        accepted_response = _json_document(response_body["body"])
+
+    assert accepted_response["accepted"] is True
+
+    def _matching_execution():
+        paginator = sfn_client.get_paginator("list_executions")
+        for page in paginator.paginate(stateMachineArn=state_machine_arn):
+            for execution in page["executions"]:
+                if execution["startDate"] < request_started_at:
+                    continue
+                description = sfn_client.describe_execution(
+                    executionArn=execution["executionArn"]
+                )
+                execution_input = description.get("input", "")
+                if order_id not in execution_input:
+                    continue
+                if description["status"] in {"FAILED", "TIMED_OUT", "ABORTED"}:
+                    raise AssertionError(
+                        f"execution {description['executionArn']} finished with {description['status']}"
+                    )
+                if description["status"] != "SUCCEEDED":
+                    return None
+                return description
+        return None
+
+    try:
+        execution = _wait_for(
+            "Pipe delivery to include enrichment in the Step Functions input",
+            _matching_execution,
+            timeout_seconds=25 if _is_emulated_environment() else 180,
+            interval_seconds=3 if _is_emulated_environment() else 5,
+        )
+    except AssertionError:
+        if _is_emulated_environment():
+            return
+        raise
+
+    execution_input = _json_document(execution["input"])
+    assert execution_input["enrichment"]["source"] == "event-enrichment"
+    assert execution_input["enrichment"]["isEnriched"] is True
