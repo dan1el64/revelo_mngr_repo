@@ -11,7 +11,7 @@ This Terraform configuration works with **AWS** or **local mode** without code c
 | `name_prefix` | string | Prefix for resource names (e.g., S3 buckets) to avoid collisions | *Required* |
 | `bucket_name` | string | S3 bucket name suffix. Final name: `${name_prefix}-${bucket_name}` | `"bucket"` |
 | `aws_region` | string | AWS region | `"us-east-1"` |
-| `aws_endpoint` | string | AWS endpoint override for local mode. Set to `http://10.0.2.20:4566` for local mode, `null` for real AWS | `null` |
+| `aws_endpoint` | string | AWS endpoint override for local mode. Set this from the harness or environment for local mode, `null` for real AWS | `null` |
 
 **Environment variables** (alternative to `TF_VAR_*`):
 - `AWS_ACCESS_KEY_ID` - AWS access key (use `"test"` for local mode)
@@ -22,7 +22,7 @@ This Terraform configuration works with **AWS** or **local mode** without code c
 
 ## Testing locally
 
-Assumes a local provider is already running on the `iac-harness-network` at `10.0.2.20:4566`. Tests are **Python** (pytest).
+Assumes a local provider is already running on the `iac-harness-network`. Tests are **Python** (pytest).
 
 ### Run in the test container
 
@@ -32,7 +32,7 @@ Use the provided Docker image with all dependencies (Terraform, Python, pytest):
 docker run --rm -it \
   -v "$PWD:/work-ro:ro" \
   --network iac-harness-network \
-  -e TF_VAR_aws_endpoint="http://10.0.2.20:4566" \
+  -e TF_VAR_aws_endpoint="<provider-endpoint>" \
   -e TF_VAR_aws_region="us-east-1" \
   -e TF_VAR_name_prefix="dev" \
   -e AWS_ACCESS_KEY_ID="test" \

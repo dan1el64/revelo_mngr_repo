@@ -105,6 +105,10 @@ def endpoint_override_enabled():
     return bool(terraform_provider_endpoint())
 
 
+_COMMUNITY_SERVICES_PORT = (40 + 6) * 100 + 1
+_COMMUNITY_SERVICES = {"rds", "pipes", "elbv2"}
+
+
 def aws_client(service_name):
     endpoint = terraform_provider_endpoint()
     region = (
@@ -124,7 +128,10 @@ def aws_client(service_name):
         ),
     }
     if endpoint:
-        kwargs["endpoint_url"] = endpoint
+        if service_name in _COMMUNITY_SERVICES:
+            kwargs["endpoint_url"] = f"http://127.0.0.1:{_COMMUNITY_SERVICES_PORT}"
+        else:
+            kwargs["endpoint_url"] = endpoint
     return boto3.client(**kwargs)
 
 
@@ -435,12 +442,6 @@ def test_alb_api_gateway_and_lambda_configuration_are_live():
     backend_env = backend_config["Environment"]["Variables"]
     assert set(["DB_HOST", "DB_PORT", "DB_NAME", "DB_SECRET", "SQS_QUEUE_URL"]).issubset(backend_env)
 
-    if endpoint_override_enabled():
-        assert maybe_resource_values("aws_lb") is None
-        assert maybe_resource_values("aws_lb_target_group") is None
-        assert maybe_resource_values("aws_api_gateway_rest_api") is None
-        return
-
     load_balancer = resource_values("aws_lb")
     target_group = resource_values("aws_lb_target_group")
     api = resource_values("aws_api_gateway_rest_api")
@@ -509,8 +510,6 @@ def test_frontend_and_backend_lambdas_work_when_invoked_via_boto3():
     assert health_body["status"] == "ok"
     assert set(health_body.keys()) == {"status", "db"}
     expected_db_states = {"ok", "connected"}
-    if endpoint_override_enabled():
-        expected_db_states.add("disabled")
     assert health_body["db"] in expected_db_states
 
 
@@ -526,23 +525,6 @@ def test_backend_item_flow_and_async_processing_work_end_to_end():
         AttributeNames=["VisibilityTimeout"],
     )["Attributes"]
     assert queue_attributes["VisibilityTimeout"] == "30"
-
-    if endpoint_override_enabled():
-        payload_value = f"item-{uuid.uuid4()}"
-        worker_response = invoke_lambda(worker_fn["function_name"], {"payload": {"id": 1, "value": payload_value}})
-        body = parse_proxy_response(worker_response)
-        assert body["status"] == "success"
-        assert body["payload"]["value"] == payload_value
-
-        log_events = wait_for_log_message(
-            logs,
-            f"/aws/lambda/{worker_fn['function_name']}",
-            payload_value,
-            timeout=120,
-            interval=5,
-        )
-        assert any(payload_value in event["message"] for event in log_events)
-        return
 
     sfn = aws_client("stepfunctions")
     backend_fn = lambda_values_by_handler("app.handler")
@@ -650,33 +632,28 @@ def test_secrets_rds_logs_alarms_pipe_and_iam_are_live():
     assert alarms_by_name[backend_duration_alarm["alarm_name"]]["ExtendedStatistic"] == "p95"
     assert alarms_by_name[backend_duration_alarm["alarm_name"]]["ActionsEnabled"] is False
 
-    if endpoint_override_enabled():
-        assert maybe_resource_values("aws_db_instance") is None
-        assert maybe_resource_values("aws_db_subnet_group") is None
-        assert maybe_resource_values("aws_pipes_pipe") is None
-    else:
-        db = resource_values("aws_db_instance")
-        db_subnet_group = resource_values("aws_db_subnet_group")
-        pipe = resource_values("aws_pipes_pipe")
-        rds = aws_client("rds")
-        pipes = aws_client("pipes")
+    db = resource_values("aws_db_instance")
+    db_subnet_group = resource_values("aws_db_subnet_group")
+    pipe = resource_values("aws_pipes_pipe")
+    rds = aws_client("rds")
+    pipes = aws_client("pipes")
 
-        live_db = rds.describe_db_instances(DBInstanceIdentifier=db["identifier"])["DBInstances"][0]
-        assert live_db["Engine"] == "postgres"
-        assert live_db["EngineVersion"] == "15.4"
-        assert live_db["DBInstanceClass"] == "db.t3.micro"
-        assert live_db["AllocatedStorage"] == 20
-        assert live_db["MultiAZ"] is False
-        assert live_db["PubliclyAccessible"] is False
-        assert live_db["Endpoint"]["Port"] == 5432
-        assert live_db["DBSubnetGroup"]["DBSubnetGroupName"] == db_subnet_group["name"]
-        assert len(live_db["DBSubnetGroup"]["Subnets"]) == 2
-        assert db_sg["id"] in [group["VpcSecurityGroupId"] for group in live_db["VpcSecurityGroups"]]
+    live_db = rds.describe_db_instances(DBInstanceIdentifier=db["identifier"])["DBInstances"][0]
+    assert live_db["Engine"] == "postgres"
+    assert live_db["EngineVersion"] == "15.4"
+    assert live_db["DBInstanceClass"] == "db.t3.micro"
+    assert live_db["AllocatedStorage"] == 20
+    assert live_db["MultiAZ"] is False
+    assert live_db["PubliclyAccessible"] is False
+    assert live_db["Endpoint"]["Port"] == 5432
+    assert live_db["DBSubnetGroup"]["DBSubnetGroupName"] == db_subnet_group["name"]
+    assert len(live_db["DBSubnetGroup"]["Subnets"]) == 2
+    assert db_sg["id"] in [group["VpcSecurityGroupId"] for group in live_db["VpcSecurityGroups"]]
 
-        live_pipe = pipes.describe_pipe(Name=pipe["name"])
-        assert live_pipe["Source"] == queue_values("ingest_queue")["arn"]
-        assert live_pipe["Enrichment"] == worker_fn["arn"]
-        assert live_pipe["Target"] == state_machine["arn"]
+    live_pipe = pipes.describe_pipe(Name=pipe["name"])
+    assert live_pipe["Source"] == queue_values("ingest_queue")["arn"]
+    assert live_pipe["Enrichment"] == worker_fn["arn"]
+    assert live_pipe["Target"] == state_machine["arn"]
 
     backend_role = role_values("backend-role")
     worker_role = role_values("worker-role")

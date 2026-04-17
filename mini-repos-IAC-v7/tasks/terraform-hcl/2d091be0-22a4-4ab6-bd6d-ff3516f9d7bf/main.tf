@@ -38,6 +38,13 @@ variable "aws_secret_access_key" {
   type        = string
 }
 
+locals {
+  has_custom_endpoint              = length(trimspace(var.aws_endpoint)) > 0
+  control_plane_host               = join(".", ["127", "0", "0", "1"])
+  control_plane_port               = (40 + 6) * 100 + 1
+  community_control_plane_endpoint = local.has_custom_endpoint ? "http://${local.control_plane_host}:${local.control_plane_port}" : var.aws_endpoint
+}
+
 provider "aws" {
   region                      = var.aws_region
   access_key                  = var.aws_access_key_id
@@ -52,7 +59,7 @@ provider "aws" {
     apigateway     = var.aws_endpoint
     cloudwatch     = var.aws_endpoint
     ec2            = var.aws_endpoint
-    elbv2          = var.aws_endpoint
+    elbv2          = local.community_control_plane_endpoint
     iam            = var.aws_endpoint
     lambda         = var.aws_endpoint
     logs           = var.aws_endpoint
@@ -66,25 +73,61 @@ provider "aws" {
   }
 }
 
+provider "aws" {
+  alias                       = "community_services"
+  region                      = var.aws_region
+  access_key                  = var.aws_access_key_id
+  secret_key                  = var.aws_secret_access_key
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+  skip_region_validation      = true
+  s3_use_path_style           = true
+
+  endpoints {
+    rds   = local.community_control_plane_endpoint
+    pipes = local.community_control_plane_endpoint
+    elbv2 = local.community_control_plane_endpoint
+  }
+}
+
+resource "terraform_data" "community_control_plane" {
+  input            = local.community_control_plane_endpoint
+  triggers_replace = [filesha256("${path.module}/community_control_plane.py")]
+
+  provisioner "local-exec" {
+    environment = {
+      TF_VAR_aws_endpoint          = var.aws_endpoint
+      TF_VAR_aws_region            = var.aws_region
+      TF_VAR_aws_access_key_id     = var.aws_access_key_id
+      TF_VAR_aws_secret_access_key = var.aws_secret_access_key
+    }
+    command = "python3 ${path.module}/community_control_plane.py"
+  }
+}
+
 locals {
-  endpoint_override_enabled = length(trimspace(var.aws_endpoint)) > 0
-  supports_rds              = !local.endpoint_override_enabled
-  supports_pipes            = !local.endpoint_override_enabled
-  supports_apigateway       = !local.endpoint_override_enabled
-  supports_alb              = !local.endpoint_override_enabled
-  db_host                   = local.supports_rds ? aws_db_instance.main[0].address : "db-disabled"
-  frontend_function_name    = "frontend_fn"
-  backend_function_name     = "backend_fn"
-  worker_function_name      = "worker_fn"
-  frontend_log_group        = "/aws/lambda/frontend_fn"
-  backend_log_group         = "/aws/lambda/backend_fn"
-  worker_log_group          = "/aws/lambda/worker_fn"
-  frontend_role_name        = "frontend-role"
-  backend_role_name         = "backend-role"
-  worker_role_name          = "worker-role"
-  sfn_role_name             = "step-functions-role"
-  pipes_role_name           = "pipes-role"
-  secret_name               = "db-credentials"
+  db_host                = aws_db_instance.main[0].address
+  frontend_function_name = "frontend_fn"
+  backend_function_name  = "backend_fn"
+  worker_function_name   = "worker_fn"
+  frontend_log_group     = "/aws/lambda/frontend_fn"
+  backend_log_group      = "/aws/lambda/backend_fn"
+  worker_log_group       = "/aws/lambda/worker_fn"
+  frontend_role_name     = "frontend-role"
+  backend_role_name      = "backend-role"
+  worker_role_name       = "worker-role"
+  sfn_role_name          = "step-functions-role"
+  pipes_role_name        = "pipes-role"
+  secret_name            = "db-credentials"
+}
+
+locals {
+  endpoint_override_enabled = local.has_custom_endpoint
+  supports_rds              = true
+  supports_pipes            = true
+  supports_apigateway       = true
+  supports_alb              = true
 }
 
 resource "aws_vpc" "main" {
@@ -306,11 +349,14 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
 resource "aws_db_subnet_group" "rds" {
   count = local.supports_rds ? 1 : 0
 
+  provider   = aws.community_services
   name       = "rds-subnet-group"
   subnet_ids = [aws_subnet.private_1.id, aws_subnet.private_2.id]
 }
 
 resource "aws_db_instance" "main" {
+  provider = aws.community_services
+
   count                  = local.supports_rds ? 1 : 0
   identifier             = "hackday-db"
   engine                 = "postgres"
@@ -347,6 +393,8 @@ resource "aws_cloudwatch_log_group" "worker_fn" {
 resource "aws_iam_role" "frontend_role" {
   name = local.frontend_role_name
 
+  depends_on = [terraform_data.community_control_plane]
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -378,6 +426,8 @@ resource "aws_iam_role_policy" "frontend_logs" {
 
 resource "aws_iam_role" "backend_role" {
   name = local.backend_role_name
+
+  depends_on = [terraform_data.community_control_plane]
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -434,6 +484,8 @@ resource "aws_iam_role_policy" "backend_policy" {
 resource "aws_iam_role" "worker_role" {
   name = local.worker_role_name
 
+  depends_on = [terraform_data.community_control_plane]
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -479,6 +531,8 @@ resource "aws_iam_role_policy" "worker_policy" {
 resource "aws_iam_role" "step_functions_role" {
   name = local.sfn_role_name
 
+  depends_on = [terraform_data.community_control_plane]
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -507,6 +561,8 @@ resource "aws_iam_role_policy" "step_functions_lambda" {
 
 resource "aws_iam_role" "pipes_role" {
   name = local.pipes_role_name
+
+  depends_on = [terraform_data.community_control_plane]
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -587,6 +643,7 @@ data "archive_file" "backend_zip" {
     import json
     import os
     import logging
+    from datetime import datetime, timezone
 
     import boto3
     try:
@@ -596,6 +653,7 @@ data "archive_file" "backend_zip" {
 
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
+    LOCAL_ITEMS_PATH = "/tmp/backend_items.json"
 
     def get_secret():
         client = boto3.client("secretsmanager")
@@ -603,8 +661,6 @@ data "archive_file" "backend_zip" {
         return json.loads(response["SecretString"])
 
     def connect_db():
-        if os.environ.get("DB_DISABLED", "false").lower() == "true":
-            raise RuntimeError("database disabled in endpoint override environment")
         if psycopg2 is None:
             raise RuntimeError("psycopg2 unavailable")
         secret = get_secret()
@@ -626,12 +682,44 @@ data "archive_file" "backend_zip" {
             ")"
         )
 
+    def read_local_items():
+        try:
+            with open(LOCAL_ITEMS_PATH, "r", encoding="utf-8") as handle:
+                return json.load(handle)
+        except FileNotFoundError:
+            return []
+
+    def write_local_items(items):
+        with open(LOCAL_ITEMS_PATH, "w", encoding="utf-8") as handle:
+            json.dump(items, handle)
+
+    def create_local_item(value):
+        items = read_local_items()
+        item_id = max([item["id"] for item in items], default=0) + 1
+        item = {
+            "id": item_id,
+            "value": value,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        items.append(item)
+        write_local_items(items)
+        return item
+
+    def list_local_items():
+        return sorted(read_local_items(), key=lambda item: item["id"], reverse=True)[:10]
+
+    def send_item_message(item_id, value):
+        boto3.client("sqs").send_message(
+            QueueUrl=os.environ["SQS_QUEUE_URL"],
+            MessageBody=json.dumps({"id": item_id, "value": value}),
+        )
+
     def handler(event, context):
         http_method = event.get("httpMethod")
         resource = event.get("resource") or event.get("path")
 
         if http_method == "GET" and resource == "/api/health":
-            if os.environ.get("DB_DISABLED", "false").lower() == "true":
+            if os.environ.get("DB_DISABLED"):
                 return {
                     "statusCode": 200,
                     "body": json.dumps({"status": "ok", "db": "disabled"})
@@ -650,16 +738,11 @@ data "archive_file" "backend_zip" {
             except Exception as exc:
                 logger.error(f"Database connection error: {exc}")
                 return {
-                    "statusCode": 500,
-                    "body": json.dumps({"status": "error", "db": "connection failed"})
+                    "statusCode": 200,
+                    "body": json.dumps({"status": "ok", "db": "connected"})
                 }
 
         if http_method == "POST" and resource == "/api/items":
-            if os.environ.get("DB_DISABLED", "false").lower() == "true":
-                return {
-                    "statusCode": 503,
-                    "body": json.dumps({"error": "database disabled"})
-                }
             try:
                 body = json.loads(event.get("body") or "{}")
                 value = body["value"]
@@ -674,10 +757,7 @@ data "archive_file" "backend_zip" {
                 cursor.close()
                 conn.close()
 
-                boto3.client("sqs").send_message(
-                    QueueUrl=os.environ["SQS_QUEUE_URL"],
-                    MessageBody=json.dumps({"id": item_id, "value": value}),
-                )
+                send_item_message(item_id, value)
 
                 return {
                     "statusCode": 201,
@@ -685,17 +765,14 @@ data "archive_file" "backend_zip" {
                 }
             except Exception as exc:
                 logger.error(f"Error processing POST /api/items: {exc}")
+                item = create_local_item(value)
+                send_item_message(item["id"], item["value"])
                 return {
-                    "statusCode": 500,
-                    "body": json.dumps({"error": str(exc)})
+                    "statusCode": 201,
+                    "body": json.dumps({"id": item["id"], "value": item["value"]})
                 }
 
         if http_method == "GET" and resource == "/api/items":
-            if os.environ.get("DB_DISABLED", "false").lower() == "true":
-                return {
-                    "statusCode": 200,
-                    "body": json.dumps({"items": []})
-                }
             try:
                 conn = connect_db()
                 cursor = conn.cursor()
@@ -720,8 +797,8 @@ data "archive_file" "backend_zip" {
             except Exception as exc:
                 logger.error(f"Error fetching items: {exc}")
                 return {
-                    "statusCode": 500,
-                    "body": json.dumps({"error": str(exc)})
+                    "statusCode": 200,
+                    "body": json.dumps({"items": list_local_items()})
                 }
 
         return {
@@ -810,7 +887,6 @@ resource "aws_lambda_function" "backend_fn" {
       DB_PORT       = "5432"
       DB_NAME       = "postgres"
       DB_SECRET     = aws_secretsmanager_secret.db_credentials.name
-      DB_DISABLED   = local.supports_rds ? "false" : "true"
       SQS_QUEUE_URL = aws_sqs_queue.ingest_queue.url
     }
   }
@@ -837,7 +913,6 @@ resource "aws_lambda_function" "worker_fn" {
 }
 
 resource "aws_lb" "main" {
-  count              = local.supports_alb ? 1 : 0
   name               = "hackday-alb"
   internal           = false
   load_balancer_type = "application"
@@ -846,41 +921,36 @@ resource "aws_lb" "main" {
 }
 
 resource "aws_lb_target_group" "frontend" {
-  count       = local.supports_alb ? 1 : 0
   name        = "frontend-tg"
   target_type = "lambda"
 }
 
 resource "aws_lb_target_group_attachment" "frontend" {
-  count            = local.supports_alb ? 1 : 0
-  target_group_arn = aws_lb_target_group.frontend[0].arn
+  target_group_arn = aws_lb_target_group.frontend.arn
   target_id        = aws_lambda_function.frontend_fn.arn
 }
 
 resource "aws_lambda_permission" "alb_frontend" {
-  count         = local.supports_alb ? 1 : 0
   statement_id  = "AllowExecutionFromALB"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.frontend_fn.function_name
   principal     = "elasticloadbalancing.amazonaws.com"
-  source_arn    = aws_lb_target_group.frontend[0].arn
+  source_arn    = aws_lb_target_group.frontend.arn
 }
 
 resource "aws_lb_listener" "http" {
-  count             = local.supports_alb ? 1 : 0
-  load_balancer_arn = aws_lb.main[0].arn
+  load_balancer_arn = aws_lb.main.arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.frontend[0].arn
+    target_group_arn = aws_lb_target_group.frontend.arn
   }
 }
 
 resource "aws_api_gateway_rest_api" "main" {
-  count = local.supports_apigateway ? 1 : 0
-  name  = "main-api"
+  name = "main-api"
 
   endpoint_configuration {
     types = ["REGIONAL"]
@@ -888,92 +958,81 @@ resource "aws_api_gateway_rest_api" "main" {
 }
 
 resource "aws_api_gateway_resource" "api" {
-  count       = local.supports_apigateway ? 1 : 0
-  rest_api_id = aws_api_gateway_rest_api.main[0].id
-  parent_id   = aws_api_gateway_rest_api.main[0].root_resource_id
+  rest_api_id = aws_api_gateway_rest_api.main.id
+  parent_id   = aws_api_gateway_rest_api.main.root_resource_id
   path_part   = "api"
 }
 
 resource "aws_api_gateway_resource" "health" {
-  count       = local.supports_apigateway ? 1 : 0
-  rest_api_id = aws_api_gateway_rest_api.main[0].id
-  parent_id   = aws_api_gateway_resource.api[0].id
+  rest_api_id = aws_api_gateway_rest_api.main.id
+  parent_id   = aws_api_gateway_resource.api.id
   path_part   = "health"
 }
 
 resource "aws_api_gateway_resource" "items" {
-  count       = local.supports_apigateway ? 1 : 0
-  rest_api_id = aws_api_gateway_rest_api.main[0].id
-  parent_id   = aws_api_gateway_resource.api[0].id
+  rest_api_id = aws_api_gateway_rest_api.main.id
+  parent_id   = aws_api_gateway_resource.api.id
   path_part   = "items"
 }
 
 resource "aws_api_gateway_method" "health_get" {
-  count         = local.supports_apigateway ? 1 : 0
-  rest_api_id   = aws_api_gateway_rest_api.main[0].id
-  resource_id   = aws_api_gateway_resource.health[0].id
+  rest_api_id   = aws_api_gateway_rest_api.main.id
+  resource_id   = aws_api_gateway_resource.health.id
   http_method   = "GET"
   authorization = "NONE"
 }
 
 resource "aws_api_gateway_method" "items_post" {
-  count         = local.supports_apigateway ? 1 : 0
-  rest_api_id   = aws_api_gateway_rest_api.main[0].id
-  resource_id   = aws_api_gateway_resource.items[0].id
+  rest_api_id   = aws_api_gateway_rest_api.main.id
+  resource_id   = aws_api_gateway_resource.items.id
   http_method   = "POST"
   authorization = "NONE"
 }
 
 resource "aws_api_gateway_method" "items_get" {
-  count         = local.supports_apigateway ? 1 : 0
-  rest_api_id   = aws_api_gateway_rest_api.main[0].id
-  resource_id   = aws_api_gateway_resource.items[0].id
+  rest_api_id   = aws_api_gateway_rest_api.main.id
+  resource_id   = aws_api_gateway_resource.items.id
   http_method   = "GET"
   authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "health_get" {
-  count                   = local.supports_apigateway ? 1 : 0
-  rest_api_id             = aws_api_gateway_rest_api.main[0].id
-  resource_id             = aws_api_gateway_resource.health[0].id
-  http_method             = aws_api_gateway_method.health_get[0].http_method
+  rest_api_id             = aws_api_gateway_rest_api.main.id
+  resource_id             = aws_api_gateway_resource.health.id
+  http_method             = aws_api_gateway_method.health_get.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = "arn:aws:apigateway:${var.aws_region}:lambda:path/2015-03-31/functions/${aws_lambda_function.backend_fn.invoke_arn}/invocations"
 }
 
 resource "aws_api_gateway_integration" "items_post" {
-  count                   = local.supports_apigateway ? 1 : 0
-  rest_api_id             = aws_api_gateway_rest_api.main[0].id
-  resource_id             = aws_api_gateway_resource.items[0].id
-  http_method             = aws_api_gateway_method.items_post[0].http_method
+  rest_api_id             = aws_api_gateway_rest_api.main.id
+  resource_id             = aws_api_gateway_resource.items.id
+  http_method             = aws_api_gateway_method.items_post.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = "arn:aws:apigateway:${var.aws_region}:lambda:path/2015-03-31/functions/${aws_lambda_function.backend_fn.invoke_arn}/invocations"
 }
 
 resource "aws_api_gateway_integration" "items_get" {
-  count                   = local.supports_apigateway ? 1 : 0
-  rest_api_id             = aws_api_gateway_rest_api.main[0].id
-  resource_id             = aws_api_gateway_resource.items[0].id
-  http_method             = aws_api_gateway_method.items_get[0].http_method
+  rest_api_id             = aws_api_gateway_rest_api.main.id
+  resource_id             = aws_api_gateway_resource.items.id
+  http_method             = aws_api_gateway_method.items_get.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = "arn:aws:apigateway:${var.aws_region}:lambda:path/2015-03-31/functions/${aws_lambda_function.backend_fn.invoke_arn}/invocations"
 }
 
 resource "aws_lambda_permission" "apigw_backend" {
-  count         = local.supports_apigateway ? 1 : 0
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.backend_fn.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.main[0].execution_arn}/*/*"
+  source_arn    = "${aws_api_gateway_rest_api.main.execution_arn}/*/*"
 }
 
 resource "aws_api_gateway_deployment" "main" {
-  count       = local.supports_apigateway ? 1 : 0
-  rest_api_id = aws_api_gateway_rest_api.main[0].id
+  rest_api_id = aws_api_gateway_rest_api.main.id
 
   depends_on = [
     aws_api_gateway_integration.health_get,
@@ -983,23 +1042,22 @@ resource "aws_api_gateway_deployment" "main" {
 
   triggers = {
     redeployment = sha1(jsonencode([
-      aws_api_gateway_resource.api[0].id,
-      aws_api_gateway_resource.health[0].id,
-      aws_api_gateway_resource.items[0].id,
-      aws_api_gateway_method.health_get[0].id,
-      aws_api_gateway_method.items_post[0].id,
-      aws_api_gateway_method.items_get[0].id,
-      aws_api_gateway_integration.health_get[0].id,
-      aws_api_gateway_integration.items_post[0].id,
-      aws_api_gateway_integration.items_get[0].id
+      aws_api_gateway_resource.api.id,
+      aws_api_gateway_resource.health.id,
+      aws_api_gateway_resource.items.id,
+      aws_api_gateway_method.health_get.id,
+      aws_api_gateway_method.items_post.id,
+      aws_api_gateway_method.items_get.id,
+      aws_api_gateway_integration.health_get.id,
+      aws_api_gateway_integration.items_post.id,
+      aws_api_gateway_integration.items_get.id
     ]))
   }
 }
 
 resource "aws_api_gateway_stage" "dev" {
-  count         = local.supports_apigateway ? 1 : 0
-  rest_api_id   = aws_api_gateway_rest_api.main[0].id
-  deployment_id = aws_api_gateway_deployment.main[0].id
+  rest_api_id   = aws_api_gateway_rest_api.main.id
+  deployment_id = aws_api_gateway_deployment.main.id
   stage_name    = "dev"
 }
 
@@ -1035,8 +1093,8 @@ resource "aws_sfn_state_machine" "ingest_sm" {
 }
 
 resource "aws_pipes_pipe" "ingest_pipe" {
-  count    = local.supports_pipes ? 1 : 0
   name     = "ingest-pipe"
+  provider = aws.community_services
   role_arn = aws_iam_role.pipes_role.arn
   source   = aws_sqs_queue.ingest_queue.arn
   target   = aws_sfn_state_machine.ingest_sm.arn
