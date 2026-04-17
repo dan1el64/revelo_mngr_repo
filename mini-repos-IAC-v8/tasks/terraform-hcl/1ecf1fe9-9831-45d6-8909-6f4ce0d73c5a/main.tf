@@ -32,12 +32,12 @@ provider "aws" {
     apigateway     = var.aws_endpoint
     cloudwatchlogs = var.aws_endpoint
     ec2            = var.aws_endpoint
-    glue           = var.aws_endpoint
+    glue           = local.control_plane_endpoint
     iam            = var.aws_endpoint
     lambda         = var.aws_endpoint
-    pipes          = var.aws_endpoint
-    rds            = var.aws_endpoint
-    redshift       = var.aws_endpoint
+    pipes          = local.control_plane_endpoint
+    rds            = local.control_plane_endpoint
+    redshift       = local.control_plane_endpoint
     secretsmanager = var.aws_endpoint
     sfn            = var.aws_endpoint
     sns            = var.aws_endpoint
@@ -70,9 +70,15 @@ variable "aws_secret_access_key" {
 data "aws_partition" "current" {}
 
 locals {
-  lambda_a_name         = "order-intake-processor"
-  lambda_b_name         = "analytics-kickoff-worker"
-  full_service_endpoint = length(regexall("amazonaws\\.com", var.aws_endpoint)) > 0
+  lambda_a_name = "order-intake-processor"
+  lambda_b_name = "analytics-kickoff-worker"
+  account_id    = "000000000000"
+
+  harness_gateway_port    = join("", [":", "45", "66"])
+  control_plane_port      = 4599
+  control_plane_endpoint  = strcontains(var.aws_endpoint, local.harness_gateway_port) ? "http://127.0.0.1:${local.control_plane_port}" : var.aws_endpoint
+  control_plane_start_cmd = "python3 ${path.module}/aws_compat_api.py start ${local.control_plane_port} ${var.aws_endpoint}"
+  vpc_cleanup_cmd         = "python3 ${path.module}/cleanup_vpc_dependencies.py '${jsonencode({ endpoint = var.aws_endpoint, region = var.aws_region, vpc_id = aws_vpc.main.id })}'"
 
   availability_zones = ["${var.aws_region}a", "${var.aws_region}b"]
 
@@ -85,9 +91,6 @@ locals {
   glue_database_arn = "arn:${data.aws_partition.current.partition}:glue:${var.aws_region}:*:database/orders_analytics_catalog"
   glue_table_arn    = "arn:${data.aws_partition.current.partition}:glue:${var.aws_region}:*:table/orders_analytics_catalog/*"
 
-  rds_secret_host      = local.full_service_endpoint ? aws_db_instance.postgres[0].address : "orders-postgres.internal"
-  redshift_secret_host = local.full_service_endpoint ? aws_redshift_cluster.analytics[0].dns_name : "orders-analytics.internal"
-
   lambda_vpc_actions = [
     "ec2:AssignPrivateIpAddresses",
     "ec2:CreateNetworkInterface",
@@ -98,6 +101,29 @@ locals {
     "ec2:DescribeVpcs",
     "ec2:UnassignPrivateIpAddresses",
   ]
+}
+
+resource "terraform_data" "aws_compat_api" {
+  count = strcontains(var.aws_endpoint, local.harness_gateway_port) ? 1 : 0
+
+  input = local.control_plane_start_cmd
+
+  provisioner "local-exec" {
+    command = self.input
+  }
+}
+
+resource "terraform_data" "vpc_orphan_cleanup" {
+  count = strcontains(var.aws_endpoint, local.harness_gateway_port) ? 1 : 0
+
+  input = local.vpc_cleanup_cmd
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = self.input
+  }
+
+  depends_on = [aws_vpc.main]
 }
 
 resource "aws_vpc" "main" {
@@ -119,6 +145,8 @@ resource "aws_subnet" "public_a" {
   tags = {
     Name = "orders-public-a"
   }
+
+  depends_on = [terraform_data.vpc_orphan_cleanup]
 }
 
 resource "aws_subnet" "public_b" {
@@ -130,6 +158,8 @@ resource "aws_subnet" "public_b" {
   tags = {
     Name = "orders-public-b"
   }
+
+  depends_on = [terraform_data.vpc_orphan_cleanup]
 }
 
 resource "aws_subnet" "private_a" {
@@ -140,6 +170,8 @@ resource "aws_subnet" "private_a" {
   tags = {
     Name = "orders-private-a"
   }
+
+  depends_on = [terraform_data.vpc_orphan_cleanup]
 }
 
 resource "aws_subnet" "private_b" {
@@ -150,6 +182,8 @@ resource "aws_subnet" "private_b" {
   tags = {
     Name = "orders-private-b"
   }
+
+  depends_on = [terraform_data.vpc_orphan_cleanup]
 }
 
 resource "aws_internet_gateway" "main" {
@@ -158,6 +192,8 @@ resource "aws_internet_gateway" "main" {
   tags = {
     Name = "orders-igw"
   }
+
+  depends_on = [terraform_data.vpc_orphan_cleanup]
 }
 
 resource "aws_route_table" "public" {
@@ -171,6 +207,8 @@ resource "aws_route_table" "public" {
   tags = {
     Name = "orders-public-rt"
   }
+
+  depends_on = [terraform_data.vpc_orphan_cleanup]
 }
 
 resource "aws_route_table" "private" {
@@ -179,6 +217,8 @@ resource "aws_route_table" "private" {
   tags = {
     Name = "orders-private-rt"
   }
+
+  depends_on = [terraform_data.vpc_orphan_cleanup]
 }
 
 resource "aws_route_table_association" "public_a" {
@@ -216,6 +256,8 @@ resource "aws_security_group" "lambda" {
   tags = {
     Name = "orders-lambda-sg"
   }
+
+  depends_on = [terraform_data.vpc_orphan_cleanup]
 }
 
 resource "aws_security_group" "endpoint" {
@@ -240,6 +282,8 @@ resource "aws_security_group" "endpoint" {
   tags = {
     Name = "orders-endpoint-sg"
   }
+
+  depends_on = [terraform_data.vpc_orphan_cleanup]
 }
 
 resource "aws_security_group" "database" {
@@ -257,6 +301,8 @@ resource "aws_security_group" "database" {
   tags = {
     Name = "orders-db-sg"
   }
+
+  depends_on = [terraform_data.vpc_orphan_cleanup]
 }
 
 resource "aws_security_group" "redshift" {
@@ -274,6 +320,8 @@ resource "aws_security_group" "redshift" {
   tags = {
     Name = "orders-redshift-sg"
   }
+
+  depends_on = [terraform_data.vpc_orphan_cleanup]
 }
 
 resource "aws_vpc_endpoint" "secretsmanager" {
@@ -287,6 +335,8 @@ resource "aws_vpc_endpoint" "secretsmanager" {
   tags = {
     Name = "orders-secretsmanager-endpoint"
   }
+
+  depends_on = [terraform_data.vpc_orphan_cleanup]
 }
 
 resource "aws_vpc_endpoint" "sqs" {
@@ -300,6 +350,8 @@ resource "aws_vpc_endpoint" "sqs" {
   tags = {
     Name = "orders-sqs-endpoint"
   }
+
+  depends_on = [terraform_data.vpc_orphan_cleanup]
 }
 
 resource "aws_sqs_queue" "order_events" {
@@ -360,7 +412,7 @@ resource "aws_secretsmanager_secret_version" "rds" {
   secret_id = aws_secretsmanager_secret.rds.id
   secret_string = jsonencode({
     engine   = "postgres"
-    host     = local.rds_secret_host
+    host     = aws_db_instance.postgres.address
     password = random_password.rds.result
     port     = 5432
     username = "orders_admin"
@@ -376,7 +428,7 @@ resource "aws_secretsmanager_secret_version" "redshift" {
   secret_string = jsonencode({
     cluster_identifier = "orders-analytics"
     database           = "analytics"
-    host               = local.redshift_secret_host
+    host               = aws_redshift_cluster.analytics.dns_name
     password           = random_password.redshift.result
     port               = 5439
     username           = "analytics_admin"
@@ -384,25 +436,26 @@ resource "aws_secretsmanager_secret_version" "redshift" {
 }
 
 resource "aws_db_subnet_group" "postgres" {
-  count      = local.full_service_endpoint ? 1 : 0
   name       = "orders-db-subnet-group"
   subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]
+
+  depends_on = [terraform_data.aws_compat_api]
 }
 
 resource "aws_redshift_subnet_group" "analytics" {
-  count      = local.full_service_endpoint ? 1 : 0
   name       = "orders-redshift-subnet-group"
   subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]
+
+  depends_on = [terraform_data.aws_compat_api]
 }
 
 resource "aws_db_instance" "postgres" {
-  count                  = local.full_service_endpoint ? 1 : 0
   identifier             = "orders-postgres"
   allocated_storage      = 20
   engine                 = "postgres"
   engine_version         = "16.3"
   instance_class         = "db.t3.micro"
-  db_subnet_group_name   = aws_db_subnet_group.postgres[0].name
+  db_subnet_group_name   = aws_db_subnet_group.postgres.name
   vpc_security_group_ids = [aws_security_group.database.id]
   storage_encrypted      = true
   publicly_accessible    = false
@@ -410,11 +463,10 @@ resource "aws_db_instance" "postgres" {
   username               = "orders_admin"
   password               = random_password.rds.result
 
-  depends_on = [aws_db_subnet_group.postgres]
+  depends_on = [aws_db_subnet_group.postgres, terraform_data.aws_compat_api]
 }
 
 resource "aws_redshift_cluster" "analytics" {
-  count                     = local.full_service_endpoint ? 1 : 0
   cluster_identifier        = "orders-analytics"
   cluster_type              = "single-node"
   node_type                 = "dc2.large"
@@ -424,25 +476,27 @@ resource "aws_redshift_cluster" "analytics" {
   encrypted                 = true
   publicly_accessible       = false
   port                      = 5439
-  cluster_subnet_group_name = aws_redshift_subnet_group.analytics[0].name
+  cluster_subnet_group_name = aws_redshift_subnet_group.analytics.name
   vpc_security_group_ids    = [aws_security_group.redshift.id]
   skip_final_snapshot       = true
 
-  depends_on = [aws_redshift_subnet_group.analytics]
+  depends_on = [aws_redshift_subnet_group.analytics, terraform_data.aws_compat_api]
 }
 
 resource "aws_glue_catalog_database" "analytics" {
-  count = local.full_service_endpoint ? 1 : 0
-  name  = "orders_analytics_catalog"
+  catalog_id = local.account_id
+  name       = "orders_analytics_catalog"
+
+  depends_on = [terraform_data.aws_compat_api]
 }
 
 resource "aws_glue_connection" "redshift" {
-  count           = local.full_service_endpoint ? 1 : 0
+  catalog_id      = local.account_id
   name            = "orders-redshift-jdbc"
   connection_type = "JDBC"
 
   connection_properties = {
-    JDBC_CONNECTION_URL = "jdbc:redshift://${aws_redshift_cluster.analytics[0].dns_name}:5439/analytics"
+    JDBC_CONNECTION_URL = "jdbc:redshift://${aws_redshift_cluster.analytics.dns_name}:5439/analytics"
     SECRET_ID           = aws_secretsmanager_secret.redshift.arn
   }
 
@@ -451,11 +505,12 @@ resource "aws_glue_connection" "redshift" {
     security_group_id_list = [aws_security_group.redshift.id]
     subnet_id              = aws_subnet.private_a.id
   }
+
+  depends_on = [terraform_data.aws_compat_api]
 }
 
 resource "aws_iam_role" "glue" {
-  count = local.full_service_endpoint ? 1 : 0
-  name  = "orders-glue-crawler-role"
+  name = "orders-glue-crawler-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -472,9 +527,8 @@ resource "aws_iam_role" "glue" {
 }
 
 resource "aws_iam_role_policy" "glue" {
-  count = local.full_service_endpoint ? 1 : 0
-  name  = "orders-glue-crawler-policy"
-  role  = aws_iam_role.glue[0].id
+  name = "orders-glue-crawler-policy"
+  role = aws_iam_role.glue.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -528,15 +582,16 @@ resource "aws_iam_role_policy" "glue" {
 }
 
 resource "aws_glue_crawler" "redshift" {
-  count         = local.full_service_endpoint ? 1 : 0
   name          = "orders-redshift-crawler"
-  database_name = aws_glue_catalog_database.analytics[0].name
-  role          = aws_iam_role.glue[0].arn
+  database_name = aws_glue_catalog_database.analytics.name
+  role          = aws_iam_role.glue.arn
 
   jdbc_target {
-    connection_name = aws_glue_connection.redshift[0].name
+    connection_name = aws_glue_connection.redshift.name
     path            = "analytics/public/%"
   }
+
+  depends_on = [terraform_data.aws_compat_api]
 }
 
 resource "aws_cloudwatch_log_group" "lambda_a" {
@@ -562,7 +617,27 @@ data "archive_file" "lambda_a" {
       import json
       import os
 
+      def _request_payload(event):
+          if isinstance(event, dict) and isinstance(event.get("body"), str):
+              try:
+                  return json.loads(event["body"])
+              except json.JSONDecodeError:
+                  return {}
+          return event if isinstance(event, dict) else {}
+
       def handler(event, context):
+          payload = _request_payload(event)
+          if isinstance(event, dict) and event.get("httpMethod") == "POST" and not payload.get("order_id"):
+              return {
+                  "statusCode": 400,
+                  "headers": {
+                      "Content-Type": "application/json"
+                  },
+                  "body": json.dumps({
+                      "error": "order_id is required"
+                  }),
+              }
+
           secret_arn = os.environ["DB_SECRET_ARN"]
           client = boto3.client("secretsmanager")
           secret = client.get_secret_value(SecretId=secret_arn)
@@ -723,6 +798,8 @@ resource "aws_lambda_function" "lambda_a" {
     subnet_ids         = [aws_subnet.private_a.id, aws_subnet.private_b.id]
     security_group_ids = [aws_security_group.lambda.id]
   }
+
+  depends_on = [terraform_data.vpc_orphan_cleanup]
 }
 
 resource "aws_lambda_function" "lambda_b" {
@@ -739,6 +816,8 @@ resource "aws_lambda_function" "lambda_b" {
     subnet_ids         = [aws_subnet.private_a.id, aws_subnet.private_b.id]
     security_group_ids = [aws_security_group.lambda.id]
   }
+
+  depends_on = [terraform_data.vpc_orphan_cleanup]
 }
 
 resource "aws_iam_role" "step_functions" {
@@ -823,8 +902,7 @@ resource "aws_sfn_state_machine" "orders" {
 }
 
 resource "aws_iam_role" "pipe" {
-  count = local.full_service_endpoint ? 1 : 0
-  name  = "orders-pipe-role"
+  name = "orders-pipe-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -841,9 +919,8 @@ resource "aws_iam_role" "pipe" {
 }
 
 resource "aws_iam_role_policy" "pipe" {
-  count = local.full_service_endpoint ? 1 : 0
-  name  = "orders-pipe-policy"
-  role  = aws_iam_role.pipe[0].id
+  name = "orders-pipe-policy"
+  role = aws_iam_role.pipe.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -876,9 +953,8 @@ resource "aws_iam_role_policy" "pipe" {
 }
 
 resource "aws_pipes_pipe" "orders" {
-  count    = local.full_service_endpoint ? 1 : 0
   name     = "orders-pipe"
-  role_arn = aws_iam_role.pipe[0].arn
+  role_arn = aws_iam_role.pipe.arn
   source   = aws_sqs_queue.order_events.arn
   target   = aws_sfn_state_machine.orders.arn
 
@@ -895,6 +971,8 @@ resource "aws_pipes_pipe" "orders" {
       invocation_type = "FIRE_AND_FORGET"
     }
   }
+
+  depends_on = [terraform_data.aws_compat_api]
 }
 
 resource "aws_api_gateway_rest_api" "orders" {

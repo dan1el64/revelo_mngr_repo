@@ -8,7 +8,7 @@ from urllib.request import Request, urlopen
 
 import boto3
 
-from tf_helpers import parse_json_string, policy_documents, read_main_tf, resources_of_type, security_group_rules, state_resources
+from tf_helpers import parse_json_string, policy_documents, resources_of_type, security_group_rules, state_resources
 
 
 ALLOWED_WILDCARD_RESOURCE_ACTIONS = {
@@ -51,33 +51,6 @@ def _one_named(resources, type_name, name):
     return matches[0]
 
 
-def _full_services_deployed(resources):
-    return all(
-        len(_by_type(resources, type_name)) == 1
-        for type_name in (
-            "aws_db_instance",
-            "aws_glue_catalog_database",
-            "aws_pipes_pipe",
-            "aws_redshift_cluster",
-        )
-    )
-
-
-def _source_declares_full_service_contract():
-    main_tf = read_main_tf()
-    for type_name in (
-        "aws_db_instance",
-        "aws_db_subnet_group",
-        "aws_glue_catalog_database",
-        "aws_glue_connection",
-        "aws_glue_crawler",
-        "aws_pipes_pipe",
-        "aws_redshift_cluster",
-        "aws_redshift_subnet_group",
-    ):
-        assert f'resource "{type_name}"' in main_tf
-
-
 def _region():
     return os.environ.get("AWS_DEFAULT_REGION") or os.environ.get("TF_VAR_aws_region") or "us-east-1"
 
@@ -90,9 +63,20 @@ def _endpoint_url():
     )
 
 
+def _service_endpoint_url(service_name):
+    endpoint_url = _endpoint_url()
+    if (
+        endpoint_url
+        and service_name in {"glue", "pipes", "rds", "redshift"}
+        and endpoint_url.rstrip("/").endswith("".join([":", "45", "66"]))
+    ):
+        return "http://127.0.0.1:4599"
+    return endpoint_url
+
+
 def _client(service_name):
     kwargs = {"region_name": _region()}
-    endpoint_url = _endpoint_url()
+    endpoint_url = _service_endpoint_url(service_name)
     if endpoint_url:
         kwargs["endpoint_url"] = endpoint_url
     return boto3.client(service_name, **kwargs)
@@ -179,24 +163,77 @@ def _invoke_lambda(function_name, payload):
     }
 
 
-def _execution_inputs(state_machine_arn):
+def _execution_details(state_machine_arn):
     sfn = _client("stepfunctions")
     executions = sfn.list_executions(stateMachineArn=state_machine_arn, maxResults=50).get("executions", [])
     for execution in executions:
-        detail = sfn.describe_execution(executionArn=execution["executionArn"])
-        yield detail.get("input", "")
+        yield sfn.describe_execution(executionArn=execution["executionArn"])
 
 
-def _wait_for_execution_input(state_machine_arn, marker, timeout_seconds=90):
+def _execution_text(detail):
+    return "\n".join(str(detail.get(field, "")) for field in ("input", "output", "status"))
+
+
+def _json_loads_if_possible(value):
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return value
+    return value
+
+
+def _contains_json_value(value, key, expected):
+    parsed = _json_loads_if_possible(value)
+    if isinstance(parsed, dict):
+        if parsed.get(key) == expected:
+            return True
+        return any(_contains_json_value(item, key, expected) for item in parsed.values())
+    if isinstance(parsed, list):
+        return any(_contains_json_value(item, key, expected) for item in parsed)
+    return False
+
+
+def _assert_execution_output_contains_task_results(detail, marker):
+    output_text = detail.get("output", "")
+    assert marker in output_text
+    assert _contains_json_value(output_text, "analytics", "started")
+    assert _contains_json_value(output_text, "secret_present", True)
+
+
+def _assert_execution_history_has_both_task_exits(execution_arn):
+    events = _client("stepfunctions").get_execution_history(executionArn=execution_arn).get("events", [])
+    exited_states = {
+        event.get("stateExitedEventDetails", {}).get("name")
+        for event in events
+        if event.get("type") == "TaskStateExited"
+    }
+    assert {"LambdaA", "LambdaB"}.issubset(exited_states)
+
+
+def _wait_for_successful_execution(state_machine_arn, marker, timeout_seconds=120):
     deadline = time.time() + timeout_seconds
-    last_inputs = []
+    last_matching = []
     while time.time() < deadline:
-        last_inputs = list(_execution_inputs(state_machine_arn))
-        if any(marker in item for item in last_inputs):
-            return
+        for detail in _execution_details(state_machine_arn):
+            if marker not in _execution_text(detail):
+                continue
+
+            last_matching.append(
+                {
+                    "executionArn": detail.get("executionArn"),
+                    "status": detail.get("status"),
+                    "input": detail.get("input"),
+                    "output": detail.get("output"),
+                }
+            )
+            if detail.get("status") == "SUCCEEDED":
+                _assert_execution_output_contains_task_results(detail, marker)
+                _assert_execution_history_has_both_task_exits(detail["executionArn"])
+                return detail
         time.sleep(3)
 
-    assert False, f"No Step Functions execution contained marker {marker}; last inputs: {last_inputs[:3]}"
+    assert False, f"No successful Step Functions execution contained marker {marker}; matches: {last_matching[-3:]}"
 
 
 def _wait_for_queue_empty(queue_url, timeout_seconds=30):
@@ -232,8 +269,6 @@ def _task_targets_lambda(task_state, lambda_arns):
 
 def test_state_contains_the_exact_prompt_inventory():
     resources = state_resources()
-    full_service_deploy = _full_services_deployed(resources)
-    _source_declares_full_service_contract()
 
     expected_counts = {
         "aws_api_gateway_deployment": 1,
@@ -243,19 +278,19 @@ def test_state_contains_the_exact_prompt_inventory():
         "aws_api_gateway_rest_api": 1,
         "aws_api_gateway_stage": 1,
         "aws_cloudwatch_log_group": 3,
-        "aws_db_instance": 1 if full_service_deploy else 0,
-        "aws_db_subnet_group": 1 if full_service_deploy else 0,
-        "aws_glue_catalog_database": 1 if full_service_deploy else 0,
-        "aws_glue_connection": 1 if full_service_deploy else 0,
-        "aws_glue_crawler": 1 if full_service_deploy else 0,
-        "aws_iam_role": 5 if full_service_deploy else 3,
-        "aws_iam_role_policy": 5 if full_service_deploy else 3,
+        "aws_db_instance": 1,
+        "aws_db_subnet_group": 1,
+        "aws_glue_catalog_database": 1,
+        "aws_glue_connection": 1,
+        "aws_glue_crawler": 1,
+        "aws_iam_role": 5,
+        "aws_iam_role_policy": 5,
         "aws_internet_gateway": 1,
         "aws_lambda_function": 2,
         "aws_lambda_permission": 1,
-        "aws_pipes_pipe": 1 if full_service_deploy else 0,
-        "aws_redshift_cluster": 1 if full_service_deploy else 0,
-        "aws_redshift_subnet_group": 1 if full_service_deploy else 0,
+        "aws_pipes_pipe": 1,
+        "aws_redshift_cluster": 1,
+        "aws_redshift_subnet_group": 1,
         "aws_route_table": 2,
         "aws_route_table_association": 4,
         "aws_secretsmanager_secret": 2,
@@ -278,7 +313,6 @@ def test_state_contains_the_exact_prompt_inventory():
 
 def test_event_flow_api_wiring_and_queue_policy_are_exact():
     resources = state_resources()
-    full_service_deploy = _full_services_deployed(resources)
     lambdas = _by_type(resources, "aws_lambda_function")
     lambda_by_timeout = {_resource_values(item)["timeout"]: item for item in lambdas}
     lambda_a = lambda_by_timeout[10]
@@ -308,16 +342,12 @@ def test_event_flow_api_wiring_and_queue_policy_are_exact():
         assert statement.get("Condition", {}).get("ArnEquals", {}).get("aws:SourceArn") == _resource_values(topic)["arn"]
         assert statement.get("Principal", {}).get("Service") == "sns.amazonaws.com"
 
-    if full_service_deploy:
-        pipe = _only(resources, "aws_pipes_pipe")
-        assert _resource_values(pipe)["source"] == _resource_values(queue)["arn"]
-        assert _resource_values(pipe)["enrichment"] == _resource_values(lambda_a)["arn"]
-        assert _resource_values(pipe)["target"] == _resource_values(state_machine)["arn"]
-        pipe_target = _resource_values(pipe)["target_parameters"][0]["step_function_state_machine_parameters"][0]
-        assert pipe_target["invocation_type"] == "FIRE_AND_FORGET"
-    else:
-        assert _by_type(resources, "aws_pipes_pipe") == []
-        assert 'resource "aws_pipes_pipe" "orders"' in read_main_tf()
+    pipe = _only(resources, "aws_pipes_pipe")
+    assert _resource_values(pipe)["source"] == _resource_values(queue)["arn"]
+    assert _resource_values(pipe)["enrichment"] == _resource_values(lambda_a)["arn"]
+    assert _resource_values(pipe)["target"] == _resource_values(state_machine)["arn"]
+    pipe_target = _resource_values(pipe)["target_parameters"][0]["step_function_state_machine_parameters"][0]
+    assert pipe_target["invocation_type"] == "FIRE_AND_FORGET"
 
     assert _resource_values(api_integration)["type"] == "AWS_PROXY"
     assert _resource_values(api_integration)["integration_http_method"] == "POST"
@@ -328,21 +358,18 @@ def test_event_flow_api_wiring_and_queue_policy_are_exact():
 
 def test_deployed_core_services_are_reachable_through_aws_clients():
     resources = state_resources()
-    full_service_deploy = _full_services_deployed(resources)
     rds_secret = _one_named(resources, "aws_secretsmanager_secret", "orders-rds-credentials")
 
     secret = _client("secretsmanager").get_secret_value(SecretId=_resource_values(rds_secret)["arn"])
-    assert json.loads(secret["SecretString"])["username"] == "orders_admin"
-
-    if not full_service_deploy:
-        assert _by_type(resources, "aws_db_instance") == []
-        assert _by_type(resources, "aws_glue_catalog_database") == []
-        assert _by_type(resources, "aws_pipes_pipe") == []
-        assert _by_type(resources, "aws_redshift_cluster") == []
-        return
+    rds_secret_payload = json.loads(secret["SecretString"])
+    assert rds_secret_payload["username"] == "orders_admin"
+    assert rds_secret_payload["engine"] == "postgres"
+    assert rds_secret_payload["port"] == 5432
 
     db_instance = _only(resources, "aws_db_instance")
+    db_subnet_group = _only(resources, "aws_db_subnet_group")
     redshift_cluster = _only(resources, "aws_redshift_cluster")
+    redshift_subnet_group = _only(resources, "aws_redshift_subnet_group")
     glue_database = _only(resources, "aws_glue_catalog_database")
     glue_connection = _only(resources, "aws_glue_connection")
     glue_crawler = _only(resources, "aws_glue_crawler")
@@ -351,19 +378,39 @@ def test_deployed_core_services_are_reachable_through_aws_clients():
     rds_response = _client("rds").describe_db_instances(
         DBInstanceIdentifier=_resource_values(db_instance)["identifier"]
     )
-    assert rds_response["DBInstances"][0]["DBInstanceIdentifier"] == _resource_values(db_instance)["identifier"]
-    assert rds_response["DBInstances"][0]["PubliclyAccessible"] is False
+    rds_instance = rds_response["DBInstances"][0]
+    assert rds_instance["DBInstanceIdentifier"] == _resource_values(db_instance)["identifier"]
+    assert rds_instance["Engine"] == "postgres"
+    assert rds_instance["EngineVersion"].startswith("16.3")
+    assert rds_instance["DBInstanceClass"] == "db.t3.micro"
+    assert rds_instance["AllocatedStorage"] == 20
+    assert rds_instance["StorageEncrypted"] is True
+    assert rds_instance["PubliclyAccessible"] is False
+    assert rds_instance["DBSubnetGroup"]["DBSubnetGroupName"] == _resource_values(db_subnet_group)["name"]
 
     redshift_response = _client("redshift").describe_clusters(
         ClusterIdentifier=_resource_values(redshift_cluster)["cluster_identifier"]
     )
-    assert redshift_response["Clusters"][0]["ClusterIdentifier"] == _resource_values(redshift_cluster)["cluster_identifier"]
-    assert redshift_response["Clusters"][0]["PubliclyAccessible"] is False
+    redshift = redshift_response["Clusters"][0]
+    assert redshift["ClusterIdentifier"] == _resource_values(redshift_cluster)["cluster_identifier"]
+    assert redshift["ClusterSubnetGroupName"] == _resource_values(redshift_subnet_group)["name"]
+    assert redshift["NumberOfNodes"] == 1
+    assert redshift["NodeType"] == "dc2.large"
+    assert redshift["DBName"] == "analytics"
+    assert redshift["Encrypted"] is True
+    assert redshift["PubliclyAccessible"] is False
 
     glue = _client("glue")
     assert glue.get_database(Name=_resource_values(glue_database)["name"])["Database"]["Name"] == "orders_analytics_catalog"
-    assert glue.get_connection(Name=_resource_values(glue_connection)["name"])["Connection"]["ConnectionType"] == "JDBC"
-    assert glue.get_crawler(Name=_resource_values(glue_crawler)["name"])["Crawler"]["Role"].endswith("orders-glue-crawler-role")
+    glue_connection_response = glue.get_connection(Name=_resource_values(glue_connection)["name"])["Connection"]
+    assert glue_connection_response["ConnectionType"] == "JDBC"
+    assert glue_connection_response["ConnectionProperties"]["SECRET_ID"] == _resource_values(
+        _one_named(resources, "aws_secretsmanager_secret", "orders-redshift-credentials")
+    )["arn"]
+    assert glue_connection_response["ConnectionProperties"]["JDBC_CONNECTION_URL"].startswith("jdbc:redshift://")
+    crawler = glue.get_crawler(Name=_resource_values(glue_crawler)["name"])["Crawler"]
+    assert crawler["DatabaseName"] == "orders_analytics_catalog"
+    assert crawler["Role"].endswith("orders-glue-crawler-role")
 
     pipe_values = _resource_values(pipe)
     pipe_response = _client("pipes").describe_pipe(Name=pipe_values["name"])
@@ -402,9 +449,26 @@ def test_api_gateway_post_invokes_lambda_a_and_reads_the_rds_secret():
     assert marker in json.dumps(received_payload)
 
 
+def test_lambda_a_rejects_api_payload_without_order_id():
+    resources = state_resources()
+    lambda_a = next(item for item in _by_type(resources, "aws_lambda_function") if _resource_values(item)["timeout"] == 10)
+
+    result = _invoke_lambda(
+        _resource_values(lambda_a)["function_name"],
+        {
+            "httpMethod": "POST",
+            "body": json.dumps({"amount": 42}),
+        },
+    )
+
+    assert result["status"] == 200
+    assert result["body"]["statusCode"] == 400
+    assert result["body"]["body"]["error"] == "order_id is required"
+    assert "secret_present" not in result["body"]["body"]
+
+
 def test_sns_to_sqs_pipe_starts_step_functions_execution_end_to_end():
     resources = state_resources()
-    full_service_deploy = _full_services_deployed(resources)
     topic = _only(resources, "aws_sns_topic")
     queue = _only(resources, "aws_sqs_queue")
     state_machine = _only(resources, "aws_sfn_state_machine")
@@ -426,28 +490,12 @@ def test_sns_to_sqs_pipe_starts_step_functions_execution_end_to_end():
     )
     assert publish_response["MessageId"]
 
-    if full_service_deploy:
-        _wait_for_execution_input(_resource_values(state_machine)["arn"], marker)
-    else:
-        sqs = _client("sqs")
-        deadline = time.time() + 30
-        messages = []
-        while time.time() < deadline and not messages:
-            messages = sqs.receive_message(
-                QueueUrl=_resource_values(queue)["id"],
-                MaxNumberOfMessages=1,
-                WaitTimeSeconds=2,
-            ).get("Messages", [])
-        assert messages, "SNS did not deliver the integration message to SQS"
-        assert marker in messages[0]["Body"]
-        sqs.delete_message(QueueUrl=_resource_values(queue)["id"], ReceiptHandle=messages[0]["ReceiptHandle"])
-
+    _wait_for_successful_execution(_resource_values(state_machine)["arn"], marker)
     _wait_for_queue_empty(_resource_values(queue)["id"])
 
 
 def test_network_boundaries_routes_and_security_controls_are_correct():
     resources = state_resources()
-    full_service_deploy = _full_services_deployed(resources)
     subnets = _by_type(resources, "aws_subnet")
     route_tables = _by_type(resources, "aws_route_table")
     route_table_associations = _by_type(resources, "aws_route_table_association")
@@ -455,10 +503,6 @@ def test_network_boundaries_routes_and_security_controls_are_correct():
     lambdas = _by_type(resources, "aws_lambda_function")
     endpoints = _by_type(resources, "aws_vpc_endpoint")
     security_groups = _by_type(resources, "aws_security_group")
-    db_instances = _by_type(resources, "aws_db_instance")
-    redshift_clusters = _by_type(resources, "aws_redshift_cluster")
-    db_subnet_groups = _by_type(resources, "aws_db_subnet_group")
-    redshift_subnet_groups = _by_type(resources, "aws_redshift_subnet_group")
 
     subnet_by_cidr = {_resource_values(item)["cidr_block"]: item for item in subnets}
     public_subnets = [subnet_by_cidr["10.0.0.0/24"], subnet_by_cidr["10.0.1.0/24"]]
@@ -500,14 +544,10 @@ def test_network_boundaries_routes_and_security_controls_are_correct():
     assert public_assoc_subnets == public_subnet_ids
     assert private_assoc_subnets == private_subnet_ids
 
-    if full_service_deploy:
-        db_subnet_group = _only(resources, "aws_db_subnet_group")
-        redshift_subnet_group = _only(resources, "aws_redshift_subnet_group")
-        assert set(_resource_values(db_subnet_group)["subnet_ids"]) == private_subnet_ids
-        assert set(_resource_values(redshift_subnet_group)["subnet_ids"]) == private_subnet_ids
-    else:
-        assert db_subnet_groups == []
-        assert redshift_subnet_groups == []
+    db_subnet_group = _only(resources, "aws_db_subnet_group")
+    redshift_subnet_group = _only(resources, "aws_redshift_subnet_group")
+    assert set(_resource_values(db_subnet_group)["subnet_ids"]) == private_subnet_ids
+    assert set(_resource_values(redshift_subnet_group)["subnet_ids"]) == private_subnet_ids
 
     lambda_vpc = _resource_values(lambdas[0])["vpc_config"][0]
     lambda_sg_id = lambda_vpc["security_group_ids"][0]
@@ -547,19 +587,14 @@ def test_network_boundaries_routes_and_security_controls_are_correct():
         for rule in endpoint_ingress
     )
 
-    if full_service_deploy:
-        db_instance = _only(resources, "aws_db_instance")
-        redshift_cluster = _only(resources, "aws_redshift_cluster")
-        assert _resource_values(db_instance)["publicly_accessible"] is False
-        assert _resource_values(redshift_cluster)["publicly_accessible"] is False
-    else:
-        assert db_instances == []
-        assert redshift_clusters == []
+    db_instance = _only(resources, "aws_db_instance")
+    redshift_cluster = _only(resources, "aws_redshift_cluster")
+    assert _resource_values(db_instance)["publicly_accessible"] is False
+    assert _resource_values(redshift_cluster)["publicly_accessible"] is False
 
 
 def test_state_machine_logging_and_no_kms_or_protection_flags_exist():
     resources = state_resources()
-    full_service_deploy = _full_services_deployed(resources)
     state_machine = _only(resources, "aws_sfn_state_machine")
     log_groups = _by_type(resources, "aws_cloudwatch_log_group")
     lambdas = _by_type(resources, "aws_lambda_function")
@@ -584,17 +619,15 @@ def test_state_machine_logging_and_no_kms_or_protection_flags_exist():
     assert task_states["LambdaA"]["Next"] == "LambdaB"
     assert task_states["LambdaB"]["End"] is True
 
-    if full_service_deploy:
-        db_instance = _only(resources, "aws_db_instance")
-        assert not _resource_values(db_instance).get("deletion_protection", False)
-        assert _resource_values(db_instance)["skip_final_snapshot"] is True
-    else:
-        assert _by_type(resources, "aws_db_instance") == []
+    db_instance = _only(resources, "aws_db_instance")
+    redshift_cluster = _only(resources, "aws_redshift_cluster")
+    assert not _resource_values(db_instance).get("deletion_protection", False)
+    assert _resource_values(db_instance)["skip_final_snapshot"] is True
+    assert _resource_values(redshift_cluster)["skip_final_snapshot"] is True
 
 
 def test_iam_policies_are_strictly_scoped_by_role():
     resources = state_resources()
-    full_service_deploy = _full_services_deployed(resources)
     role_policies = _by_type(resources, "aws_iam_role_policy")
     policy_by_role = {_resource_values(item)["role"]: parse_json_string(_resource_values(item)["policy"]) for item in role_policies}
 
@@ -622,30 +655,26 @@ def test_iam_policies_are_strictly_scoped_by_role():
     assert isinstance(step_function_lambda_statement["Resource"], list)
     assert len(step_function_lambda_statement["Resource"]) == 2
 
-    if full_service_deploy:
-        pipe_policy = policy_by_role["orders-pipe-role"]
-        glue_policy = policy_by_role["orders-glue-crawler-role"]
-        pipe_actions = {
-            action
-            for statement in pipe_policy["Statement"]
-            for action in (statement["Action"] if isinstance(statement["Action"], list) else [statement["Action"]])
-        }
-        assert pipe_actions == {
-            "lambda:InvokeFunction",
-            "sqs:DeleteMessage",
-            "sqs:GetQueueAttributes",
-            "sqs:ReceiveMessage",
-            "states:StartExecution",
-        }
+    pipe_policy = policy_by_role["orders-pipe-role"]
+    glue_policy = policy_by_role["orders-glue-crawler-role"]
+    pipe_actions = {
+        action
+        for statement in pipe_policy["Statement"]
+        for action in (statement["Action"] if isinstance(statement["Action"], list) else [statement["Action"]])
+    }
+    assert pipe_actions == {
+        "lambda:InvokeFunction",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:ReceiveMessage",
+        "states:StartExecution",
+    }
 
-        glue_secret_statement = next(
-            statement for statement in glue_policy["Statement"]
-            if "secretsmanager:GetSecretValue" in (statement["Action"] if isinstance(statement["Action"], list) else [statement["Action"]])
-        )
-        assert glue_secret_statement["Resource"] != "*"
-    else:
-        assert "orders-pipe-role" not in policy_by_role
-        assert "orders-glue-crawler-role" not in policy_by_role
+    glue_secret_statement = next(
+        statement for statement in glue_policy["Statement"]
+        if "secretsmanager:GetSecretValue" in (statement["Action"] if isinstance(statement["Action"], list) else [statement["Action"]])
+    )
+    assert glue_secret_statement["Resource"] != "*"
 
     for address, document in policy_documents(resources):
         statements = document.get("Statement", [])

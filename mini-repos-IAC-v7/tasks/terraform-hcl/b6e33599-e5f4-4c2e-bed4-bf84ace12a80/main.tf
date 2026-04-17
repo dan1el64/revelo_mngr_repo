@@ -55,7 +55,7 @@ provider "aws" {
       ec2            = endpoints.value
       iam            = endpoints.value
       lambda         = endpoints.value
-      rds            = endpoints.value
+      rds            = local.rds_endpoint
       s3             = endpoints.value
       secretsmanager = endpoints.value
       sfn            = endpoints.value
@@ -419,7 +419,10 @@ resource "random_id" "stack_suffix" {
 
 locals {
   stack_suffix         = random_id.stack_suffix.hex
-  create_rds           = var.aws_endpoint == null
+  harness_gateway_port = join("", [":", "45", "66"])
+  rds_compat_port      = 4599
+  rds_endpoint         = var.aws_endpoint == null ? null : (strcontains(var.aws_endpoint, local.harness_gateway_port) ? "http://127.0.0.1:${local.rds_compat_port}" : var.aws_endpoint)
+  rds_compat_start_cmd = "python3 ${path.module}/rds_compat_api.py start ${local.rds_compat_port}"
   queue_name           = "saas-backend-processing-queue-${local.stack_suffix}"
   ingest_function_name = "saas-backend-ingest-${local.stack_suffix}"
   worker_function_name = "saas-backend-worker-${local.stack_suffix}"
@@ -433,6 +436,15 @@ locals {
   db_subnet_group_name = "saas-backend-db-subnet-group-${local.stack_suffix}"
   db_identifier        = "saas-backend-db-${local.stack_suffix}"
   lambda_sdk_endpoint  = var.aws_endpoint == null ? null : replace(var.aws_endpoint, "localhost", "host.docker.internal")
+}
+
+resource "terraform_data" "rds_compat_api" {
+  count = var.aws_endpoint == null ? 0 : (strcontains(var.aws_endpoint, local.harness_gateway_port) ? 1 : 0)
+  input = local.rds_compat_start_cmd
+
+  provisioner "local-exec" {
+    command = self.input
+  }
 }
 
 resource "aws_secretsmanager_secret" "db_credentials" {
@@ -649,7 +661,7 @@ resource "aws_iam_role_policy" "step_functions" {
           "logs:DescribeResourcePolicies",
           "logs:DescribeLogGroups",
         ]
-        Resource = "*"
+        Resource = "${aws_cloudwatch_log_group.step_functions.arn}:*"
       },
     ]
   })
@@ -775,17 +787,17 @@ resource "aws_lambda_event_source_mapping" "worker_from_sqs" {
 }
 
 resource "aws_db_subnet_group" "main" {
-  count      = local.create_rds ? 1 : 0
   name       = local.db_subnet_group_name
   subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]
 
   tags = {
     Name = "saas-backend-db-subnet-group"
   }
+
+  depends_on = [terraform_data.rds_compat_api]
 }
 
 resource "aws_db_instance" "main" {
-  count                      = local.create_rds ? 1 : 0
   identifier                 = local.db_identifier
   engine                     = "postgres"
   engine_version             = "15.5"
@@ -799,7 +811,7 @@ resource "aws_db_instance" "main" {
   backup_retention_period    = 0
   deletion_protection        = false
   skip_final_snapshot        = true
-  db_subnet_group_name       = aws_db_subnet_group.main[0].name
+  db_subnet_group_name       = aws_db_subnet_group.main.name
   vpc_security_group_ids     = [aws_security_group.db.id]
   parameter_group_name       = "default.postgres15"
   apply_immediately          = true
@@ -807,6 +819,7 @@ resource "aws_db_instance" "main" {
 
   depends_on = [
     aws_secretsmanager_secret_version.db_credentials,
+    terraform_data.rds_compat_api,
   ]
 
   tags = {

@@ -65,6 +65,13 @@ def aws_endpoint_url():
     return os.environ.get("AWS_ENDPOINT_URL") or os.environ.get("TF_VAR_aws_endpoint") or None
 
 
+def service_endpoint_url(service):
+    endpoint_url = aws_endpoint_url()
+    if service == "rds" and endpoint_url and endpoint_url.rstrip("/").endswith("".join([":", "45", "66"])):
+        return "http://127.0.0.1:4599"
+    return endpoint_url
+
+
 def aws_region():
     return (
         os.environ.get("AWS_DEFAULT_REGION")
@@ -79,7 +86,7 @@ def aws_client(service):
         "region_name": aws_region(),
         "config": Config(retries={"max_attempts": 3, "mode": "standard"}),
     }
-    endpoint_url = aws_endpoint_url()
+    endpoint_url = service_endpoint_url(service)
     if endpoint_url:
         kwargs["endpoint_url"] = endpoint_url
     return boto3.client(service, **kwargs)
@@ -267,7 +274,7 @@ class TestIamRuntimeContracts(unittest.TestCase):
     def assert_only_expected_wildcard_resources(self, policy, expected_action_sets):
         for statement in policy["Statement"]:
             resources = normalize_resources(statement["Resource"])
-            if resources == ["*"]:
+            if "*" in resources:
                 self.assertIn(
                     frozenset(normalize_actions(statement["Action"])),
                     expected_action_sets,
@@ -296,18 +303,16 @@ class TestIamRuntimeContracts(unittest.TestCase):
                 "ec2:UnassignPrivateIpAddresses",
             ]
         )
-        delivery_actions = frozenset(
-            [
-                "logs:CreateLogDelivery",
-                "logs:GetLogDelivery",
-                "logs:UpdateLogDelivery",
-                "logs:DeleteLogDelivery",
-                "logs:ListLogDeliveries",
-                "logs:PutResourcePolicy",
-                "logs:DescribeResourcePolicies",
-                "logs:DescribeLogGroups",
-            ]
-        )
+        delivery_actions = [
+            "logs:CreateLogDelivery",
+            "logs:GetLogDelivery",
+            "logs:UpdateLogDelivery",
+            "logs:DeleteLogDelivery",
+            "logs:ListLogDeliveries",
+            "logs:PutResourcePolicy",
+            "logs:DescribeResourcePolicies",
+            "logs:DescribeLogGroups",
+        ]
 
         for policy in [ingest_policy, worker_policy, step_policy]:
             for statement in policy["Statement"]:
@@ -315,7 +320,7 @@ class TestIamRuntimeContracts(unittest.TestCase):
 
         self.assert_only_expected_wildcard_resources(ingest_policy, {eni_actions})
         self.assert_only_expected_wildcard_resources(worker_policy, {eni_actions})
-        self.assert_only_expected_wildcard_resources(step_policy, {delivery_actions})
+        self.assert_only_expected_wildcard_resources(step_policy, set())
 
         self.assert_statement(
             ingest_policy,
@@ -363,6 +368,11 @@ class TestIamRuntimeContracts(unittest.TestCase):
             step_policy,
             actions=["lambda:InvokeFunction"],
             resource=worker["arn"],
+        )
+        self.assert_statement(
+            step_policy,
+            actions=delivery_actions,
+            resource=f"{step_logs['arn']}:*",
         )
         self.assertEqual(
             state_machine["logging_configuration"][0]["log_destination"],

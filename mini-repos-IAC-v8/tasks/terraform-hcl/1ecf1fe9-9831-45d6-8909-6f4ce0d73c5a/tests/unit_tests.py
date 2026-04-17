@@ -51,10 +51,6 @@ def _resource_block(text: str, type_name: str, name: str) -> str:
     return text[start:end]
 
 
-def _uses_full_service_plan(resources):
-    return len(_by_type(resources, "aws_pipes_pipe")) == 1
-
-
 def _assert_resource_block_count(text: str, type_name: str, expected_count: int):
     actual = len(re.findall(rf'resource\s+"{re.escape(type_name)}"\s+"[^"]+"\s+\{{', text))
     assert actual == expected_count, f"Expected {expected_count} declared {type_name} blocks, found {actual}"
@@ -130,9 +126,8 @@ def test_main_tf_declares_the_full_prompt_inventory_as_source_contract():
         _assert_resource_block_count(main_tf, type_name, expected_count)
 
 
-def test_plan_contains_full_inventory_or_explicit_harness_smoke_subset():
+def test_plan_contains_the_exact_full_prompt_inventory():
     resources = planned_resources()
-    full_service_plan = _uses_full_service_plan(resources)
 
     expected_counts = {
         "aws_api_gateway_deployment": 1,
@@ -142,19 +137,19 @@ def test_plan_contains_full_inventory_or_explicit_harness_smoke_subset():
         "aws_api_gateway_rest_api": 1,
         "aws_api_gateway_stage": 1,
         "aws_cloudwatch_log_group": 3,
-        "aws_db_instance": 1 if full_service_plan else 0,
-        "aws_db_subnet_group": 1 if full_service_plan else 0,
-        "aws_glue_catalog_database": 1 if full_service_plan else 0,
-        "aws_glue_connection": 1 if full_service_plan else 0,
-        "aws_glue_crawler": 1 if full_service_plan else 0,
-        "aws_iam_role": 5 if full_service_plan else 3,
-        "aws_iam_role_policy": 5 if full_service_plan else 3,
+        "aws_db_instance": 1,
+        "aws_db_subnet_group": 1,
+        "aws_glue_catalog_database": 1,
+        "aws_glue_connection": 1,
+        "aws_glue_crawler": 1,
+        "aws_iam_role": 5,
+        "aws_iam_role_policy": 5,
         "aws_internet_gateway": 1,
         "aws_lambda_function": 2,
         "aws_lambda_permission": 1,
-        "aws_pipes_pipe": 1 if full_service_plan else 0,
-        "aws_redshift_cluster": 1 if full_service_plan else 0,
-        "aws_redshift_subnet_group": 1 if full_service_plan else 0,
+        "aws_pipes_pipe": 1,
+        "aws_redshift_cluster": 1,
+        "aws_redshift_subnet_group": 1,
         "aws_route_table": 2,
         "aws_route_table_association": 4,
         "aws_secretsmanager_secret": 2,
@@ -184,6 +179,7 @@ def test_lambda_workflow_and_api_configuration_match_prompt():
 
     assert len(re.findall(r'data "archive_file" "', main_tf)) == 2
     assert _count(r'source \{\s*content\s*=.*?filename\s*=\s*"index\.py"', main_tf) == 2
+    assert '"error": "order_id is required"' in main_tf
     assert len(lambdas) == 2
     assert {_resource_values(item)["runtime"] for item in lambdas} == {"python3.12"}
     assert {_resource_values(item)["handler"] for item in lambdas} == {"index.handler"}
@@ -204,11 +200,8 @@ def test_lambda_workflow_and_api_configuration_match_prompt():
     assert "enrichment = aws_lambda_function.lambda_a.arn" in pipe_resource_block
     assert "target   = aws_sfn_state_machine.orders.arn" in pipe_resource_block
     assert 'invocation_type = "FIRE_AND_FORGET"' in pipe_resource_block
-    if _uses_full_service_plan(resources):
-        assert len(_by_type(resources, "aws_pipes_pipe")) == 1
-    else:
-        assert len(_by_type(resources, "aws_pipes_pipe")) == 0
-        assert "count    = local.full_service_endpoint ? 1 : 0" in pipe_resource_block
+    assert "count" not in pipe_resource_block
+    assert len(_by_type(resources, "aws_pipes_pipe")) == 1
 
     api_stage = _only(resources, "aws_api_gateway_stage")
     assert _resource_values(api_stage)["stage_name"] == "prod"
@@ -267,12 +260,10 @@ def test_network_topology_routes_and_subnet_groups_are_strict():
     redshift_subnet_group_block = _resource_block(main_tf, "aws_redshift_subnet_group", "analytics")
     assert "aws_subnet.private_a.id" in db_subnet_group_block and "aws_subnet.private_b.id" in db_subnet_group_block
     assert "aws_subnet.private_a.id" in redshift_subnet_group_block and "aws_subnet.private_b.id" in redshift_subnet_group_block
-    if _uses_full_service_plan(resources):
-        assert len(_by_type(resources, "aws_db_subnet_group")) == 1
-        assert len(_by_type(resources, "aws_redshift_subnet_group")) == 1
-    else:
-        assert len(_by_type(resources, "aws_db_subnet_group")) == 0
-        assert len(_by_type(resources, "aws_redshift_subnet_group")) == 0
+    assert "count" not in db_subnet_group_block
+    assert "count" not in redshift_subnet_group_block
+    assert len(_by_type(resources, "aws_db_subnet_group")) == 1
+    assert len(_by_type(resources, "aws_redshift_subnet_group")) == 1
 
     for log_group in log_groups:
         assert not _resource_values(log_group).get("kms_key_id")
@@ -307,14 +298,34 @@ def test_storage_policies_and_deletion_controls_match_prompt():
     for flag in forbidden_flags:
         assert flag not in main_tf, f"Unexpected protection or KMS setting found: {flag}"
 
-    if _uses_full_service_plan(resources):
-        assert len(_by_type(resources, "aws_db_instance")) == 1
-        assert len(_by_type(resources, "aws_redshift_cluster")) == 1
-        assert len(_by_type(resources, "aws_glue_catalog_database")) == 1
-    else:
-        assert len(_by_type(resources, "aws_db_instance")) == 0
-        assert len(_by_type(resources, "aws_redshift_cluster")) == 0
-        assert len(_by_type(resources, "aws_glue_catalog_database")) == 0
+    db_instance = _only(resources, "aws_db_instance")
+    db_values = _resource_values(db_instance)
+    assert db_values["identifier"] == "orders-postgres"
+    assert db_values["allocated_storage"] == 20
+    assert db_values["engine"] == "postgres"
+    assert db_values["engine_version"] == "16.3"
+    assert db_values["instance_class"] == "db.t3.micro"
+    assert db_values["storage_encrypted"] is True
+    assert db_values["publicly_accessible"] is False
+    assert db_values["skip_final_snapshot"] is True
+
+    redshift_cluster = _only(resources, "aws_redshift_cluster")
+    redshift_values = _resource_values(redshift_cluster)
+    assert redshift_values["cluster_identifier"] == "orders-analytics"
+    assert redshift_values["cluster_type"] == "single-node"
+    assert redshift_values["node_type"] == "dc2.large"
+    assert redshift_values["database_name"] == "analytics"
+    assert redshift_values["encrypted"] is True
+    assert redshift_values["publicly_accessible"] is False
+    assert redshift_values["port"] == 5439
+    assert redshift_values["skip_final_snapshot"] is True
+
+    glue_connection = _only(resources, "aws_glue_connection")
+    glue_values = _resource_values(glue_connection)
+    glue_connection_block = _resource_block(main_tf, "aws_glue_connection", "redshift")
+    assert glue_values["connection_type"] == "JDBC"
+    assert 'JDBC_CONNECTION_URL = "jdbc:redshift://${aws_redshift_cluster.analytics.dns_name}:5439/analytics"' in glue_connection_block
+    assert "SECRET_ID           = aws_secretsmanager_secret.redshift.arn" in glue_connection_block
 
 
 def test_iam_policies_are_minimal_and_scoped():

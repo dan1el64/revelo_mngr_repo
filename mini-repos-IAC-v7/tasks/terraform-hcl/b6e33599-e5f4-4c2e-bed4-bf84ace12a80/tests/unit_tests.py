@@ -86,7 +86,6 @@ class TestTerraformSourceContract(unittest.TestCase):
             "ec2",
             "iam",
             "lambda",
-            "rds",
             "s3",
             "secretsmanager",
             "sfn",
@@ -94,6 +93,7 @@ class TestTerraformSourceContract(unittest.TestCase):
             "sts",
         ]:
             self.assertRegex(self.main_tf, rf"{service}\s*=\s*endpoints\.value")
+        self.assertRegex(self.main_tf, r"rds\s*=\s*local\.rds_endpoint")
 
     def test_network_topology_matches_prompt(self):
         vpc = self.resource_map["aws_vpc.main"]["values"]
@@ -247,22 +247,18 @@ class TestTerraformSourceContract(unittest.TestCase):
         self.assertEqual(method_settings["method_path"], "*/*")
         self.assertIn(method_settings["settings"][0]["logging_level"], ("INFO", "ERROR"))
 
-        db = self.resource_map.get("aws_db_instance.main") or self.resource_map.get("aws_db_instance.main[0]")
-        if db:
-            db_values = db["values"]
-            self.assertEqual(db_values["engine"], "postgres")
-            self.assertEqual(db_values["engine_version"], "15.5")
-            self.assertEqual(db_values["instance_class"], "db.t3.micro")
-            self.assertEqual(db_values["allocated_storage"], 20)
-            self.assertTrue(db_values["storage_encrypted"])
-            self.assertFalse(db_values["publicly_accessible"])
-            self.assertEqual(db_values["backup_retention_period"], 0)
-            self.assertFalse(db_values["deletion_protection"])
-            self.assertTrue(db_values["skip_final_snapshot"])
-        else:
-            self.assertMainTfMatches(
-                r'resource "aws_db_instance" "main" \{[\s\S]*?engine\s*=\s*"postgres"[\s\S]*?engine_version\s*=\s*"15\.5"[\s\S]*?instance_class\s*=\s*"db\.t3\.micro"[\s\S]*?skip_final_snapshot\s*=\s*true'
-            )
+        db_resources = [resource for resource in self.planned_resources if resource["type"] == "aws_db_instance"]
+        self.assertEqual(len(db_resources), 1)
+        db_values = self.resource_map["aws_db_instance.main"]["values"]
+        self.assertEqual(db_values["engine"], "postgres")
+        self.assertEqual(db_values["engine_version"], "15.5")
+        self.assertEqual(db_values["instance_class"], "db.t3.micro")
+        self.assertEqual(db_values["allocated_storage"], 20)
+        self.assertTrue(db_values["storage_encrypted"])
+        self.assertFalse(db_values["publicly_accessible"])
+        self.assertEqual(db_values["backup_retention_period"], 0)
+        self.assertFalse(db_values["deletion_protection"])
+        self.assertTrue(db_values["skip_final_snapshot"])
 
     def test_storage_secrets_logging_and_inline_code_requirements(self):
         self.assertIn('resource "random_password" "db_password"', self.main_tf)
@@ -304,13 +300,16 @@ class TestTerraformSourceContract(unittest.TestCase):
         self.assertTrue(public_access["restrict_public_buckets"])
         self.assertEqual(ownership["rule"][0]["object_ownership"], "BucketOwnerEnforced")
 
-        db_subnet_group = self.resource_map.get("aws_db_subnet_group.main") or self.resource_map.get("aws_db_subnet_group.main[0]")
-        if db_subnet_group:
+        db_subnet_groups = [
+            resource for resource in self.planned_resources if resource["type"] == "aws_db_subnet_group"
+        ]
+        self.assertEqual(len(db_subnet_groups), 1)
+        db_subnet_group = self.resource_map["aws_db_subnet_group.main"]
+        if "subnet_ids" in db_subnet_group["values"]:
             self.assertEqual(len(db_subnet_group["values"]["subnet_ids"]), 2)
-        else:
-            self.assertMainTfMatches(
-                r'resource "aws_db_subnet_group" "main" \{[\s\S]*?subnet_ids\s*=\s*\[aws_subnet\.private_a\.id, aws_subnet\.private_b\.id\]'
-            )
+        self.assertMainTfMatches(
+            r'resource "aws_db_subnet_group" "main" \{[\s\S]*?subnet_ids\s*=\s*\[aws_subnet\.private_a\.id, aws_subnet\.private_b\.id\]'
+        )
 
         for address in [
             "aws_cloudwatch_log_group.ingest_lambda",
