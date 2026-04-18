@@ -1,5 +1,6 @@
 import json
 import re
+import shutil
 import subprocess
 import unittest
 from pathlib import Path
@@ -59,6 +60,38 @@ class TestTerraformSourceContract(unittest.TestCase):
     def test_only_main_tf_exists_and_variables_match_contract(self):
         tf_files = sorted(path.name for path in ROOT.glob("*.tf"))
         self.assertEqual(tf_files, ["main.tf"])
+
+        source_extensions = {".py", ".sh", ".js", ".ts", ".mjs", ".cjs", ".rb", ".go", ".java"}
+        ignored_source_dirs = {"tests", ".terraform", ".pytest_cache", "__pycache__"}
+        helper_files = sorted(
+            path.relative_to(ROOT).as_posix()
+            for path in ROOT.rglob("*")
+            if path.is_file()
+            and path.suffix in source_extensions
+            and not set(path.relative_to(ROOT).parts).intersection(ignored_source_dirs)
+        )
+        self.assertEqual(helper_files, [])
+
+        if shutil.which("git") is not None:
+            tracked_files_result = subprocess.run(
+                ["git", "ls-files"],
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            tracked_helper_files = sorted(
+                path
+                for path in tracked_files_result.stdout.splitlines()
+                if Path(path).suffix in source_extensions
+                and not set(Path(path).parts).intersection(ignored_source_dirs)
+            )
+            self.assertEqual(tracked_helper_files, [])
+        self.assertNotRegex(
+            self.main_tf,
+            r"\$\{path\.module\}/[^\"']+\.(py|sh|js|ts|mjs|cjs|rb|go|java)\b",
+        )
+        self.assertNotIn("rds_compat_api.py", self.main_tf)
 
         variable_names = set(self.plan["configuration"]["root_module"]["variables"].keys())
         self.assertEqual(

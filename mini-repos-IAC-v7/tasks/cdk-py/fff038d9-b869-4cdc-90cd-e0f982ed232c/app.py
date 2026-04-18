@@ -579,6 +579,7 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
         stack,
         "IngestRequestModel",
         rest_api=api,
+        model_name="EventIngestionIngestRequest",
         content_type="application/json",
         schema=apigw.JsonSchema(
             schema=apigw.JsonSchemaVersion.DRAFT4,
@@ -596,14 +597,19 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
             ],
         ),
     )
+    ingest_request_validator = apigw.RequestValidator(
+        stack,
+        "IngestRequestValidator",
+        rest_api=api,
+        request_validator_name="event-ingestion-ingest-body",
+        validate_request_body=True,
+    )
     post_method = ingest_resource.add_method(
         "POST",
         apigw.LambdaIntegration(ingest_lambda, proxy=True),
         authorization_type=apigw.AuthorizationType.NONE,
         request_models={"application/json": ingest_request_model},
-        request_validator_options=apigw.RequestValidatorOptions(
-            validate_request_body=True
-        ),
+        request_validator=ingest_request_validator,
     )
 
     status_table_arn = status_table.table_arn
@@ -671,6 +677,7 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
         stack,
         "ProcessingStateMachine",
         role_arn=state_machine_role.role_arn,
+        state_machine_name="event-ingestion-processing",
         state_machine_type="STANDARD",
         definition_string=json.dumps(definition),
         definition_substitutions={
@@ -698,6 +705,7 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
     processing_event_rule = events.CfnRule(
         stack,
         "ApplicationEventRule",
+        name="event-ingestion-processing-complete",
         event_bus_name=application_bus.event_bus_name,
         event_pattern={
             "source": [SOURCE_NAME],
@@ -744,6 +752,7 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
     pipes.CfnPipe(
         stack,
         "ProcessingPipe",
+        name="event-ingestion-processing-pipe",
         role_arn=pipe_role.role_arn,
         source=ingestion_queue.queue_arn,
         source_parameters=pipes.CfnPipe.PipeSourceParametersProperty(
@@ -858,6 +867,7 @@ def build_stack(app: cdk.App, config: Dict[str, Optional[str]]) -> cdk.Stack:
     crawler = glue.CfnCrawler(
         stack,
         "ProcessedRecordsCrawler",
+        name="event-ingestion-processed-records",
         role=glue_role.role_arn,
         database_name=glue_database.ref,
         targets=glue.CfnCrawler.TargetsProperty(

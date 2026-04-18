@@ -1,0 +1,24 @@
+Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/tasks/terraform-hcl/b6e33599-e5f4-4c2e-bed4-bf84ace12a80 FRAMEWORK=terraform-hcl
+
+
+Starting LocalStack (harness environment)...
+ Network iac-harness-network  Creating
+ Network iac-harness-network  Created
+ Container localstack-harness  Creating
+ Container localstack-harness  Created
+ Container localstack-harness  Starting
+ Container localstack-harness  Started
+Waiting for LocalStack health endpoint: http://localhost:4566/_localstack/health
+
+ERROR: LocalStack is not available.
+  Health check timed out after 180s at http://localhost:4566/_localstack/health
+  Ensure LocalStack is running, reachable, and LOCALSTACK_AUTH_TOKEN is correctly set.
+
+
+Stopping LocalStack...
+ Container localstack-harness  Stopping
+ Container localstack-harness  Stopped
+ Container localstack-harness  Removing
+ Container localstack-harness  Removed
+ Network iac-harness-network  Removing
+ Network iac-harness-network  Removed

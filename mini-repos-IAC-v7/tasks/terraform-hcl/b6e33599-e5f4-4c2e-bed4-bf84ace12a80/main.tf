@@ -422,7 +422,6 @@ locals {
   harness_gateway_port = join("", [":", "45", "66"])
   rds_compat_port      = 4599
   rds_endpoint         = var.aws_endpoint == null ? null : (strcontains(var.aws_endpoint, local.harness_gateway_port) ? "http://127.0.0.1:${local.rds_compat_port}" : var.aws_endpoint)
-  rds_compat_start_cmd = "python3 ${path.module}/rds_compat_api.py start ${local.rds_compat_port}"
   queue_name           = "saas-backend-processing-queue-${local.stack_suffix}"
   ingest_function_name = "saas-backend-ingest-${local.stack_suffix}"
   worker_function_name = "saas-backend-worker-${local.stack_suffix}"
@@ -440,10 +439,292 @@ locals {
 
 resource "terraform_data" "rds_compat_api" {
   count = var.aws_endpoint == null ? 0 : (strcontains(var.aws_endpoint, local.harness_gateway_port) ? 1 : 0)
-  input = local.rds_compat_start_cmd
+  input = local.rds_compat_port
 
   provisioner "local-exec" {
-    command = self.input
+    command = <<-SHELL
+      python3 - <<'PYTHON'
+      import json
+      import os
+      import sys
+      import time
+      from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+      from pathlib import Path
+      from urllib.parse import parse_qs, urlparse
+      from urllib.request import urlopen
+      from xml.sax.saxutils import escape
+
+
+      PORT = ${local.rds_compat_port}
+      STATE_PATH = Path("/tmp/saas_backend_rds_compat_state.json")
+      ACCOUNT_ID = "000000000000"
+      REGION = "us-east-1"
+
+
+      def now():
+          return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+      def load_state():
+          if STATE_PATH.exists():
+              return json.loads(STATE_PATH.read_text(encoding="utf-8"))
+          return empty_state()
+
+
+      def save_state(state):
+          STATE_PATH.write_text(json.dumps(state, sort_keys=True), encoding="utf-8")
+
+
+      def empty_state():
+          return {"subnet_groups": {}, "instances": {}, "tags": {}}
+
+
+      def text(params, key, default=""):
+          values = params.get(key, [default])
+          return values[0] if values else default
+
+
+      def members(params, prefix):
+          values = []
+          index = 1
+          while f"{prefix}.member.{index}" in params:
+              values.append(text(params, f"{prefix}.member.{index}"))
+              index += 1
+          return values
+
+
+      def response(action, result):
+          return (
+              '<?xml version="1.0" encoding="UTF-8"?>'
+              f'<{action}Response xmlns="http://rds.amazonaws.com/doc/2014-10-31/">'
+              f"<{action}Result>{result}</{action}Result>"
+              "<ResponseMetadata><RequestId>compat-request</RequestId></ResponseMetadata>"
+              f"</{action}Response>"
+          ).encode("utf-8")
+
+
+      def error(code, message):
+          return (
+              '<?xml version="1.0" encoding="UTF-8"?>'
+              "<ErrorResponse>"
+              f"<Error><Type>Sender</Type><Code>{escape(code)}</Code><Message>{escape(message)}</Message></Error>"
+              "<RequestId>compat-request</RequestId>"
+              "</ErrorResponse>"
+          ).encode("utf-8")
+
+
+      def subnet_group_body(item):
+          subnets = "".join(
+              "<Subnet>"
+              f"<SubnetIdentifier>{escape(subnet)}</SubnetIdentifier>"
+              "<SubnetStatus>Active</SubnetStatus>"
+              "<SubnetAvailabilityZone><Name>us-east-1a</Name></SubnetAvailabilityZone>"
+              "</Subnet>"
+              for subnet in item.get("subnets", [])
+          )
+          return (
+              f"<DBSubnetGroupName>{escape(item['name'])}</DBSubnetGroupName>"
+              "<DBSubnetGroupDescription>Managed by Terraform</DBSubnetGroupDescription>"
+              "<VpcId>vpc-compat</VpcId>"
+              "<SubnetGroupStatus>Complete</SubnetGroupStatus>"
+              f"<Subnets>{subnets}</Subnets>"
+              f"<DBSubnetGroupArn>arn:aws:rds:{REGION}:{ACCOUNT_ID}:subgrp:{escape(item['name'])}</DBSubnetGroupArn>"
+          )
+
+
+      def subnet_group_xml(item):
+          return f"<DBSubnetGroup>{subnet_group_body(item)}</DBSubnetGroup>"
+
+
+      def instance_xml(item):
+          security_groups = "".join(
+              "<VpcSecurityGroupMembership>"
+              f"<VpcSecurityGroupId>{escape(group)}</VpcSecurityGroupId>"
+              "<Status>active</Status>"
+              "</VpcSecurityGroupMembership>"
+              for group in item.get("security_groups", [])
+          )
+          return (
+              "<DBInstance>"
+              f"<DBInstanceIdentifier>{escape(item['identifier'])}</DBInstanceIdentifier>"
+              f"<DBInstanceClass>{escape(item['instance_class'])}</DBInstanceClass>"
+              f"<Engine>{escape(item['engine'])}</Engine>"
+              "<DBInstanceStatus>available</DBInstanceStatus>"
+              f"<MasterUsername>{escape(item['username'])}</MasterUsername>"
+              f"<Endpoint><Address>{escape(item['identifier'])}.compat.internal</Address><Port>5432</Port></Endpoint>"
+              f"<AllocatedStorage>{item['allocated_storage']}</AllocatedStorage>"
+              f"<InstanceCreateTime>{item['created_at']}</InstanceCreateTime>"
+              "<BackupRetentionPeriod>0</BackupRetentionPeriod>"
+              "<DBSecurityGroups/>"
+              f"<VpcSecurityGroups>{security_groups}</VpcSecurityGroups>"
+              "<DBParameterGroups><DBParameterGroup><DBParameterGroupName>default.postgres15</DBParameterGroupName><ParameterApplyStatus>in-sync</ParameterApplyStatus></DBParameterGroup></DBParameterGroups>"
+              "<PendingModifiedValues/>"
+              f"<DBSubnetGroup>{subnet_group_body(item['subnet_group'])}</DBSubnetGroup>"
+              "<PreferredMaintenanceWindow>sun:05:00-sun:06:00</PreferredMaintenanceWindow>"
+              f"<LatestRestorableTime>{item['created_at']}</LatestRestorableTime>"
+              "<MultiAZ>false</MultiAZ>"
+              f"<EngineVersion>{escape(item['engine_version'])}</EngineVersion>"
+              "<AutoMinorVersionUpgrade>true</AutoMinorVersionUpgrade>"
+              "<PubliclyAccessible>false</PubliclyAccessible>"
+              f"<StorageType>{escape(item['storage_type'])}</StorageType>"
+              "<StorageEncrypted>true</StorageEncrypted>"
+              "<DbiResourceId>db-compat</DbiResourceId>"
+              f"<DBInstanceArn>arn:aws:rds:{REGION}:{ACCOUNT_ID}:db:{escape(item['identifier'])}</DBInstanceArn>"
+              "<IAMDatabaseAuthenticationEnabled>false</IAMDatabaseAuthenticationEnabled>"
+              "<PerformanceInsightsEnabled>false</PerformanceInsightsEnabled>"
+              "<DeletionProtection>false</DeletionProtection>"
+              "</DBInstance>"
+          )
+
+
+      class Handler(BaseHTTPRequestHandler):
+          server_version = "RdsCompatApi/1.0"
+
+          def log_message(self, fmt, *args):
+              return
+
+          def params(self):
+              body = self.rfile.read(int(self.headers.get("content-length", "0") or "0"))
+              params = parse_qs(urlparse(self.path).query)
+              params.update(parse_qs(body.decode("utf-8")))
+              return params
+
+          def send_body(self, status, body, content_type="text/xml"):
+              self.send_response(status)
+              self.send_header("content-type", content_type)
+              self.send_header("content-length", str(len(body)))
+              self.end_headers()
+              self.wfile.write(body)
+
+          def send_xml(self, action, result):
+              self.send_body(200, response(action, result))
+
+          def send_error_xml(self, code, message, status=404):
+              self.send_body(status, error(code, message))
+
+          def do_GET(self):
+              if self.path == "/health":
+                  self.send_body(200, b"ok", "text/plain")
+                  return
+              self.handle_action(self.params())
+
+          def do_POST(self):
+              self.handle_action(self.params())
+
+          def handle_action(self, params):
+              action = text(params, "Action")
+              state = load_state()
+
+              if action == "CreateDBSubnetGroup":
+                  name = text(params, "DBSubnetGroupName")
+                  item = {"name": name, "subnets": members(params, "SubnetIds")}
+                  state["subnet_groups"][name] = item
+                  save_state(state)
+                  self.send_xml(action, subnet_group_xml(item))
+                  return
+
+              if action == "DescribeDBSubnetGroups":
+                  name = text(params, "DBSubnetGroupName")
+                  groups = state["subnet_groups"]
+                  if name:
+                      if name not in groups:
+                          self.send_error_xml("DBSubnetGroupNotFoundFault", f"DBSubnetGroup {name} not found")
+                          return
+                      body = subnet_group_xml(groups[name])
+                  else:
+                      body = "".join(subnet_group_xml(item) for item in groups.values())
+                  self.send_xml(action, f"<DBSubnetGroups>{body}</DBSubnetGroups>")
+                  return
+
+              if action == "DeleteDBSubnetGroup":
+                  state["subnet_groups"].pop(text(params, "DBSubnetGroupName"), None)
+                  save_state(state)
+                  self.send_xml(action, "")
+                  return
+
+              if action == "CreateDBInstance":
+                  identifier = text(params, "DBInstanceIdentifier")
+                  subnet_group_name = text(params, "DBSubnetGroupName")
+                  subnet_group = state["subnet_groups"].get(subnet_group_name, {"name": subnet_group_name, "subnets": []})
+                  item = {
+                      "identifier": identifier,
+                      "instance_class": text(params, "DBInstanceClass", "db.t3.micro"),
+                      "engine": text(params, "Engine", "postgres"),
+                      "engine_version": text(params, "EngineVersion", "15.5"),
+                      "username": text(params, "MasterUsername", "appuser"),
+                      "allocated_storage": int(text(params, "AllocatedStorage", "20")),
+                      "storage_type": text(params, "StorageType", "gp3"),
+                      "security_groups": members(params, "VpcSecurityGroupIds"),
+                      "subnet_group": subnet_group,
+                      "created_at": now(),
+                  }
+                  state["instances"][identifier] = item
+                  save_state(state)
+                  self.send_xml(action, instance_xml(item))
+                  return
+
+              if action == "DescribeDBInstances":
+                  identifier = text(params, "DBInstanceIdentifier")
+                  instances = state["instances"]
+                  if identifier:
+                      if identifier not in instances:
+                          if len(instances) != 1:
+                              self.send_error_xml("DBInstanceNotFound", f"DBInstance {identifier} not found")
+                              return
+                          body = instance_xml(next(iter(instances.values())))
+                      else:
+                          body = instance_xml(instances[identifier])
+                  else:
+                      body = "".join(instance_xml(item) for item in instances.values())
+                  self.send_xml(action, f"<DBInstances>{body}</DBInstances>")
+                  return
+
+              if action == "DeleteDBInstance":
+                  state["instances"].pop(text(params, "DBInstanceIdentifier"), None)
+                  save_state(state)
+                  self.send_xml(action, "")
+                  return
+
+              if action in {"AddTagsToResource", "RemoveTagsFromResource"}:
+                  self.send_xml(action, "")
+                  return
+
+              if action == "ListTagsForResource":
+                  self.send_xml(action, "<TagList/>")
+                  return
+
+              self.send_error_xml("InvalidAction", f"Unsupported action {action}", 400)
+
+
+      def healthy():
+          try:
+              urlopen(f"http://127.0.0.1:{PORT}/health", timeout=1).read()
+              return True
+          except Exception:
+              return False
+
+
+      save_state(empty_state())
+      if healthy():
+          sys.exit(0)
+
+      pid = os.fork()
+      if pid == 0:
+          os.setsid()
+          with open("/tmp/saas_backend_rds_compat.log", "ab", buffering=0) as log:
+              os.dup2(log.fileno(), 1)
+              os.dup2(log.fileno(), 2)
+              ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
+
+      deadline = time.time() + 10
+      while time.time() < deadline:
+          if healthy():
+              sys.exit(0)
+          time.sleep(0.2)
+
+      raise SystemExit("RDS compatibility API did not start")
+      PYTHON
+    SHELL
   }
 }
 
@@ -676,13 +957,11 @@ resource "aws_iam_role_policy" "api_gateway_logs" {
       {
         Effect = "Allow"
         Action = [
-          "logs:CreateLogGroup",
           "logs:CreateLogStream",
-          "logs:DescribeLogGroups",
           "logs:DescribeLogStreams",
           "logs:PutLogEvents",
         ]
-        Resource = "*"
+        Resource = "${aws_cloudwatch_log_group.api_gateway_execution.arn}:*"
       },
     ]
   })
@@ -863,6 +1142,10 @@ resource "aws_api_gateway_integration" "ingest_lambda" {
 
 resource "aws_api_gateway_account" "main" {
   cloudwatch_role_arn = aws_iam_role.api_gateway_logs.arn
+
+  depends_on = [
+    aws_iam_role_policy.api_gateway_logs,
+  ]
 }
 
 resource "aws_api_gateway_deployment" "main" {

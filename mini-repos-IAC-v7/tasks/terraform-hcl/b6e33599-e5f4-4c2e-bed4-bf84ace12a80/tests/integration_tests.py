@@ -289,10 +289,14 @@ class TestIamRuntimeContracts(unittest.TestCase):
         ingest_logs = self.values("aws_cloudwatch_log_group.ingest_lambda")
         worker_logs = self.values("aws_cloudwatch_log_group.worker_lambda")
         step_logs = self.values("aws_cloudwatch_log_group.step_functions")
+        api_logs = self.values("aws_cloudwatch_log_group.api_gateway_execution")
+        api_logs_role = self.values("aws_iam_role.api_gateway_logs")
+        api_account = self.values("aws_api_gateway_account.main")
 
         ingest_policy = self.policy("aws_iam_role_policy.ingest_lambda")
         worker_policy = self.policy("aws_iam_role_policy.worker_lambda")
         step_policy = self.policy("aws_iam_role_policy.step_functions")
+        api_logs_policy = self.policy("aws_iam_role_policy.api_gateway_logs")
 
         eni_actions = frozenset(
             [
@@ -314,13 +318,14 @@ class TestIamRuntimeContracts(unittest.TestCase):
             "logs:DescribeLogGroups",
         ]
 
-        for policy in [ingest_policy, worker_policy, step_policy]:
+        for policy in [ingest_policy, worker_policy, step_policy, api_logs_policy]:
             for statement in policy["Statement"]:
                 self.assertNotIn("*", normalize_actions(statement["Action"]))
 
         self.assert_only_expected_wildcard_resources(ingest_policy, {eni_actions})
         self.assert_only_expected_wildcard_resources(worker_policy, {eni_actions})
         self.assert_only_expected_wildcard_resources(step_policy, set())
+        self.assert_only_expected_wildcard_resources(api_logs_policy, set())
 
         self.assert_statement(
             ingest_policy,
@@ -377,6 +382,16 @@ class TestIamRuntimeContracts(unittest.TestCase):
         self.assertEqual(
             state_machine["logging_configuration"][0]["log_destination"],
             f"{step_logs['arn']}:*",
+        )
+        self.assertEqual(api_account["cloudwatch_role_arn"], api_logs_role["arn"])
+        self.assert_statement(
+            api_logs_policy,
+            actions=[
+                "logs:CreateLogStream",
+                "logs:DescribeLogStreams",
+                "logs:PutLogEvents",
+            ],
+            resource=f"{api_logs['arn']}:*",
         )
 
 
