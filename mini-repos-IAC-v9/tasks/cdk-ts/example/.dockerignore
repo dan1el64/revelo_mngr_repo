@@ -1,0 +1,6 @@
+cdk.out/
+node_modules/
+.git/
+.DS_Store
+*.js
+*.d.ts

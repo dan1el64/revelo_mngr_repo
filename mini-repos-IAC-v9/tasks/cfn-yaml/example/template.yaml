@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation example - S3 bucket with tags and BucketName output.
+
+Parameters:
+  NamePrefix:
+    Type: String
+    Description: Prefix for resource names (set by harness to avoid collisions).
+
+Resources:
+  Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${NamePrefix}-bucket"
+      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-bucket"
+        - Key: Project
+          Value: !Ref NamePrefix
+
+Outputs:
+  BucketName:
+    Description: Name of the S3 bucket
+    Value: !Ref Bucket
+    Export:
+      Name: !Sub "${AWS::StackName}-BucketName"

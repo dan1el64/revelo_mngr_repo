@@ -1,0 +1,32 @@
+# Pulumi generated files
+.pulumi/
+Pulumi.*.yaml
+
+# Harness-generated files
+preview.json
+state.json
+
+# Maven
+target/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.egg-info/
+venv/
+.venv/
+*.egg
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

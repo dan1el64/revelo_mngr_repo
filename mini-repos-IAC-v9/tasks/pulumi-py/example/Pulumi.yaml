@@ -1,0 +1,3 @@
+name: pulumi-aws-py
+runtime: python
+description: A Pulumi Python program for AWS infrastructure
