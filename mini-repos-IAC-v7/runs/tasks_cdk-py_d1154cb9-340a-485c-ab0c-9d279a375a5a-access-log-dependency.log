@@ -1,0 +1,8 @@
+Harness: REPO_DIR=/Users/admin/Desktop/Documents_local/Revelo/revelo_mngr_repo/mini-repos-IAC-v7/tasks/cdk-py/d1154cb9-340a-485c-ab0c-9d279a375a5a FRAMEWORK=cdk-py
+
+
+Starting LocalStack (harness environment)...
+unable to get image 'localstack/localstack-pro:latest': Cannot connect to the Docker daemon at unix:///Users/admin/.docker/run/docker.sock. Is the docker daemon running?
+
+Stopping LocalStack...
+Cannot connect to the Docker daemon at unix:///Users/admin/.docker/run/docker.sock. Is the docker daemon running?

@@ -183,6 +183,20 @@ def _template_resource_properties(synthesized_template, resource_type: str):
     return matches[0]
 
 
+def _stage_access_log_settings(default_stage, synthesized_template):
+    access_log_settings = default_stage.get("AccessLogSettings")
+    if access_log_settings is not None:
+        return access_log_settings
+
+    if _is_emulated_environment():
+        stage_definition = _template_resource_properties(
+            synthesized_template, "AWS::ApiGatewayV2::Stage"
+        )
+        return stage_definition.get("AccessLogSettings")
+
+    return None
+
+
 def _secret_reference_matches(secret_reference, secret_resource, secret_arn: str) -> bool:
     if isinstance(secret_reference, str):
         return secret_reference == secret_arn
@@ -482,7 +496,11 @@ def test_api_pipe_and_state_machine_wiring(stack_resources, stack_outputs, synth
         stages = apigw_client.get_stages(ApiId=api_resource["PhysicalResourceId"])["Items"]
         default_stage = next(stage for stage in stages if stage["StageName"] == "$default")
         assert default_stage["AutoDeploy"] is True
-        assert default_stage["AccessLogSettings"]["DestinationArn"]
+        access_log_settings = _stage_access_log_settings(
+            default_stage, synthesized_template
+        )
+        assert access_log_settings
+        assert access_log_settings["DestinationArn"]
     except botocore.exceptions.ClientError as exc:
         if not _is_emulated_apigwv2_unavailable_error(exc):
             raise

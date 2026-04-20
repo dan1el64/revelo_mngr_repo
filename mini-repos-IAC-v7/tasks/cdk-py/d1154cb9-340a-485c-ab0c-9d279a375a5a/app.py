@@ -474,7 +474,7 @@ class InternalWebAppStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
         )
 
-        apigwv2.CfnStage(
+        orders_default_stage = apigwv2.CfnStage(
             self,
             "OrdersDefaultStage",
             api_id=http_api.ref,
@@ -485,6 +485,7 @@ class InternalWebAppStack(Stack):
                 format='{"requestId":"$context.requestId","routeKey":"$context.routeKey","status":"$context.status"}',
             ),
         )
+        orders_default_stage.node.add_dependency(api_access_log_group)
 
         lambda_.CfnPermission(
             self,
@@ -782,6 +783,7 @@ class InternalWebAppStack(Stack):
         glue_crawler = glue.CfnCrawler(
             self,
             "AnalyticsRedshiftCrawler",
+            name="analytics-redshift-crawler",
             role=glue_crawler_role.role_arn,
             database_name="analytics_catalog",
             targets=glue.CfnCrawler.TargetsProperty(
